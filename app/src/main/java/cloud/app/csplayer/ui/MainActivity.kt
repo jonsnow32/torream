@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
       } else if(uri?.scheme?.contains("http") == true || uri?.scheme?.contains("file") == true) {
         navigate(
           R.id.global_to_navigation_player,
-          bundleOf("url" to dataString)
+          intent.extras
         )
       }
     }

@@ -69,7 +69,6 @@ android {
   }
 }
 
-
 dependencies {
 
   implementation("androidx.core:core-ktx:1.13.1")
@@ -92,7 +91,7 @@ dependencies {
   implementation("androidx.media3:media3-exoplayer-dash:$media3_version")
   implementation("androidx.media3:media3-datasource-okhttp:$media3_version")
   implementation("androidx.media3:media3-extractor:$media3_version")
-
+  implementation("com.github.recloudstream:media-ffmpeg:1.1.0")
 
   // UI Stuff
   implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")

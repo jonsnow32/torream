@@ -17,6 +17,7 @@ import androidx.core.animation.addListener
 import androidx.core.net.toFile
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import androidx.media3.common.Format.NO_VALUE
 import androidx.media3.common.MimeTypes
@@ -53,15 +54,17 @@ import cloud.app.csplayer.utils.UIHelper.popCurrentPage
 import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils.sortSubs
 import cloud.app.csplayer.utils.isTvOrEmulator
+import cloud.app.csplayer.utils.observe
+import java.io.File
+
 
 class CSPlayerFragment : FullScreenPlayer() {
 
+  private lateinit var viewModel: CSPlayerViewModel
   private var titleRez = 3
   private var limitTitle = 0
 
-  private var currentLinks: Set<Pair<ExtractorLink?, ExtractorUri?>> = setOf()
-  private var currentSubs: Set<SubtitleData> = setOf()
-
+  private var currentSubs: Set<SubtitleData> = mutableSetOf()
   private var currentSelectedLink: Pair<ExtractorLink?, ExtractorUri?>? = null
   private var currentSelectedSubtitles: SubtitleData? = null
 
@@ -109,13 +112,13 @@ class CSPlayerFragment : FullScreenPlayer() {
   }
 
   override fun embeddedSubtitlesFetched(subtitles: List<SubtitleData>) {
-    //viewModel.addSubtitles(subtitles.toSet())
+    viewModel.addSubtitles(subtitles.toSet())
   }
 
   override fun onTracksInfoChanged() {
     val tracks = player.getVideoTracks()
-    playerBinding?.playerTracksBtt?.isVisible =
-      tracks.allVideoTracks.size > 1 || tracks.allAudioTracks.size > 1
+//    playerBinding?.playerTracksBtt?.isVisible =
+//      tracks.allVideoTracks.size > 1 || tracks.allAudioTracks.size > 1 || currentSubs.size > 0
     // Only set the preferred language if it is available.
     // Otherwise it may give some users audio track init failed!
     if (tracks.allAudioTracks.any { it.language == preferredAudioTrackLanguage }) {
@@ -180,33 +183,7 @@ class CSPlayerFragment : FullScreenPlayer() {
       player.addTimeStamps(listOf()) // clear stamps
   }
 
-  private fun closestQuality(target: Int?): Qualities {
-    if (target == null) return Qualities.Unknown
-    return Qualities.values().minBy { abs(it.value - target) }
-  }
 
-  private fun getLinkPriority(
-    qualityProfile: Int,
-    link: Pair<ExtractorLink?, ExtractorUri?>
-  ): Int {
-    val (linkData, _) = link
-
-    val qualityPriority = QualityDataHelper.getQualityPriority(
-      qualityProfile,
-      closestQuality(linkData?.quality)
-    )
-    val sourcePriority =
-      QualityDataHelper.getSourcePriority(qualityProfile, linkData?.source)
-
-    // negative because we want to sort highest quality first
-    return qualityPriority + sourcePriority
-  }
-
-  private fun sortLinks(qualityProfile: Int): List<Pair<ExtractorLink?, ExtractorUri?>> {
-    return currentLinks.sortedBy {
-      -getLinkPriority(qualityProfile, it)
-    }
-  }
 
   override fun openOnlineSubPicker(
     context: Context, loadResponse: List<SubtitleData>?, dismissCallback: (() -> Unit)
@@ -479,10 +456,10 @@ class CSPlayerFragment : FullScreenPlayer() {
     player.reloadPlayer(ctx)
 
     setSubtitles(selectedSubtitle)
-    TODO()
-    //viewModel.addSubtitles(subtitleData.toSet())
 
-    selectSourceDialog?.dismissSafe(activity)
+    viewModel.addSubtitles(subtitleData.toSet())
+
+    selectTrackDialog?.dismissSafe(activity)
 
     this.showToast(
       String.format(ctx.getString(R.string.player_loaded_subtitles), selectedSubtitle.name),
@@ -503,7 +480,7 @@ class CSPlayerFragment : FullScreenPlayer() {
           Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         )
 
-        val file = uri.toFile()// SafeFile.fromUri(ctx, uri)
+        val file = File(requireNotNull(uri.path))// SafeFile.fromUri(ctx, uri)
         val fileName = file.name
         println("Loaded subtitle file. Selected URI path: $uri - Name: $fileName")
         // DO NOT REMOVE THE FILE EXTENSION FROM NAME, IT'S NEEDED FOR MIME TYPES
@@ -523,7 +500,6 @@ class CSPlayerFragment : FullScreenPlayer() {
     }
 
   var selectSourceDialog: Dialog? = null
-//    var selectTracksDialog: AlertDialog? = null
 
   @OptIn(UnstableApi::class)
   override fun showMirrorsDialogue() {
@@ -544,17 +520,6 @@ class CSPlayerFragment : FullScreenPlayer() {
 
         sourceDialog.show()
         val providerList = binding.sortProviders
-        val subtitleList = binding.sortSubtitles
-
-        val loadFromFileFooter: TextView =
-          layoutInflater.inflate(R.layout.sort_bottom_footer_add_choice, null) as TextView
-
-        loadFromFileFooter.text = ctx.getString(R.string.player_load_subtitles)
-        loadFromFileFooter.setOnClickListener {
-          openSubPicker()
-        }
-        subtitleList.addFooterView(loadFromFileFooter)
-
         var shouldDismiss = true
 
         fun dismiss() {
@@ -569,132 +534,19 @@ class CSPlayerFragment : FullScreenPlayer() {
         var startSource = 0
         var sortedUrls = emptyList<Pair<ExtractorLink?, ExtractorUri?>>()
 
-        fun refreshLinks(qualityProfile: Int) {
-          sortedUrls = sortLinks(qualityProfile)
-          if (sortedUrls.isEmpty()) {
-            sourceDialog.findViewById<LinearLayout>(R.id.sort_sources_holder)?.isGone =
-              true
-          } else {
-            startSource = sortedUrls.indexOf(currentSelectedLink)
-            sourceIndex = startSource
-
-            val sourcesArrayAdapter =
-              ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
-
-            sourcesArrayAdapter.addAll(sortedUrls.map { (link, uri) ->
-              val name = link?.name ?: uri?.name ?: "NULL"
-              "$name ${Qualities.getStringByInt(link?.quality)}"
-            })
-
-            providerList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-            providerList.adapter = sourcesArrayAdapter
-            providerList.setSelection(sourceIndex)
-            providerList.setItemChecked(sourceIndex, true)
-
-            providerList.setOnItemClickListener { _, _, which, _ ->
-              sourceIndex = which
-              providerList.setItemChecked(which, true)
-            }
-          }
-        }
-
-
         sourceDialog.setOnDismissListener {
           if (shouldDismiss) dismiss()
           selectSourceDialog = null
-        }
-
-        val subtitleIndexStart = currentSubtitles.indexOf(currentSelectedSubtitles) + 1
-        var subtitleIndex = subtitleIndexStart
-
-        val subsArrayAdapter = ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
-        subsArrayAdapter.add(ctx.getString(R.string.no_subtitles))
-        subsArrayAdapter.addAll(currentSubtitles.map { it.name })
-
-        subtitleList.adapter = subsArrayAdapter
-        subtitleList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-
-        subtitleList.setSelection(subtitleIndex)
-        subtitleList.setItemChecked(subtitleIndex, true)
-
-        subtitleList.setOnItemClickListener { _, _, which, _ ->
-          if (which > currentSubtitles.size) {
-            // Since android TV is funky the setOnItemClickListener will be triggered
-            // instead of setOnClickListener when selecting. To override this we programmatically
-            // click the view when selecting an item outside the list.
-
-            // Cheeky way of getting the view at that position to click it
-            // to avoid keeping track of the various footers.
-            // getChildAt() gives null :(
-            val child = subtitleList.adapter.getView(which, null, subtitleList)
-            child?.performClick()
-          } else {
-            subtitleIndex = which
-            subtitleList.setItemChecked(which, true)
-          }
         }
 
         binding.cancelBtt.setOnClickListener {
           sourceDialog.dismissSafe(activity)
         }
 
-
-
-        binding.subtitlesEncodingFormat.apply {
-          val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
-
-          val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
-          val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
-
-          val value = settingsManager.getString(
-            ctx.getString(R.string.subtitles_encoding_key), null
-          )
-          val index = prefValues.indexOf(value)
-          text = prefNames[if (index == -1) 0 else index]
-        }
-
-        binding.subtitlesClickSettings.setOnClickListener {
-          val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
-
-          val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
-          val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
-
-          val currentPrefMedia = settingsManager.getString(
-            ctx.getString(R.string.subtitles_encoding_key), null
-          )
-
-          shouldDismiss = false
-          sourceDialog.dismissSafe(activity)
-
-          val index = prefValues.indexOf(currentPrefMedia)
-          activity?.showDialog(prefNames.toList(),
-            if (index == -1) 0 else index,
-            ctx.getString(R.string.subtitles_encoding),
-            true,
-            {}) {
-            settingsManager.edit().putString(
-              ctx.getString(R.string.subtitles_encoding_key), prefValues[it]
-            ).apply()
-
-            updateForcedEncoding(ctx)
-            dismiss()
-            player.seekTime(-1) // to update subtitles, a dirty trick
-          }
-        }
-
         binding.applyBtt.setOnClickListener {
           var init = false
           if (sourceIndex != startSource) {
             init = true
-          }
-          if (subtitleIndex != subtitleIndexStart) {
-            init = init || if (subtitleIndex <= 0) {
-              noSubtitles()
-            } else {
-              currentSubtitles.getOrNull(subtitleIndex - 1)?.let {
-                setSubtitles(it)
-              } ?: false
-            }
           }
           if (init) {
             sortedUrls.getOrNull(sourceIndex)?.let {
@@ -708,7 +560,8 @@ class CSPlayerFragment : FullScreenPlayer() {
       logError(e)
     }
   }
-
+  var selectTrackDialog: Dialog? = null
+  @OptIn(UnstableApi::class)
   override fun showTracksDialogue() {
     try {
       //println("CURRENT SELECTED :$currentSelectedSubtitles of $currentSubs")
@@ -724,11 +577,10 @@ class CSPlayerFragment : FullScreenPlayer() {
         val currentAudioTracks = tracks.allAudioTracks
         val binding: PlayerSelectTracksBinding =
           PlayerSelectTracksBinding.inflate(LayoutInflater.from(ctx), null, false)
-        val trackDialog = Dialog(ctx, R.style.AlertDialogCustomBlack)
+        val trackDialog = Dialog(ctx, R.style.AlertDialogCustom)
         trackDialog.setContentView(binding.root)
         trackDialog.show()
-
-//                selectTracksDialog = tracksDialog
+        selectTrackDialog = trackDialog
 
         val videosList = binding.videoTracksList
         val audioList = binding.autoTracksList
@@ -799,6 +651,93 @@ class CSPlayerFragment : FullScreenPlayer() {
           audioList.setItemChecked(which, true)
         }
 
+        val currentVideo = currentVideoTracks.getOrNull(videoIndex)
+        val width = currentVideo?.width ?: NO_VALUE
+        val height = currentVideo?.height ?: NO_VALUE
+        if (width != NO_VALUE && height != NO_VALUE) {
+          player.setMaxVideoSize(width, height, currentVideo?.id)
+        }
+
+
+
+        val subtitleList = binding.sortSubtitles
+        val loadFromFileFooter: TextView =
+          layoutInflater.inflate(R.layout.sort_bottom_footer_add_choice, null) as TextView
+
+        loadFromFileFooter.text = ctx.getString(R.string.player_load_subtitles)
+        loadFromFileFooter.setOnClickListener {
+          openSubPicker()
+        }
+        subtitleList.addFooterView(loadFromFileFooter)
+        val currentSubtitles = sortSubs(currentSubs)
+        val subtitleIndexStart = currentSubtitles.indexOf(currentSelectedSubtitles) + 1
+        var subtitleIndex = subtitleIndexStart
+
+        val subsArrayAdapter = ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+        subsArrayAdapter.add(ctx.getString(R.string.no_subtitles))
+        subsArrayAdapter.addAll(currentSubtitles.map { it.name })
+
+        subtitleList.adapter = subsArrayAdapter
+        subtitleList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
+
+        subtitleList.setSelection(subtitleIndex)
+        subtitleList.setItemChecked(subtitleIndex, true)
+
+        subtitleList.setOnItemClickListener { _, _, which, _ ->
+          if (which > currentSubtitles.size) {
+            // Since android TV is funky the setOnItemClickListener will be triggered
+            // instead of setOnClickListener when selecting. To override this we programmatically
+            // click the view when selecting an item outside the list.
+
+            // Cheeky way of getting the view at that position to click it
+            // to avoid keeping track of the various footers.
+            // getChildAt() gives null :(
+            val child = subtitleList.adapter.getView(which, null, subtitleList)
+            child?.performClick()
+          } else {
+            subtitleIndex = which
+            subtitleList.setItemChecked(which, true)
+          }
+        }
+
+
+        binding.subtitlesEncodingFormat.apply {
+          val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
+
+          val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
+          val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
+
+          val value = settingsManager.getString(
+            ctx.getString(R.string.subtitles_encoding_key), null
+          )
+          val index = prefValues.indexOf(value)
+          text = prefNames[if (index == -1) 0 else index]
+        }
+        binding.subtitlesClickSettings.setOnClickListener {
+          val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
+
+          val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
+          val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
+
+          val currentPrefMedia = settingsManager.getString(
+            ctx.getString(R.string.subtitles_encoding_key), null
+          )
+          val index = prefValues.indexOf(currentPrefMedia)
+          activity?.showDialog(prefNames.toList(),
+            if (index == -1) 0 else index,
+            ctx.getString(R.string.subtitles_encoding),
+            true,
+            {}) {
+            settingsManager.edit().putString(
+              ctx.getString(R.string.subtitles_encoding_key), prefValues[it]
+            ).apply()
+
+            updateForcedEncoding(ctx)
+            dismiss()
+            player.seekTime(-1) // to update subtitles, a dirty trick
+          }
+        }
+
         binding.cancelBtt.setOnClickListener {
           trackDialog.dismissSafe(activity)
         }
@@ -808,14 +747,15 @@ class CSPlayerFragment : FullScreenPlayer() {
           player.setPreferredAudioTrack(
             currentTrack?.language, currentTrack?.id
           )
-
-          val currentVideo = currentVideoTracks.getOrNull(videoIndex)
-          val width = currentVideo?.width ?: NO_VALUE
-          val height = currentVideo?.height ?: NO_VALUE
-          if (width != NO_VALUE && height != NO_VALUE) {
-            player.setMaxVideoSize(width, height, currentVideo?.id)
+          if (subtitleIndex != subtitleIndexStart) {
+            if (subtitleIndex <= 0) {
+              noSubtitles()
+            } else {
+              currentSubtitles.getOrNull(subtitleIndex - 1)?.let {
+                setSubtitles(it)
+              } ?: false
+            }
           }
-
           trackDialog.dismissSafe(activity)
         }
       }
@@ -829,20 +769,14 @@ class CSPlayerFragment : FullScreenPlayer() {
     Log.i(TAG, "playerError = $currentSelectedLink")
     super.playerError(exception)
   }
-
+  private fun noLinksFound() {
+    showToast(R.string.no_links_found_toast, Toast.LENGTH_SHORT)
+    activity?.popCurrentPage()
+  }
 
   private fun startPlayer() {
     if (isActive) return // we don't want double load when you skip loading
-//
-//    val links = sortLinks(currentQualityProfile)
-//    if (links.isEmpty()) {
-//      noLinksFound()
-//      return
-//    }
-    currentSelectedLink?.let {
-      loadLink(currentSelectedLink, false)
-    }
-
+    loadLink(currentSelectedLink, false)
   }
 
   override fun nextEpisode() {
@@ -1036,8 +970,12 @@ class CSPlayerFragment : FullScreenPlayer() {
     // this is used instead of layout-television to follow the settings and some TV devices are not classified as TV for some reason
     layout = if (context?.isTvOrEmulator() == true) R.layout.fragment_player_tv else R.layout.fragment_player
 
+    viewModel = ViewModelProvider(this)[CSPlayerViewModel::class.java]
+    viewModel.initialize(arguments)
+
     unwrapBundle(savedInstanceState)
     unwrapBundle(arguments)
+
 
     val root = super.onCreateView(inflater, container, savedInstanceState) ?: return null
     binding = FragmentPlayerBinding.bind(root)
@@ -1148,11 +1086,39 @@ class CSPlayerFragment : FullScreenPlayer() {
     unwrapBundle(savedInstanceState)
     unwrapBundle(arguments)
 
+    observe(viewModel.currentSubs) { set ->
+      val setOfSub = mutableSetOf<SubtitleData>()
+      if (langFilterList.isNotEmpty() && filterSubByLang) {
+        Log.i("subfilter", "Filtering subtitle")
+        langFilterList.forEach { lang ->
+          Log.i("subfilter", "Lang: $lang")
+          setOfSub += set.filter {
+            it.name.contains(lang, ignoreCase = true) ||
+              it.origin != SubtitleOrigin.URL
+          }
+        }
+        currentSubs = setOfSub
+      } else {
+        currentSubs = set
+      }
 
+      player.setActiveSubtitles(set)
+
+      // If the file is downloaded then do not select auto select the subtitles
+      // Downloaded subtitles cannot be selected immediately after loading since
+      // player.getCurrentPreferredSubtitle() cannot fetch data from non-loaded subtitles
+      // Resulting in unselecting the downloaded subtitle
+      if (set.lastOrNull()?.origin != SubtitleOrigin.DOWNLOADED_FILE) {
+        autoSelectSubtitles()
+      }
+    }
+
+    observe(viewModel.currentLink) {
+      currentSelectedLink = it
+      startPlayer()
+    }
 
     preferredAutoSelectSubtitles = context?.getAutoSelectLanguageISO639_1()
-
-
     binding?.overlayLoadingSkipButton?.setOnClickListener {
       startPlayer()
     }
@@ -1163,12 +1129,5 @@ class CSPlayerFragment : FullScreenPlayer() {
       activity?.popCurrentPage()
     }
 
-    val url = arguments?.getString("url");
-    val header = mapOf<String, String>()
-    if(!url.isNullOrEmpty()) {
-      currentSelectedLink = ExtractorLink("", url,url, "", Qualities.Unknown.value, type = INFER_TYPE) to null
-      currentLinks.plus(currentSelectedLink)
-      startPlayer();
-    }
   }
 }
