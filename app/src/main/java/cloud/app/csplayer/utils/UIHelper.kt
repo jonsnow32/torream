@@ -1,21 +1,30 @@
 package cloud.app.csplayer.utils
 
 import android.app.Activity
+import android.app.AppOpsManager
 import android.app.Dialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
 import android.content.res.Resources
 import android.os.Build
 import android.os.Bundle
+import android.os.TransactionTooLargeException
+import android.util.Log
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.getSystemService
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.fragment.NavHostFragment
 import cloud.app.csplayer.R
 import cloud.app.csplayer.utils.Utils.logError
+import cloud.app.csplayer.utils.Utils.showToast
 
 object UIHelper {
   val Int.toPx: Int get() = (this * Resources.getSystem().displayMetrics.density).toInt()
@@ -134,5 +143,46 @@ object UIHelper {
 
     changeStatusBarState(isLayout(LayoutMode.Emulator.id))
   }
+  fun Fragment.clipboardHelper(label: UiText, text: CharSequence) {
+    val ctx = requireContext();
+    try {
+      ctx.let {
+        val clip = ClipData.newPlainText(label.asString(ctx), text)
+        val labelSuffix = txt(R.string.toast_copied).asString(ctx)
+        ctx.getSystemService<ClipboardManager>()?.setPrimaryClip(clip)
 
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+          showToast("${label.asString(ctx)} $labelSuffix")
+        }
+      }
+    } catch (t: Throwable) {
+      Log.e("ClipboardService", "$t")
+      when (t) {
+        is SecurityException -> {
+          showToast(R.string.clipboard_permission_error)
+        }
+
+        is TransactionTooLargeException -> {
+          showToast(R.string.clipboard_too_large)
+        }
+
+        else -> {
+          showToast(R.string.clipboard_unknown_error, Toast.LENGTH_LONG)
+        }
+      }
+    }
+  }
+  fun Context.hasPIPPermission(): Boolean {
+    val appOps =
+      getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      appOps.checkOpNoThrow(
+        AppOpsManager.OPSTR_PICTURE_IN_PICTURE,
+        android.os.Process.myUid(),
+        packageName
+      ) == AppOpsManager.MODE_ALLOWED
+    } else {
+      return true
+    }
+  }
 }

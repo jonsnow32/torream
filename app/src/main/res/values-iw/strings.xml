@@ -550,4 +550,10 @@
 \nיגרמו לעדיפות הסרטון להיות 10.
 \n
 \nשימו לב: אם הסכום הוא 10 או יותר, הנגן ידלג על טעינת הסרטון כאשר הלינק נטען!</string>
+
+  <string name="cpv_default_title">בחירת צבע</string>
+  <string name="cpv_presets">קבוע מראש</string>
+  <string name="cpv_custom">מותאם אישית</string>
+  <string name="cpv_select">בחירה</string>
+  <string name="cpv_transparency">שקיפות</string>
 </resources>

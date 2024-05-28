@@ -595,4 +595,9 @@
     <string name="test_extensions_summary">Ce test est destiné uniquement aux développeurs et ne vérifie ni n\'empêche le fonctionnement d\'aucune extension.</string>
     <string name="toast_copied">Copié !</string>
     <string name="repo_copy_label">Nom du dépôt et adresse internet</string>
+  <string name="cpv_default_title">Sélectionner une couleur</string>
+  <string name="cpv_presets">Présélections</string>
+  <string name="cpv_custom">Personnalisée</string>
+  <string name="cpv_select">Valider</string>
+  <string name="cpv_transparency">Transparence</string>
 </resources>

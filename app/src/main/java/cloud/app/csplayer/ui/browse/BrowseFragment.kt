@@ -5,7 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentBrowseBinding
+import cloud.app.csplayer.utils.UIHelper.navigate
 
 class BrowseFragment: Fragment() {
   lateinit var binding : FragmentBrowseBinding
@@ -16,5 +19,13 @@ class BrowseFragment: Fragment() {
   ): View? {
     binding = FragmentBrowseBinding.inflate(layoutInflater)
     return binding.root;
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+
+    binding.gotoSettingBtn.setOnClickListener {
+      findNavController().navigate(R.id.navigation_settings, null, null)
+    }
   }
 }

@@ -19,6 +19,7 @@ import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHO
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
@@ -31,12 +32,14 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
+import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
 import cloud.app.csplayer.utils.CommonActivitty.screenHeight
 import cloud.app.csplayer.utils.CommonActivitty.screenWidth
 import cloud.app.csplayer.utils.DataStore
 import cloud.app.csplayer.utils.LayoutMode
+import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SubtitleData
 import cloud.app.csplayer.utils.UIHelper.colorFromAttribute
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
@@ -46,15 +49,15 @@ import cloud.app.csplayer.utils.UIHelper.popCurrentPage
 import cloud.app.csplayer.utils.UIHelper.showSystemUI
 import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils
-import cloud.app.csplayer.utils.Utils.isUsingMobileData
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isLayout
 import cloud.app.csplayer.utils.isTvOrEmulator
-import cloud.app.csplayer.utils.txt
-import kotlin.math.*
-import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.setText
+import cloud.app.csplayer.utils.txt
+import com.google.android.gms.cast.framework.CastButtonFactory
+import com.google.android.gms.cast.framework.CastContext
+import kotlin.math.*
 
 const val MINIMUM_SEEK_TIME = 7000L         // when swipe seeking
 const val MINIMUM_VERTICAL_SWIPE = 2.0f     // in percentage
@@ -67,7 +70,7 @@ const val DOUBLE_TAB_PAUSE_PERCENTAGE = 0.15        // in both directions
 private const val SUBTITLE_DELAY_BUNDLE_KEY = "subtitle_delay"
 
 // All the UI Logic for the player
-open class FullScreenPlayer : AbstractPlayerFragment() {
+open class FullScreenPlayer : AbstractPlayerFragment(){
   private var isVerticalOrientation: Boolean = false
   protected open var lockRotation = true
   protected open var isFullScreenPlayer = true
@@ -1476,7 +1479,40 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         }
         return@setOnTouchListener false
       }
+
+      playerMediaRouteButton.apply {
+        val chromecastSupport = true
+        alpha = if (chromecastSupport) 1f else 0.3f
+        if (!chromecastSupport) {
+          setOnClickListener {
+            Utils.showToast(
+              R.string.no_chromecast_support_toast,
+              Toast.LENGTH_LONG
+            )
+          }
+        }
+        activity?.let { act ->
+          if (act.isCastApiAvailable()) {
+            try {
+              CastButtonFactory.setUpMediaRouteButton(act, this)
+              val castContext = CastContext.getSharedInstance(act.applicationContext)
+              //isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
+              // this shit leaks for some reason
+              //castContext.addCastStateListener { state ->
+              //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
+              //}
+            } catch (e: Exception) {
+              logError(e)
+            }
+          }
+        }
+      }
+
     }
+
+
+
+
     // cs3 is peak media center
     setRemainingTimeCounter(durationMode || context?.isLayout(LayoutMode.Tv.id) == true)
     playerBinding?.exoPosition?.doOnTextChanged { _, _, _, _ ->
@@ -1531,4 +1567,5 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE // default orientation
     }
   }
+
 }

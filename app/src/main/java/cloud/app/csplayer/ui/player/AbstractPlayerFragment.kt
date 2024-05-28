@@ -38,6 +38,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.ui.subtitles.SubtitlesFragment
 import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.getCurrentSavedStyle
+import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty.canEnterPipMode
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
 import cloud.app.csplayer.utils.CommonActivitty.isInPIPMode
@@ -54,6 +55,9 @@ import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
+import com.google.android.gms.cast.framework.CastButtonFactory
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastState
 
 enum class PlayerResize(@StringRes val nameRes: Int) {
     Fit(R.string.resize_fit),
@@ -268,13 +272,13 @@ abstract class AbstractPlayerFragment(
     open fun playerError(exception: Throwable) {
         fun showToast(message: String, gotoNext: Boolean = false) {
             if (gotoNext && hasNextMirror()) {
-              this.showToast(
+              showToast(
                     message,
                     Toast.LENGTH_SHORT
                 )
                 nextMirror()
             } else {
-              this.showToast(
+              showToast(
                     context?.getString(R.string.no_links_found_toast) + "\n" + message,
                     Toast.LENGTH_LONG
                 )
@@ -574,6 +578,7 @@ abstract class AbstractPlayerFragment(
                 logError(e)
             }
         }
+
 
         /*context?.let { ctx ->
             player.loadPlayer(

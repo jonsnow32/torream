@@ -35,7 +35,7 @@
                 android:scaleType="centerCrop"
                 android:src="@drawable/subtitles_preview_background" />
 
-            <androidx.media3.ui.SubtitleView
+            “<androidx.media3.ui.SubtitleView
                 android:id="@+id/subtitle_text"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

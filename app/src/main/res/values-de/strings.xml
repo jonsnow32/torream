@@ -607,4 +607,9 @@
     <string name="clipboard_unknown_error">Beim kopieren ist ein Fehler aufgetreten, bitte kopieren sie logical und wenden sich an den Support.</string>
     <string name="clipboard_permission_error">Fehler beim zugriff auf die Zwischenablage, bitte erneut versuchen.</string>
     <string name="repo_copy_label">Repository Name und URL</string>
+  <string name="cpv_default_title">Farbe auswählen</string>
+  <string name="cpv_presets">Voreinstellungen</string>
+  <string name="cpv_custom">Benutzerdefiniert</string>
+  <string name="cpv_select">Auswählen</string>
+  <string name="cpv_transparency">Transparenz</string>
 </resources>

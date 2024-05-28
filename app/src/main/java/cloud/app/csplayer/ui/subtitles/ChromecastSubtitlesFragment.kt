@@ -1,5 +1,6 @@
 package cloud.app.csplayer.ui.subtitles
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Color
@@ -22,13 +23,14 @@ import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
 import cloud.app.csplayer.utils.GlobalEvent.onDialogDismissedEvent
 import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.UIHelper.fixPaddingStatusbar
+import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isTvOrEmulator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.android.gms.cast.TextTrackStyle
 import com.google.android.gms.cast.TextTrackStyle.*
-import com.jaredrummler.android.colorpicker.ColorPickerDialog
+import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
 
 const val CHROME_SUBTITLE_KEY = "chome_subtitle_settings"
 
@@ -47,7 +49,11 @@ data class SaveChromeCaptionStyle(
 class ChromecastSubtitlesFragment : Fragment() {
   companion object {
     val applyStyleEvent = Event<SaveChromeCaptionStyle>()
-
+    fun push(activity: Activity?, hide: Boolean = true) {
+      activity.navigate(R.id.global_to_navigation_chrome_subtitles, Bundle().apply {
+        putBoolean("hide", hide)
+      })
+    }
     private fun getDefColor(id: Int): Int {
       return when (id) {
         0 -> Color.WHITE

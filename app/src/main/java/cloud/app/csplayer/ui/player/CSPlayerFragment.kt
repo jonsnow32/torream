@@ -14,14 +14,12 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.core.animation.addListener
-import androidx.core.net.toFile
-import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
-import androidx.preference.PreferenceManager
 import androidx.media3.common.Format.NO_VALUE
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
+import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentPlayerBinding
 import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
@@ -33,29 +31,26 @@ import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.getAutoSelect
 import cloud.app.csplayer.utils.DataStore.setKey
 import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.ExtractorUri
-import cloud.app.csplayer.utils.INFER_TYPE
-import cloud.app.csplayer.utils.Qualities
+import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SubtitleData
 import cloud.app.csplayer.utils.SubtitleHelper.fromTwoLettersToLanguage
+import cloud.app.csplayer.utils.SubtitleHelper.languages
 import cloud.app.csplayer.utils.SubtitleOrigin
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
+import cloud.app.csplayer.utils.UIHelper.popCurrentPage
+import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import cloud.app.csplayer.utils.Utils.showToast
+import cloud.app.csplayer.utils.Utils.sortSubs
 import cloud.app.csplayer.utils.Utils.toSubtitleMimeType
 import cloud.app.csplayer.utils.hideSystemUI
-import kotlinx.coroutines.Job
-import java.util.*
-import kotlin.math.abs
-import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
-import cloud.app.csplayer.utils.SubtitleHelper.languages
-import cloud.app.csplayer.utils.UIHelper.popCurrentPage
-import cloud.app.csplayer.utils.UIHelper.toPx
-import cloud.app.csplayer.utils.Utils.sortSubs
 import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.observe
+import kotlinx.coroutines.Job
 import java.io.File
+import java.util.*
 
 
 class CSPlayerFragment : FullScreenPlayer() {
@@ -461,7 +456,7 @@ class CSPlayerFragment : FullScreenPlayer() {
 
     selectTrackDialog?.dismissSafe(activity)
 
-    this.showToast(
+    showToast(
       String.format(ctx.getString(R.string.player_loaded_subtitles), selectedSubtitle.name),
       Toast.LENGTH_LONG
     )

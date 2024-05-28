@@ -73,6 +73,7 @@ dependencies {
 
   implementation("androidx.core:core-ktx:1.13.1")
   implementation("androidx.appcompat:appcompat:1.6.1")
+  implementation("androidx.preference:preference-ktx:1.2.1")
   implementation("com.google.android.material:material:1.12.0")
   implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
   implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.0")
@@ -96,10 +97,9 @@ dependencies {
   // UI Stuff
   implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
-  implementation("com.jaredrummler:colorpicker:1.1.0")
 
   // Downloading & Networking
-  implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0")
+  implementation("com.github.Blatzar:NiceHttp:0.4.11")
 
   // Others
   implementation("org.mozilla:rhino:1.7.13")

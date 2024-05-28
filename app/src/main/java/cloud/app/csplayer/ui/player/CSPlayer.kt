@@ -50,6 +50,7 @@ import androidx.media3.exoplayer.trackselection.TrackSelector
 import androidx.media3.ui.SubtitleView
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
+import cloud.app.csplayer.app
 import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.utils.DataStore.deleteFileOnExit
 import cloud.app.csplayer.utils.DataStore.getKey
@@ -71,9 +72,7 @@ import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import com.google.common.net.HttpHeaders.USER_AGENT
 import com.lagradost.cloudstream3.ui.player.CustomTextRenderer
-import okhttp3.OkHttpClient
 import java.io.File
-import java.lang.IllegalArgumentException
 import java.util.UUID
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
@@ -485,6 +484,10 @@ class CSPlayer : IPlayer {
     }
   }
 
+  override fun getCurrentMedias() : MediaItem? {
+    return exoPlayer?.currentMediaItem
+  }
+
   private fun releasePlayer(saveTime: Boolean = true) {
     Log.i(TAG, "releasePlayer")
 
@@ -556,7 +559,7 @@ class CSPlayer : IPlayer {
 
     @SuppressLint("UnsafeOptInUsageError")
     private fun createOnlineSource(headers: Map<String, String>): HttpDataSource.Factory {
-      val source = OkHttpDataSource.Factory(OkHttpClient()).setUserAgent(USER_AGENT)
+      val source = OkHttpDataSource.Factory(app.baseClient).setUserAgent(USER_AGENT)
       return source.apply {
         setDefaultRequestProperties(headers)
       }
@@ -564,9 +567,7 @@ class CSPlayer : IPlayer {
 
     @SuppressLint("UnsafeOptInUsageError")
     private fun createOnlineSource(link: ExtractorLink): HttpDataSource.Factory {
-      val client = OkHttpClient().newBuilder()
-        .build()
-      val source = OkHttpDataSource.Factory(client).setUserAgent(USER_AGENT)
+      val source = OkHttpDataSource.Factory(app.baseClient).setUserAgent(USER_AGENT)
 
       // Do no include empty referer, if the provider wants those they can use the header map.
       val refererMap =

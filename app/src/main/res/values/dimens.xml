@@ -22,4 +22,13 @@
     <dimen name="video_frame_width">1dp</dimen>
 
     <dimen name="account_select_linear_item_size">100dp</dimen>
+
+  <dimen name="cpv_required_padding">6dp</dimen>
+  <dimen name="cpv_dialog_preview_width">66dp</dimen>
+  <dimen name="cpv_dialog_preview_height">34dp</dimen>
+  <dimen name="cpv_column_width">58dp</dimen>
+  <dimen name="cpv_item_size">50dp</dimen>
+  <dimen name="cpv_item_horizontal_padding">8dp</dimen>
+  <dimen name="cpv_color_preference_normal">28dp</dimen>
+  <dimen name="cpv_color_preference_large">40dp</dimen>
 </resources>

@@ -776,4 +776,16 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="media_route_menu_title">Cast</string>
   <string name="reset_btn">Reset</string>
 
+  <bool name="is_prerelease">true</bool>
+  <!-- Value from default config. -->
+  <string name="app_version" translatable="false">4.3.2</string>
+  <!-- Value from default config. -->
+  <string name="commit_hash" translatable="false">e697bf75</string>
+
+  <string name="cpv_default_title">Select a Color</string>
+  <string name="cpv_presets">Presets</string>
+  <string name="cpv_custom">Custom</string>
+  <string name="cpv_select">Select</string>
+  <string name="cpv_transparency">Transparency</string>
+  <string name="input_url">Enter your link</string>
 </resources>

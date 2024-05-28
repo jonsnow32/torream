@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
   android:id="@+id/mobile_navigation"
-  app:startDestination="@id/browseFragment">
+  app:startDestination="@id/navigation_settings">
 
   <action
     android:id="@+id/global_to_navigation_player"
@@ -25,6 +26,124 @@
       app:argType="long" />
   </action>
 
+  <action
+    android:id="@+id/global_to_navigation_subtitles"
+    app:destination="@id/navigation_subtitles"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim">
+    <argument
+      android:name="hide"
+      android:defaultValue="true"
+      app:argType="boolean" />
+  </action>
+
+  <action
+    android:id="@+id/global_to_navigation_chrome_subtitles"
+    app:destination="@id/navigation_chrome_subtitles"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim">
+    <argument
+      android:name="hide"
+      android:defaultValue="true"
+      app:argType="boolean" />
+  </action>
+
+  <action
+    android:id="@+id/action_navigation_global_to_navigation_settings_player"
+    app:destination="@id/navigation_settings_player"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+  <action
+    android:id="@+id/action_navigation_global_to_navigation_settings_updates"
+    app:destination="@id/navigation_settings_updates"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
+  <action
+    android:id="@+id/action_navigation_global_to_navigation_settings_general"
+    app:destination="@id/navigation_settings_general"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
+  <fragment
+    android:id="@+id/navigation_settings_general"
+    android:name="cloud.app.csplayer.ui.settings.SettingsGeneral"
+    android:label="@string/title_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
+
+  <action
+    android:id="@+id/action_navigation_global_to_navigation_settings_ui"
+    app:destination="@id/navigation_settings_ui"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
+  <fragment
+    android:id="@+id/navigation_settings"
+    android:name="cloud.app.csplayer.ui.settings.SettingsFragment"
+    android:layout_height="match_parent"
+    android:label="@string/title_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim"
+    tools:layout="@layout/fragment_settings" />
+
+  <fragment
+    android:id="@+id/navigation_settings_updates"
+    android:name="com.lagradost.cloudstream3.ui.settings.SettingsUpdates"
+    android:label="@string/title_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
+  <fragment
+    android:id="@+id/navigation_settings_ui"
+    android:name="com.lagradost.cloudstream3.ui.settings.SettingsUI"
+    android:label="@string/title_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
+  <fragment
+    android:id="@+id/navigation_subtitles"
+    android:name="cloud.app.csplayer.ui.subtitles.SubtitlesFragment"
+    android:layout_height="match_parent"
+    android:label="@string/subtitles_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim"
+    tools:layout="@layout/subtitle_settings" />
+
+  <fragment
+    android:id="@+id/navigation_chrome_subtitles"
+    android:name="cloud.app.csplayer.ui.subtitles.ChromecastSubtitlesFragment"
+    android:layout_height="match_parent"
+    android:label="@string/chromecast_subtitles_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim"
+    tools:layout="@layout/chromecast_subtitle_settings" />
+
   <fragment
     android:id="@+id/playerFragment"
     android:name="cloud.app.csplayer.ui.player.CSPlayerFragment"
@@ -34,4 +153,28 @@
     android:id="@+id/browseFragment"
     android:name="cloud.app.csplayer.ui.browse.BrowseFragment"
     android:label="BrowseFragment" />
+
+  <fragment
+    android:id="@+id/navigation_settings_player"
+    android:name="cloud.app.csplayer.ui.settings.SettingsPlayer"
+    android:label="@string/title_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim">
+    <action
+      android:id="@+id/action_navigation_settings_player_to_navigation_subtitles"
+      app:destination="@id/navigation_subtitles"
+      app:enterAnim="@anim/enter_anim"
+      app:exitAnim="@anim/exit_anim"
+      app:popEnterAnim="@anim/enter_anim"
+      app:popExitAnim="@anim/exit_anim" />
+    <action
+      android:id="@+id/action_navigation_settings_player_to_navigation_chrome_subtitles"
+      app:destination="@id/navigation_chrome_subtitles"
+      app:enterAnim="@anim/enter_anim"
+      app:exitAnim="@anim/exit_anim"
+      app:popEnterAnim="@anim/enter_anim"
+      app:popExitAnim="@anim/exit_anim" />
+  </fragment>
 </navigation>

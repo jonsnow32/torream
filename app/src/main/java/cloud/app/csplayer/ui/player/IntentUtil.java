@@ -36,6 +36,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import android.content.Intent;
 import android.net.Uri;
+
 import androidx.annotation.Nullable;
 import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
@@ -43,7 +44,9 @@ import androidx.media3.common.MediaItem.ClippingConfiguration;
 import androidx.media3.common.MediaItem.SubtitleConfiguration;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.util.Util;
+
 import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

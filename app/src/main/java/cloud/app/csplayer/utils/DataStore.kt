@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 const val PREFERENCES_NAME = "rebuild_preference"
+const val USER_PROVIDER_API = "user_custom_sites"
 
 /** When inserting many keys use this function, this is because apply for every key is very expensive on memory */
 data class Editor(

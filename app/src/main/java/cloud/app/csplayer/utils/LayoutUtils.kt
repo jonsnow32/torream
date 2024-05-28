@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.view.View
+import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 
@@ -47,6 +48,9 @@ fun Context.isLayout(flags: Int): Boolean {
 
 fun Context.isTvOrEmulator(): Boolean {
   return isLayout(LayoutMode.Tv.id or LayoutMode.Emulator.id)
+}
+fun Fragment.isTvOrEmulator(): Boolean {
+  return requireContext().isLayout(LayoutMode.Tv.id or LayoutMode.Emulator.id)
 }
 fun Activity.hideSystemUI() {
   @Suppress("DEPRECATION")

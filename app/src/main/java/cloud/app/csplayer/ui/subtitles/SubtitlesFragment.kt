@@ -1,5 +1,6 @@
 package cloud.app.csplayer.ui.subtitles
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Color
@@ -12,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.Dimension
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
@@ -29,11 +31,13 @@ import cloud.app.csplayer.utils.UIHelper.fixPaddingStatusbar
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isLayout
-import com.jaredrummler.android.colorpicker.ColorPickerDialog
+import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.DataStore.setKey
 import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SingleSelectionHelper.showMultiDialog
+import cloud.app.csplayer.utils.UIHelper.navigate
+import cloud.app.csplayer.utils.isTvOrEmulator
 import java.io.File
 
 const val SUBTITLE_KEY = "subtitle_settings"
@@ -71,7 +75,11 @@ class SubtitlesFragment : Fragment() {
         ?: Typeface.SANS_SERIF
       )
     }
-
+    fun push(activity: Activity?, hide: Boolean = true) {
+      activity.navigate(R.id.global_to_navigation_subtitles, Bundle().apply {
+        putBoolean("hide", hide)
+      })
+    }
 
     private fun getDefColor(id: Int): Int {
       return when (id) {
@@ -157,9 +165,13 @@ class SubtitlesFragment : Fragment() {
   }
 
   private fun Context.updateState() {
-    binding?.subtitleText?.setStyle(fromSaveToStyle(state))
+    val captionStyle = fromSaveToStyle(state);
+    binding?.subtitleText?.setStyle(captionStyle)
     val text = getString(R.string.subtitles_example_text)
     val fixedText = if (state.upperCase) text.uppercase() else text
+    state.fixedTextSize?.let { binding?.subtitleText?.setFixedTextSize(Dimension.SP,
+      it
+    ) };
     binding?.subtitleText?.setCues(
       listOf(
         Cue.Builder()
@@ -171,6 +183,7 @@ class SubtitlesFragment : Fragment() {
           .build()
       )
     )
+
   }
 
   private fun getColor(id: Int): Int {
@@ -239,6 +252,7 @@ class SubtitlesFragment : Fragment() {
             .setDialogId(id)
             .setShowAlphaSlider(true)
             .setColor(getColor(id))
+            .setAllowCustom(!context.isLayout(LayoutMode.Tv.id))
             .show(it)
         }
       }
@@ -392,7 +406,7 @@ class SubtitlesFragment : Fragment() {
           dismissCallback
         ) { index ->
           state.fixedTextSize = fontSizes.map { it.first }[index]
-          //textView.context.updateState() // font size not changed
+          textView.context.updateState() // font size not changed
         }
       }
 

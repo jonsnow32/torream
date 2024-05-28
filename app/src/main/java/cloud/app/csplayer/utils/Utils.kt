@@ -13,20 +13,17 @@ import android.view.Gravity
 import android.widget.Toast
 import androidx.annotation.MainThread
 import androidx.annotation.StringRes
-import androidx.fragment.app.Fragment
 import androidx.media3.common.MimeTypes
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.databinding.ToastBinding
-import cloud.app.csplayer.ui.MainActivity
+import cloud.app.csplayer.utils.DataStore.mapper
 import cloud.app.csplayer.utils.UIHelper.toPx
-import com.google.android.gms.cast.framework.CastSession
-import java.lang.IllegalArgumentException
+import com.fasterxml.jackson.module.kotlin.readValue
 import java.lang.ref.WeakReference
 import kotlin.math.sqrt
 
-import kotlin.math.sqrt
 object Utils {
 
   private var _activity: WeakReference<Activity>? = null
@@ -105,26 +102,52 @@ object Utils {
     throwable.printStackTrace()
     Log.d("ApiError", "-------------------------------------------------------------------")
   }
-
-  fun Fragment.showToast(@StringRes message: Int, duration: Int? = null) {
-    val act = activity ?: return
-    act.runOnUiThread {
-      requireActivity().showToast(act, act.getString(message), duration)
-    }
-  }
-
-  fun Fragment.showToast(message: String?, duration: Int? = null) {
-    val act = activity ?: return
-    act.runOnUiThread {
-      requireActivity().showToast(act, message, duration)
-    }
-  }
-
   private var currentToast: Toast? = null
 
+
+  fun showToast(@StringRes message: Int, duration: Int? = null) {
+    val act = activity ?: return
+    act.runOnUiThread {
+      showToast(act, act.getString(message), duration)
+    }
+  }
+
+  fun showToast(message: String?, duration: Int? = null) {
+    val act = activity ?: return
+    act.runOnUiThread {
+      showToast(act, message, duration)
+    }
+  }
+
+  fun showToast(message: UiText?, duration: Int? = null) {
+    val act = activity ?: return
+    if (message == null) return
+    act.runOnUiThread {
+      showToast(act, message.asString(act), duration)
+    }
+  }
+
+
   @MainThread
-  fun Activity.showToast(act: Activity?, message: String?, duration: Int? = null) {
-    val TAG = "ShowToast"
+  fun showToast(act: Activity?, text: UiText, duration: Int) {
+    if (act == null) return
+    text.asStringNull(act)?.let {
+      showToast(act, it, duration)
+    }
+  }
+
+  /** duration is Toast.LENGTH_SHORT if null*/
+  @MainThread
+  fun showToast(act: Activity?, @StringRes message: Int, duration: Int? = null) {
+    if (act == null) return
+    showToast(act, act.getString(message), duration)
+  }
+
+  const val TAG = "COMPACT"
+
+  /** duration is Toast.LENGTH_SHORT if null*/
+  @MainThread
+  fun showToast(act: Activity?, message: String?, duration: Int? = null) {
     if (act == null || message == null) {
       Log.w(TAG, "invalid showToast act = $act message = $message")
       return
@@ -153,7 +176,6 @@ object Utils {
       logError(e)
     }
   }
-
   fun String.toSubtitleMimeType(): String {
     return when {
       endsWith("vtt", true) -> MimeTypes.TEXT_VTT
@@ -289,5 +311,25 @@ object Utils {
   fun sortSubs(subs: Set<SubtitleData>): List<SubtitleData> {
     return subs.sortedBy { it.name }
   }
+
+  /** Any object as json string */
+  fun Any.toJson(): String {
+    if (this is String) return this
+    return mapper.writeValueAsString(this)
+  }
+
+  inline fun <reified T> parseJson(value: String): T {
+    return mapper.readValue(value)
+  }
+
+  inline fun <reified T> tryParseJson(value: String?): T? {
+    return try {
+      parseJson(value ?: return null)
+    } catch (_: Exception) {
+      null
+    }
+  }
+
   const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+
 }

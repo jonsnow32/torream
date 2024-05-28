@@ -629,4 +629,9 @@
     <string name="toast_copied">copiato!</string>
     <string name="clipboard_permission_error">Errore durante l\'accesso agli Appunti. Riprova.</string>
     <string name="clipboard_unknown_error">Errore durante la copia. Copia logcat e contatta il supporto dell\'app.</string>
+  <string name="cpv_custom">Personalizzato</string>
+  <string name="cpv_default_title">Seleziona un Colore</string>
+  <string name="cpv_presets">Predefiniti</string>
+  <string name="cpv_select">Seleziona</string>
+  <string name="cpv_transparency">Trasparenza</string>
 </resources>

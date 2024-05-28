@@ -609,4 +609,9 @@
     <string name="toast_copied">¡Copiado!</string>
     <string name="clipboard_unknown_error">Error al copiar. Por favor, copie el logcat y comuníquese con el soporte de la aplicación.</string>
     <string name="clipboard_permission_error">Error al acceder al portapapeles. Inténtelo de nuevo.</string>
+  <string name="cpv_default_title">Selecciona un color</string>
+  <string name="cpv_presets">Predeterminados</string>
+  <string name="cpv_custom">Personalizar</string>
+  <string name="cpv_select">Seleccionar</string>
+  <string name="cpv_transparency">Transparencia</string>
 </resources>

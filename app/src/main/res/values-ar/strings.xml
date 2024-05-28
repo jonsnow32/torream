@@ -641,4 +641,9 @@
     <string name="clipboard_permission_error">خطأ في الوصول الي حافظة النسخ، برجاء المحاولة مرة اخرى.</string>
     <string name="toast_copied">تم النسخ!</string>
     <string name="clipboard_unknown_error">خطأ في عملية النسخ، برجاء نسخ ال logcat و ارساله الى مسؤولين دعم التطبيق.</string>
+  <string name="cpv_default_title">اختر لونًا</string>
+  <string name="cpv_presets">ألوان جاهزة</string>
+  <string name="cpv_custom">ألوان معدلة</string>
+  <string name="cpv_select">اختر</string>
+  <string name="cpv_transparency">الشفافية</string>
 </resources>

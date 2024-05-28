@@ -633,4 +633,9 @@
     <string name="clipboard_unknown_error">Chyba při kopírování, zkopírujte prosím protokol a kontaktujte podporu aplikace.</string>
     <string name="toast_copied">Zkopírováno!</string>
     <string name="clipboard_permission_error">Chyba při přístupu ke schránce, zkuste to prosím znovu.</string>
+  <string name="cpv_default_title">Vyberte barvu</string>
+  <string name="cpv_presets">Přednastavené</string>
+  <string name="cpv_custom">Vlastní</string>
+  <string name="cpv_select">Vybrat</string>
+  <string name="cpv_transparency">Průhlednost</string>
 </resources>

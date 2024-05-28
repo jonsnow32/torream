@@ -242,4 +242,9 @@
     <string name="autoplay_next_settings_des">現在のエピソードが終了したら次のエピソードを開始する</string>
     <string name="subs_hold_to_reset_to_default">長押しするとデフォルトにリセットされます</string>
     <string name="popup_resume_download">ダウンロードを再開</string>
+  <string name="cpv_default_title">色を選択</string>
+  <string name="cpv_presets">プリセット</string>
+  <string name="cpv_custom">カスタム</string>
+  <string name="cpv_select">選択</string>
+  <string name="cpv_transparency">透明度</string>
 </resources>

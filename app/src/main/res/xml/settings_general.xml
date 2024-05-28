@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        android:key="@string/locale_key"
+        android:title="@string/app_language"
+        android:icon="@drawable/ic_baseline_language_24" />
+
+
+  <PreferenceCategory
+        android:title="@string/title_downloads">
+
+        <Preference
+            android:key="@string/download_path_key"
+            android:title="@string/download_path_pref"
+            android:icon="@drawable/ic_download" />
+
+        <Preference
+            android:key="@string/battery_optimisation_key"
+            android:title="@string/battery_dialog_title"
+            android:icon="@drawable/ic_battery" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_bypass">
+
+        <Preference
+                android:key="@string/override_site_key"
+                android:title="@string/add_site_pref"
+                android:summary="@string/add_site_summary"
+                android:icon="@drawable/ic_baseline_add_24" />
+
+        <Preference
+                android:key="@string/dns_key"
+                android:title="@string/dns_pref"
+                android:summary="@string/dns_pref_summary"
+                android:icon="@drawable/ic_baseline_dns_24" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

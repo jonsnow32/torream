@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="horizontal"
+  android:paddingStart="20dp"
+  android:paddingEnd="20dp"
+  xmlns:tools="http://schemas.android.com/tools">
+
+  <EditText
+    android:id="@+id/url_input"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="20"
+    android:hint="@string/example_site_url"
+    android:inputType="textUri"
+    app:layout_constraintEnd_toStartOf="@+id/apply_btt"
+    app:layout_constraintStart_toStartOf="parent"
+    tools:ignore="LabelFor" >
+    <requestFocus />
+  </EditText>
+
+  <com.google.android.material.button.MaterialButton
+    android:id="@+id/apply_btt"
+    style="@style/WhiteButton"
+    android:layout_width="wrap_content"
+    android:nextFocusRight="@id/cancel_btt"
+    android:nextFocusUp="@id/subs_edge_type"
+    android:text="@string/sort_apply"
+    android:visibility="visible">
+
+  </com.google.android.material.button.MaterialButton>
+</LinearLayout>

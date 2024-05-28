@@ -624,7 +624,7 @@
 
                 android:nextFocusLeft="@id/player_sources_btt"
                 android:nextFocusRight="@id/player_skip_op"
-                android:text="@string/title_settings"
+                android:text="@string/tracks"
                 app:icon="@drawable/ic_outline_settings_24" />
 
               <com.google.android.material.button.MaterialButton

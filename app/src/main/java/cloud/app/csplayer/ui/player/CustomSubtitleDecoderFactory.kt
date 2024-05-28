@@ -2,7 +2,6 @@ package cloud.app.csplayer.ui.player
 
 import android.content.Context
 import android.util.Log
-import androidx.preference.PreferenceManager
 import androidx.media3.common.Format
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
@@ -21,6 +20,7 @@ import androidx.media3.extractor.text.ttml.TtmlDecoder
 import androidx.media3.extractor.text.tx3g.Tx3gDecoder
 import androidx.media3.extractor.text.webvtt.Mp4WebvttDecoder
 import androidx.media3.extractor.text.webvtt.WebvttDecoder
+import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.utils.Utils.logError
 import org.mozilla.universalchardet.UniversalDetector
