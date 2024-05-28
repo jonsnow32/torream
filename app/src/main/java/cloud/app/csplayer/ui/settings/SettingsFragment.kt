@@ -176,7 +176,7 @@ class SettingsFragment : Fragment() {
         settingsGeneral.requestFocus()
       }
       urlBtn.setOnClickListener {
-        var text = "https://sample/video.mp4";
+        var text = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
         (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
           0
         )?.text?.toString()?.let { copy ->

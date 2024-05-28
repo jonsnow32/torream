@@ -1,35 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <SwitchPreference
-        android:defaultValue="true"
-        android:icon="@drawable/ic_baseline_bug_report_24"
-        android:key="acra.disable"
-        android:summaryOff="@string/bug_report_settings_off"
-        android:summaryOn="@string/bug_report_settings_on"
-        android:title="@string/pref_disable_acra" />
+  xmlns:app="http://schemas.android.com/apk/res-auto">
+  <cloud.app.csplayer.utils.CustomSwitchPreference
+    android:defaultValue="true"
+    android:icon="@drawable/ic_baseline_bug_report_24"
+    android:key="acra.disable"
+    android:summaryOff="@string/bug_report_settings_off"
+    android:summaryOn="@string/bug_report_settings_on"
+    android:title="@string/pref_disable_acra" />
 
-    <PreferenceCategory
-        android:title="@string/pref_category_app_updates">
-        <Preference
-            android:title="@string/check_for_update"
-            app:icon="@drawable/ic_baseline_system_update_24"
-            app:key="@string/manual_check_update_key"
-            app:summary="@string/app_version" />
+  <PreferenceCategory android:title="@string/pref_category_app_updates">
+    <Preference
+      android:layout="@layout/custom_preference"
+      android:title="@string/check_for_update"
+      app:icon="@drawable/ic_baseline_system_update_24"
+      app:key="@string/manual_check_update_key"
+      app:summary="@string/app_version" />
 
-        <Preference
-            android:icon="@drawable/ic_download"
-            android:key="@string/apk_installer_key"
-            android:title="@string/apk_installer_settings"
-            android:summary="@string/apk_installer_settings_des"
-            />
-        <SwitchPreference
-            android:icon="@drawable/ic_baseline_notifications_active_24"
-            android:summary="@string/updates_settings_des"
-            android:title="@string/updates_settings"
-            app:defaultValue="true"
-            app:key="@string/auto_update_key" />
-    </PreferenceCategory>
+    <Preference
+      android:icon="@drawable/ic_download"
+      android:key="@string/apk_installer_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/apk_installer_settings_des"
+      android:title="@string/apk_installer_settings" />
+
+    <cloud.app.csplayer.utils.CustomSwitchPreference
+      android:icon="@drawable/ic_baseline_notifications_active_24"
+      android:summary="@string/updates_settings_des"
+      android:title="@string/updates_settings"
+      app:defaultValue="true"
+      app:key="@string/auto_update_key" />
+  </PreferenceCategory>
 
 
 </PreferenceScreen>

@@ -15,6 +15,7 @@ import android.util.Log
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
@@ -185,4 +186,12 @@ object UIHelper {
       return true
     }
   }
+
+  fun showInputMethod(view: View?) {
+    if (view == null) return
+    val inputMethodManager =
+      view.context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager?
+    inputMethodManager?.showSoftInput(view, 0)
+  }
+
 }
