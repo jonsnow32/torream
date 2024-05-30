@@ -85,14 +85,6 @@
     app:popExitAnim="@anim/exit_anim" />
 
 
-  <action
-    android:id="@+id/action_navigation_global_to_navigation_settings_ui"
-    app:destination="@id/navigation_settings_ui"
-    app:enterAnim="@anim/enter_anim"
-    app:exitAnim="@anim/exit_anim"
-    app:popEnterAnim="@anim/enter_anim"
-    app:popExitAnim="@anim/exit_anim" />
-
   <fragment
     android:id="@+id/navigation_settings"
     android:name="cloud.app.csplayer.ui.settings.SettingsFragment"
@@ -106,7 +98,7 @@
 
   <fragment
     android:id="@+id/navigation_settings_updates"
-    android:name="com.lagradost.cloudstream3.ui.settings.SettingsUpdates"
+    android:name="cloud.app.csplayer.ui.settings.SettingsUpdates"
     android:label="@string/title_settings"
     app:enterAnim="@anim/enter_anim"
     app:exitAnim="@anim/exit_anim"
@@ -115,7 +107,7 @@
 
   <fragment
     android:id="@+id/navigation_settings_ui"
-    android:name="com.lagradost.cloudstream3.ui.settings.SettingsUI"
+    android:name="cloud.app.csplayer.ui.settings.SettingsUI"
     android:label="@string/title_settings"
     app:enterAnim="@anim/enter_anim"
     app:exitAnim="@anim/exit_anim"

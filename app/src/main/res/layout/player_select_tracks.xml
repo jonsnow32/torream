@@ -40,10 +40,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_rowWeight="1"
-        android:background="?attr/primaryBlackBackground"
         android:nextFocusRight="@id/audio_tracks_holder"
         android:requiresFadingEdge="vertical"
-
         tools:listitem="@layout/sort_bottom_single_choice" />
     </LinearLayout>
 
@@ -111,7 +109,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_rowWeight="1"
-        android:background="?attr/primaryBlackBackground"
         android:nextFocusLeft="@id/video_tracks_list"
         android:nextFocusRight="@id/apply_btt"
         android:requiresFadingEdge="vertical"
@@ -186,7 +183,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_rowWeight="1"
-        android:background="?attr/primaryBlackBackground"
         android:listSelector="@drawable/outline_drawable_forced"
         android:nextFocusLeft="@id/sort_providers"
         android:nextFocusRight="@id/apply_btt"

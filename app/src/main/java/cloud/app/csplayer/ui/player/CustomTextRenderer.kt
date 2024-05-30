@@ -1,4 +1,4 @@
-package com.lagradost.cloudstream3.ui.player
+package cloud.app.csplayer.ui.player
 
 import android.os.Looper
 import androidx.media3.common.util.UnstableApi

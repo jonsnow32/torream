@@ -3,7 +3,7 @@
 
   <!-- KEYS DON'T TRANSLATE -->
   <string name="search_providers_list_key" translatable="false">search_providers_list</string>
-  <string name="locale_key" translatable="false">app_locale</string>
+  <string name="locale_key" translatable="false">app_locale_1</string>
   <string name="search_types_list_key" translatable="false">search_type_list</string>
   <string name="auto_update_key" translatable="false">auto_update</string>
   <string name="auto_update_plugins_key" translatable="false">auto_update_plugins</string>
@@ -778,9 +778,10 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
 
   <bool name="is_prerelease">true</bool>
   <!-- Value from default config. -->
-  <string name="app_version" translatable="false">4.3.2</string>
+  <string name="app_version" translatable="false">v1.0</string>
   <!-- Value from default config. -->
-  <string name="commit_hash" translatable="false">e697bf75</string>
+  <string name="commit_hash" translatable="false">14504dd</string>
+  <string name="version_update_at" translatable="false">2024-05-29T05:23:38Z</string>
 
   <string name="cpv_default_title">Select a Color</string>
   <string name="cpv_presets">Presets</string>

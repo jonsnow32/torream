@@ -156,7 +156,7 @@ object CommonActivitty {
 
   fun Context.updateLocale() {
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
-    val localeCode = settingsManager.getString(getString(R.string.locale_key), null)
+    val localeCode = settingsManager.getString(getString(R.string.locale_key), Locale.getDefault().language)
     setLocale(this, localeCode)
   }
 

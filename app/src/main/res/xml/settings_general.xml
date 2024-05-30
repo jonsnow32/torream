@@ -1,42 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
-    <Preference
-        android:key="@string/locale_key"
-        android:title="@string/app_language"
-        android:icon="@drawable/ic_baseline_language_24" />
+  xmlns:app="http://schemas.android.com/apk/res-auto">
 
+  <PreferenceCategory android:title="@string/category_ui">
+    <Preference
+      android:layout="@layout/custom_preference"
+      android:icon="@drawable/ic_baseline_color_lens_24"
+      android:key="@string/primary_color_key"
+      android:title="@string/primary_color_settings" />
+    <Preference
+      android:layout="@layout/custom_preference"
+      android:icon="@drawable/ic_baseline_color_lens_24"
+      android:key="@string/app_theme_key"
+      android:title="@string/app_theme_settings" />
+    <Preference
+      android:layout="@layout/custom_preference"
+      android:icon="@drawable/ic_baseline_tv_24"
+      android:key="@string/app_layout_key"
+      android:title="@string/app_layout" />
+  </PreferenceCategory>
+
+  <PreferenceCategory android:title="@string/title_downloads" app:isPreferenceVisible="false">
+
+    <Preference
+      android:icon="@drawable/ic_download"
+      android:key="@string/download_path_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/download_path_pref" />
+
+    <Preference
+      android:icon="@drawable/ic_battery"
+      android:key="@string/battery_optimisation_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/battery_dialog_title" />
+
+  </PreferenceCategory>
+
+  <PreferenceCategory android:title="@string/pref_category_bypass">
+    <Preference
+      app:isPreferenceVisible="false"
+      android:icon="@drawable/ic_baseline_add_24"
+      android:key="@string/override_site_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/add_site_summary"
+      android:title="@string/add_site_pref" />
+
+    <Preference
+      android:icon="@drawable/ic_baseline_dns_24"
+      android:key="@string/dns_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/dns_pref_summary"
+      android:title="@string/dns_pref" />
+
+  </PreferenceCategory>
+
+  <Preference
+    android:icon="@drawable/ic_baseline_language_24"
+    android:key="@string/locale_key"
+    android:layout="@layout/custom_preference"
+    android:title="@string/app_language" />
 
   <PreferenceCategory
-        android:title="@string/title_downloads">
+    android:title="@string/pref_category_links">
 
-        <Preference
-            android:key="@string/download_path_key"
-            android:title="@string/download_path_pref"
-            android:icon="@drawable/ic_download" />
-
-        <Preference
-            android:key="@string/battery_optimisation_key"
-            android:title="@string/battery_dialog_title"
-            android:icon="@drawable/ic_battery" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:title="@string/pref_category_bypass">
-
-        <Preference
-                android:key="@string/override_site_key"
-                android:title="@string/add_site_pref"
-                android:summary="@string/add_site_summary"
-                android:icon="@drawable/ic_baseline_add_24" />
-
-        <Preference
-                android:key="@string/dns_key"
-                android:title="@string/dns_pref"
-                android:summary="@string/dns_pref_summary"
-                android:icon="@drawable/ic_baseline_dns_24" />
-
-    </PreferenceCategory>
-
+    <Preference
+      android:title="@string/github"
+      android:icon="@drawable/ic_github_logo"
+      app:summary="https://github.com/recloudstream/cloudstream">
+      <intent
+        android:action="android.intent.action.VIEW"
+        android:data="https://github.com/recloudstream/cloudstream" />
+    </Preference>
+  </PreferenceCategory>
 </PreferenceScreen>

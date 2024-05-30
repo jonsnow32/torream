@@ -1,4 +1,4 @@
-package com.lagradost.cloudstream3.ui.settings
+package cloud.app.csplayer.ui.settings
 
 import android.os.Bundle
 import android.view.View
@@ -20,11 +20,9 @@ import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.txt
-import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.utils.InAppUpdater.Companion.runAutoUpdate
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.*
 
 class SettingsUpdates : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

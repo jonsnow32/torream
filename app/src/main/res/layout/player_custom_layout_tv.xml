@@ -9,7 +9,6 @@
     android:tag="television"
     tools:orientation="vertical">
 
-
     <FrameLayout
         android:id="@+id/piphide"
         android:layout_width="match_parent"
@@ -276,7 +275,7 @@
                         android:layout_gravity="end"
                         android:layout_margin="5dp"
                         android:mediaRouteTypes="user"
-                        android:visibility="visible"
+                        android:visibility="gone"
                         app:layout_constraintRight_toRightOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 

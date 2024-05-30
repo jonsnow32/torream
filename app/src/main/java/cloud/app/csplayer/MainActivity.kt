@@ -47,6 +47,8 @@ import kotlin.reflect.KClass
 import kotlin.system.exitProcess
 import cloud.app.csplayer.utils.CommonActivitty.onUserLeaveHint
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
+import cloud.app.csplayer.utils.Coroutines.ioSafe
+import cloud.app.csplayer.utils.InAppUpdater.Companion.runAutoUpdate
 import cloud.app.csplayer.utils.UIHelper
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.navigationrail.NavigationRailView
@@ -174,6 +176,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   override fun onResume() {
     super.onResume()
     setActivityInstance(this)
+    ioSafe {
+      runAutoUpdate()
+    }
   }
 
   fun loadThemes() {
@@ -192,7 +197,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
 
     val currentOverlayTheme =
-      when (settingsManager.getString(getString(R.string.primary_color_key), "Normal")) {
+      when (settingsManager.getString(getString(R.string.primary_color_key), "Banana")) {
         "Normal" -> R.style.OverlayPrimaryColorNormal
         "DandelionYellow" -> R.style.OverlayPrimaryColorDandelionYellow
         "CarnationPink" -> R.style.OverlayPrimaryColorCarnationPink

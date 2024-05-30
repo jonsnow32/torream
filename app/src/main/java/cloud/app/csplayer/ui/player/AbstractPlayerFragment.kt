@@ -279,7 +279,7 @@ abstract class AbstractPlayerFragment(
                 nextMirror()
             } else {
               showToast(
-                    context?.getString(R.string.no_links_found_toast) + "\n" + message,
+                    message,
                     Toast.LENGTH_LONG
                 )
                 activity?.popCurrentPage()

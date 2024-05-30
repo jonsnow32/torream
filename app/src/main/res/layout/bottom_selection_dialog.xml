@@ -25,7 +25,6 @@
     android:layout_height="match_parent"
     android:layout_rowWeight="1"
     android:layout_marginBottom="60dp"
-    android:divider="?android:attr/listDivider"
     android:dividerHeight="1dp"
     android:nextFocusLeft="@id/apply_btt"
     android:nextFocusRight="@id/cancel_btt"

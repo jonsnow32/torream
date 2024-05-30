@@ -64,49 +64,43 @@
         android:text="@string/input_url" />
 
 
+      <TextView
+        android:id="@+id/settings_text"
+        android:textColor="?attr/colorPrimary"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="5dp"
+        style="@style/SettingsTitle"
+        android:nextFocusDown="@id/settings_player"
+        android:text="@string/title_settings" />
+
+
       <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/outline_less"
         android:orientation="vertical">
 
         <TextView
-          android:id="@+id/settings_text"
-          android:textColor="?attr/colorPrimary"
-          style="@style/SettingsTitle"
-          android:nextFocusDown="@id/settings_player"
-          android:text="@string/title_settings" />
-
-
-        <TextView
           android:id="@+id/settings_general"
-
           style="@style/SettingsItem"
           android:nextFocusDown="@id/settings_player"
           android:text="@string/category_general" />
-
         <TextView
           android:id="@+id/settings_player"
           style="@style/SettingsItem"
 
           android:nextFocusUp="@id/settings_general"
-          android:nextFocusDown="@id/settings_ui"
+          android:nextFocusDown="@id/settings_updates"
           android:text="@string/category_player" />
 
-
-        <TextView
-          android:id="@+id/settings_ui"
-          style="@style/SettingsItem"
-
-          android:nextFocusUp="@id/settings_player"
-          android:nextFocusDown="@id/settings_updates"
-          android:text="@string/category_ui" />
 
         <TextView
           android:id="@+id/settings_updates"
           style="@style/SettingsItem"
 
-          android:nextFocusUp="@id/settings_ui"
+          android:nextFocusUp="@id/app_version_info"
           android:nextFocusDown="@id/app_version_info"
           android:text="@string/category_updates" />
 
@@ -122,7 +116,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="@string/app_version"
+            tools:text="@string/app_version"
             android:textColor="?attr/textColor" />
 
           <TextView

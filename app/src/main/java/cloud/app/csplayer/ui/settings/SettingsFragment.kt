@@ -22,6 +22,7 @@ import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
 import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URL
+import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.SingleSelectionHelper.showNginxTextInputDialog
 import cloud.app.csplayer.utils.UIHelper
@@ -157,7 +158,6 @@ class SettingsFragment : Fragment() {
       listOf(
         settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
         settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
-        settingsUi to R.id.action_navigation_global_to_navigation_settings_ui,
         settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
       ).forEach { (view, navigationId) ->
         view.apply {
@@ -176,15 +176,17 @@ class SettingsFragment : Fragment() {
         settingsGeneral.requestFocus()
       }
       urlBtn.setOnClickListener {
-        var text = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-        (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
-          0
-        )?.text?.toString()?.let { copy ->
-          text = copy;
+        var text =
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        if (!BuildConfig.DEBUG) {
+          (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
+            0
+          )?.text?.toString()?.let { copy ->
+            text = copy;
+          }
         }
 
         activity?.showNginxTextInputDialog("Your Link", text, 16, {
-
         }, {
           activity?.navigate(
             R.id.global_to_navigation_player,
@@ -193,8 +195,7 @@ class SettingsFragment : Fragment() {
         });
       }
     }
-
-    val appVersion = getString(R.string.app_version)
+    val appVersion = BuildConfig.VERSION_NAME
     val commitInfo = getString(R.string.commit_hash)
     val buildTimestamp = SimpleDateFormat.getDateTimeInstance(
       DateFormat.LONG, DateFormat.LONG,
@@ -202,10 +203,10 @@ class SettingsFragment : Fragment() {
     ).apply {
       timeZone = TimeZone.getTimeZone("UTC")
     }.format(Date(BuildConfig.BUILD_DATE)).replace("UTC", "")
-
+    binding?.versionInfo?.text = "v${BuildConfig.VERSION_NAME}"
     binding?.buildDate?.text = buildTimestamp
     binding?.appVersionInfo?.setOnLongClickListener {
-      clipboardHelper(txt(R.string.extension_version), "$appVersion $commitInfo $buildTimestamp")
+      clipboardHelper(txt(R.string.extension_version), "v$appVersion $commitInfo $buildTimestamp")
       true
     }
 

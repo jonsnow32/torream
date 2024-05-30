@@ -71,7 +71,6 @@ import cloud.app.csplayer.utils.Utils.isUsingMobileData
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import com.google.common.net.HttpHeaders.USER_AGENT
-import com.lagradost.cloudstream3.ui.player.CustomTextRenderer
 import java.io.File
 import java.util.UUID
 import javax.net.ssl.HttpsURLConnection
