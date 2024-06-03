@@ -743,4 +743,11 @@
         android:layout_height="match_parent">
 
     </FrameLayout>
+
+  <cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
+    android:id="@+id/yt_overlay"
+    android:visibility="invisible"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"/>
+
 </FrameLayout>

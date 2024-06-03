@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto">
-  <cloud.app.csplayer.utils.CustomSwitchPreference
+  <SwitchPreferenceCompat android:layout="@layout/custom_switch_preference"
     android:defaultValue="true"
     android:icon="@drawable/ic_baseline_bug_report_24"
     android:key="acra.disable"
@@ -16,7 +16,7 @@
       app:icon="@drawable/ic_baseline_system_update_24"
       app:key="@string/manual_check_update_key"
       app:summary="@string/app_version" />
-    <cloud.app.csplayer.utils.CustomSwitchPreference
+    <SwitchPreferenceCompat android:layout="@layout/custom_switch_preference"
       android:icon="@drawable/ic_baseline_developer_mode_24"
       android:summary="@string/uprereleases_settings_des"
       android:title="@string/uprereleases_settings"
@@ -29,7 +29,7 @@
       android:summary="@string/apk_installer_settings_des"
       android:title="@string/apk_installer_settings" />
 
-    <cloud.app.csplayer.utils.CustomSwitchPreference
+    <SwitchPreferenceCompat android:layout="@layout/custom_switch_preference"
       android:icon="@drawable/ic_baseline_notifications_active_24"
       android:summary="@string/updates_settings_des"
       android:title="@string/updates_settings"

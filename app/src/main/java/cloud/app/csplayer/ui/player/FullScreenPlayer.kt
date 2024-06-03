@@ -32,6 +32,7 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
+import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
 import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
@@ -70,7 +71,7 @@ const val DOUBLE_TAB_PAUSE_PERCENTAGE = 0.15        // in both directions
 private const val SUBTITLE_DELAY_BUNDLE_KEY = "subtitle_delay"
 
 // All the UI Logic for the player
-open class FullScreenPlayer : AbstractPlayerFragment(){
+open class FullScreenPlayer : AbstractPlayerFragment() {
   private var isVerticalOrientation: Boolean = false
   protected open var lockRotation = true
   protected open var isFullScreenPlayer = true
@@ -534,6 +535,31 @@ open class FullScreenPlayer : AbstractPlayerFragment(){
       getString(R.string.ffw_text_regular_format).format(fastForwardTime / 1000)
   }
 
+  private fun doubleTapRewind() {
+    try {
+      playerBinding?.apply {
+        val width = resources.displayMetrics.widthPixels
+        ytOverlay.onDoubleTapProgressUp(width, width/2.0f - 20.0f, playerView?.height!!/2.0f)
+      }
+      player.seekTime(-fastForwardTime)
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
+  private fun doubleTapForawd() {
+    try {
+      playerBinding?.apply {
+        val width = resources.displayMetrics.widthPixels
+        val height = resources.displayMetrics.heightPixels
+        ytOverlay.onDoubleTapProgressUp(width, width/2.0f + 20.0f, height/2.0f)
+      }
+      player.seekTime(fastForwardTime)
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
   private fun rewind() {
     try {
       playerBinding?.apply {
@@ -542,6 +568,8 @@ open class FullScreenPlayer : AbstractPlayerFragment(){
 
         val rotateLeft = AnimationUtils.loadAnimation(context, R.anim.rotate_left)
         exoRew.startAnimation(rotateLeft)
+//        val width = resources.displayMetrics.widthPixels
+//        ytOverlay.onDoubleTapProgressUp(width, width/2.0f - 20.0f, playerView?.height!!/2.0f)
 
         val goLeft = AnimationUtils.loadAnimation(context, R.anim.go_left)
         goLeft.setAnimationListener(object : Animation.AnimationListener {
@@ -572,7 +600,6 @@ open class FullScreenPlayer : AbstractPlayerFragment(){
       playerBinding?.apply {
         playerCenterMenu.isGone = false
         playerFfwdHolder.alpha = 1f
-
         val rotateRight = AnimationUtils.loadAnimation(context, R.anim.rotate_right)
         exoFfwd.startAnimation(rotateRight)
 
@@ -923,12 +950,12 @@ open class FullScreenPlayer : AbstractPlayerFragment(){
                   when {
                     currentTouch.x < screenWidth / 2 - (DOUBLE_TAB_PAUSE_PERCENTAGE * screenWidth) -> {
                       if (doubleTapEnabled)
-                        rewind()
+                        doubleTapRewind()
                     }
 
                     currentTouch.x > screenWidth / 2 + (DOUBLE_TAB_PAUSE_PERCENTAGE * screenWidth) -> {
                       if (doubleTapEnabled)
-                        fastForward()
+                        doubleTapForawd()
                     }
 
                     else -> {
@@ -937,9 +964,9 @@ open class FullScreenPlayer : AbstractPlayerFragment(){
                   }
                 } else if (doubleTapEnabled && isFullScreenPlayer) {
                   if (currentTouch.x < screenWidth / 2) {
-                    rewind()
+                    doubleTapRewind()
                   } else {
-                    fastForward()
+                    doubleTapForawd()
                   }
                 }
               }
@@ -1388,6 +1415,19 @@ open class FullScreenPlayer : AbstractPlayerFragment(){
         player.handleEvent(CSPlayerEvent.PlayPauseToggle)
       }
 
+      ytOverlay.performListener(object : YouTubeOverlay.PerformListener {
+        override fun onAnimationStart() {
+          // Do UI changes when circle scaling animation starts (e.g. hide controller views)
+          ytOverlay.visibility = View.VISIBLE
+        }
+
+        override fun onAnimationEnd() {
+          // Do UI changes when circle scaling animation starts (e.g. show controller views)
+          ytOverlay.visibility = View.GONE
+        }
+      })
+      ytOverlay.seekSeconds((fastForwardTime / 1000).toInt());
+
       exoDuration.setOnClickListener {
         setRemainingTimeCounter(true)
       }
@@ -1509,8 +1549,6 @@ open class FullScreenPlayer : AbstractPlayerFragment(){
       }
 
     }
-
-
 
 
     // cs3 is peak media center

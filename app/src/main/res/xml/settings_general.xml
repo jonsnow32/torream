@@ -65,6 +65,7 @@
 
     <Preference
       android:title="@string/github"
+      android:layout="@layout/custom_preference"
       android:icon="@drawable/ic_github_logo"
       app:summary="https://github.com/recloudstream/cloudstream">
       <intent

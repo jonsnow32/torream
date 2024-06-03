@@ -62,7 +62,6 @@ internal class CircleClipTapView(context: Context?, attrs: AttributeSet) :
 
         // Pre-configuations depending on device display metrics
         val dm = context.resources.displayMetrics
-
         widthPx = dm.widthPixels
         heightPx = dm.heightPixels
 
