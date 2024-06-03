@@ -186,9 +186,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
     val currentTheme =
       when (settingsManager.getString(getString(R.string.app_theme_key), "AmoledLight")) {
-        "Black" -> R.style.AppTheme
         "Light" -> R.style.LightMode
-        "Amoled" -> R.style.AmoledMode
         "AmoledLight" -> R.style.AmoledModeLight
         "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
           R.style.MonetMode else R.style.AppTheme
