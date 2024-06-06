@@ -69,6 +69,7 @@
       android:summary="@string/enable_skip_op_from_database_des"
       android:title="@string/video_skip_op"
       app:defaultValue="true"
+      app:isPreferenceVisible="false"
       app:key="@string/enable_skip_op_from_database" />
     <SwitchPreferenceCompat
       android:icon="@drawable/screen_rotation"

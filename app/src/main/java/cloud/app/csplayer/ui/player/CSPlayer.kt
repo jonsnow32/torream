@@ -66,6 +66,7 @@ import cloud.app.csplayer.utils.SubtitleHelper.fromTwoLettersToLanguage
 import cloud.app.csplayer.utils.SubtitleOrigin
 import cloud.app.csplayer.utils.SubtitleStatus
 import cloud.app.csplayer.utils.Utils
+import cloud.app.csplayer.utils.Utils.activity
 import cloud.app.csplayer.utils.Utils.debugAssert
 import cloud.app.csplayer.utils.Utils.isUsingMobileData
 import cloud.app.csplayer.utils.Utils.logError
@@ -481,6 +482,7 @@ class CSPlayer : IPlayer {
       currentWindow = exo.currentWindowIndex
       isPlaying = exo.isPlaying
     }
+
   }
 
   override fun getCurrentMedias() : MediaItem? {

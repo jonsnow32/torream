@@ -244,10 +244,12 @@
 
 
   <string-array name="themes_names">
+    <item>Đại dương</item>
     <item>Tối</item>
     <item>Sáng</item>
   </string-array>
   <string-array name="themes_names_values">
+    <item>Ocean</item>
     <item>AmoledLight</item>
     <item>Light</item>
   </string-array>

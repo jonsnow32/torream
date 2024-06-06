@@ -21,7 +21,8 @@ import androidx.preference.PreferenceFragmentCompat
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
-import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URL
+import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URLS_NAME_HEADERS
+
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.SingleSelectionHelper.showNginxTextInputDialog
@@ -177,20 +178,20 @@ class SettingsFragment : Fragment() {
       }
       urlBtn.setOnClickListener {
         var text =
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-        if (!BuildConfig.DEBUG) {
-          (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
-            0
-          )?.text?.toString()?.let { copy ->
+          if(BuildConfig.DEBUG) "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" else "";
+
+        (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
+          0
+        )?.text?.toString()?.let { copy ->
+          if(copy.isNotEmpty() && copy.contains("http"))
             text = copy;
-          }
         }
 
         activity?.showNginxTextInputDialog("Your Link", text, 16, {
         }, {
           activity?.navigate(
             R.id.global_to_navigation_player,
-            bundleOf(EXTRA_VIDEO_URL to it)
+            bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
           )
         });
       }

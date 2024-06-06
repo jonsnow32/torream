@@ -513,7 +513,7 @@
   <string name="subtitles_depressed">Depressed</string>
   <string name="subtitles_shadow">Shadow</string>
   <string name="subtitles_raised">Raised</string>
-  <string name="subtitle_offset">Sync subs</string>
+  <string name="subtitle_offset">Sync subtitle</string>
   <string name="subtitle_offset_hint">1000 ms</string>
   <string name="subtitle_offset_title">Subtitle delay</string>
   <string name="subtitle_offset_extra_hint_later_format">Use this if the subtitles are shown %d ms too early</string>

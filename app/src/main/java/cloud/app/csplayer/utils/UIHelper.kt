@@ -22,6 +22,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import cloud.app.csplayer.R
 import cloud.app.csplayer.utils.Utils.logError
@@ -87,17 +88,18 @@ object UIHelper {
     return color
   }
 
-  fun Activity?.navigate(@IdRes navigation: Int, arguments: Bundle? = null) {
+  fun Activity?.navigate(@IdRes navigation: Int, arguments: Bundle? = null, navOptions: NavOptions? = null) {
     try {
       if (this is FragmentActivity) {
         val navHostFragment =
           supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment?
-        navHostFragment?.navController?.navigate(navigation, arguments)
+        navHostFragment?.navController?.navigate(navigation, arguments, navOptions)
       }
     } catch (t: Throwable) {
       logError(t)
     }
   }
+
 
   fun FragmentActivity.popCurrentPage() {
     this.onBackPressedDispatcher.onBackPressed()
@@ -193,5 +195,4 @@ object UIHelper {
       view.context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager?
     inputMethodManager?.showSoftInput(view, 0)
   }
-
 }

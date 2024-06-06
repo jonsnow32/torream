@@ -62,9 +62,10 @@
       android:name=".MainActivity"
       android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation"
       android:exported="true"
-      android:launchMode="singleTask"
+      android:launchMode="standard"
       android:resizeableActivity="true"
       android:supportsPictureInPicture="true">
+
 
       <intent-filter android:exported="true">
         <action android:name="android.intent.action.MAIN" />
@@ -101,7 +102,6 @@
         <data android:mimeType="video/*" />
       </intent-filter>
     </activity>
-
 
     <provider
       android:name="androidx.core.content.FileProvider"

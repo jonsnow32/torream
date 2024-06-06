@@ -277,10 +277,12 @@
   </string-array>
 
   <string-array name="themes_names">
+    <item>Okyanus</item>
     <item>Koyu</item>
-    <item>Flaş Bombası</item>
+    <item>Açık</item>
   </string-array>
   <string-array name="themes_names_values">
+    <item>Ocean</item>
     <item>AmoledLight</item>
     <item>Light</item>
   </string-array>

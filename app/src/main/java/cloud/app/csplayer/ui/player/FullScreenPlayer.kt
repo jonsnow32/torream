@@ -34,6 +34,7 @@ import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
 import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
 import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
+import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
 import cloud.app.csplayer.utils.CommonActivitty.screenHeight
@@ -219,8 +220,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     val sView = subView
     val sStyle = subStyle
     if (sView != null && sStyle != null) {
-      val move = if (isShowing) -((playerBinding?.bottomPlayerBar?.height?.toFloat()
-        ?: 0f) + 40.toPx) else -sStyle.elevation.toPx.toFloat()
+      val move = if (isShowing) (-50.toPx.toFloat() -sStyle.elevation.toPx.toFloat())else -sStyle.elevation.toPx.toFloat()
       ObjectAnimator.ofFloat(sView, "translationY", move).apply {
         duration = 200
         start()
@@ -716,6 +716,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       //player_media_route_button?.isClickable = !isGone
       playerGoBackHolder.isGone = isGone
       playerSkipEpisode.isClickable = !isGone
+      playerSourcesBtt.isGone = isGone
     }
   }
 
@@ -1237,7 +1238,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       playerSkipEpisode.isVisible = false
       playerSkipOp.isVisible = false
       shadowOverlay.isVisible = false
-      playerSourcesBtt.isVisible = false
+      //playerSourcesBtt.isVisible = false
     }
     updateLockUI()
     updateUIVisibility()
@@ -1487,6 +1488,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
       playerGoBack.setOnClickListener {
         activity?.popCurrentPage()
+        player.getPosition()?.let{CommonActivitty.activityResultEvent?.invoke(Activity.RESULT_OK, it)}
       }
 
       playerSourcesBtt.setOnClickListener {

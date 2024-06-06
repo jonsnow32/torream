@@ -6,8 +6,8 @@
         android:layout_height="match_parent"
         android:padding="5dp"
         app:cardCornerRadius="10dp"
-        app:cardBackgroundColor="?attr/primaryBlackBackground"
-        android:background="?attr/primaryBlackBackground">
+        app:cardBackgroundColor="?attr/primaryGrayBackground"
+        android:background="?attr/primaryGrayBackground">
 
     <TextView
             android:padding="20dp"

@@ -42,7 +42,7 @@
       android:singleLine="true"
       tools:text="@string/title"
       android:textAppearance="?attr/textAppearanceListItem"
-      android:textColor="?android:attr/textColorPrimary" />
+      android:textColor="?attr/textColor" />
 
     <TextView
       android:id="@android:id/summary"
@@ -54,7 +54,7 @@
       tools:text="@string/title"
       android:visibility="gone"
       android:textAppearance="?attr/textAppearanceListItemSecondary"
-      android:textColor="?android:attr/textColorSecondary"/>
+      android:textColor="?attr/grayTextColor"/>
   </LinearLayout>
 
   <TextView
@@ -64,7 +64,7 @@
     android:layout_alignParentEnd="true"
     android:layout_centerVertical="true"
     android:textAppearance="?android:attr/textAppearanceSmall"
-    android:textColor="?android:attr/textColorSecondary"
+    android:textColor="?attr/grayTextColor"
     android:visibility="visible"
     app:layout_constraintBottom_toBottomOf="@+id/seekbar"
     app:layout_constraintEnd_toEndOf="parent"

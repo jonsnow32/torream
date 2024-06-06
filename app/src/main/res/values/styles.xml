@@ -117,6 +117,19 @@
     <item name="primaryGrayBackground">@color/amoledModeLight</item>
   </style>
 
+  <style name="OceanMode">
+    <item name="primaryGrayBackground">#176B97</item>
+    <item name="primaryBlackBackground">#1B3B6A</item>
+    <item name="iconGrayBackground">#1D8AC3</item>
+    <item name="boxItemBackground">#1D8AC3</item>
+    <item name="textColor">@color/white</item>
+    <item name="grayTextColor">@color/white</item>
+    <item name="white">@color/white</item>
+    <item name="black">@color/black</item>
+
+    <item name="colorOnPrimary">@color/blackText</item>
+  </style>
+
   <style name="LightMode">
     <item name="primaryGrayBackground">@color/lightPrimaryGrayBackground</item>
     <item name="primaryBlackBackground">@color/lightBitDarkerGrayBackground</item>
@@ -422,6 +435,8 @@
     <item name="android:windowMinWidthMajor">@dimen/abc_dialog_min_width_major</item>
     <item name="android:windowMinWidthMinor">@dimen/abc_dialog_min_width_minor</item>
     <item name="android:windowBackground">@drawable/dialog_window_background</item>
+    <item name="buttonBarPositiveButtonStyle">@style/WhiteButton</item>
+    <item name="buttonBarNegativeButtonStyle">@style/WhiteButton</item>
     <item name="textAllCaps">false</item>
   </style>
 
@@ -845,12 +860,12 @@
     <item name="textColor">@color/player_on_button_tv</item>
     <item name="android:textColor">@color/player_on_button_tv</item>
     <item name="android:layout_width">wrap_content</item>
-    <item name="android:layout_height">25dp</item>
+    <item name="android:layout_height">30dp</item>
     <item name="iconSize">16dp</item>
     <item name="android:gravity">center</item>
     <item name="android:layout_gravity">center</item>
     <item name="android:baselineAligned">false</item>
-    <item name="textAllCaps">false</item>
+    <item name="textAllCaps">true</item>
     <item name="android:textStyle">bold</item>
     <item name="android:textSize">10sp</item>
     <item name="android:layout_marginStart">4dp</item>

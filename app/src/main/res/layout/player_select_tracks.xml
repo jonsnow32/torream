@@ -138,8 +138,6 @@
           android:layout_height="wrap_content"
           android:layout_rowWeight="1"
           android:layout_marginTop="10dp"
-          android:focusable="true"
-          android:foreground="@drawable/outline_drawable_forced"
           android:orientation="horizontal"
           android:paddingTop="10dp"
           android:paddingBottom="10dp">

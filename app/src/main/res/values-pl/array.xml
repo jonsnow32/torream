@@ -252,10 +252,12 @@
 
 
   <string-array name="themes_names">
+    <item>Ocean</item>
     <item>Ciemny</item>
-    <item>Light</item>
+    <item>Jasny</item>
   </string-array>
   <string-array name="themes_names_values">
+    <item>Ocean</item>
     <item>AmoledLight</item>
     <item>Light</item>
   </string-array>

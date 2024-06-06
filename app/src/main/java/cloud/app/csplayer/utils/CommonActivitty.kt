@@ -41,6 +41,7 @@ object CommonActivitty {
   var isInPIPMode: Boolean = false
   var playerEventListener: ((PlayerEventType) -> Unit)? = null
   var keyEventListener: ((Pair<KeyEvent?, Boolean>) -> Boolean)? = null
+  var activityResultEvent: ((Int, Long) -> Unit)? = null
   val displayMetrics: DisplayMetrics = Resources.getSystem().displayMetrics
 
   // screenWidth and screenHeight does always

@@ -120,7 +120,7 @@ class PlayerSubtitleHelper {
         }
     }
 
-    fun initSubtitles(subView: SubtitleView?, subHolder: FrameLayout?, style: SaveCaptionStyle?) {
+    fun initSubtitles( subView: SubtitleView?, subHolder: FrameLayout?, style: SaveCaptionStyle?) {
         subtitleView = subView
         subView?.let { sView ->
             (sView.parent as ViewGroup?)?.removeView(sView)

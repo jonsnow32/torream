@@ -22,6 +22,7 @@ import cloud.app.csplayer.utils.DataStore.mapper
 import cloud.app.csplayer.utils.UIHelper.toPx
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.lang.ref.WeakReference
+import java.util.Base64
 import kotlin.math.sqrt
 
 object Utils {
@@ -328,6 +329,73 @@ object Utils {
     } catch (_: Exception) {
       null
     }
+  }
+  val base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+  fun decodeBase64StringToList(base64String: String): List<String> {
+    val decodedBytes = decodeBase64StringToBytes(base64String)
+    return decodeBytesToList(decodedBytes)
+  }
+
+  fun decodeBase64StringToBytes(base64String: String): ByteArray {
+    val paddingCount = base64String.count { it == '=' }
+    val estimatedSize = (base64String.length * 6 / 8) - paddingCount
+    val result = ByteArray(estimatedSize)
+
+    var byteIndex = 0
+    var charIndex = 0
+
+    while (charIndex < base64String.length) {
+      var bits = 0
+      var bitCount = 0
+
+      repeat(4) {
+        if (charIndex >= base64String.length) return@repeat
+
+        val index = base64Chars.indexOf(base64String[charIndex++])
+        if (index != -1) {
+          bits = (bits shl 6) or index
+          bitCount += 6
+        }
+      }
+
+      repeat(3) {
+        if (byteIndex < estimatedSize && bitCount >= 8) {
+          result[byteIndex++] = (bits shr (bitCount - 8)).toByte()
+          bitCount -= 8
+        }
+      }
+    }
+
+    return result
+  }
+
+  fun decodeBytesToList(bytes: ByteArray): List<String> {
+    val result = mutableListOf<String>()
+    var i = 0
+
+    while (i < bytes.size) {
+      val triplet = (base64Chars.indexOf(bytes[i].toChar()) shl 18) or
+        (base64Chars.indexOf(bytes[i + 1].toChar()) shl 12) or
+        (if (bytes[i + 2] != '='.toByte()) base64Chars.indexOf(bytes[i + 2].toChar()) shl 6 else 0) or
+        if (bytes[i + 3] != '='.toByte()) base64Chars.indexOf(bytes[i + 3].toChar()) else 0
+
+      val char1 = triplet shr 16 and 0xFF
+      val char2 = triplet shr 8 and 0xFF
+      val char3 = triplet and 0xFF
+
+      if (bytes[i + 2] != '='.toByte()) {
+        result.add(char1.toChar().toString() + char2.toChar() + char3.toChar())
+      } else if (bytes[i + 3] != '='.toByte()) {
+        result.add(char1.toChar().toString() + char2.toChar())
+      } else {
+        result.add(char1.toChar().toString())
+      }
+
+      i += 4
+    }
+
+    return result
   }
 
   const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"

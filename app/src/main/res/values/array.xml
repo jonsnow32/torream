@@ -314,10 +314,12 @@
     </string-array>
 
     <string-array name="themes_names">
+        <item>Ocean</item>
         <item>Dark</item>
         <item>Light</item>
     </string-array>
     <string-array name="themes_names_values">
+      <item>Ocean</item>
         <item>AmoledLight</item>
         <item>Light</item>
     </string-array>

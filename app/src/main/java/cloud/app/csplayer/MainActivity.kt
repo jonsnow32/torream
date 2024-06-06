@@ -1,29 +1,42 @@
 package cloud.app.csplayer
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
-import android.view.View
-import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import androidx.core.view.children
+import androidx.fragment.app.FragmentResultListener
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavOptions
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
+import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
+import cloud.app.csplayer.ui.player.PlayerEventType
+import cloud.app.csplayer.utils.CommonActivitty
+import cloud.app.csplayer.utils.CommonActivitty.activityResultEvent
+import cloud.app.csplayer.utils.CommonActivitty.getNextFocus
+import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
+import cloud.app.csplayer.utils.CommonActivitty.onUserLeaveHint
+import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
 import cloud.app.csplayer.utils.CommonActivitty.updateLocale
+import cloud.app.csplayer.utils.Coroutines.ioSafe
+import cloud.app.csplayer.utils.Event
 import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
 import cloud.app.csplayer.utils.GlobalEvent.onDialogDismissedEvent
+import cloud.app.csplayer.utils.InAppUpdater.Companion.runAutoUpdate
+import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.colorFromAttribute
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
@@ -34,24 +47,12 @@ import cloud.app.csplayer.utils.isTvOrEmulator
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
-import cloud.app.csplayer.ui.player.PlayerEventType
-import cloud.app.csplayer.utils.AppUtils.isRtl
-import cloud.app.csplayer.utils.CommonActivitty
-import cloud.app.csplayer.utils.CommonActivitty.getNextFocus
-import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
 import java.net.URI
 import kotlin.reflect.KClass
 import kotlin.system.exitProcess
-import cloud.app.csplayer.utils.CommonActivitty.onUserLeaveHint
-import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
-import cloud.app.csplayer.utils.Coroutines.ioSafe
-import cloud.app.csplayer.utils.InAppUpdater.Companion.runAutoUpdate
-import cloud.app.csplayer.utils.UIHelper
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.navigationrail.NavigationRailView
+
 
 enum class FocusDirection {
   Start,
@@ -88,13 +89,14 @@ var app = Requests(responseParser = object : ResponseParser {
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private lateinit var binding: ActivityMainBinding;
-
+  private var result : Pair<Int, Long>? = null;
   override fun onCreate(savedInstanceState: Bundle?) {
 
     app.initClient(this)
     loadThemes()
     updateLocale()
     CommonActivitty.init(this)
+
     super.onCreate(savedInstanceState)
 
     binding = ActivityMainBinding.inflate(layoutInflater)
@@ -107,14 +109,36 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
     navController.addOnDestinationChangedListener { _: NavController, navDestination: NavDestination, bundle: Bundle? ->
       if (isTvOrEmulator()) {
-        if (navDestination.matchDestination(R.id.browseFragment)) {
+        if (navDestination.matchDestination(R.id.navigation_settings)) {
           attachBackPressedCallback()
         } else detachBackPressedCallback()
       }
     }
+
+    activityResultEvent = { code, position ->
+      // Do something with the result value
+      result = Pair(code,position)
+    }
+
     handleAppIntent(intent)
   }
 
+  override fun onStop() {
+    super.onStop()
+  }
+  override fun finish() {
+    result?.let{
+      val resultIntent = Intent().apply {
+        putExtra("position", it.second)
+      }
+      setResult(it.first, resultIntent)
+    }
+    super.finish()
+  }
+//  override fun onSupportNavigateUp(): Boolean {
+//    val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
+//    return navController.navigateUp() || super.onSupportNavigateUp()
+//  }
   private fun NavDestination.matchDestination(@IdRes destId: Int): Boolean =
     hierarchy.any { it.id == destId }
 
@@ -133,9 +157,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       if (uri?.scheme == "csplayer") {
 
       } else if (uri?.scheme?.contains("http") == true || uri?.scheme?.contains("file") == true) {
+//
+//        app:launchSingleTop="true"
+//        app:popUpTo="@+id/mobile_navigation"
+//        app:popUpToInclusive="true"
+
+        val navBuilder = NavOptions.Builder()
+        val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true , true).build()
         navigate(
           R.id.global_to_navigation_player,
-          intent.extras
+          intent.extras,
+          navOptions
         )
       }
     }
@@ -147,9 +179,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     if (backPressedCallback == null) {
       backPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
-          showConfirmExitDialog()
-          window?.navigationBarColor =
-            colorFromAttribute(R.attr.primaryGrayBackground)
+          if(supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.findNavController()?.navigateUp() == false) {
+            showConfirmExitDialog()
+            window?.navigationBarColor =
+              colorFromAttribute(R.attr.primaryGrayBackground)
+          }
         }
       }
     }
@@ -167,7 +201,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     builder.setTitle(R.string.confirm_exit_dialog)
     builder.apply {
       // Forceful exit since back button can actually go back to setup
-      setPositiveButton(R.string.yes) { _, _ -> exitProcess(0) }
+      setPositiveButton(R.string.yes) { _, _ -> finish() }
       setNegativeButton(R.string.no) { _, _ -> }
     }
     builder.show().setDefaultFocus()
@@ -188,6 +222,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       when (settingsManager.getString(getString(R.string.app_theme_key), "AmoledLight")) {
         "Light" -> R.style.LightMode
         "AmoledLight" -> R.style.AmoledModeLight
+        "Ocean" -> R.style.OceanMode
         "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
           R.style.MonetMode else R.style.AppTheme
 
