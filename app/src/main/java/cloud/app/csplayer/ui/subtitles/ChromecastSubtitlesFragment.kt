@@ -31,6 +31,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.android.gms.cast.TextTrackStyle
 import com.google.android.gms.cast.TextTrackStyle.*
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
+import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.getCurrentSavedStyle
+import cloud.app.csplayer.utils.Utils
 
 const val CHROME_SUBTITLE_KEY = "chome_subtitle_settings"
 
@@ -73,8 +75,8 @@ class ChromecastSubtitlesFragment : Fragment() {
       return TypedValue.applyDimension(unit, size, metrics).toInt()
     }
 
-    fun Context.getCurrentSavedStyle(): SaveChromeCaptionStyle {
-      return this.getKey(CHROME_SUBTITLE_KEY) ?: defaultState
+    fun getCurrentSavedStyle(): SaveChromeCaptionStyle {
+      return Utils.activity?.getKey(CHROME_SUBTITLE_KEY) ?: defaultState
     }
 
     private val defaultState = SaveChromeCaptionStyle()
@@ -154,7 +156,7 @@ class ChromecastSubtitlesFragment : Fragment() {
 
     fixPaddingStatusbar(binding?.subsRoot)
 
-    state = requireContext().getCurrentSavedStyle()
+    state = getCurrentSavedStyle()
     context?.updateState()
 
     val isTvSettings = requireActivity().isTvOrEmulator()

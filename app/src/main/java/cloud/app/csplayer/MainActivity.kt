@@ -24,6 +24,7 @@ import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
 import cloud.app.csplayer.ui.player.PlayerEventType
+import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.activityResultEvent
 import cloud.app.csplayer.utils.CommonActivitty.getNextFocus
@@ -42,11 +43,16 @@ import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
 import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.Utils.USER_AGENT
+import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.Session
+import com.google.android.gms.cast.framework.SessionManager
+import com.google.android.gms.cast.framework.SessionManagerListener
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
 import java.net.URI
@@ -90,6 +96,38 @@ var app = Requests(responseParser = object : ResponseParser {
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private lateinit var binding: ActivityMainBinding;
   private var result : Pair<Int, Long>? = null;
+  lateinit var mSessionManager: SessionManager
+  private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
+  private inner class SessionManagerListenerImpl : SessionManagerListener<Session> {
+    override fun onSessionStarting(session: Session) {
+    }
+
+    override fun onSessionStarted(session: Session, sessionId: String) {
+      invalidateOptionsMenu()
+    }
+
+    override fun onSessionStartFailed(session: Session, i: Int) {
+    }
+
+    override fun onSessionEnding(session: Session) {
+    }
+
+    override fun onSessionResumed(session: Session, wasSuspended: Boolean) {
+      invalidateOptionsMenu()
+    }
+
+    override fun onSessionResumeFailed(session: Session, i: Int) {
+    }
+
+    override fun onSessionSuspended(session: Session, i: Int) {
+    }
+
+    override fun onSessionEnded(session: Session, error: Int) {
+    }
+
+    override fun onSessionResuming(session: Session, s: String) {
+    }
+  }
   override fun onCreate(savedInstanceState: Bundle?) {
 
     app.initClient(this)
@@ -98,7 +136,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     CommonActivitty.init(this)
 
     super.onCreate(savedInstanceState)
-
+    try {
+      if (isCastApiAvailable()) {
+        mSessionManager = CastContext.getSharedInstance(this).sessionManager
+      }
+    } catch (t: Throwable) {
+      logError(t)
+    }
     binding = ActivityMainBinding.inflate(layoutInflater)
     val view = binding.root
     setContentView(view);
@@ -213,8 +257,29 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     ioSafe {
       runAutoUpdate()
     }
+
+    try {
+      if (isCastApiAvailable()) {
+        //mCastSession = mSessionManager.currentCastSession
+        mSessionManager.addSessionManagerListener(mSessionManagerListener)
+      }
+    } catch (e: Exception) {
+      logError(e)
+    }
   }
 
+  override fun onPause() {
+    super.onPause()
+
+    try {
+      if (isCastApiAvailable()) {
+        mSessionManager.removeSessionManagerListener(mSessionManagerListener)
+        //mCastSession = null
+      }
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
   fun loadThemes() {
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 

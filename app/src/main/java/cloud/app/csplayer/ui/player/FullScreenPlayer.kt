@@ -20,7 +20,9 @@ import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.Toast
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
@@ -28,6 +30,9 @@ import androidx.core.view.isGone
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
@@ -52,6 +57,7 @@ import cloud.app.csplayer.utils.UIHelper.showSystemUI
 import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.Utils.logError
+import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isLayout
 import cloud.app.csplayer.utils.isTvOrEmulator
@@ -59,6 +65,7 @@ import cloud.app.csplayer.utils.setText
 import cloud.app.csplayer.utils.txt
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastState
 import kotlin.math.*
 
 const val MINIMUM_SEEK_TIME = 7000L         // when swipe seeking
@@ -203,7 +210,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         start()
       }
     }
-    val playerBarMove = if (isShowing) 0f else 50.toPx.toFloat()
+    val playerBarMove = if (isShowing) 0f else 70.toPx.toFloat()
     playerBinding?.bottomPlayerBar?.let {
       ObjectAnimator.ofFloat(it, "translationY", playerBarMove).apply {
         duration = 200
@@ -220,7 +227,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     val sView = subView
     val sStyle = subStyle
     if (sView != null && sStyle != null) {
-      val move = if (isShowing) (-50.toPx.toFloat() -sStyle.elevation.toPx.toFloat())else -sStyle.elevation.toPx.toFloat()
+      val move = if (isShowing) (-70.toPx.toFloat() -sStyle.elevation.toPx.toFloat())else -sStyle.elevation.toPx.toFloat()
       ObjectAnimator.ofFloat(sView, "translationY", move).apply {
         duration = 200
         start()
@@ -713,7 +720,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       playerEpisodeFiller.isGone = isGone
       playerCenterMenu.isGone = isGone
       playerLock.isGone = !isShowing
-      //player_media_route_button?.isClickable = !isGone
       playerGoBackHolder.isGone = isGone
       playerSkipEpisode.isClickable = !isGone
       playerSourcesBtt.isGone = isGone
@@ -1239,6 +1245,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       playerSkipOp.isVisible = false
       shadowOverlay.isVisible = false
       //playerSourcesBtt.isVisible = false
+      setReizeIcon()
     }
     updateLockUI()
     updateUIVisibility()
@@ -1291,6 +1298,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
         PlayerEventType.Resize -> {
           nextResize()
+          setReizeIcon()
         }
 
         PlayerEventType.PrevEpisode -> {
@@ -1450,6 +1458,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       playerResizeBtt.setOnClickListener {
         autoHide()
         nextResize()
+        setReizeIcon()
       }
 
       playerSpeedBtt.setOnClickListener {
@@ -1491,6 +1500,9 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         player.getPosition()?.let{CommonActivitty.activityResultEvent?.invoke(Activity.RESULT_OK, it)}
       }
 
+      playerGoSetting.setOnClickListener {
+        findNavController().navigate(R.id.navigation_settings_player)
+      }
       playerSourcesBtt.setOnClickListener {
         showMirrorsDialogue()
       }
@@ -1504,6 +1516,33 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         return@setOnTouchListener handleMotionEvent(callView, event)
       }
 
+      playerMediaRouteButton.apply {
+        val chromecastSupport = true;//api?.hasChromecastSupport == true
+        alpha = if (chromecastSupport) 1f else 0.3f
+        if (!chromecastSupport) {
+          setOnClickListener {
+            showToast(
+              R.string.no_chromecast_support_toast,
+              Toast.LENGTH_LONG
+            )
+          }
+        }
+        activity?.let { act ->
+          if (act.isCastApiAvailable()) {
+            try {
+              CastButtonFactory.setUpMediaRouteButton(act, this)
+              val castContext = CastContext.getSharedInstance(act.applicationContext)
+              isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
+              // this shit leaks for some reason
+              //castContext.addCastStateListener { state ->
+              //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
+              //}
+            } catch (e: Exception) {
+              logError(e)
+            }
+          }
+        }
+      }
       exoProgress.setOnTouchListener { _, event ->
         // this makes the bar not disappear when sliding
         when (event.action) {
@@ -1522,34 +1561,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         return@setOnTouchListener false
       }
 
-      playerMediaRouteButton.apply {
-        val chromecastSupport = true
-        alpha = if (chromecastSupport) 1f else 0.3f
-        if (!chromecastSupport) {
-          setOnClickListener {
-            Utils.showToast(
-              R.string.no_chromecast_support_toast,
-              Toast.LENGTH_LONG
-            )
-          }
-        }
-        activity?.let { act ->
-          if (act.isCastApiAvailable()) {
-            try {
-              CastButtonFactory.setUpMediaRouteButton(act, this)
-              val castContext = CastContext.getSharedInstance(act.applicationContext)
-              //isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
-              // this shit leaks for some reason
-              //castContext.addCastStateListener { state ->
-              //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
-              //}
-            } catch (e: Exception) {
-              logError(e)
-            }
-          }
-        }
-      }
-
     }
 
 
@@ -1563,6 +1574,25 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       uiReset()
     } catch (e: Exception) {
       logError(e)
+    }
+  }
+
+  @OptIn(UnstableApi::class)
+  private fun setReizeIcon() {
+    when(playerView?.resizeMode) {
+      AspectRatioFrameLayout.RESIZE_MODE_FIT -> {
+        playerBinding?.playerResizeBtt?.icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_fit_24, null)
+      }
+      AspectRatioFrameLayout.RESIZE_MODE_FILL -> {
+        playerBinding?.playerResizeBtt?.icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_stretch_24, null)
+      }
+      AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> {
+        playerBinding?.playerResizeBtt?.icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_zoom_24, null)
+      }
+
+      else -> {
+        //nothing todo
+      }
     }
   }
 

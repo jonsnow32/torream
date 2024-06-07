@@ -485,7 +485,7 @@ class CSPlayer : IPlayer {
 
   }
 
-  override fun getCurrentMedias() : MediaItem? {
+  override fun getCurrentMedias(): MediaItem? {
     return exoPlayer?.currentMediaItem
   }
 
@@ -927,6 +927,15 @@ class CSPlayer : IPlayer {
       Log.e(TAG, "handleEvent error", t)
       event(ErrorEvent(t))
     }
+  }
+
+  private fun loadCast(
+    context: Context,
+    mediaSlices: List<MediaItemSlice>,
+    subSources: List<SingleSampleMediaSource>,
+    cacheFactory: CacheDataSource.Factory? = null
+  ) {
+
   }
 
   private fun loadExo(

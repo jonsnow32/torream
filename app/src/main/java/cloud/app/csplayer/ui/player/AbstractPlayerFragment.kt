@@ -10,7 +10,9 @@ import android.graphics.drawable.AnimatedVectorDrawable
 import android.media.metrics.PlaybackErrorEvent
 import android.os.Build
 import android.os.Bundle
+import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -367,25 +369,25 @@ abstract class AbstractPlayerFragment(
     private var mMediaSession: MediaSession? = null
 
     // this can be used in the future for players other than exoplayer
-    //private val mMediaSessionCallback: MediaSessionCompat.Callback = object : MediaSessionCompat.Callback() {
-    //    override fun onMediaButtonEvent(mediaButtonEvent: Intent): Boolean {
-    //        val keyEvent = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT) as KeyEvent?
-    //        if (keyEvent != null) {
-    //            if (keyEvent.action == KeyEvent.ACTION_DOWN) { // NO DOUBLE SKIP
-    //                val consumed = when (keyEvent.keyCode) {
-    //                    KeyEvent.KEYCODE_MEDIA_PAUSE -> callOnPause()
-    //                    KeyEvent.KEYCODE_MEDIA_PLAY -> callOnPlay()
-    //                    KeyEvent.KEYCODE_MEDIA_STOP -> callOnStop()
-    //                    KeyEvent.KEYCODE_MEDIA_NEXT -> callOnNext()
-    //                    else -> false
-    //                }
-    //                if (consumed) return true
-    //            }
-    //        }
-    //
-    //        return super.onMediaButtonEvent(mediaButtonEvent)
-    //    }
-    //}
+//    private val mMediaSessionCallback: MediaSessionCompat.Callback = object : MediaSessionCompat.Callback() {
+//        override fun onMediaButtonEvent(mediaButtonEvent: Intent): Boolean {
+//            val keyEvent = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT) as KeyEvent?
+//            if (keyEvent != null) {
+//                if (keyEvent.action == KeyEvent.ACTION_DOWN) { // NO DOUBLE SKIP
+//                    val consumed = when (keyEvent.keyCode) {
+//                        KeyEvent.KEYCODE_MEDIA_PAUSE -> callOnPause()
+//                        KeyEvent.KEYCODE_MEDIA_PLAY -> callOnPlay()
+//                        KeyEvent.KEYCODE_MEDIA_STOP -> callOnStop()
+//                        KeyEvent.KEYCODE_MEDIA_NEXT -> callOnNext()
+//                        else -> false
+//                    }
+//                    if (consumed) return true
+//                }
+//            }
+//
+//            return super.onMediaButtonEvent(mediaButtonEvent)
+//        }
+//    }
 
     /** This receives the events from the player, if you want to append functionality you do it here,
      * do note that this only receives events for UI changes,
@@ -622,9 +624,15 @@ abstract class AbstractPlayerFragment(
     fun resize(resize: PlayerResize, showToast: Boolean) {
         DataStore.resizeMode = resize.ordinal
         val type = when (resize) {
-            PlayerResize.Fill -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-            PlayerResize.Fit -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-            PlayerResize.Zoom -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            PlayerResize.Fill -> {
+              AspectRatioFrameLayout.RESIZE_MODE_FILL
+            }
+            PlayerResize.Fit -> {
+              AspectRatioFrameLayout.RESIZE_MODE_FIT
+            }
+            PlayerResize.Zoom -> {
+              AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            }
         }
         playerView?.resizeMode = type
 

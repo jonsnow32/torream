@@ -30,6 +30,7 @@
 
   <FrameLayout
     android:id="@+id/player_loading_overlay"
+    android:visibility="gone"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black"

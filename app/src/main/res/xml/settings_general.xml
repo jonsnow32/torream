@@ -18,6 +18,13 @@
       android:icon="@drawable/ic_baseline_tv_24"
       android:key="@string/app_layout_key"
       android:title="@string/app_layout" />
+
+    <Preference
+      android:icon="@drawable/ic_baseline_language_24"
+      android:key="@string/locale_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/app_language" />
+
   </PreferenceCategory>
 
   <PreferenceCategory android:title="@string/title_downloads" app:isPreferenceVisible="false">
@@ -54,11 +61,6 @@
 
   </PreferenceCategory>
 
-  <Preference
-    android:icon="@drawable/ic_baseline_language_24"
-    android:key="@string/locale_key"
-    android:layout="@layout/custom_preference"
-    android:title="@string/app_language" />
 
   <PreferenceCategory
     android:title="@string/pref_category_links">

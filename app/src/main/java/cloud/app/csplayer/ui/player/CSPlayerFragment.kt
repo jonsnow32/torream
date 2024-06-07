@@ -18,6 +18,7 @@ import androidx.core.animation.addListener
 import androidx.core.view.isVisible
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.Format.NO_VALUE
 import androidx.media3.common.MimeTypes
@@ -59,7 +60,8 @@ import java.util.*
 
 class CSPlayerFragment : FullScreenPlayer() {
 
-  private lateinit var viewModel: CSPlayerViewModel
+  private val viewModel by viewModels<CSPlayerViewModel>()
+
   private var titleRez = 3
   private var limitTitle = 0
   private var allLinks: Set<Pair<ExtractorLink?, ExtractorUri?>> = setOf()
@@ -76,7 +78,6 @@ class CSPlayerFragment : FullScreenPlayer() {
   private fun startLoading() {
     player.release()
     currentSelectedSubtitles = null
-    isActive = false
     binding?.overlayLoadingSkipButton?.isVisible = false
     binding?.playerLoadingOverlay?.isVisible = true
   }
@@ -135,24 +136,13 @@ class CSPlayerFragment : FullScreenPlayer() {
     return setSubtitles(null)
   }
 
-  private fun getPos(): Long {
-//    val durPos = DataStore.getViewPos(viewModel.getId()) ?: return 0L
-//    if (durPos.duration == 0L) return 0L
-//    if (durPos.position * 100L / durPos.duration > 95L) {
-//      return 0L
-//    }
-//    return durPos.position
-    return 0;
-  }
-
   private var currentVerifyLink: Job? = null
   private fun loadLink(link: Pair<ExtractorLink?, ExtractorUri?>?, sameEpisode: Boolean) {
     if (link == null) return
     // manage UI
-    binding?.playerLoadingOverlay?.isVisible = false
+    //binding?.playerLoadingOverlay?.isVisible = false
     uiReset()
     currentSelectedLink = link
-    isActive = true
     setPlayerDimen(null)
     setTitle()
     if (!sameEpisode)
@@ -166,7 +156,7 @@ class CSPlayerFragment : FullScreenPlayer() {
         sameEpisode,
         url,
         uri,
-        startPosition = if(sameEpisode) null else if(isNextEpisode) 0L else link.first?.position,
+        startPosition = if (sameEpisode) null else if (isNextEpisode) 0L else link.first?.position,
         currentSubs,
         (if (sameEpisode) currentSelectedSubtitles else null) ?: getAutoSelectSubtitle(
           currentSubs, settings = true, downloads = true
@@ -530,8 +520,8 @@ class CSPlayerFragment : FullScreenPlayer() {
         val sourcesArrayAdapter =
           ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
 
-        sourcesArrayAdapter.addAll(sortedUrls.map { (link, uri) ->
-          link?.source ?: uri?.name ?: "NULL"
+        sourcesArrayAdapter.addAll(sortedUrls.mapIndexed { index, (link, uri) ->
+         "${index +1}. "+ (link?.source ?: uri?.name ?: "NULL")
         })
 
         providerList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
@@ -787,10 +777,16 @@ class CSPlayerFragment : FullScreenPlayer() {
   }
 
   private fun startPlayer() {
-    if (isActive) return // we don't want double load when you skip loading
-    loadLink(allLinks.first(), false)
+    if (!player.isActive())
+      loadLink(allLinks.elementAt(viewModel.currentLinkIndex.value ?: 0), false)
   }
 
+  override fun onResume() {
+    if(context == null) return
+    if(player.isActive() && !player.getIsPlaying())
+      loadLink(currentSelectedLink, true)
+    super.onResume()
+  }
   override fun nextEpisode() {
 
 //    player.release()
@@ -863,7 +859,6 @@ class CSPlayerFragment : FullScreenPlayer() {
         it
       )
     }
-
   }
 
   private fun getAutoSelectSubtitle(
@@ -1011,8 +1006,8 @@ class CSPlayerFragment : FullScreenPlayer() {
     layout =
       if (context?.isTvOrEmulator() == true) R.layout.fragment_player_tv else R.layout.fragment_player
 
-    viewModel = ViewModelProvider(this)[CSPlayerViewModel::class.java]
-    viewModel.initialize(arguments)
+//    viewModel = ViewModelProvider(this)[CSPlayerViewModel::class.java]
+//    viewModel.initialize(arguments)
 
     unwrapBundle(savedInstanceState)
     unwrapBundle(arguments)
@@ -1131,7 +1126,7 @@ class CSPlayerFragment : FullScreenPlayer() {
       allLinks = it
       //currentSelectedLink = allLinks.first()
       normalSafeApiCall {
-          startPlayer()
+        startPlayer()
       }
     }
 

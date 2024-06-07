@@ -33,4 +33,5 @@
   <dimen name="cpv_item_horizontal_padding">8dp</dimen>
   <dimen name="cpv_color_preference_normal">28dp</dimen>
   <dimen name="cpv_color_preference_large">40dp</dimen>
+    <dimen name="control_icon_size">35dp</dimen>
 </resources>

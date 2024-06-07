@@ -280,6 +280,33 @@
           app:layout_constraintTop_toTopOf="parent" />
 
         <FrameLayout
+          android:id="@+id/player_go_setting_holder"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_margin="5dp"
+          android:layout_gravity="end">
+
+          <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/go_back_img_des"
+            android:src="@drawable/ic_outline_settings_24"
+            app:tint="@android:color/white" />
+
+          <ImageView
+            android:id="@+id/player_go_setting"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_gravity="center"
+            android:background="@drawable/video_tap_button_always_white"
+            android:clickable="true"
+            android:contentDescription="@string/go_back_img_des"
+            android:focusable="true"
+            android:tag="@string/tv_no_focus_tag" />
+        </FrameLayout>
+
+        <FrameLayout
           android:id="@+id/player_go_back_holder"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
@@ -491,7 +518,7 @@
       <FrameLayout
         android:id="@+id/subtitle_holder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
       <LinearLayout
         android:id="@+id/bottom_player_bar"
@@ -735,7 +762,7 @@
               android:nextFocusRight="@id/player_skip_op"
               android:nextFocusUp="@id/player_pause_play"
               android:text="@string/tracks"
-              app:icon="@drawable/ic_outline_settings_24" />
+              app:icon="@drawable/track_source_merge_24dp" />
           </LinearLayout>
         </HorizontalScrollView>
       </LinearLayout>

@@ -198,7 +198,6 @@ interface Track {
 data class VideoTrack(
   override val id: String?,
   override val label: String?,
-//    override val isCurrentlyPlaying: Boolean,
   override val language: String?,
   val width: Int?,
   val height: Int?,
@@ -207,7 +206,6 @@ data class VideoTrack(
 data class AudioTrack(
   override val id: String?,
   override val label: String?,
-//    override val isCurrentlyPlaying: Boolean,
   override val language: String?,
 ) : Track
 
@@ -228,17 +226,13 @@ const val EXTRA_CONTROL_TYPE = "control_type"
 interface IPlayer {
   fun getPlaybackSpeed(): Float
   fun setPlaybackSpeed(speed: Float)
-
   fun getIsPlaying(): Boolean
   fun getDuration(): Long?
   fun getPosition(): Long?
-
   fun seekTime(time: Long, source: PlayerEventSource = PlayerEventSource.UI)
   fun seekTo(time: Long, source: PlayerEventSource = PlayerEventSource.UI)
-
   fun getSubtitleOffset(): Long // in ms
   fun setSubtitleOffset(offset: Long) // in ms
-
   fun initCallbacks(
     eventHandler: ((PlayerEvent) -> Unit),
     /** this is used to request when the player should report back view percentage */

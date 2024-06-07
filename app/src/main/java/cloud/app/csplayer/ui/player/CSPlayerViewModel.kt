@@ -19,13 +19,14 @@ const val EXTRA_POSITION = "position" // long
 const val EXTRA_TITLE = "title" // string
 
 const val EXTRA_VIDEO_URLS_NAME_HEADERS = "video_url_headers" // string["url1", "base64(headers1)", "url2", "base64(headers2)" ...]
-const val EXTRA_VIDEO_START_INDEX = "subtitle_start_index" //int
+const val EXTRA_VIDEO_START_INDEX = "video_start_index" //int
 
 const val EXTRA_SUBTITLE_LIST = "subtitles" // string[]
 const val EXTRA_SUBTITLE_START_INDEX = "subtitle_start_index" //int
+const val EXTRA_HAS_AD = "has_ad" // boolean
 
 
-class CSPlayerViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class CSPlayerViewModel(private val arguments: SavedStateHandle) : ViewModel() {
 
   private val _allLinks = MutableLiveData<Set<Pair<ExtractorLink?, ExtractorUri?>>>()
   val allLinks: LiveData<Set<Pair<ExtractorLink?, ExtractorUri?>>> = _allLinks
@@ -40,13 +41,12 @@ class CSPlayerViewModel(private val savedStateHandle: SavedStateHandle) : ViewMo
   private val _currentSubtitleIndex = MutableLiveData<Int>()
   val currentSubtitleIndex: LiveData<Int> = _currentSubtitleIndex
 
-
-  fun initialize(arguments: Bundle?) {
-    val title = arguments?.getString(EXTRA_TITLE);
-    val position = arguments?.getLong(EXTRA_POSITION)
+  init {
+    val title = arguments.get<String>(EXTRA_TITLE);
+    val position = arguments.get<Long>(EXTRA_POSITION)
 
     val extractorLinks = mutableSetOf<Pair<ExtractorLink?, ExtractorUri?>>();
-    val videoUrls = arguments?.getStringArray(EXTRA_VIDEO_URLS_NAME_HEADERS);
+    val videoUrls = arguments.get<Array<String>>(EXTRA_VIDEO_URLS_NAME_HEADERS);
     videoUrls?.apply {
       val urls = filterIndexed() { index, s -> index % 3 == 0 }
       val names = filterIndexed() { index, s -> index % 3 == 1 }
@@ -77,35 +77,42 @@ class CSPlayerViewModel(private val savedStateHandle: SavedStateHandle) : ViewMo
       }
     }
 
-    _allLinks.postValue(extractorLinks);
-
-    if(extractorLinks.isEmpty()) return //nothing to do
-    _currentLinkIndex.postValue(arguments?.getInt(EXTRA_VIDEO_START_INDEX) ?: 0)
-    val subtitlesArray =
-      arguments?.getStringArray(EXTRA_SUBTITLE_LIST); //format ["lang", "url", "lang", "url" ....]
-    _currentSubtitleIndex.postValue(arguments?.getInt(EXTRA_SUBTITLE_START_INDEX) ?: 0)
-    val headerMap = mutableMapOf<String, String>()
 
 
-    val subtitles = mutableSetOf<SubtitleData>()
-    subtitlesArray?.apply {
-      val keys = filterIndexed() { index, s -> index % 2 == 0 }
-      val values = filterIndexed() { index, s -> index % 2 != 0 }
-      keys.forEachIndexed { index, s ->
-        val languageCode = keys[index]
-        subtitles += subtitles.plus(
-          SubtitleData(
-            SubtitleHelper.fromTwoLettersToLanguage(languageCode) ?: languageCode,
-            url = values[index],
-            origin = SubtitleOrigin.URL,
-            mimeType = values[index].toSubtitleMimeType(),
-            headers = headerMap,
-            languageCode = languageCode
+    if(extractorLinks.isNotEmpty()) {
+      //nothing to do
+      _currentLinkIndex.postValue(arguments.get<Int>(EXTRA_VIDEO_START_INDEX) ?: 0)
+      val subtitlesArray =
+        arguments.get<Array<String>>(EXTRA_SUBTITLE_LIST); //format ["lang", "url", "lang", "url" ....]
+      _currentSubtitleIndex.postValue(arguments.get<Int>(EXTRA_SUBTITLE_START_INDEX) ?: 0)
+      val headerMap = mutableMapOf<String, String>()
+
+
+      val subtitles = mutableSetOf<SubtitleData>()
+      subtitlesArray?.apply {
+        val keys = filterIndexed() { index, s -> index % 2 == 0 }
+        val values = filterIndexed() { index, s -> index % 2 != 0 }
+        keys.forEachIndexed { index, s ->
+          val languageCode = keys[index]
+          subtitles += subtitles.plus(
+            SubtitleData(
+              SubtitleHelper.fromTwoLettersToLanguage(languageCode) ?: languageCode,
+              url = values[index],
+              origin = SubtitleOrigin.URL,
+              mimeType = values[index].toSubtitleMimeType(),
+              headers = headerMap,
+              languageCode = languageCode
+            )
           )
-        )
+        }
       }
+      _currentSubs.postValue(subtitles)
+      _allLinks.postValue(extractorLinks);
     }
-    _currentSubs.postValue(subtitles)
+  }
+
+  fun initialize(arguments: Bundle?) {
+
   }
 
 //  fun getNextLink() : Pair<ExtractorLink?, ExtractorUri?>? {

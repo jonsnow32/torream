@@ -37,7 +37,7 @@
     android:name=".CSApplication"
     android:allowBackup="true"
     android:appCategory="video"
-    android:banner="@mipmap/ic_launcher_round"
+    android:banner="@mipmap/ic_banner"
     android:dataExtractionRules="@xml/data_extraction_rules"
     android:fullBackupContent="@xml/backup_rules"
     android:icon="@mipmap/ic_launcher"
@@ -56,7 +56,7 @@
 
 
     <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-      android:value="androidx.media3.cast.DefaultCastOptionsProvider"/>
+      android:value="cloud.app.csplayer.utils.CastOptionsProvider"/>
 
     <activity
       android:name=".MainActivity"
@@ -102,6 +102,10 @@
         <data android:mimeType="video/*" />
       </intent-filter>
     </activity>
+
+    <activity
+      android:name=".ControllerActivity"
+      android:exported="false" />
 
     <provider
       android:name="androidx.core.content.FileProvider"

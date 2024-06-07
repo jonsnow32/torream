@@ -42,8 +42,8 @@ android {
   buildTypes {
     release {
       isDebuggable = false
-      isMinifyEnabled = false
-      isShrinkResources = false
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
@@ -52,6 +52,7 @@ android {
     debug {
       isDebuggable = true
       applicationIdSuffix = ".debug"
+      resValue("string", "app_name", "CSPlayer-Debug")
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
@@ -78,6 +79,7 @@ dependencies {
   implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
   implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.0")
   implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.0")
+  implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.0")
   implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
 
   val media3_version = "1.1.1"
