@@ -19,7 +19,6 @@
     <item name="android:buttonStyle">@style/AppButtonStyle</item>
     <item name="android:editTextStyle">@style/AppEditStyle</item>
     <item name="materialButtonStyle">@style/AppMaterialButtonStyle</item>
-    <item name="preferenceFragmentCompatStyle">@style/PreferenceTheme</item>
     <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogTheme</item>
     <item name="searchViewStyle">@style/AppSearchViewStyle</item>
     <item name="android:searchViewStyle">@style/AndroidSearchView</item>
@@ -30,21 +29,6 @@
     <item name="android:dividerHeight">0dp</item>
     <item name="showDividers">none</item>
     <item name="android:listViewStyle">@style/ListViewStyle</item>
-
-    <!-- Preference -->
-    <item name="android:textColor">?attr/textColor</item>
-    <item name="android:textColorSecondary">?attr/grayTextColor</item>
-<!--    <item name="android:selectableItemBackground">@color/colorPrimaryRed</item>-->
-    <!-- Need a non-android: attr here so that gradle doesn't remove it -->
-    <item name="selectableItemBackground">@drawable/outline</item>
-    <item name="android:textColorHint">?attr/grayTextColor</item>
-    <item name="android:editTextColor">?attr/textColor</item>
-    <item name="android:colorForeground">?attr/textColor</item>
-    <item name="android:colorControlHighlight">?attr/textColor</item> <!--iconRipple-->
-
-    <item name="android:windowAllowReturnTransitionOverlap">true</item>
-    <item name="android:windowAllowEnterTransitionOverlap">true</item>
-    <!--<item name="preferenceTheme">@style/PreferencesTheme</item>-->
 
     <!-- DEF STYLE -->
     <item name="colorPrimary">@color/colorPrimary</item>
@@ -60,11 +44,25 @@
     <item name="iconColor">@color/iconColor</item>
     <item name="white">@color/white</item>
     <item name="black">@color/black</item>
-    <item name="preferenceTheme">@style/CustomPreferenceThemeOverlay</item>
+
     <item name="download_icon_color">?attr/white</item>
     <item name="download_fill_color">?attr/white</item>
     <item name="download_outline_color">?attr/white</item>
     <item name="download_icon_scale">1.0</item>
+
+    <!-- preference -->
+    <item name="preferenceFragmentCompatStyle">@style/PreferenceTheme</item>
+    <item name="preferenceTheme">@style/CustomPreferenceThemeOverlay</item>
+
+    <item name="android:textColor">?attr/textColor</item>
+    <item name="android:textColorSecondary">?attr/grayTextColor</item>
+    <item name="android:textColorHint">?attr/grayTextColor</item>
+    <item name="android:editTextColor">?attr/textColor</item>
+    <item name="android:colorForeground">?attr/textColor</item>
+    <item name="android:colorControlHighlight">?attr/textColor</item> <!--iconRipple-->
+    <item name="android:windowAllowReturnTransitionOverlap">true</item>
+    <item name="android:windowAllowEnterTransitionOverlap">true</item>
+    <item name="selectableItemBackground">@drawable/outline</item>
   </style>
 
   <style name="ListViewStyle" parent="Widget.AppCompat.ListView">
@@ -414,7 +412,14 @@
     <item name="android:navigationBarColor">@color/transparent</item>
     <item name="android:windowCloseOnTouchOutside">true</item>
     <item name="android:windowBackground">@android:color/transparent</item>
-<!--    <item name="android:windowAnimationStyle">@style/Animation.Design.BottomSheetDialog</item>-->
+    <item name="android:windowAnimationStyle">@style/Animation.Design.BottomSheetDialog</item>
+    <item name="android:windowIsTranslucent">true</item>
+    <item name="android:windowContentOverlay">@null</item>
+    <item name="android:colorBackground">     @android:color/transparent</item>
+    <item name="android:backgroundDimEnabled">true</item>
+    <item name="android:backgroundDimAmount">0.3</item>
+    <item name="android:windowFrame">@null</item>
+    <item name="android:windowIsFloating">true</item>
     <item name="bottomSheetStyle">@style/AppModalStyle</item>
   </style>
 
@@ -426,10 +431,12 @@
     <item name="shapeAppearanceOverlay">@null</item>
     <item name="backgroundTint">?attr/primaryGrayBackground</item>
     <item name="android:background">@drawable/rounded_dialog</item>
-    <item name="behavior_peekHeight">512dp</item>
+<!--    <item name="behavior_peekHeight">512dp</item>-->
   </style>
 
-  <style name="PreferenceTheme" parent="@style/AppTheme" />
+  <style name="PreferenceTheme" parent="@style/AppTheme" >
+
+  </style>
 
   <style name="Theme.AlertDialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
     <item name="android:windowMinWidthMajor">@dimen/abc_dialog_min_width_major</item>

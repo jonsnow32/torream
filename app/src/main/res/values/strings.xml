@@ -197,7 +197,7 @@
   <string name="subs_auto_select_language">Auto-Select Language</string>
   <string name="subs_download_languages">Download Languages</string>
   <string name="subs_subtitle_languages">Subtitle Language</string>
-  <string name="subs_hold_to_reset_to_default">Hold to reset to default</string>
+  <string name="subs_hold_to_reset_to_default">Hold to reset to default \n Or</string>
   <string name="subs_import_text" formatted="true">Import fonts by placing them in %s</string>
   <string name="continue_watching">Continue Watching</string>
   <string name="action_remove_watching">Remove</string>
@@ -267,7 +267,7 @@
   <string name="updates_settings">Show app updates</string>
   <string name="updates_settings_des">Automatically search for new updates after starting the app.</string>
   <string name="redo_setup_process">Redo setup process</string>
-  <string name="uprereleases_settings">Update to prereleases</string>
+  <string name="uprereleases_settings">Try beta version</string>
   <string name="uprereleases_settings_des">Search for prerelease updates instead of full releases only</string>
   <string name="apk_installer_settings">APK Installer</string>
   <string name="apk_installer_settings_des">Some phones do not support the new package installer. Try the legacy option if updates do not install. </string>
@@ -525,7 +525,7 @@
 https://en.wikipedia.org/w/index.php?title=Pangram&oldid=225849300
 https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   -->
-  <string name="subtitles_example_text">The quick brown fox jumps over the lazy dog</string>
+  <string name="subtitles_example_text">The gray rabbit hides in the grass</string>
   <string name="recommended">Recommended</string>
   <string name="player_loaded_subtitles" formatted="true">Loaded %s</string>
   <string name="player_load_subtitles">Load from file</string>
@@ -776,17 +776,17 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="media_route_menu_title">Cast</string>
   <string name="reset_btn">Reset</string>
 
-  <bool name="is_prerelease">true</bool>
+  <bool name="is_prerelease">false</bool>
   <!-- Value from default config. -->
-  <string name="app_version" translatable="false">v1.0</string>
+  <string name="app_version" translatable="false">v1.0.1</string>
   <!-- Value from default config. -->
-  <string name="commit_hash" translatable="false">14504dd</string>
-  <string name="version_update_at" translatable="false">2024-05-29T05:23:38Z</string>
-
+  <string name="commit_hash" translatable="false">583223f</string>
+  <string name="version_update_at" translatable="false">2024-06-07T05:23:38Z</string>
   <string name="cpv_default_title">Select a Color</string>
   <string name="cpv_presets">Presets</string>
   <string name="cpv_custom">Custom</string>
   <string name="cpv_select">Select</string>
   <string name="cpv_transparency">Transparency</string>
   <string name="input_url">Enter your link</string>
+  <string name="reset_all">Reset All</string>
 </resources>

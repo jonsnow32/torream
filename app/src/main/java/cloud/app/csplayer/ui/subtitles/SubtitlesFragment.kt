@@ -20,7 +20,7 @@ import androidx.preference.PreferenceManager
 import androidx.media3.common.text.Cue
 import androidx.media3.ui.CaptionStyleCompat
 import cloud.app.csplayer.R
-import cloud.app.csplayer.databinding.SubtitleSettingsBinding
+import cloud.app.csplayer.databinding.FragmentSubtitleSettingsBinding
 import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.utils.Event
 import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
@@ -46,6 +46,7 @@ const val SUBTITLE_DOWNLOAD_KEY = "subs_auto_download"
 
 
 const val DEF_SUBS_ELEVATION = 20
+const val DEF_SUBS_TEXT_SIZE = 25.0f
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class SubtitlesFragment : Fragment() {
@@ -75,6 +76,7 @@ class SubtitlesFragment : Fragment() {
         ?: Typeface.SANS_SERIF
       )
     }
+
     fun push(activity: Activity?, hide: Boolean = true) {
       activity.navigate(R.id.global_to_navigation_subtitles, Bundle().apply {
         putBoolean("hide", hide)
@@ -105,7 +107,7 @@ class SubtitlesFragment : Fragment() {
         null,
         null,
         DEF_SUBS_ELEVATION,
-        null,
+        DEF_SUBS_TEXT_SIZE,
       )
     }
 
@@ -169,21 +171,21 @@ class SubtitlesFragment : Fragment() {
     binding?.subtitleText?.setStyle(captionStyle)
     val text = getString(R.string.subtitles_example_text)
     val fixedText = if (state.upperCase) text.uppercase() else text
-    state.fixedTextSize?.let { binding?.subtitleText?.setFixedTextSize(Dimension.SP,
-      it
-    ) };
-    binding?.subtitleText?.setCues(
-      listOf(
-        Cue.Builder()
-          .setTextSize(
-            getPixels(TypedValue.COMPLEX_UNIT_SP, 25.0f).toFloat(),
-            Cue.TEXT_SIZE_TYPE_ABSOLUTE
-          )
-          .setText(fixedText)
-          .build()
+    state.fixedTextSize?.let {
+      binding?.subtitleText?.setCues(
+        listOf(
+          Cue.Builder()
+            .setTextSize(
+              getPixels(TypedValue.COMPLEX_UNIT_SP, it).toFloat(),
+              Cue.TEXT_SIZE_TYPE_ABSOLUTE
+            )
+            .setText(fixedText)
+            .build()
+        )
       )
-    )
+    }
 
+    binding?.applyBtt?.callOnClick()
   }
 
   private fun getColor(id: Int): Int {
@@ -204,13 +206,13 @@ class SubtitlesFragment : Fragment() {
     super.onDestroyView()
   }
 
-  var binding: SubtitleSettingsBinding? = null
+  var binding: FragmentSubtitleSettingsBinding? = null
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
     savedInstanceState: Bundle?
   ): View {
-    val localBinding = SubtitleSettingsBinding.inflate(inflater, container, false)
+    val localBinding = FragmentSubtitleSettingsBinding.inflate(inflater, container, false)
     binding = localBinding
     return localBinding.root
     //return inflater.inflate(R.layout.subtitle_settings, container, false)
@@ -363,11 +365,6 @@ class SubtitlesFragment : Fragment() {
         val suffix = "sp"
         val fontSizes = listOf(
           Pair(null, textView.context.getString(R.string.normal)),
-          Pair(6f, "6$suffix"),
-          Pair(7f, "7$suffix"),
-          Pair(8f, "8$suffix"),
-          Pair(9f, "9$suffix"),
-          Pair(10f, "10$suffix"),
           Pair(11f, "11$suffix"),
           Pair(12f, "12$suffix"),
           Pair(13f, "13$suffix"),
@@ -426,8 +423,8 @@ class SubtitlesFragment : Fragment() {
       }
 
       subsFontSize.setOnLongClickListener { _ ->
-        state.fixedTextSize = null
-        //textView.context.updateState() // font size not changed
+        state.fixedTextSize = DEF_SUBS_TEXT_SIZE;
+        subtitleText.context.updateState()
         showToast(R.string.subs_default_reset_toast, Toast.LENGTH_SHORT)
         return@setOnLongClickListener true
       }
@@ -569,7 +566,33 @@ class SubtitlesFragment : Fragment() {
         it.context.saveStyle(state)
         applyStyleEvent.invoke(state)
         it.context.fromSaveToStyle(state)
-        activity?.onBackPressedDispatcher?.onBackPressed()
+//        activity?.onBackPressedDispatcher?.onBackPressed()
+      }
+
+      resetAllSubtitleSettings.setOnClickListener {
+        state = SaveCaptionStyle(
+          getDefColor(0),
+          getDefColor(2),
+          getDefColor(3),
+          CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+          getDefColor(1),
+          null,
+          null,
+          DEF_SUBS_ELEVATION,
+          DEF_SUBS_TEXT_SIZE,
+        )
+        applyBtt.callOnClick()
+        subtitleText.context.updateState()
+        subtitlesRemoveBloat.isChecked = state.removeBloat
+        subtitlesUppercase.isChecked = state.upperCase
+
+
+        subtitlesRemoveCaptions.isChecked = state.removeCaptions
+        context?.let { ctx ->
+          subtitlesFilterSubLang.isChecked = false
+          PreferenceManager.getDefaultSharedPreferences(ctx)
+            .edit().putBoolean(getString(R.string.filter_sub_lang_key), false).apply()
+        }
       }
     }
   }

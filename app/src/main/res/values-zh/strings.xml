@@ -383,7 +383,7 @@
 	https://en.wikipedia.org/w/index.php?title=Pangram&oldid=225849300
 	https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
     -->
-    <string name="subtitles_example_text">The quick brown fox jumps over the lazy dog</string>
+    <string name="subtitles_example_text">The gray rabbit hides in the grass</string>
     <string name="recommended">推荐</string>
     <string name="player_loaded_subtitles" formatted="true">已加载 %s</string>
     <string name="player_load_subtitles">从文件加载</string>

@@ -115,7 +115,7 @@
     app:exitAnim="@anim/exit_anim"
     app:popEnterAnim="@anim/enter_anim"
     app:popExitAnim="@anim/exit_anim"
-    tools:layout="@layout/subtitle_settings" />
+    tools:layout="@layout/fragment_subtitle_settings" />
 
   <fragment
     android:id="@+id/navigation_chrome_subtitles"

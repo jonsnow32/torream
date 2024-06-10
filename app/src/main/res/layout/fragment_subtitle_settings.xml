@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:id="@+id/subs_root"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:id="@+id/subs_root"
+  android:background="?attr/primaryBlackBackground"
   android:orientation="vertical">
+
   <TextView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_rowWeight="1"
-    android:layout_marginTop="20dp"
-    android:layout_marginBottom="10dp"
+    android:background="?attr/primaryGrayBackground"
     android:paddingStart="20dp"
+    android:paddingTop="20dp"
     android:paddingEnd="20dp"
+    android:paddingBottom="10dp"
     android:text="@string/subtitles_settings"
     android:textColor="?attr/textColor"
     android:textSize="20sp"
@@ -28,12 +30,13 @@
       android:contentDescription="@string/preview_background_img_des"
       android:scaleType="centerCrop"
       android:src="@drawable/subtitles_preview_background" />
+
     <androidx.media3.ui.SubtitleView
-    android:id="@+id/subtitle_text"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_gravity="center"
-    android:foregroundGravity="center" />
+      android:id="@+id/subtitle_text"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_gravity="center"
+      android:foregroundGravity="center" />
   </FrameLayout>
 
   <ScrollView
@@ -45,6 +48,7 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical">
+
       <TextView
         android:id="@+id/subs_font"
         style="@style/SettingsItem"
@@ -206,12 +210,22 @@
         android:textColor="?attr/textColor"
         android:textSize="14sp" />
 
+      <Button
+        style="@style/RoundedSelectableButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/reset_all_subtitle_settings"
+        android:text="@string/reset_all"
+        android:layout_gravity="center_horizontal">
+      </Button>
+
       <TextView
         android:id="@+id/subs_import_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_rowWeight="1"
         android:gravity="center"
+        android:visibility="gone"
         android:text="@string/subs_import_text"
         android:textColor="?attr/textColor"
         android:textSize="14sp" />
@@ -221,6 +235,7 @@
         android:layout_height="60dp"
         android:layout_gravity="bottom"
         android:gravity="bottom|end"
+        android:visibility="gone"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton

@@ -159,7 +159,7 @@ class CSPlayerFragment : FullScreenPlayer() {
         startPosition = if (sameEpisode) null else if (isNextEpisode) 0L else link.first?.position,
         currentSubs,
         (if (sameEpisode) currentSelectedSubtitles else null) ?: getAutoSelectSubtitle(
-          currentSubs, settings = true, downloads = true
+          currentSubs, settings = true, downloads = false
         ),
         preview = isFullScreenPlayer
       )
@@ -647,13 +647,6 @@ class CSPlayerFragment : FullScreenPlayer() {
           audioList.setItemChecked(which, true)
         }
 
-        val currentVideo = currentVideoTracks.getOrNull(videoIndex)
-        val width = currentVideo?.width ?: NO_VALUE
-        val height = currentVideo?.height ?: NO_VALUE
-        if (width != NO_VALUE && height != NO_VALUE) {
-          player.setMaxVideoSize(width, height, currentVideo?.id)
-        }
-
 
         val subtitleList = binding.sortSubtitles
         val loadFromFileFooter: TextView =
@@ -750,6 +743,13 @@ class CSPlayerFragment : FullScreenPlayer() {
                 setSubtitles(it)
               } ?: false
             }
+          }
+
+          val currentVideo = currentVideoTracks.getOrNull(videoIndex)
+          val width = currentVideo?.width ?: NO_VALUE
+          val height = currentVideo?.height ?: NO_VALUE
+          if (width != NO_VALUE && height != NO_VALUE) {
+            player.setMaxVideoSize(width, height, currentVideo?.id)
           }
           trackDialog.dismissSafe(activity)
         }

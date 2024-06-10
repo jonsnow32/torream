@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
@@ -104,7 +105,7 @@ class InAppUpdater {
           ).text
         )
 
-      val versionRegex = Regex("""(.*?((\d+)\.(\d+)\.(\d+))\.apk)""")
+      val versionRegex = Regex("""(.*?((\d+)\.(\d+)\.(\d+)))""") //get from tag_name
       val versionRegexLocal = Regex("""(.*?((\d+)\.(\d+)\.(\d+)).*)""")
       /*
       val releases = response.map { it.assets }.flatten()
@@ -117,47 +118,47 @@ class InAppUpdater {
         response.filter { rel ->
           !rel.prerelease
         }.sortedWith(compareBy { release ->
-          release.assets.firstOrNull { it.content_type == "application/vnd.android.package-archive" }?.name?.let { it1 ->
-            versionRegex.find(
-              it1
-            )?.groupValues?.let {
-              it[3].toInt() * 100_000_000 + it[4].toInt() * 10_000 + it[5].toInt()
-            }
+          versionRegex.find(
+            release.tag_name
+          )?.groupValues?.let {
+            it[3].toInt() * 100 + it[4].toInt() * 10 + it[5].toInt()
           }
         }).toList()
       val found = foundList.lastOrNull()
-      val foundAsset = found?.assets?.getOrNull(0)
-      val currentVersion = packageName?.let {
-        packageManager.getPackageInfo(
-          it,
-          0
-        )
-      }
+      found?.tag_name?.let {versionName ->
+        val versionCode = versionRegex.find(
+          versionName
+        )?.groupValues?.let {
+          it[3].toInt() * 100 + it[4].toInt() * 10 + it[5].toInt()
+        }
 
-      foundAsset?.name?.let { assetName ->
-        val foundVersion = versionRegex.find(assetName)
-        val shouldUpdate =
-          if (foundAsset.browser_download_url != "" && foundVersion != null) currentVersion?.versionName?.let { versionName ->
-            versionRegexLocal.find(versionName)?.groupValues?.let {
-              it[3].toInt() * 100_000_000 + it[4].toInt() * 10_000 + it[5].toInt()
-            }
-          }?.compareTo(
-            foundVersion.groupValues.let {
-              it[3].toInt() * 100_000_000 + it[4].toInt() * 10_000 + it[5].toInt()
-            }
-          )!! < 0 else false
-        return if (foundVersion != null) {
-          Update(
+        val foundAsset = found.assets.getOrNull(0)
+        val currentVersionCode = packageName?.let {
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageManager.getPackageInfo(
+              it,
+              0
+            ).longVersionCode
+          } else {
+            packageManager.getPackageInfo(
+              it,
+              0
+            ).versionCode.toLong()
+          }
+        }
+        if(versionCode != null && currentVersionCode != null && !foundAsset?.browser_download_url.isNullOrEmpty()) {
+          val shouldUpdate = versionCode.toLong() > currentVersionCode
+          return Update(
             shouldUpdate,
-            foundAsset.browser_download_url,
-            foundVersion.groupValues[2],
+            foundAsset?.browser_download_url,
+            "v${versionCode}",
             found.body,
             found.node_id
           )
-        } else {
-          Update(false, null, null, null, null)
         }
       }
+
+
       return Update(false, null, null, null, null)
     }
 
@@ -287,12 +288,12 @@ class InAppUpdater {
 
           runOnUiThread {
             try {
-              val currentVersion = "v" + BuildConfig.VERSION_NAME
+              val currentVersion = "v" + BuildConfig.VERSION_CODE
 
               val builder: AlertDialog.Builder = AlertDialog.Builder(this)
               builder.setTitle(
                 getString(R.string.new_update_format).format(
-                  "currentVersion",
+                  currentVersion,
                   update.updateVersion
                 )
               )

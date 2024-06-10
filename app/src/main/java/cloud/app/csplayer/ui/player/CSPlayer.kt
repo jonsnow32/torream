@@ -1256,7 +1256,9 @@ class CSPlayer : IPlayer {
         .setId(sub.getId())
         .setSelectionFlags(0)
         .build()
+
       when (sub.origin) {
+        SubtitleOrigin.EMBEDDED_IN_VIDEO,
         SubtitleOrigin.DOWNLOADED_FILE -> {
           if (offlineSourceFactory != null) {
             activeSubtitles.add(sub)
@@ -1274,16 +1276,6 @@ class CSPlayer : IPlayer {
               if (sub.headers.isNotEmpty())
                 this.setDefaultRequestProperties(sub.headers)
             })
-              .createMediaSource(subConfig, TIME_UNSET)
-          } else {
-            null
-          }
-        }
-
-        SubtitleOrigin.EMBEDDED_IN_VIDEO -> {
-          if (offlineSourceFactory != null) {
-            activeSubtitles.add(sub)
-            SingleSampleMediaSource.Factory(offlineSourceFactory)
               .createMediaSource(subConfig, TIME_UNSET)
           } else {
             null

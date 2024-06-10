@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.LogcatBinding
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getPref
@@ -130,8 +131,9 @@ class SettingsUpdates : PreferenceFragmentCompat() {
             }
             return@setOnPreferenceClickListener true
         }
-
-        getPref(R.string.manual_check_update_key)?.setOnPreferenceClickListener {
+        val checkUpdatePref = getPref(R.string.manual_check_update_key);
+      checkUpdatePref?.summary = BuildConfig.VERSION_NAME
+      checkUpdatePref?.setOnPreferenceClickListener {
             ioSafe {
                 if (activity?.runAutoUpdate(false) == false) {
                     activity?.runOnUiThread {

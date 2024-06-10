@@ -392,7 +392,7 @@
     <string name="subtitles_raised">ထမြောက်မှု</string>
     <string name="subtitle_offset">စာတန်းထိုးများ ထပ်တူပြုရန်</string>
     <string name="subtitle_offset_extra_hint_later_format">စာတန်းထိုးများ အလွန်စောနေပါက %d ms ဒီဟာကိုသုံးပါ</string>
-    <string name="subtitles_example_text">The quick brown fox jumps over the lazy dog</string>
+    <string name="subtitles_example_text">The gray rabbit hides in the grass</string>
     <string name="player_loaded_subtitles" formatted="true">တင်ပြီး %s</string>
     <string name="player_load_subtitles">ဖိုင်မှတင်သွင်းပြီး</string>
     <string name="quality_cam_hd">ရုံရိုက်</string>
