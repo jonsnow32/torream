@@ -62,17 +62,17 @@
   </PreferenceCategory>
 
 
-  <PreferenceCategory
-    android:title="@string/pref_category_links">
+<!--  <PreferenceCategory-->
+<!--    android:title="@string/pref_category_links">-->
 
-    <Preference
-      android:title="@string/github"
-      android:layout="@layout/custom_preference"
-      android:icon="@drawable/ic_github_logo"
-      app:summary="https://github.com/recloudstream/cloudstream">
-      <intent
-        android:action="android.intent.action.VIEW"
-        android:data="https://github.com/recloudstream/cloudstream" />
-    </Preference>
-  </PreferenceCategory>
+<!--    <Preference-->
+<!--      android:title="@string/github"-->
+<!--      android:layout="@layout/custom_preference"-->
+<!--      android:icon="@drawable/ic_github_logo"-->
+<!--      app:summary="https://github.com/recloudstream/cloudstream">-->
+<!--      <intent-->
+<!--        android:action="android.intent.action.VIEW"-->
+<!--        android:data="https://github.com/recloudstream/cloudstream" />-->
+<!--    </Preference>-->
+<!--  </PreferenceCategory>-->
 </PreferenceScreen>

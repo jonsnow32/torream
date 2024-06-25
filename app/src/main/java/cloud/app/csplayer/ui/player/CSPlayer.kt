@@ -23,6 +23,7 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultDataSourceFactory
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
@@ -589,7 +590,7 @@ class CSPlayer : IPlayer {
 
     @SuppressLint("UnsafeOptInUsageError")
     private fun Context.createOfflineSource(): DataSource.Factory {
-      return DefaultDataSourceFactory(this, USER_AGENT)
+      return DefaultDataSource.Factory(this)
     }
 
     /*private fun getSubSources(

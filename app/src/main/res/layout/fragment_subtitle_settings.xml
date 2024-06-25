@@ -210,14 +210,11 @@
         android:textColor="?attr/textColor"
         android:textSize="14sp" />
 
-      <Button
-        style="@style/RoundedSelectableButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+      <com.google.android.material.button.MaterialButton
+        style="@style/BlackButton"
         android:id="@+id/reset_all_subtitle_settings"
         android:text="@string/reset_all"
-        android:layout_gravity="center_horizontal">
-      </Button>
+        android:layout_gravity="center_horizontal"/>
 
       <TextView
         android:id="@+id/subs_import_text"

@@ -797,7 +797,13 @@ class CSPlayerFragment : FullScreenPlayer() {
 //        if(index + 1 < allLinks.size)
 //          loadLink(allLinks.elementAt(index+1), false);
 //    }
-
+    player.getPosition()?.let {
+      CommonActivitty.activityResultEvent?.invoke(
+        Activity.RESULT_OK,
+        it
+      )
+    }
+    activity?.finish()
   }
 
   override fun prevEpisode() {

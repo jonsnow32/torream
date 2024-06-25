@@ -1,15 +1,25 @@
 package cloud.app.csplayer
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import android.view.KeyEvent
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentResultListener
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -136,6 +146,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     CommonActivitty.init(this)
 
     super.onCreate(savedInstanceState)
+
+    if(!hasAllFilesAccessPermission(this)) {
+      //create a dialog to request permission
+      val dialog = AlertDialog.Builder(this).setTitle(R.string.request_permission_title).setMessage(R.string.request_permission_message).setPositiveButton(R.string.ok) { dialog, which ->
+        requestAllFilesAccessPermission(this, 100)
+        dialog.dismiss()
+      }.create()
+      dialog.show()
+    }
+
     try {
       if (isCastApiAvailable()) {
         mSessionManager = CastContext.getSharedInstance(this).sessionManager
@@ -166,7 +186,23 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
     handleAppIntent(intent)
   }
-
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    if (requestCode == 100) {
+      if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        // Permission was granted, yay! Do the
+        // contacts-related task you need to do.
+        Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show()
+      } else {
+        // Permission was denied, handle the case where you inform the user and potentially disable features
+        Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+      }
+    }
+  }
   override fun onStop() {
     super.onStop()
   }
@@ -504,5 +540,53 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
     return super.dispatchKeyEvent(event)
   }
+  fun hasAllFilesAccessPermission(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      Environment.isExternalStorageManager()
+    } else {
+      // For Android 10 and below, check if WRITE_EXTERNAL_STORAGE permission is granted
+      (ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+      ) == PackageManager.PERMISSION_GRANTED)
+    }
+  }
 
+  fun requestAllFilesAccessPermission(activity: Activity, requestCode: Int) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      try {
+        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+        intent.addCategory(Intent.CATEGORY_DEFAULT)
+        val uri: Uri = Uri.fromParts("package", activity.packageName, null)
+        intent.data = uri
+        activity.startActivityForResult(intent, requestCode)
+      } catch (e: Exception) {
+        if (ContextCompat.checkSelfPermission(
+            activity,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+          )
+          != PackageManager.PERMISSION_GRANTED
+        ) {
+          ActivityCompat.requestPermissions(
+            activity, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            requestCode
+          )
+        }
+      }
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      // For Android 6 (Marshmallow) to Android 10, use WRITE_EXTERNAL_STORAGE
+      if (ContextCompat.checkSelfPermission(
+          activity,
+          Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) != PackageManager.PERMISSION_GRANTED
+      )
+        ActivityCompat.requestPermissions(
+          activity,
+          arrayOf(
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+          ),
+          requestCode
+        )
+    }
+  }
 }

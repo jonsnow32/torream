@@ -98,7 +98,7 @@ class CSPlayerViewModel(private val arguments: SavedStateHandle) : ViewModel() {
             SubtitleData(
               SubtitleHelper.fromTwoLettersToLanguage(languageCode) ?: languageCode,
               url = values[index],
-              origin = SubtitleOrigin.URL,
+              origin = if(values[index].startsWith("http")) SubtitleOrigin.URL else SubtitleOrigin.DOWNLOADED_FILE,
               mimeType = values[index].toSubtitleMimeType(),
               headers = headerMap,
               languageCode = languageCode
