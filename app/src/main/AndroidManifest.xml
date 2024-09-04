@@ -14,6 +14,7 @@
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /> <!-- Used for app update -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Used for app notifications on Android 13+ -->
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- Used for update service -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
   <!-- Required for getting arbitrary Aniyomi packages  -->
   <uses-permission
     android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -27,10 +28,12 @@
     android:name="android.software.leanback"
     android:required="false" />
 
+  <uses-feature android:glEsVersion="0x00020000" />
+
   <queries>
     <package android:name="org.videolan.vlc" />
     <package android:name="com.instantbits.cast.webvideo" />
-    <package android:name="is.xyz.mpv" />
+    <package android:name="cloud.app.csplayer" />
   </queries>
 
   <application
@@ -118,6 +121,17 @@
         android:resource="@xml/provider_paths" />
     </provider>
 
+    <service
+      android:name=".ui.player.mpv.BackgroundPlaybackService"
+      android:foregroundServiceType="mediaPlayback"
+      android:exported="false" />
+    <receiver android:name=".ui.player.mpv.NotificationButtonReceiver" android:exported="false">
+      <intent-filter>
+        <action android:name="cloud.app.csplayer.ui.player.mpv.PLAY_PAUSE" />
+        <action android:name="cloud.app.csplayer.ui.player.mpv.ACTION_PREV" />
+        <action android:name="cloud.app.csplayer.ui.player.mpv.ACTION_NEXT" />
+      </intent-filter>
+    </receiver>
   </application>
 
 </manifest>

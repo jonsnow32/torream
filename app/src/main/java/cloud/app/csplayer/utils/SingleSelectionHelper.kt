@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Dialog
 import android.text.Spanned
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.AbsListView
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
@@ -20,307 +19,315 @@ import cloud.app.csplayer.databinding.BottomInputDialogBinding
 import cloud.app.csplayer.databinding.BottomSelectionDialogBinding
 import cloud.app.csplayer.databinding.BottomTextDialogBinding
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 
 object SingleSelectionHelper {
-    fun Activity?.showDialog(
-      binding: BottomSelectionDialogBinding,
-      dialog: Dialog,
-      items: List<String>,
-      selectedIndex: List<Int>,
-      name: String,
-      showApply: Boolean,
-      isMultiSelect: Boolean,
-      callback: (List<Int>) -> Unit,
-      dismissCallback: () -> Unit,
-      itemLayout: Int = R.layout.sort_bottom_single_choice
-    ) {
-        if (this == null) return
+  fun Activity?.showDialog(
+    binding: BottomSelectionDialogBinding,
+    dialog: Dialog,
+    items: List<String>,
+    selectedIndex: List<Int>,
+    name: String,
+    showApply: Boolean,
+    isMultiSelect: Boolean,
+    callback: (List<Int>) -> Unit,
+    dismissCallback: () -> Unit,
+    itemLayout: Int = R.layout.sort_bottom_single_choice
+  ) {
+    if (this == null) return
 
-        val realShowApply = showApply || isMultiSelect
-        val listView = binding.listview1
-        val textView = binding.text1
-        val applyButton = binding.applyBtt
-        val cancelButton = binding.cancelBtt
-        val applyHolder =
-            binding.applyBttHolder
+    val realShowApply = showApply || isMultiSelect
+    val listView = binding.listview1
+    val textView = binding.text1
+    val applyButton = binding.applyBtt
+    val cancelButton = binding.cancelBtt
+    val applyHolder =
+      binding.applyBttHolder
 
-        applyHolder.isVisible = realShowApply
-        if (!realShowApply) {
-            val params = listView.layoutParams as LinearLayout.LayoutParams
-            params.setMargins(listView.marginLeft, listView.marginTop, listView.marginRight, 0)
-            listView.layoutParams = params
-        }
-
-        textView.text = name
-        textView.isGone = name.isBlank()
-
-        val arrayAdapter = ArrayAdapter<String>(this, itemLayout)
-        arrayAdapter.addAll(items)
-
-        listView.adapter = arrayAdapter
-        if (isMultiSelect) {
-            listView.choiceMode = AbsListView.CHOICE_MODE_MULTIPLE
-        } else {
-            listView.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-        }
-
-        for (select in selectedIndex) {
-            listView.setItemChecked(select, true)
-        }
-
-        selectedIndex.minOrNull()?.let {
-            listView.setSelection(it)
-        }
-
-        //  var lastSelectedIndex = if(selectedIndex.isNotEmpty()) selectedIndex.first() else -1
-
-        dialog.setOnDismissListener {
-            dismissCallback.invoke()
-        }
-
-        listView.setOnItemClickListener { _, _, which, _ ->
-            //  lastSelectedIndex = which
-            if (realShowApply) {
-                if (!isMultiSelect) {
-                    listView.setItemChecked(which, true)
-                }
-            } else {
-                callback.invoke(listOf(which))
-                dialog.dismissSafe(this)
-            }
-        }
-        if (realShowApply) {
-            applyButton.setOnClickListener {
-                val list = ArrayList<Int>()
-                for (index in 0 until listView.count) {
-                    if (listView.checkedItemPositions[index])
-                        list.add(index)
-                }
-                callback.invoke(list)
-                dialog.dismissSafe(this)
-            }
-            cancelButton.setOnClickListener {
-                dialog.dismissSafe(this)
-            }
-        }
+    applyHolder.isVisible = realShowApply
+    if (!realShowApply) {
+      val params = listView.layoutParams as LinearLayout.LayoutParams
+      params.setMargins(listView.marginLeft, listView.marginTop, listView.marginRight, 0)
+      listView.layoutParams = params
     }
 
-    private fun Activity?.showInputDialog(
-      binding: BottomInputDialogBinding,
-      dialog: Dialog,
-      value: String,
-      name: String,
-      textInputType: Int?,
-      callback: (String) -> Unit,
-      dismissCallback: () -> Unit
-    ) {
-        if (this == null) return
+    textView.text = name
+    textView.isGone = name.isBlank()
 
-        val inputView = binding.nginxTextInput
-        val textView = binding.text1
-        val applyButton = binding.applyBtt
-        val cancelButton = binding.cancelBtt
-        val applyHolder = binding.applyBttHolder
+    val arrayAdapter = ArrayAdapter<String>(this, itemLayout)
+    arrayAdapter.addAll(items)
 
-        applyHolder.isVisible = true
-        textView.text = name
+    listView.adapter = arrayAdapter
+    if (isMultiSelect) {
+      listView.choiceMode = AbsListView.CHOICE_MODE_MULTIPLE
+    } else {
+      listView.choiceMode = AbsListView.CHOICE_MODE_SINGLE
+    }
 
-        if (textInputType != null) {
-            inputView.inputType = textInputType // 16 for website url input type
+    for (select in selectedIndex) {
+      listView.setItemChecked(select, true)
+    }
+
+    selectedIndex.minOrNull()?.let {
+      listView.setSelection(it)
+    }
+
+    //  var lastSelectedIndex = if(selectedIndex.isNotEmpty()) selectedIndex.first() else -1
+
+    dialog.setOnDismissListener {
+      dismissCallback.invoke()
+    }
+
+    listView.setOnItemClickListener { _, _, which, _ ->
+      //  lastSelectedIndex = which
+      if (realShowApply) {
+        if (!isMultiSelect) {
+          listView.setItemChecked(which, true)
         }
-        inputView.setText(value, TextView.BufferType.EDITABLE)
-
-
-        applyButton.setOnClickListener {
-            callback.invoke(inputView.text.toString())  // try to save the setting, using callback
-            dialog.dismissSafe(this)
+      } else {
+        callback.invoke(listOf(which))
+        dialog.dismissSafe(this)
+      }
+    }
+    if (realShowApply) {
+      applyButton.setOnClickListener {
+        val list = ArrayList<Int>()
+        for (index in 0 until listView.count) {
+          if (listView.checkedItemPositions[index])
+            list.add(index)
         }
+        callback.invoke(list)
+        dialog.dismissSafe(this)
+      }
+      cancelButton.setOnClickListener {
+        dialog.dismissSafe(this)
+      }
+    }
+  }
 
-        cancelButton.setOnClickListener {  // just dismiss
-            dialog.dismissSafe(this)
-        }
+  private fun Activity?.showInputDialog(
+    binding: BottomInputDialogBinding,
+    dialog: Dialog,
+    value: String,
+    name: String,
+    textInputType: Int?,
+    callback: (String) -> Unit,
+    dismissCallback: () -> Unit
+  ) {
+    if (this == null) return
 
-        dialog.setOnDismissListener {
-            dismissCallback.invoke()
-        }
+    val inputView = binding.nginxTextInput
+    val textView = binding.text1
+    val applyButton = binding.applyBtt
+    val cancelButton = binding.cancelBtt
+    val applyHolder = binding.applyBttHolder
 
+    applyHolder.isVisible = true
+    textView.text = name
+
+    if (textInputType != null) {
+      inputView.inputType = textInputType // 16 for website url input type
+    }
+    inputView.setText(value, TextView.BufferType.EDITABLE)
+
+
+    applyButton.setOnClickListener {
+      callback.invoke(inputView.text.toString())  // try to save the setting, using callback
+      dialog.dismissSafe(this)
     }
 
-    fun Activity?.showMultiDialog(
-        items: List<String>,
-        selectedIndex: List<Int>,
-        name: String,
-        dismissCallback: () -> Unit,
-        callback: (List<Int>) -> Unit,
-    ) {
-        if (this == null) return
-
-        val binding: BottomSelectionDialogBinding = BottomSelectionDialogBinding.inflate(
-            LayoutInflater.from(this)
-        )
-        val builder =
-            AlertDialog.Builder(this, R.style.AlertDialogCustom)
-                .setView(binding.root)
-
-        val dialog = builder.create()
-        dialog.show()
-        showDialog(
-            binding,
-            dialog,
-            items,
-            selectedIndex,
-            name,
-            showApply = true,
-            isMultiSelect = true,
-            callback,
-            dismissCallback
-        )
+    cancelButton.setOnClickListener {  // just dismiss
+      dialog.dismissSafe(this)
     }
 
-    fun Activity?.showDialog(
-        items: List<String>,
-        selectedIndex: Int,
-        name: String,
-        showApply: Boolean,
-        dismissCallback: () -> Unit,
-        callback: (Int) -> Unit,
-    ) {
-        if (this == null) return
-
-        val binding: BottomSelectionDialogBinding = BottomSelectionDialogBinding.inflate(
-            LayoutInflater.from(this)
-        )
-        val builder =
-            AlertDialog.Builder(this, R.style.AlertDialogCustom)
-                .setView(binding.root)
-
-        val dialog = builder.create()
-        dialog.show()
-
-
-        showDialog(
-            binding,
-            dialog,
-            items,
-            listOf(selectedIndex),
-            name,
-            showApply,
-            false,
-            { if (it.isNotEmpty()) callback.invoke(it.first()) },
-            dismissCallback
-        )
+    dialog.setOnDismissListener {
+      dismissCallback.invoke()
     }
 
-    /** Only for a low amount of items */
-    fun Activity?.showBottomDialog(
-        items: List<String>,
-        selectedIndex: Int,
-        name: String,
-        showApply: Boolean,
-        dismissCallback: () -> Unit,
-        callback: (Int) -> Unit,
-    ) {
-        if (this == null) return
+  }
 
-        val binding: BottomSelectionDialogBinding = BottomSelectionDialogBinding.inflate(
-            LayoutInflater.from(this)
-        )
+  fun Activity?.showMultiDialog(
+    items: List<String>,
+    selectedIndex: List<Int>,
+    name: String,
+    dismissCallback: () -> Unit,
+    callback: (List<Int>) -> Unit,
+  ) {
+    if (this == null) return
 
-        val builder =
-            BottomSheetDialog(this)
-        builder.setContentView(binding.root)
+    val binding: BottomSelectionDialogBinding = BottomSelectionDialogBinding.inflate(
+      LayoutInflater.from(this)
+    )
+    val builder =
+      AlertDialog.Builder(this, R.style.AlertDialogCustom)
+        .setView(binding.root)
 
-        builder.show()
-        showDialog(
-            binding,
-            builder,
-            items,
-            listOf(selectedIndex),
-            name,
-            showApply,
-            false,
-            { if (it.isNotEmpty()) callback.invoke(it.first()) },
-            dismissCallback
-        )
+    val dialog = builder.create()
+    dialog.show()
+    showDialog(
+      binding,
+      dialog,
+      items,
+      selectedIndex,
+      name,
+      showApply = true,
+      isMultiSelect = true,
+      callback,
+      dismissCallback
+    )
+  }
+
+  fun Activity?.showDialog(
+    items: List<String>,
+    selectedIndex: Int,
+    name: String,
+    showApply: Boolean,
+    dismissCallback: () -> Unit,
+    callback: (Int) -> Unit,
+  ) {
+    if (this == null) return
+
+    val binding: BottomSelectionDialogBinding = BottomSelectionDialogBinding.inflate(
+      LayoutInflater.from(this)
+    )
+    val builder =
+      AlertDialog.Builder(this, R.style.AlertDialogCustom)
+        .setView(binding.root)
+
+    val dialog = builder.create()
+    dialog.show()
+
+
+    showDialog(
+      binding,
+      dialog,
+      items,
+      listOf(selectedIndex),
+      name,
+      showApply,
+      false,
+      { if (it.isNotEmpty()) callback.invoke(it.first()) },
+      dismissCallback
+    )
+  }
+
+  /** Only for a low amount of items */
+  fun Activity?.showBottomDialog(
+    items: List<String>,
+    selectedIndex: Int,
+    name: String,
+    showApply: Boolean,
+    dismissCallback: () -> Unit,
+    callback: (Int) -> Unit,
+  ) {
+    if (this == null) return
+
+    val binding: BottomSelectionDialogBinding = BottomSelectionDialogBinding.inflate(
+      LayoutInflater.from(this)
+    )
+
+    val builder =
+      BottomSheetDialog(this)
+    builder.setContentView(binding.root)
+
+    if (isTvOrEmulator() == true) {
+      builder.setOnShowListener {
+        val bottomSheetBehavior: BottomSheetBehavior<*> = (it as BottomSheetDialog).behavior
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED)
+      }
     }
 
-    fun Activity.showBottomDialogInstant(
-        items: List<String>,
-        name: String,
-        dismissCallback: () -> Unit,
-        callback: (Int) -> Unit,
-    ): BottomSheetDialog {
-        val builder =
-            BottomSheetDialog(this)
+    builder.show()
+    showDialog(
+      binding,
+      builder,
+      items,
+      listOf(selectedIndex),
+      name,
+      showApply,
+      false,
+      { if (it.isNotEmpty()) callback.invoke(it.first()) },
+      dismissCallback
+    )
+  }
 
-        val binding: BottomSelectionDialogBinding = BottomSelectionDialogBinding.inflate(
-            LayoutInflater.from(this)
-        )
+  fun Activity.showBottomDialogInstant(
+    items: List<String>,
+    name: String,
+    dismissCallback: () -> Unit,
+    callback: (Int) -> Unit,
+  ): BottomSheetDialog {
+    val builder =
+      BottomSheetDialog(this)
 
-        //builder.setContentView(R.layout.bottom_selection_dialog_direct)
-        builder.setContentView(binding.root)
-        builder.show()
-        showDialog(
-            binding,
-            builder,
-            items,
-            emptyList(),
-            name,
-            showApply = false,
-            isMultiSelect = false,
-            callback = { if (it.isNotEmpty()) callback.invoke(it.first()) },
-            dismissCallback = dismissCallback,
-            itemLayout = R.layout.sort_bottom_single_choice_no_checkmark
-        )
-        return builder
+    val binding: BottomSelectionDialogBinding = BottomSelectionDialogBinding.inflate(
+      LayoutInflater.from(this)
+    )
+
+    //builder.setContentView(R.layout.bottom_selection_dialog_direct)
+    builder.setContentView(binding.root)
+    builder.show()
+    showDialog(
+      binding,
+      builder,
+      items,
+      emptyList(),
+      name,
+      showApply = false,
+      isMultiSelect = false,
+      callback = { if (it.isNotEmpty()) callback.invoke(it.first()) },
+      dismissCallback = dismissCallback,
+      itemLayout = R.layout.sort_bottom_single_choice_no_checkmark
+    )
+    return builder
+  }
+
+  fun Activity.showNginxTextInputDialog(
+    name: String,
+    value: String,
+    textInputType: Int?,
+    dismissCallback: () -> Unit,
+    callback: (String) -> Unit,
+  ) {
+    val builder = BottomSheetDialog(this)
+
+    val binding: BottomInputDialogBinding = BottomInputDialogBinding.inflate(
+      LayoutInflater.from(this)
+    )
+
+    builder.setContentView(binding.root)
+
+    builder.show()
+    showInputDialog(
+      binding,
+      builder,
+      value,
+      name,
+      textInputType,  // type is a uri
+      callback,
+      dismissCallback
+    )
+  }
+
+  fun Activity.showBottomDialogText(
+    title: String,
+    text: Spanned,
+    dismissCallback: () -> Unit
+  ) {
+    val binding = BottomTextDialogBinding.inflate(layoutInflater)
+    val dialog = BottomSheetDialog(this)
+
+    dialog.setContentView(binding.root)
+
+    binding.dialogTitle.text = title
+    binding.dialogText.text = text
+
+    dialog.setOnDismissListener {
+      dismissCallback.invoke()
     }
 
-    fun Activity.showNginxTextInputDialog(
-        name: String,
-        value: String,
-        textInputType: Int?,
-        dismissCallback: () -> Unit,
-        callback: (String) -> Unit,
-    ) {
-        val builder = BottomSheetDialog(this)
-
-        val binding: BottomInputDialogBinding = BottomInputDialogBinding.inflate(
-            LayoutInflater.from(this)
-        )
-
-        builder.setContentView(binding.root)
-
-        builder.show()
-        showInputDialog(
-            binding,
-            builder,
-            value,
-            name,
-            textInputType,  // type is a uri
-            callback,
-            dismissCallback
-        )
-    }
-
-    fun Activity.showBottomDialogText(
-        title: String,
-        text: Spanned,
-        dismissCallback: () -> Unit
-    ) {
-        val binding = BottomTextDialogBinding.inflate(layoutInflater)
-        val dialog = BottomSheetDialog(this)
-
-        dialog.setContentView(binding.root)
-
-        binding.dialogTitle.text = title
-        binding.dialogText.text = text
-
-        dialog.setOnDismissListener {
-            dismissCallback.invoke()
-        }
-
-        dialog.show()
-    }
+    dialog.show()
+  }
 }

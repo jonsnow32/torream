@@ -13,13 +13,13 @@ import cloud.app.csplayer.utils.Qualities
 import cloud.app.csplayer.utils.SubtitleData
 import cloud.app.csplayer.utils.SubtitleHelper
 import cloud.app.csplayer.utils.SubtitleOrigin
-import cloud.app.csplayer.utils.Utils
 
 const val EXTRA_POSITION = "position" // long
 const val EXTRA_TITLE = "title" // string
 
 const val EXTRA_VIDEO_URLS_NAME_HEADERS = "video_url_headers" // string["url1", "base64(headers1)", "url2", "base64(headers2)" ...]
 const val EXTRA_VIDEO_START_INDEX = "video_start_index" //int
+const val EXTRA_IS_SAME_EPISODE = "is_same_episode" // boolean
 
 const val EXTRA_SUBTITLE_LIST = "subtitles" // string[]
 const val EXTRA_SUBTITLE_START_INDEX = "subtitle_start_index" //int
@@ -31,7 +31,6 @@ class CSPlayerViewModel(private val arguments: SavedStateHandle) : ViewModel() {
   private val _allLinks = MutableLiveData<Set<Pair<ExtractorLink?, ExtractorUri?>>>()
   val allLinks: LiveData<Set<Pair<ExtractorLink?, ExtractorUri?>>> = _allLinks
 
-
   private val _currentSubs = MutableLiveData<Set<SubtitleData>>(setOf())
   val currentSubs: LiveData<Set<SubtitleData>> = _currentSubs
 
@@ -40,6 +39,9 @@ class CSPlayerViewModel(private val arguments: SavedStateHandle) : ViewModel() {
 
   private val _currentSubtitleIndex = MutableLiveData<Int>()
   val currentSubtitleIndex: LiveData<Int> = _currentSubtitleIndex
+
+  private val _isSameEpisode = MutableLiveData<Boolean>()
+  val isSameEpisode: LiveData<Boolean> = _isSameEpisode
 
   init {
     val title = arguments.get<String>(EXTRA_TITLE);
@@ -77,17 +79,10 @@ class CSPlayerViewModel(private val arguments: SavedStateHandle) : ViewModel() {
       }
     }
 
-
-
     if(extractorLinks.isNotEmpty()) {
-      //nothing to do
-      _currentLinkIndex.postValue(arguments.get<Int>(EXTRA_VIDEO_START_INDEX) ?: 0)
       val subtitlesArray =
         arguments.get<Array<String>>(EXTRA_SUBTITLE_LIST); //format ["lang", "url", "lang", "url" ....]
-      _currentSubtitleIndex.postValue(arguments.get<Int>(EXTRA_SUBTITLE_START_INDEX) ?: 0)
       val headerMap = mutableMapOf<String, String>()
-
-
       val subtitles = mutableSetOf<SubtitleData>()
       subtitlesArray?.apply {
         val keys = filterIndexed() { index, s -> index % 2 == 0 }
@@ -107,7 +102,10 @@ class CSPlayerViewModel(private val arguments: SavedStateHandle) : ViewModel() {
         }
       }
       _currentSubs.postValue(subtitles)
+      _currentSubtitleIndex.postValue(arguments.get<Int>(EXTRA_SUBTITLE_START_INDEX) ?: 0)
       _allLinks.postValue(extractorLinks);
+      _currentLinkIndex.postValue(arguments.get<Int>(EXTRA_VIDEO_START_INDEX) ?: 0)
+      _isSameEpisode.postValue(arguments.get<Boolean>(EXTRA_IS_SAME_EPISODE) ?: true)
     }
   }
 

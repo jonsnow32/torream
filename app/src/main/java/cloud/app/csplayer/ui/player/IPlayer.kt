@@ -221,6 +221,7 @@ class InvalidFileException(msg: String) : Exception(msg)
 //http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
 const val ACTION_MEDIA_CONTROL = "media_control"
 const val EXTRA_CONTROL_TYPE = "control_type"
+const val SUBTITLE_DELAY_BUNDLE_KEY = "subtitle_delay"
 
 /** Abstract Exoplayer logic, can be expanded to other players */
 interface IPlayer {

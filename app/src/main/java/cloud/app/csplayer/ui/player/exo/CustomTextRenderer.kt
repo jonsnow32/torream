@@ -1,10 +1,9 @@
-package cloud.app.csplayer.ui.player
+package cloud.app.csplayer.ui.player.exo
 
 import android.os.Looper
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.text.SubtitleDecoderFactory
 import androidx.media3.exoplayer.text.TextOutput
-import cloud.app.csplayer.ui.player.NonFinalTextRenderer
 
 @UnstableApi
 class CustomTextRenderer(

@@ -1,4 +1,4 @@
-package cloud.app.csplayer.ui.player
+package cloud.app.csplayer.ui.player.exo
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -24,7 +24,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultDataSourceFactory
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.cache.CacheDataSource
@@ -53,6 +52,32 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.app
 import cloud.app.csplayer.model.SaveCaptionStyle
+import cloud.app.csplayer.ui.player.AudioTrack
+import cloud.app.csplayer.ui.player.CSPlayerEvent
+import cloud.app.csplayer.ui.player.CSPlayerLoading
+import cloud.app.csplayer.ui.player.CurrentTracks
+import cloud.app.csplayer.ui.player.EmbeddedSubtitlesFetchedEvent
+import cloud.app.csplayer.ui.player.EpisodeSeekEvent
+import cloud.app.csplayer.ui.player.ErrorEvent
+import cloud.app.csplayer.ui.player.IPlayer
+import cloud.app.csplayer.ui.player.InvalidFileException
+import cloud.app.csplayer.ui.player.PauseEvent
+import cloud.app.csplayer.ui.player.PlayEvent
+import cloud.app.csplayer.ui.player.PlayerAttachedEvent
+import cloud.app.csplayer.ui.player.PlayerEvent
+import cloud.app.csplayer.ui.player.PlayerEventSource
+import cloud.app.csplayer.ui.player.PositionEvent
+import cloud.app.csplayer.ui.player.RequestAudioFocusEvent
+import cloud.app.csplayer.ui.player.ResizedEvent
+import cloud.app.csplayer.ui.player.SSLTrustManager
+import cloud.app.csplayer.ui.player.SkipStamp
+import cloud.app.csplayer.ui.player.StatusEvent
+import cloud.app.csplayer.ui.player.SubtitlesUpdatedEvent
+import cloud.app.csplayer.ui.player.TimestampInvokedEvent
+import cloud.app.csplayer.ui.player.TimestampSkippedEvent
+import cloud.app.csplayer.ui.player.TracksChangedEvent
+import cloud.app.csplayer.ui.player.VideoEndedEvent
+import cloud.app.csplayer.ui.player.VideoTrack
 import cloud.app.csplayer.utils.DataStore.deleteFileOnExit
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.DataStore.setKey
@@ -67,7 +92,6 @@ import cloud.app.csplayer.utils.SubtitleHelper.fromTwoLettersToLanguage
 import cloud.app.csplayer.utils.SubtitleOrigin
 import cloud.app.csplayer.utils.SubtitleStatus
 import cloud.app.csplayer.utils.Utils
-import cloud.app.csplayer.utils.Utils.activity
 import cloud.app.csplayer.utils.Utils.debugAssert
 import cloud.app.csplayer.utils.Utils.isUsingMobileData
 import cloud.app.csplayer.utils.Utils.logError
@@ -152,6 +176,7 @@ class CSPlayer : IPlayer {
    * String = id
    * Boolean = if it's active
    * */
+
   private var playerSelectedSubtitleTracks = listOf<Pair<String, Boolean>>()
   private var requestedListeningPercentages: List<Int>? = null
 
@@ -720,7 +745,7 @@ class CSPlayer : IPlayer {
                   textRendererOutput,
                   eventHandler.looper,
                   CustomSubtitleDecoderFactory()
-                ).also { this.currentTextRenderer = it }
+                ).also { currentTextRenderer = it }
                 currentTextRenderer
               } else it
             }.toTypedArray()
@@ -1380,4 +1405,5 @@ class CSPlayer : IPlayer {
       loadOfflinePlayer(context, it)
     }
   }
+
 }

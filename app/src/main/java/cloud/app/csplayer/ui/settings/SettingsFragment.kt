@@ -1,15 +1,11 @@
 package cloud.app.csplayer.ui.settings
 
-import android.accounts.AccountManager
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.ImageView
 import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
@@ -23,7 +19,6 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
 import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URLS_NAME_HEADERS
 
-import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.SingleSelectionHelper.showNginxTextInputDialog
 import cloud.app.csplayer.utils.UIHelper
@@ -36,7 +31,6 @@ import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.txt
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.textfield.TextInputEditText
 import java.io.File
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -190,7 +184,7 @@ class SettingsFragment : Fragment() {
         activity?.showNginxTextInputDialog("Your Link", text, 16, {
         }, {
           activity?.navigate(
-            R.id.global_to_navigation_player,
+            R.id.global_to_navigation_mvp_player,
             bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
           )
         });

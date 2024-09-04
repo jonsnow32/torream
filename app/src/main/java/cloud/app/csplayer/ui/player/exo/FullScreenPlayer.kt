@@ -1,20 +1,24 @@
-package cloud.app.csplayer.ui.player
+package cloud.app.csplayer.ui.player.exo
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
-import android.content.res.ColorStateList
 import android.content.res.Configuration
-import android.graphics.Color
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
 import android.text.format.DateUtils
-import android.view.*
+import android.view.KeyEvent
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.Surface
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
@@ -23,9 +27,6 @@ import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.graphics.blue
-import androidx.core.graphics.green
-import androidx.core.graphics.red
 import androidx.core.view.isGone
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -37,6 +38,10 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
+import cloud.app.csplayer.ui.player.CSPlayerEvent
+import cloud.app.csplayer.ui.player.PlayerEventSource
+import cloud.app.csplayer.ui.player.PlayerEventType
+import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
 import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
 import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty
@@ -48,7 +53,6 @@ import cloud.app.csplayer.utils.DataStore
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SubtitleData
-import cloud.app.csplayer.utils.UIHelper.colorFromAttribute
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.UIHelper.getNavigationBarHeight
 import cloud.app.csplayer.utils.UIHelper.getStatusBarHeight
@@ -66,7 +70,11 @@ import cloud.app.csplayer.utils.txt
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastState
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.round
 
 const val MINIMUM_SEEK_TIME = 7000L         // when swipe seeking
 const val MINIMUM_VERTICAL_SWIPE = 2.0f     // in percentage
@@ -76,7 +84,7 @@ const val HORIZONTAL_MULTIPLIER = 2.0f
 const val DOUBLE_TAB_MAXIMUM_HOLD_TIME = 200L
 const val DOUBLE_TAB_MINIMUM_TIME_BETWEEN = 200L    // this also affects the UI show response time
 const val DOUBLE_TAB_PAUSE_PERCENTAGE = 0.15        // in both directions
-private const val SUBTITLE_DELAY_BUNDLE_KEY = "subtitle_delay"
+
 
 // All the UI Logic for the player
 open class FullScreenPlayer : AbstractPlayerFragment() {
@@ -224,15 +232,15 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     fadeAnimation.duration = 100
     fadeAnimation.fillAfter = true
 
-    val sView = subView
-    val sStyle = subStyle
-    if (sView != null && sStyle != null) {
-      val move = if (isShowing) (-70.toPx.toFloat() -sStyle.elevation.toPx.toFloat())else -sStyle.elevation.toPx.toFloat()
-      ObjectAnimator.ofFloat(sView, "translationY", move).apply {
-        duration = 200
-        start()
-      }
-    }
+//    val sView = subView
+//    val sStyle = subStyle
+//    if (sView != null && sStyle != null) {
+//      val move = if (isShowing) (-70.toPx.toFloat() -sStyle.elevation.toPx.toFloat())else -sStyle.elevation.toPx.toFloat()
+//      ObjectAnimator.ofFloat(sView, "translationY", move).apply {
+//        duration = 200
+//        start()
+//      }
+//    }
 
     val playerSourceMove = if (isShowing) 0f else -50.toPx.toFloat()
 
@@ -693,7 +701,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       shadowOverlay.isVisible = true
       shadowOverlay.startAnimation(fadeAnimation)
     }
-    updateLockUI()
+    //updateLockUI()
   }
 
   fun updateUIVisibility() {
@@ -723,22 +731,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       playerGoBackHolder.isGone = isGone
       playerSkipEpisode.isClickable = !isGone
       playerSourcesBtt.isGone = isGone
-    }
-  }
-
-  private fun updateLockUI() {
-    playerBinding?.apply {
-      playerLock.setIconResource(if (isLocked) R.drawable.video_locked else R.drawable.video_unlocked)
-      if (layout == R.layout.fragment_player) {
-        val color = if (isLocked) context?.colorFromAttribute(R.attr.colorPrimary)
-        else Color.WHITE
-        if (color != null) {
-          playerLock.setTextColor(color)
-          playerLock.iconTint = ColorStateList.valueOf(color)
-          playerLock.rippleColor =
-            ColorStateList.valueOf(Color.argb(50, color.red, color.green, color.blue))
-        }
-      }
     }
   }
 
@@ -1247,7 +1239,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       //playerSourcesBtt.isVisible = false
       setReizeIcon()
     }
-    updateLockUI()
+    //updateLockUI()
     updateUIVisibility()
     animateLayoutChanges()
     resetFastForwardText()

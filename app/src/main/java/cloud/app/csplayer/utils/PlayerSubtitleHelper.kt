@@ -9,10 +9,10 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.SubtitleView
 import cloud.app.csplayer.model.SaveCaptionStyle
-import cloud.app.csplayer.ui.player.CustomDecoder.Companion.regexSubtitlesToRemoveBloat
-import cloud.app.csplayer.ui.player.CustomDecoder.Companion.regexSubtitlesToRemoveCaptions
-import cloud.app.csplayer.ui.player.CustomDecoder.Companion.uppercaseSubtitles
-import cloud.app.csplayer.ui.player.TAG
+import cloud.app.csplayer.ui.player.exo.CustomDecoder.Companion.regexSubtitlesToRemoveBloat
+import cloud.app.csplayer.ui.player.exo.CustomDecoder.Companion.regexSubtitlesToRemoveCaptions
+import cloud.app.csplayer.ui.player.exo.CustomDecoder.Companion.uppercaseSubtitles
+import cloud.app.csplayer.ui.player.exo.TAG
 import cloud.app.csplayer.ui.subtitles.SubtitleFile
 import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.fromSaveToStyle
 import cloud.app.csplayer.utils.UIHelper.toPx

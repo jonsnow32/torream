@@ -6,6 +6,14 @@ plugins {
   id("org.jetbrains.kotlin.android")
 }
 
+val abiCodes = mapOf(
+  "armeabi-v7a" to 1,
+  "arm64-v8a" to 2,
+  "x86" to 3,
+  "x86_64" to 4
+)
+
+
 android {
   namespace = "cloud.app.csplayer"
   compileSdk = 34
@@ -18,8 +26,8 @@ android {
     applicationId = "cloud.app.csplayer"
     minSdk = 21
     targetSdk = 33
-    versionCode = 103
-    versionName = "1.0.3"
+    versionCode = 105
+    versionName = "1.0.5"
 
     // Reads local.properties
     val localProperties = gradleLocalProperties(rootDir)
@@ -34,11 +42,27 @@ android {
       "TEST_ID",
       "\"" + localProperties["test.id"] + "\""
     )
+
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
   }
   buildFeatures {
     buildConfig = true
   }
+
+
+
+
+  sourceSets {
+    getByName("main") {
+      jni.setSrcDirs(emptyList<File>()) // This prevents the auto generation of Android.mk
+      jniLibs.srcDir("src/main/jni") // This is not necessary unless you have precompiled libraries in your project.
+      jniLibs.srcDirs("src/main/libs")
+    }
+  }
+
+
+
   buildTypes {
     release {
       isDebuggable = false
@@ -82,7 +106,7 @@ dependencies {
   implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.0")
   implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
 
-  val media3_version = "1.1.1"
+  val media3_version = "1.2.0"
   // Media 3 (ExoPlayer)
   implementation("androidx.media3:media3-ui:$media3_version")
   implementation("androidx.media3:media3-cast:$media3_version")
@@ -113,5 +137,4 @@ dependencies {
   androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
 }
-
 

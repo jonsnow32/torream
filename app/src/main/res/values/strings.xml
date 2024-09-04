@@ -410,6 +410,8 @@
   <string name="resize_fit">Fit to screen</string>
   <string name="resize_fill">Stretch</string>
   <string name="resize_zoom">Zoom</string>
+  <string name="resize_16_9" translatable="false">16:9</string>
+  <string name="resize_4_3" translatable="false">4:3</string>">
   <string name="legal_notice">Disclaimer</string>
   <string name="legal_notice_key" translatable="false">legal_notice_key</string>
   <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application
@@ -776,11 +778,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="media_route_menu_title">Cast</string>
   <string name="reset_btn">Reset</string>
 
-  <bool name="is_prerelease">false</bool>
-  <!-- Value from default config. -->
-  <string name="app_version" translatable="false">v1.0.1</string>
-  <!-- Value from default config. -->
-  <string name="commit_hash" translatable="false">583223f</string>
+
   <string name="version_update_at" translatable="false">2024-06-07T05:23:38Z</string>
   <string name="cpv_default_title">Select a Color</string>
   <string name="cpv_presets">Presets</string>
@@ -789,6 +787,24 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="cpv_transparency">Transparency</string>
   <string name="input_url">Enter your link</string>
   <string name="reset_all">Reset All</string>
-    <string name="request_permission_message">The app needs to access all files to load subtitles from the local device and to back up and restore settings.</string>
+  <string name="request_permission_message">The app needs to access all files to load subtitles from the local device and to back up and restore settings.</string>
   <string name="request_permission_title">Request permission</string>
+
+  <bool name="is_prerelease">false</bool>
+  <!-- Value from default config. -->
+  <string name="app_version" translatable="false">v1.0.5</string>
+  <!-- Value from default config. -->
+
+
+  <string name="commit_hash" translatable="false">389372e</string>
+  <string name="pref_video_interpolation_sync_default" translatable="false">audio</string>
+  <string name="ui_track_title_lang" translatable="false" >#%1$d: %2$s (%3$s)</string>
+  <string name="ui_track_text" translatable="false" >#%1$d: %2$s</string>
+  <string name="format_fixed_number" translatable="false">%.0f</string>
+  <string name="format_seconds" translatable="false">%.1f s</string>
+  <string name="ui_track" translatable="false">#%d</string>
+  <string name="track_off">Off</string>
+  <string name="pref_background_play_title">Background playback</string>
+  <string name="action_open_url">Open URL</string>
+  <string name="uri_invalid_protocol">Invalid protocol</string>
 </resources>

@@ -34,6 +34,7 @@ import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
 import cloud.app.csplayer.ui.player.PlayerEventType
+import cloud.app.csplayer.ui.player.mpv.MPVUtils
 import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.activityResultEvent
@@ -105,9 +106,10 @@ var app = Requests(responseParser = object : ResponseParser {
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private lateinit var binding: ActivityMainBinding;
-  private var result : Pair<Int, Long>? = null;
+  private var result: Pair<Int, Long>? = null;
   lateinit var mSessionManager: SessionManager
   private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
+
   private inner class SessionManagerListenerImpl : SessionManagerListener<Session> {
     override fun onSessionStarting(session: Session) {
     }
@@ -138,21 +140,24 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     override fun onSessionResuming(session: Session, s: String) {
     }
   }
+
   override fun onCreate(savedInstanceState: Bundle?) {
 
     app.initClient(this)
     loadThemes()
     updateLocale()
     CommonActivitty.init(this)
-
+    MPVUtils.copyAssets(this)
     super.onCreate(savedInstanceState)
 
-    if(!hasAllFilesAccessPermission(this)) {
+    if (!hasAllFilesAccessPermission(this)) {
       //create a dialog to request permission
-      val dialog = AlertDialog.Builder(this).setTitle(R.string.request_permission_title).setMessage(R.string.request_permission_message).setPositiveButton(R.string.ok) { dialog, which ->
-        requestAllFilesAccessPermission(this, 100)
-        dialog.dismiss()
-      }.create()
+      val dialog = AlertDialog.Builder(this).setTitle(R.string.request_permission_title)
+        .setMessage(R.string.request_permission_message)
+        .setPositiveButton(R.string.ok) { dialog, which ->
+          requestAllFilesAccessPermission(this, 100)
+          dialog.dismiss()
+        }.create()
       dialog.show()
     }
 
@@ -181,11 +186,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
     activityResultEvent = { code, position ->
       // Do something with the result value
-      result = Pair(code,position)
+      result = Pair(code, position)
     }
 
     handleAppIntent(intent)
   }
+
   override fun onRequestPermissionsResult(
     requestCode: Int,
     permissions: Array<out String>,
@@ -203,11 +209,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
     }
   }
+
   override fun onStop() {
     super.onStop()
   }
+
   override fun finish() {
-    result?.let{
+    result?.let {
       val resultIntent = Intent().apply {
         putExtra("position", it.second)
       }
@@ -215,7 +223,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
     super.finish()
   }
-//  override fun onSupportNavigateUp(): Boolean {
+
+  //  override fun onSupportNavigateUp(): Boolean {
 //    val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
 //    return navController.navigateUp() || super.onSupportNavigateUp()
 //  }
@@ -228,28 +237,15 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   }
 
   fun handleAppIntent(intent: Intent?) {
-    if (intent == null) return;
-    fun safeURI(uri: String) = Utils.normalSafeApiCall { URI(uri) }
-    val dataString = intent.dataString;
-
-    if (!dataString.isNullOrEmpty()) {
-      val uri = safeURI(dataString);
-      if (uri?.scheme == "csplayer") {
-
-      } else if (uri?.scheme?.contains("http") == true || uri?.scheme?.contains("file") == true) {
-//
-//        app:launchSingleTop="true"
-//        app:popUpTo="@+id/mobile_navigation"
-//        app:popUpToInclusive="true"
-
-        val navBuilder = NavOptions.Builder()
-        val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true , true).build()
-        navigate(
-          R.id.global_to_navigation_player,
-          intent.extras,
-          navOptions
-        )
-      }
+    val extras = intent?.extras ?: return
+    if (intent.action == Intent.ACTION_VIEW) {
+      val navBuilder = NavOptions.Builder()
+      val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true, true).build()
+      navigate(
+        R.id.global_to_navigation_mvp_player,
+        extras,
+        navOptions
+      )
     }
   }
 
@@ -259,7 +255,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     if (backPressedCallback == null) {
       backPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
-          if(supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.findNavController()?.navigateUp() == false) {
+          if (supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.findNavController()
+              ?.navigateUp() == false
+          ) {
             showConfirmExitDialog()
             window?.navigationBarColor =
               colorFromAttribute(R.attr.primaryGrayBackground)
@@ -316,6 +314,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       logError(e)
     }
   }
+
   fun loadThemes() {
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
@@ -382,21 +381,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   }
 
   override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-    //println("Keycode: $keyCode")
-    //showToast(
-    //    this,
-    //    "Got Keycode $keyCode | ${KeyEvent.keyCodeToString(keyCode)} \n ${event?.action}",
-    //    Toast.LENGTH_LONG
-    //)
-
-    // Tested keycodes on remote:
-    // KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
-    // KeyEvent.KEYCODE_MEDIA_REWIND
-    // KeyEvent.KEYCODE_MENU
-    // KeyEvent.KEYCODE_MEDIA_NEXT
-    // KeyEvent.KEYCODE_MEDIA_PREVIOUS
-    // KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
-
     // 149 keycode_numpad 5
     when (keyCode) {
       KeyEvent.KEYCODE_FORWARD, KeyEvent.KEYCODE_D, KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
@@ -540,6 +524,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
     return super.dispatchKeyEvent(event)
   }
+
   fun hasAllFilesAccessPermission(context: Context): Boolean {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
       Environment.isExternalStorageManager()

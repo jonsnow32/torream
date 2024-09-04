@@ -1,4 +1,4 @@
-package cloud.app.csplayer.ui.player
+package cloud.app.csplayer.ui.player.exo
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -10,9 +10,7 @@ import android.graphics.drawable.AnimatedVectorDrawable
 import android.media.metrics.PlaybackErrorEvent
 import android.os.Build
 import android.os.Bundle
-import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,9 +36,33 @@ import androidx.preference.PreferenceManager
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import cloud.app.csplayer.R
 import cloud.app.csplayer.model.SaveCaptionStyle
+import cloud.app.csplayer.ui.player.ACTION_MEDIA_CONTROL
+import cloud.app.csplayer.ui.player.CSPlayerEvent
+import cloud.app.csplayer.ui.player.CSPlayerLoading
+import cloud.app.csplayer.ui.player.EXTRA_CONTROL_TYPE
+import cloud.app.csplayer.ui.player.EmbeddedSubtitlesFetchedEvent
+import cloud.app.csplayer.ui.player.EpisodeSeekEvent
+import cloud.app.csplayer.ui.player.ErrorEvent
+import cloud.app.csplayer.ui.player.IPlayer
+import cloud.app.csplayer.ui.player.InvalidFileException
+import cloud.app.csplayer.ui.player.PauseEvent
+import cloud.app.csplayer.ui.player.PlayEvent
+import cloud.app.csplayer.ui.player.PlayerAttachedEvent
+import cloud.app.csplayer.ui.player.PlayerEvent
+import cloud.app.csplayer.ui.player.PlayerEventSource
+import cloud.app.csplayer.ui.player.PlayerPipHelper
+import cloud.app.csplayer.ui.player.PositionEvent
+import cloud.app.csplayer.ui.player.RequestAudioFocusEvent
+import cloud.app.csplayer.ui.player.ResizedEvent
+import cloud.app.csplayer.ui.player.SkipStamp
+import cloud.app.csplayer.ui.player.StatusEvent
+import cloud.app.csplayer.ui.player.SubtitlesUpdatedEvent
+import cloud.app.csplayer.ui.player.TimestampInvokedEvent
+import cloud.app.csplayer.ui.player.TimestampSkippedEvent
+import cloud.app.csplayer.ui.player.TracksChangedEvent
+import cloud.app.csplayer.ui.player.VideoEndedEvent
 import cloud.app.csplayer.ui.subtitles.SubtitlesFragment
 import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.getCurrentSavedStyle
-import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty.canEnterPipMode
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
 import cloud.app.csplayer.utils.CommonActivitty.isInPIPMode
@@ -48,7 +70,6 @@ import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
 import cloud.app.csplayer.utils.DataStore
 import cloud.app.csplayer.utils.SubtitleData
-import cloud.app.csplayer.utils.UIHelper.popCurrentPage
 import cloud.app.csplayer.utils.Utils.getFocusRequest
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
@@ -57,15 +78,13 @@ import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
-import com.google.android.gms.cast.framework.CastButtonFactory
-import com.google.android.gms.cast.framework.CastContext
-import com.google.android.gms.cast.framework.CastState
 
 enum class PlayerResize(@StringRes val nameRes: Int) {
     Fit(R.string.resize_fit),
     Fill(R.string.resize_fill),
     Zoom(R.string.resize_zoom),
 }
+
 
 // when the player should switch skip op to next episode
 const val SKIP_OP_VIDEO_PERCENTAGE = 50
@@ -149,8 +168,8 @@ abstract class AbstractPlayerFragment(
     }
 
     private fun updateIsPlaying(
-        wasPlaying: CSPlayerLoading,
-        isPlaying: CSPlayerLoading
+      wasPlaying: CSPlayerLoading,
+      isPlaying: CSPlayerLoading
     ) {
         val isPlayingRightNow = CSPlayerLoading.IsPlaying == isPlaying
         val isPausedRightNow = CSPlayerLoading.IsPaused == isPlaying
@@ -199,11 +218,11 @@ abstract class AbstractPlayerFragment(
         canEnterPipMode = isPlayingRightNow && hasPipModeSupport
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             activity?.let { act ->
-                PlayerPipHelper.updatePIPModeActions(
-                    act,
-                    isPlayingRightNow,
-                    player.getAspectRatio()
-                )
+              PlayerPipHelper.updatePIPModeActions(
+                act,
+                isPlayingRightNow,
+                player.getAspectRatio()
+              )
             }
         }
     }
@@ -461,7 +480,7 @@ abstract class AbstractPlayerFragment(
                             ) == true
                     ) {
                         player.handleEvent(
-                            CSPlayerEvent.NextEpisode,
+                          CSPlayerEvent.NextEpisode,
                             source = PlayerEventSource.Player
                         )
                     }
@@ -502,8 +521,8 @@ abstract class AbstractPlayerFragment(
                         progressBar.isPreviewEnabled = hasPreview
                         resume = player.getIsPlaying()
                         if (resume) player.handleEvent(
-                            CSPlayerEvent.Pause,
-                            PlayerEventSource.Player
+                          CSPlayerEvent.Pause,
+                          PlayerEventSource.Player
                         )
                     }
 

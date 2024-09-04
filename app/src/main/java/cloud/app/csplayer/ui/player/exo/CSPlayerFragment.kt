@@ -1,4 +1,4 @@
-package cloud.app.csplayer.ui.player
+package cloud.app.csplayer.ui.player.exo
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -16,10 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.core.animation.addListener
 import androidx.core.view.isVisible
-import androidx.fragment.app.setFragmentResult
-import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.Format.NO_VALUE
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
@@ -28,8 +25,12 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentPlayerBinding
 import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
 import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
-import cloud.app.csplayer.ui.player.CSPlayer.Companion.preferredAudioTrackLanguage
-import cloud.app.csplayer.ui.player.CustomDecoder.Companion.updateForcedEncoding
+import cloud.app.csplayer.ui.player.CSPlayerEvent
+import cloud.app.csplayer.ui.player.CSPlayerViewModel
+import cloud.app.csplayer.ui.player.PlayerEventSource
+import cloud.app.csplayer.ui.player.SkipStamp
+import cloud.app.csplayer.ui.player.exo.CSPlayer.Companion.preferredAudioTrackLanguage
+import cloud.app.csplayer.ui.player.exo.CustomDecoder.Companion.updateForcedEncoding
 import cloud.app.csplayer.ui.subtitles.SUBTITLE_AUTO_SELECT_KEY
 import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.getAutoSelectLanguageISO639_1
 import cloud.app.csplayer.utils.CommonActivitty
@@ -55,7 +56,6 @@ import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.observe
 import kotlinx.coroutines.Job
 import java.io.File
-import java.util.*
 
 
 class CSPlayerFragment : FullScreenPlayer() {
@@ -521,7 +521,7 @@ class CSPlayerFragment : FullScreenPlayer() {
           ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
 
         sourcesArrayAdapter.addAll(sortedUrls.mapIndexed { index, (link, uri) ->
-         "${index +1}. "+ (link?.source ?: uri?.name ?: "NULL")
+          "${index + 1}. " + (link?.source ?: uri?.name ?: "NULL")
         })
 
         providerList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
@@ -776,27 +776,31 @@ class CSPlayerFragment : FullScreenPlayer() {
     //activity?.popCurrentPage()
   }
 
-  private fun startPlayer() {
+  private fun startPlayer(index: Int) {
     if (!player.isActive())
-      loadLink(allLinks.elementAt(viewModel.currentLinkIndex.value ?: 0), false)
+      loadLink(allLinks.elementAt(index), false)
   }
 
   override fun onResume() {
-    if(context == null) return
-    if(player.isActive() && !player.getIsPlaying())
+    if (context == null) return
+    if (player.isActive() && !player.getIsPlaying())
       loadLink(currentSelectedLink, true)
     super.onResume()
   }
+
   override fun nextEpisode() {
+    if (viewModel.isSameEpisode.value == false) {
+      player.release()
+      isNextEpisode = true
+      allLinks.forEachIndexed { index, pair ->
+        if (pair == currentSelectedLink)
+          if (index + 1 < allLinks.size) {
+            loadLink(allLinks.elementAt(index + 1), false);
+            return
+          }
+      }
+    }
 
-//    player.release()
-
-//    isNextEpisode = true
-//    allLinks.forEachIndexed { index, pair ->
-//      if(pair == currentSelectedLink)
-//        if(index + 1 < allLinks.size)
-//          loadLink(allLinks.elementAt(index+1), false);
-//    }
     player.getPosition()?.let {
       CommonActivitty.activityResultEvent?.invoke(
         Activity.RESULT_OK,
@@ -804,6 +808,7 @@ class CSPlayerFragment : FullScreenPlayer() {
       )
     }
     activity?.finish()
+
   }
 
   override fun prevEpisode() {
@@ -945,7 +950,10 @@ class CSPlayerFragment : FullScreenPlayer() {
   }
 
   private fun getPlayerVideoTitle(): String {
-    return currentSelectedLink?.first?.name ?: ""
+    if(isNextEpisode)
+      return currentSelectedLink?.first?.source ?: ""
+    else
+      return currentSelectedLink?.first?.name ?: ""
   }
 
 
@@ -978,7 +986,7 @@ class CSPlayerFragment : FullScreenPlayer() {
       ""
     }
 
-    val source = currentSelectedLink?.first?.name ?: currentSelectedLink?.second?.name ?: "NULL"
+    val source = currentSelectedLink?.first?.source ?: currentSelectedLink?.second?.name ?: "NULL"
 
     val title = when (titleRez) {
       0 -> ""
@@ -1131,8 +1139,10 @@ class CSPlayerFragment : FullScreenPlayer() {
     observe(viewModel.allLinks) {
       allLinks = it
       //currentSelectedLink = allLinks.first()
+    }
+    observe(viewModel.currentLinkIndex) {
       normalSafeApiCall {
-        startPlayer()
+        startPlayer(0.coerceAtLeast(it))
       }
     }
 
@@ -1163,10 +1173,15 @@ class CSPlayerFragment : FullScreenPlayer() {
       }
     }
 
-    preferredAutoSelectSubtitles = context?.getAutoSelectLanguageISO639_1()
-    binding?.overlayLoadingSkipButton?.setOnClickListener {
-      startPlayer()
+    observe(viewModel.currentSubtitleIndex) { index ->
+      if (index >= 0 && index < currentSubs.size)
+        setSubtitles(currentSubs.elementAt(index))
     }
+
+    preferredAutoSelectSubtitles = context?.getAutoSelectLanguageISO639_1()
+//    binding?.overlayLoadingSkipButton?.setOnClickListener {
+//      startPlayer()
+//    }
 
     binding?.playerLoadingGoBack?.setOnClickListener {
       exitFullscreen()
