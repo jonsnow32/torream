@@ -77,8 +77,23 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     this.filePath = filePath
     this.headers = headers;
     if (this.filePath != null) {
-      val headerList = getHeader(headers).entries.joinToString(",") { "${it.key}: ${it.value}" }
-      headerList?.let {
+//      val headerList = getHeader(headers).entries.joinToString(",") { "${it.key}: ${it.value}" }
+//      headerList?.let {
+//        MPVLib.setPropertyString("http-header-fields", headerList)
+//      }
+      var headerList = "";
+        for((key, value) in getHeader(headers)) {
+        if(key.lowercase() == "referer") {
+          MPVLib.setPropertyString("referrer", value)
+        } else if(key.lowercase() == "user-agent") {
+          MPVLib.setPropertyString("user-agent", value)
+        } else {
+          if(headerList.isNotEmpty())
+            headerList = headerList.plus(",")
+          headerList = headerList.plus("$key: $value");
+        }
+      }
+      if(headerList.isNotEmpty()){
         MPVLib.setPropertyString("http-header-fields", headerList)
       }
       MPVLib.command(arrayOf("loadfile", filePath as String))
@@ -114,8 +129,19 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     MPVLib.setOptionString("force-window", "yes")
 
     if (filePath != null) {
-      val headerList = getHeader(headers).entries.joinToString(",") { "${it.key}: ${it.value}" }
-      headerList.let {
+      var headerList = "";
+      for((key, value) in getHeader(headers)) {
+        if(key.lowercase() == "referer") {
+          MPVLib.setPropertyString("referrer", value)
+        } else if(key.lowercase() == "user-agent") {
+          MPVLib.setPropertyString("user-agent", value)
+        } else {
+          if(headerList.isNotEmpty())
+            headerList = headerList.plus(",")
+          headerList = headerList.plus("$key: $value");
+        }
+      }
+      if(headerList.isNotEmpty()){
         MPVLib.setPropertyString("http-header-fields", headerList)
       }
       MPVLib.command(arrayOf("loadfile", filePath as String))
