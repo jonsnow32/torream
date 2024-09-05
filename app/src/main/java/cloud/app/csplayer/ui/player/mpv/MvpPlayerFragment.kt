@@ -56,6 +56,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
 import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
+import cloud.app.csplayer.databinding.PlayerSelectVideoTracksBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
 import cloud.app.csplayer.ui.player.PlayerEventType
@@ -548,8 +549,12 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
                 showSourcesDialog()
             }
 
-            playerSubtitlesBtt.setOnClickListener {
+            playerTracksBtt.setOnClickListener {
                 showTracksDialogue()
+            }
+
+            playerVideoTracks.setOnClickListener {
+                showVideoTracks()
             }
 
             playerCodecBtt.setOnClickListener {
@@ -708,6 +713,73 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         }
     }
 
+
+  var selectVideoDialog: Dialog? = null
+  private fun showVideoTracks() {
+    try {
+      //println("CURRENT SELECTED :$currentSelectedSubtitles of $currentSubs")
+      context?.let { ctx ->
+        val tracks = player?.tracks ?: return
+
+        player?.paused = true
+
+        val currentVideoTracks = tracks["video"]
+        var videoIndex = max((currentVideoTracks?.indexOfFirst { it.selected } ?: 0), 0)
+
+
+        val binding: PlayerSelectVideoTracksBinding =
+          PlayerSelectVideoTracksBinding.inflate(LayoutInflater.from(ctx), null, false)
+        val trackDialog = Dialog(ctx, R.style.AlertDialogCustom)
+        trackDialog.setContentView(binding.root)
+        trackDialog.show()
+        selectVideoDialog = trackDialog
+
+        fun dismiss() {
+          player?.paused = false
+          activity?.hideSystemUI()
+        }
+
+        currentVideoTracks?.let {
+          val videosList = binding.videoTracksList
+          binding.videoTracksHolder.isVisible = currentVideoTracks.isNotEmpty()
+          val videosArrayAdapter =
+            ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+          videosArrayAdapter.addAll(currentVideoTracks.mapIndexed { index, format ->
+            format.name
+          })
+
+          videosList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
+          videosList.adapter = videosArrayAdapter
+
+          // Sometimes the data is not the same because some data gets resolved at different stages i think
+          videosList.setSelection(videoIndex)
+          videosList.setItemChecked(videoIndex, true)
+
+          videosList.setOnItemClickListener { _, _, which, _ ->
+            videoIndex = which
+            videosList.setItemChecked(which, true)
+          }
+        }
+
+
+        trackDialog.setOnDismissListener {
+          dismiss()
+        }
+
+        binding.cancelBtt.setOnClickListener {
+          trackDialog.dismissSafe(activity)
+        }
+        binding.applyBtt.setOnClickListener {
+          player?.vid = videoIndex
+          trackDialog.dismissSafe(activity)
+        }
+      }
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
+
     var selectTrackDialog: Dialog? = null
     private fun showTracksDialogue() {
         try {
@@ -716,9 +788,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
                 val tracks = player?.tracks ?: return
 
                 player?.paused = true
-
-                val currentVideoTracks = tracks["video"]
-                var videoIndex = max((currentVideoTracks?.indexOfFirst { it.selected } ?: 0), 0)
 
                 val currentAudioTracks = tracks["audio"]
                 var audioIndexStart =
@@ -740,27 +809,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
                     activity?.hideSystemUI()
                 }
 
-                currentVideoTracks?.let {
-                    val videosList = binding.videoTracksList
-                    binding.videoTracksHolder.isVisible = currentVideoTracks.isNotEmpty()
-                    val videosArrayAdapter =
-                        ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
-                    videosArrayAdapter.addAll(currentVideoTracks.mapIndexed { index, format ->
-                        format.name
-                    })
-
-                    videosList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-                    videosList.adapter = videosArrayAdapter
-
-                    // Sometimes the data is not the same because some data gets resolved at different stages i think
-                    videosList.setSelection(videoIndex)
-                    videosList.setItemChecked(videoIndex, true)
-
-                    videosList.setOnItemClickListener { _, _, which, _ ->
-                        videoIndex = which
-                        videosList.setItemChecked(which, true)
-                    }
-                }
 
 
                 trackDialog.setOnDismissListener {
@@ -878,8 +926,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
                 }
 
                 binding.applyBtt.setOnClickListener {
-
-                    player?.vid = videoIndex
                     player?.aid = audioIndexStart
                     player?.sid = subtitleIndex
 

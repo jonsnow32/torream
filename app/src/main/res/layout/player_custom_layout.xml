@@ -456,7 +456,7 @@
               android:nextFocusRight="@id/player_video_tracks"
               android:nextFocusDown="@id/player_video_tracks"
               android:text="@string/pick_subtitle"
-              app:icon="@drawable/cast_ic_mini_controller_closed_caption" />
+              app:icon="@drawable/track_source_merge_24dp" />
 
             <com.google.android.material.button.MaterialButton
               android:id="@+id/player_video_tracks"
