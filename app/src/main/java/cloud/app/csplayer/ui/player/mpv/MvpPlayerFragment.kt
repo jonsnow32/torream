@@ -16,6 +16,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.text.Editable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -31,11 +32,13 @@ import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
 import androidx.appcompat.app.AppCompatActivity.RESULT_OK
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.media.AudioAttributesCompat
@@ -47,6 +50,7 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
+import cloud.app.csplayer.databinding.SubtitleOffsetBinding
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
@@ -73,6 +77,8 @@ import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.Utils.sortSubs
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.observe
+import cloud.app.csplayer.utils.setText
+import cloud.app.csplayer.utils.txt
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
@@ -217,28 +223,10 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
     }
     observe(viewModel.currentSubs) { set ->
-      val filePath =
-        "file://storage/emulated/0/Documents/subtitles/extractZip/Deadpool.And.Wolverine.2024.1080p.REPACK.TELESYNC.x264.COLLECTiVE.en.srt"
-      onloadCommands.add(arrayOf("sub-add", filePath, "select"))
       for (sub in set) {
-
-
-//        val file = File(filePath)
-//
-//// Ensure the file exists
-//        if (file.exists()) {
-//          // Convert to URI
-//          val fileUri: Uri = Uri.fromFile(file)
-//          val url = resolveUri(fileUri) ?: continue
-//          val flag = "select"
-//          Log.v(TAG, "Adding subtitles from intent extras: $url")
-//
-//          Log.d("FileUri", "Uri: $fileUri")
-//        } else {
-//          Log.e("FileUri", "File not found at path: $filePath")
-//        }
-
-
+        val url = resolveUri(Uri.parse(sub.url)) ?: continue
+        val flag = "select"
+        Log.v(TAG, "Adding subtitles from intent extras: $url")
       }
     }
 
@@ -511,7 +499,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerSubtitleOffsetBtt.setOnClickListener {
-        //showSubtitleOffsetDialog()
+        showSubtitleOffsetDialog()
       }
 
       exoRew.setOnClickListener {
@@ -591,6 +579,91 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         return@setOnTouchListener false
       }
 
+    }
+  }
+
+  private fun showSubtitleOffsetDialog() {
+    val ctx = context ?: return
+
+    val binding = SubtitleOffsetBinding.inflate(LayoutInflater.from(ctx), null, false)
+
+    val builder =
+      AlertDialog.Builder(ctx, R.style.AlertDialogCustom)
+        .setView(binding.root)
+    val dialog = builder.create()
+    dialog.show()
+
+    val beforeOffset = subtitleDelay
+
+    /*val applyButton = dialog.findViewById<TextView>(R.id.apply_btt)!!
+    val cancelButton = dialog.findViewById<TextView>(R.id.cancel_btt)!!
+    val input = dialog.findViewById<EditText>(R.id.subtitle_offset_input)!!
+    val sub = dialog.findViewById<ImageView>(R.id.subtitle_offset_subtract)!!
+    val subMore = dialog.findViewById<ImageView>(R.id.subtitle_offset_subtract_more)!!
+    val add = dialog.findViewById<ImageView>(R.id.subtitle_offset_add)!!
+    val addMore = dialog.findViewById<ImageView>(R.id.subtitle_offset_add_more)!!
+    val subTitle = dialog.findViewById<TextView>(R.id.subtitle_offset_sub_title)!!*/
+    binding.apply {
+      subtitleOffsetInput.doOnTextChanged { text, _, _, _ ->
+        text?.toString()?.toLongOrNull()?.let { time ->
+          subtitleDelay = time
+          val str = when {
+            time > 0L -> {
+              txt(R.string.subtitle_offset_extra_hint_later_format, time)
+            }
+
+            time < 0L -> {
+              txt(R.string.subtitle_offset_extra_hint_before_format, -time)
+            }
+
+            else -> {
+              txt(R.string.subtitle_offset_extra_hint_none_format)
+            }
+          }
+          subtitleOffsetSubTitle.setText(str)
+        }
+      }
+      subtitleOffsetInput.text =
+        Editable.Factory.getInstance()?.newEditable(beforeOffset.toString())
+
+      val buttonChange = 100L
+      val buttonChangeMore = 1000L
+
+      fun changeBy(by: Long) {
+        val current = (subtitleOffsetInput.text?.toString()?.toLongOrNull() ?: 0) + by
+        subtitleOffsetInput.text =
+          Editable.Factory.getInstance()?.newEditable(current.toString())
+      }
+
+      subtitleOffsetAdd.setOnClickListener {
+        changeBy(buttonChange)
+      }
+      subtitleOffsetAddMore.setOnClickListener {
+        changeBy(buttonChangeMore)
+      }
+      subtitleOffsetSubtract.setOnClickListener {
+        changeBy(-buttonChange)
+      }
+      subtitleOffsetSubtractMore.setOnClickListener {
+        changeBy(-buttonChangeMore)
+      }
+
+      dialog.setOnDismissListener {
+          activity?.hideSystemUI()
+      }
+      applyBtt.setOnClickListener {
+        dialog.dismissSafe(activity)
+        //player.seekTime(1L)
+      }
+      resetBtt.setOnClickListener {
+        subtitleDelay = 0
+        dialog.dismissSafe(activity)
+        //player.seekTime(1L)
+      }
+      cancelBtt.setOnClickListener {
+        subtitleDelay = beforeOffset
+        dialog.dismissSafe(activity)
+      }
     }
   }
 
