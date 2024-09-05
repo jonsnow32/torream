@@ -65,22 +65,23 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
   fun getHeader(additionHeaders: Map<String, String>?) : Map<String, String> {
     return mapOf(
       "accept" to "*/*",
-      "sec-ch-ua" to "\"Chromium\";v=\"91\", \" Not;A Brand\";v=\"99\"",
-      "sec-ch-ua-mobile" to "?0",
-      "sec-fetch-user" to "?1",
-      "sec-fetch-mode" to "navigate",
-      "sec-fetch-dest" to "video"
+//      "sec-ch-ua" to "\"Chromium\";v=\"91\", \" Not;A Brand\";v=\"99\"",
+//      "sec-ch-ua-mobile" to "?0",
+//      "sec-fetch-user" to "?1",
+//      "sec-fetch-mode" to "navigate",
+//      "sec-fetch-dest" to "video"
     ).plus(additionHeaders ?: emptyMap())// Adds the headers from the provider, e.g Authorization
   }
 
   fun playFile(filePath: String, headers: Map<String, String>?) {
-    this.filePath = filePath
+    this.filePath = filePath.replace("https:///", "https://").replace("http:///", "http://")
     this.headers = headers;
     if (this.filePath != null) {
 //      val headerList = getHeader(headers).entries.joinToString(",") { "${it.key}: ${it.value}" }
 //      headerList?.let {
 //        MPVLib.setPropertyString("http-header-fields", headerList)
 //      }
+
       var headerList = "";
         for((key, value) in getHeader(headers)) {
         if(key.lowercase() == "referer") {
@@ -96,7 +97,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
       if(headerList.isNotEmpty()){
         MPVLib.setPropertyString("http-header-fields", headerList)
       }
-      MPVLib.command(arrayOf("loadfile", filePath as String))
+      MPVLib.command(arrayOf("loadfile", this.filePath))
 
       this.filePath = null
     } else {
