@@ -7,15 +7,15 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.content.pm.PackageManager
 import android.media.AudioManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelFileDescriptor
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -30,7 +30,6 @@ import android.widget.AbsListView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.Toast
-import androidx.activity.result.launch
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
 import androidx.appcompat.app.AppCompatActivity.RESULT_OK
@@ -39,34 +38,28 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
-import cloud.app.csplayer.ui.player.CSPlayerEvent
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
-import cloud.app.csplayer.ui.player.PlayerEventSource
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
 import cloud.app.csplayer.ui.player.exo.PlayerResize
 import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
-import cloud.app.csplayer.ui.settings.SettingsPlayer
-import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.getAutoSelectLanguageISO639_1
 import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
 import cloud.app.csplayer.utils.DataStore
 import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.ExtractorUri
+import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SubtitleData
-import cloud.app.csplayer.utils.SubtitleOrigin
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.UIHelper.getNavigationBarHeight
 import cloud.app.csplayer.utils.UIHelper.getStatusBarHeight
@@ -84,7 +77,7 @@ import com.github.rubensousa.previewseekbar.PreviewBar
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastState
-import kotlinx.coroutines.launch
+import java.io.File
 
 enum class DecodeMode {
   hwDec,
@@ -223,9 +216,30 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         loadLink(allLinks.elementAt(it))
       }
     }
-
     observe(viewModel.currentSubs) { set ->
-      val setOfSub = mutableSetOf<SubtitleData>()
+      val filePath =
+        "file://storage/emulated/0/Documents/subtitles/extractZip/Deadpool.And.Wolverine.2024.1080p.REPACK.TELESYNC.x264.COLLECTiVE.en.srt"
+      onloadCommands.add(arrayOf("sub-add", filePath, "select"))
+      for (sub in set) {
+
+
+//        val file = File(filePath)
+//
+//// Ensure the file exists
+//        if (file.exists()) {
+//          // Convert to URI
+//          val fileUri: Uri = Uri.fromFile(file)
+//          val url = resolveUri(fileUri) ?: continue
+//          val flag = "select"
+//          Log.v(TAG, "Adding subtitles from intent extras: $url")
+//
+//          Log.d("FileUri", "Uri: $fileUri")
+//        } else {
+//          Log.e("FileUri", "File not found at path: $filePath")
+//        }
+
+
+      }
     }
 
     observe(viewModel.currentSubtitleIndex) { index ->
@@ -315,7 +329,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         }
 
         PlayerEventType.ShowSpeed -> {
-          //showSpeedDialog()
+          showSpeedDialog()
         }
 
         PlayerEventType.SeekBack -> {
@@ -478,8 +492,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerSpeedBtt.setOnClickListener {
-        autoHide()
-        //showSpeedDialog()
+        showSpeedDialog()
       }
 
       playerSkipOp.setOnClickListener {
@@ -581,9 +594,37 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun loadLink(link: Pair<ExtractorLink?, ExtractorUri?>) {
+  private fun showSpeedDialog() {
+    val speedsText =
+      listOf(
+        "0.5x",
+        "0.75x",
+        "1x",
+        "1.25x",
+        "1.5x",
+        "1.75x",
+        "2x"
+      )
+    val speedsNumbers =
+      listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
+    val speedIndex = speedsNumbers.indexOf(mvpPlayer?.playbackSpeed?.toFloat() ?: 1.0f)
+
+    activity?.let { act ->
+      act.showDialog(
+        speedsText,
+        speedIndex,
+        act.getString(R.string.player_speed),
+        false,
+        {
+          activity?.hideSystemUI()
+        }) { index ->
+          setPlayBackSpeed(speedsNumbers[index])
+      }
+    }
+  }
+
+  private fun loadLink(link: Pair<ExtractorLink?, ExtractorUri?>, sub: SubtitleData? = null) {
     currentSelectedLink = link
-    onloadCommands.clear()
     if (decodeMode == DecodeMode.swDec) {
       pushOption("hwdec", "no")
     }
@@ -610,6 +651,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   fun pushOption(key: String, value: String) {
     onloadCommands.add(arrayOf("set", "file-local-options/${key}", value))
   }
+
   fun togglePlayPause() {
     mvpPlayer?.paused = mvpPlayer?.paused?.not();
     if (mvpPlayer?.paused == false)
@@ -1131,6 +1173,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_START_FILE) {
       for (c in onloadCommands)
         MPVLib.command(c)
+      onloadCommands.clear()
       playbackHasStarted = true
     }
     if (!activityIsForeground) return
@@ -1425,7 +1468,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
-
   var selectSourceDialog: Dialog? = null
   fun showSourcesDialog() {
     try {
@@ -1482,8 +1524,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
         binding.applyBtt.setOnClickListener {
           sortedUrls.elementAt(sourceIndex).let {
-
-            loadLink(it)
+            loadLink(it, currentSelectedSubtitles)
           }
           sourceDialog.dismissSafe(activity)
         }
@@ -1493,6 +1534,43 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
+  private fun resolveUri(data: Uri): String? {
+    val filepath = when (data.scheme) {
+      "file" -> data.path
+      "content" -> openContentFd(data)
+      // mpv supports data URIs but needs data:// to pass it through correctly
+      "data" -> "data://${data.schemeSpecificPart}"
+      "http", "https", "rtmp", "rtmps", "rtp", "rtsp", "mms", "mmst", "mmsh", "tcp", "udp", "lavf"
+      -> data.toString()
+
+      else -> data.path
+    }
+
+    if (filepath == null)
+      Log.e(TAG, "unknown scheme: ${data.scheme}")
+    return filepath
+  }
+
+  private fun openContentFd(uri: Uri): String? {
+    val resolver = requireActivity().applicationContext.contentResolver
+    Log.v(TAG, "Resolving content URI: $uri")
+    val fd = try {
+      val desc = resolver.openFileDescriptor(uri, "r")
+      desc!!.detachFd()
+    } catch (e: Exception) {
+      Log.e(TAG, "Failed to open content fd: $e")
+      return null
+    }
+    // See if we skip the indirection and read the real file directly
+    val path = MPVUtils.findRealPath(fd)
+    if (path != null) {
+      Log.v(TAG, "Found real file path: $path")
+      ParcelFileDescriptor.adoptFd(fd).close() // we don't need that anymore
+      return path
+    }
+    // Else, pass the fd to mpv
+    return "fd://${fd}"
+  }
 
   companion object {
     private const val TAG = "mpv"

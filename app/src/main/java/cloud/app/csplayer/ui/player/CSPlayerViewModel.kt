@@ -103,9 +103,9 @@ class CSPlayerViewModel(private val arguments: SavedStateHandle) : ViewModel() {
       }
       _currentSubs.postValue(subtitles)
       _currentSubtitleIndex.postValue(arguments.get<Int>(EXTRA_SUBTITLE_START_INDEX) ?: 0)
+      _isSameEpisode.postValue(arguments.get<Boolean>(EXTRA_IS_SAME_EPISODE) ?: true)
       _allLinks.postValue(extractorLinks);
       _currentLinkIndex.postValue(arguments.get<Int>(EXTRA_VIDEO_START_INDEX) ?: 0)
-      _isSameEpisode.postValue(arguments.get<Boolean>(EXTRA_IS_SAME_EPISODE) ?: true)
     }
   }
 
