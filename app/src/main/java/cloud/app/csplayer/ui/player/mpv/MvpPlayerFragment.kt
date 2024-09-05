@@ -30,7 +30,9 @@ import android.view.animation.AnimationUtils
 import android.widget.AbsListView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
@@ -44,12 +46,14 @@ import androidx.fragment.app.viewModels
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
+import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
 import cloud.app.csplayer.ui.player.PlayerEventType
@@ -64,6 +68,7 @@ import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.ExtractorUri
 import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SubtitleData
+import cloud.app.csplayer.utils.SubtitleOrigin
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.UIHelper.getNavigationBarHeight
 import cloud.app.csplayer.utils.UIHelper.getStatusBarHeight
@@ -75,7 +80,9 @@ import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.Utils.sortSubs
+import cloud.app.csplayer.utils.Utils.toSubtitleMimeType
 import cloud.app.csplayer.utils.hideSystemUI
+import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.observe
 import cloud.app.csplayer.utils.setText
 import cloud.app.csplayer.utils.txt
@@ -84,6 +91,7 @@ import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastState
 import java.io.File
+import kotlin.math.max
 
 enum class DecodeMode {
   hwDec,
@@ -196,7 +204,11 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     val view = inflater.inflate(R.layout.fragment_mvp_player, container, false)
     val controllerHolder = view.findViewById<FrameLayout>(R.id.controller_holder)
     mvpPlayer = view.findViewById(R.id.mvpPlayer)
-    val childView = inflater.inflate(R.layout.player_custom_layout, controllerHolder, false)
+    val childView = inflater.inflate(
+      if (context?.isTvOrEmulator() == true) R.layout.player_custom_layout else R.layout.player_custom_layout_tv,
+      controllerHolder,
+      false
+    )
     controllerHolder.addView(childView)
     playerBinding = PlayerCustomLayoutBinding.bind(childView.findViewById(R.id.player_holder))
     return view;
@@ -227,6 +239,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         val url = resolveUri(Uri.parse(sub.url)) ?: continue
         val flag = "select"
         Log.v(TAG, "Adding subtitles from intent extras: $url")
+        onloadCommands.add(arrayOf("sub-add", url, flag))
       }
     }
 
@@ -526,7 +539,11 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerTracksBtt.setOnClickListener {
-        // showTracksDialogue()
+        showTracksDialogue()
+      }
+
+      playerCodecBtt.setOnClickListener {
+        showCodecsDialog()
       }
 
       // it is !not! a bug that you cant touch the right side, it does not register inputs on navbar or status bar
@@ -581,6 +598,220 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
     }
   }
+
+  private fun showCodecsDialog() {
+    val codecTexts = mutableListOf("HW (mediacodec-copy)", "SW")
+    val codecValues = mutableListOf("mediacodec-copy", "no")
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      codecTexts.add(0, "HW+ (mediacodec)")
+      codecValues.add(0, "mediacodec")
+    }
+
+
+    val hwdecActive = mvpPlayer?.hwdecActive
+    val selectedIndex = codecValues.indexOfFirst { it == hwdecActive }
+
+    activity?.let { act ->
+      act.showDialog(
+        codecTexts,
+        selectedIndex,
+        act.getString(R.string.player_decoders),
+        false,
+        {
+          activity?.hideSystemUI()
+        }) { index ->
+        MPVLib.setPropertyString("hwdec", codecValues[index])
+      }
+    }
+  }
+
+  private fun updateDecoderButton() {
+    if (playerBinding?.playerCodecBtt?.isVisible == true) {
+      playerBinding?.playerCodecBtt?.text = when (mvpPlayer?.hwdecActive) {
+        "mediacodec" -> "HW+"
+        "no" -> "SW"
+        else -> "HW"
+      }
+    }
+  }
+
+  var selectTrackDialog: Dialog? = null
+  private fun showTracksDialogue() {
+    try {
+      //println("CURRENT SELECTED :$currentSelectedSubtitles of $currentSubs")
+      context?.let { ctx ->
+        val tracks = mvpPlayer?.tracks ?: return
+
+        mvpPlayer?.paused = true
+
+        val currentVideoTracks = tracks["video"]
+        var videoIndex = max((currentVideoTracks?.indexOfFirst { it.selected } ?: 0), 0)
+
+        val currentAudioTracks = tracks["audio"]
+        var audioIndexStart = max((currentAudioTracks?.indexOfFirst { it.selected } ?: 0), 0)
+
+        val currentSubtitleTracks = tracks["sub"]
+        var subtitleIndex = max((currentSubtitleTracks?.indexOfFirst { it.selected } ?: 0), 0)
+
+        val binding: PlayerSelectTracksBinding =
+          PlayerSelectTracksBinding.inflate(LayoutInflater.from(ctx), null, false)
+        val trackDialog = Dialog(ctx, R.style.AlertDialogCustom)
+        trackDialog.setContentView(binding.root)
+        trackDialog.show()
+        selectTrackDialog = trackDialog
+
+        fun dismiss() {
+          mvpPlayer?.paused = false
+          activity?.hideSystemUI()
+        }
+
+        currentVideoTracks?.let {
+          val videosList = binding.videoTracksList
+          binding.videoTracksHolder.isVisible = currentVideoTracks.isNotEmpty()
+          val videosArrayAdapter =
+            ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+          videosArrayAdapter.addAll(currentVideoTracks.mapIndexed { index, format ->
+            format.name
+          })
+
+          videosList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
+          videosList.adapter = videosArrayAdapter
+
+          // Sometimes the data is not the same because some data gets resolved at different stages i think
+          videosList.setSelection(videoIndex)
+          videosList.setItemChecked(videoIndex, true)
+
+          videosList.setOnItemClickListener { _, _, which, _ ->
+            videoIndex = which
+            videosList.setItemChecked(which, true)
+          }
+        }
+
+
+        trackDialog.setOnDismissListener {
+          dismiss()
+        }
+
+        currentAudioTracks?.let {
+          val audioList = binding.autoTracksList
+          binding.audioTracksHolder.isVisible = currentAudioTracks.isEmpty() == false
+
+          val audioArrayAdapter =
+            ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+//                audioArrayAdapter.add(ctx.getString(R.string.no_subtitles))
+          audioArrayAdapter.addAll(currentAudioTracks.mapIndexed { index, format ->
+            format.name//fromTwoLettersToLanguage(format.name)
+
+          })
+
+          audioList.adapter = audioArrayAdapter
+          audioList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
+
+          audioList.setSelection(audioIndexStart)
+          audioList.setItemChecked(audioIndexStart, true)
+
+          audioList.setOnItemClickListener { _, _, which, _ ->
+            audioIndexStart = which
+            audioList.setItemChecked(which, true)
+          }
+        }
+
+
+        currentSubtitleTracks?.let {
+          val subtitleList = binding.sortSubtitles
+          val loadFromFileFooter: TextView =
+            layoutInflater.inflate(R.layout.sort_bottom_footer_add_choice, null) as TextView
+
+          loadFromFileFooter.text = ctx.getString(R.string.player_load_subtitles)
+          loadFromFileFooter.setOnClickListener {
+            openSubPicker()
+          }
+          subtitleList.addFooterView(loadFromFileFooter)
+
+          val subsArrayAdapter = ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+          subsArrayAdapter.addAll(currentSubtitleTracks.map { it.name })
+
+          subtitleList.adapter = subsArrayAdapter
+          subtitleList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
+
+          subtitleList.setSelection(subtitleIndex)
+          subtitleList.setItemChecked(subtitleIndex, true)
+
+          subtitleList.setOnItemClickListener { _, _, which, _ ->
+            if (which > currentSubtitleTracks.size) {
+              // Since android TV is funky the setOnItemClickListener will be triggered
+              // instead of setOnClickListener when selecting. To override this we programmatically
+              // click the view when selecting an item outside the list.
+
+              // Cheeky way of getting the view at that position to click it
+              // to avoid keeping track of the various footers.
+              // getChildAt() gives null :(
+              val child = subtitleList.adapter.getView(which, null, subtitleList)
+              child?.performClick()
+            } else {
+              subtitleIndex = which
+              subtitleList.setItemChecked(which, true)
+            }
+          }
+        }
+
+
+
+        binding.subtitlesEncodingFormat.apply {
+          val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
+
+          val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
+          val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
+
+          val value = settingsManager.getString(
+            ctx.getString(R.string.subtitles_encoding_key), null
+          )
+          val index = prefValues.indexOf(value)
+          text = prefNames[if (index == -1) 0 else index]
+        }
+//        binding.subtitlesClickSettings.setOnClickListener {
+//          val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
+//
+//          val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
+//          val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
+//
+//          val currentPrefMedia = settingsManager.getString(
+//            ctx.getString(R.string.subtitles_encoding_key), null
+//          )
+//          val index = prefValues.indexOf(currentPrefMedia)
+//          activity?.showDialog(prefNames.toList(),
+//            if (index == -1) 0 else index,
+//            ctx.getString(R.string.subtitles_encoding),
+//            true,
+//            {}) {
+//            settingsManager.edit().putString(
+//              ctx.getString(R.string.subtitles_encoding_key), prefValues[it]
+//            ).apply()
+//
+//            //updateForcedEncoding(ctx)
+//            dismiss()
+//            //player.seekTime(-1) // to update subtitles, a dirty trick
+//          }
+//        }
+
+        binding.cancelBtt.setOnClickListener {
+          trackDialog.dismissSafe(activity)
+        }
+
+        binding.applyBtt.setOnClickListener {
+
+          mvpPlayer?.vid = videoIndex
+          mvpPlayer?.aid = audioIndexStart
+          mvpPlayer?.sid = subtitleIndex
+
+          trackDialog.dismissSafe(activity)
+        }
+      }
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
 
   private fun showSubtitleOffsetDialog() {
     val ctx = context ?: return
@@ -649,7 +880,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       dialog.setOnDismissListener {
-          activity?.hideSystemUI()
+        activity?.hideSystemUI()
       }
       applyBtt.setOnClickListener {
         dialog.dismissSafe(activity)
@@ -691,7 +922,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         {
           activity?.hideSystemUI()
         }) { index ->
-          setPlayBackSpeed(speedsNumbers[index])
+        setPlayBackSpeed(speedsNumbers[index])
       }
     }
   }
@@ -711,7 +942,10 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       "${if (psc.position > 0) psc.positionSec else (currentSelectedLink?.first?.position ?: 0L) / 1000}"
     )
 
-    mvpPlayer?.playFile(currentSelectedLink?.first?.url ?: "", currentSelectedLink?.first?.headers)
+    mvpPlayer?.playFile(
+      currentSelectedLink?.first?.url ?: "",
+      currentSelectedLink?.first?.headers
+    )
     playerBinding?.playerBuffering?.isVisible = true
 
     try {
@@ -822,6 +1056,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     updateUIVisibility()
     animateLayoutChanges()
     resetFastForwardText()
+    updateDecoderButton()
     resetRewindText()
     updateMetadataDisplay()
     mvpPlayer?.loadTracks()
@@ -1272,7 +1507,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       "hwdec-current" -> {
-        //updateDecoderButton()
+        updateDecoderButton()
       }
     }
     if (metaUpdated)
@@ -1643,6 +1878,86 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
     // Else, pass the fd to mpv
     return "fd://${fd}"
+  }
+
+  @OptIn(UnstableApi::class)
+  private fun openSubPicker() {
+    try {
+      subsPathPicker.launch(
+        arrayOf(
+          "text/plain",
+          "text/str",
+          "application/octet-stream",
+          MimeTypes.TEXT_UNKNOWN,
+          MimeTypes.TEXT_VTT,
+          MimeTypes.TEXT_SSA,
+          MimeTypes.APPLICATION_TTML,
+          MimeTypes.APPLICATION_MP4VTT,
+          MimeTypes.APPLICATION_SUBRIP,
+        )
+      )
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
+  private val subsPathPicker =
+    registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+      normalSafeApiCall {
+        // It lies, it can be null if file manager quits.
+        if (uri == null) return@normalSafeApiCall
+        val ctx = context ?: Utils.activity ?: return@normalSafeApiCall
+        // RW perms for the path
+        ctx.contentResolver.takePersistableUriPermission(
+          uri,
+          Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        )
+
+        val file = File(requireNotNull(uri.path))// SafeFile.fromUri(ctx, uri)
+        val fileName = file.name
+        println("Loaded subtitle file. Selected URI path: $uri - Name: $fileName")
+        // DO NOT REMOVE THE FILE EXTENSION FROM NAME, IT'S NEEDED FOR MIME TYPES
+        val name = fileName ?: uri.toString()
+
+        val subtitleData = SubtitleData(
+          name,
+          uri.toString(),
+          SubtitleOrigin.DOWNLOADED_FILE,
+          name.toSubtitleMimeType(),
+          emptyMap(),
+          null
+        )
+
+        addAndSelectSubtitles(subtitleData)
+      }
+    }
+
+  private fun addAndSelectSubtitles(
+    vararg subtitleData: SubtitleData
+  ) {
+    if (subtitleData.isEmpty()) return
+    val selectedSubtitle = subtitleData.first()
+    val ctx = context ?: return
+
+    val subs = currentSubs + subtitleData
+
+    // this is used instead of observe(viewModel._currentSubs), because observe is too slow
+//    player.setActiveSubtitles(subs)
+//
+//    // Save current time as to not reset player to 00:00
+//    player.saveData()
+//    player.reloadPlayer(ctx)
+//
+//    setSubtitles(selectedSubtitle)
+
+    viewModel.addSubtitles(subtitleData.toSet())
+
+    selectTrackDialog?.dismissSafe(activity)
+
+    showToast(
+      String.format(ctx.getString(R.string.player_loaded_subtitles), selectedSubtitle.name),
+      Toast.LENGTH_LONG
+    )
   }
 
   companion object {

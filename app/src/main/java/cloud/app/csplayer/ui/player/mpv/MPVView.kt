@@ -221,7 +221,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     MPVLib.removeObserver(o)
   }
 
-  data class Track(val mpvId: Int, val name: String)
+  data class Track(val mpvId: Int, val name: String, val selected: Boolean = false)
 
   var tracks = mapOf<String, MutableList<Track>>(
     "audio" to arrayListOf(),
@@ -233,7 +233,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     for (list in tracks.values) {
       list.clear()
       // pseudo-track to allow disabling audio/subs
-      list.add(Track(-1, context.getString(R.string.track_off)))
+      list.add(Track(0, context.getString(R.string.track_off)))
     }
     val count = MPVLib.getPropertyInt("track-list/count")!!
     // Note that because events are async, properties might disappear at any moment
@@ -247,17 +247,19 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
       val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
       val lang = MPVLib.getPropertyString("track-list/$i/lang")
       val title = MPVLib.getPropertyString("track-list/$i/title")
+      val selected = MPVLib.getPropertyBoolean("track-list/$i/selected")
 
       val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
         context.getString(R.string.ui_track_title_lang, mpvId, title, lang)
       else if (!lang.isNullOrEmpty() || !title.isNullOrEmpty())
         context.getString(R.string.ui_track_text, mpvId, (lang ?: "") + (title ?: ""))
       else
-        context.getString(R.string.ui_track, mpvId)
+        context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
       tracks.getValue(type).add(
         Track(
           mpvId = mpvId,
-          name = trackName
+          name = trackName,
+          selected = selected
         )
       )
     }

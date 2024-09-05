@@ -759,10 +759,19 @@
               android:id="@+id/player_tracks_btt"
               style="@style/VideoButtonTV"
               android:nextFocusLeft="@id/player_sources_btt"
-              android:nextFocusRight="@id/player_skip_op"
+              android:nextFocusRight="@id/player_codec_btt"
               android:nextFocusUp="@id/player_pause_play"
               android:text="@string/tracks"
               app:icon="@drawable/track_source_merge_24dp" />
+
+            <com.google.android.material.button.MaterialButton
+              android:id="@+id/player_codec_btt"
+              style="@style/VideoButtonTV"
+              android:nextFocusLeft="@id/player_tracks_btt"
+              android:nextFocusRight="@id/player_skip_op"
+              android:nextFocusUp="@id/player_pause_play"
+              android:text="@string/codec"
+              app:icon="@drawable/codec_24_dp" />
           </LinearLayout>
         </HorizontalScrollView>
       </LinearLayout>
