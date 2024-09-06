@@ -281,6 +281,13 @@ object SingleSelectionHelper {
       dismissCallback = dismissCallback,
       itemLayout = R.layout.sort_bottom_single_choice_no_checkmark
     )
+
+    if (isTvOrEmulator() == true) {
+      builder.setOnShowListener {
+        val bottomSheetBehavior: BottomSheetBehavior<*> = (it as BottomSheetDialog).behavior
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED)
+      }
+    }
     return builder
   }
 
@@ -298,7 +305,12 @@ object SingleSelectionHelper {
     )
 
     builder.setContentView(binding.root)
-
+    if (isTvOrEmulator() == true) {
+      builder.setOnShowListener {
+        val bottomSheetBehavior: BottomSheetBehavior<*> = (it as BottomSheetDialog).behavior
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED)
+      }
+    }
     builder.show()
     showInputDialog(
       binding,

@@ -2,15 +2,11 @@ package cloud.app.csplayer
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.Settings
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -20,13 +16,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentResultListener
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavOptions
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
@@ -44,7 +37,6 @@ import cloud.app.csplayer.utils.CommonActivitty.onUserLeaveHint
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
 import cloud.app.csplayer.utils.CommonActivitty.updateLocale
 import cloud.app.csplayer.utils.Coroutines.ioSafe
-import cloud.app.csplayer.utils.Event
 import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
 import cloud.app.csplayer.utils.GlobalEvent.onDialogDismissedEvent
 import cloud.app.csplayer.utils.InAppUpdater.Companion.runAutoUpdate
@@ -52,7 +44,6 @@ import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.colorFromAttribute
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
-import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.Utils.USER_AGENT
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
@@ -66,9 +57,7 @@ import com.google.android.gms.cast.framework.SessionManager
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
-import java.net.URI
 import kotlin.reflect.KClass
-import kotlin.system.exitProcess
 
 
 enum class FocusDirection {
@@ -149,18 +138,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     CommonActivitty.init(this)
     MPVUtils.copyAssets(this)
     super.onCreate(savedInstanceState)
-
-    if (!hasAllFilesAccessPermission(this)) {
-      //create a dialog to request permission
-      val dialog = AlertDialog.Builder(this).setTitle(R.string.request_permission_title)
-        .setMessage(R.string.request_permission_message)
-        .setPositiveButton(R.string.ok) { dialog, which ->
-          requestAllFilesAccessPermission(this, 100)
-          dialog.dismiss()
-        }.create()
-      dialog.show()
-    }
-
+    checkAndRequestPermission(this)
     try {
       if (isCastApiAvailable()) {
         mSessionManager = CastContext.getSharedInstance(this).sessionManager
@@ -525,53 +503,43 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     return super.dispatchKeyEvent(event)
   }
 
-  fun hasAllFilesAccessPermission(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-      Environment.isExternalStorageManager()
-    } else {
-      // For Android 10 and below, check if WRITE_EXTERNAL_STORAGE permission is granted
-      (ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-      ) == PackageManager.PERMISSION_GRANTED)
-    }
-  }
-
-  fun requestAllFilesAccessPermission(activity: Activity, requestCode: Int) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-      try {
-        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-        intent.addCategory(Intent.CATEGORY_DEFAULT)
-        val uri: Uri = Uri.fromParts("package", activity.packageName, null)
-        intent.data = uri
-        activity.startActivityForResult(intent, requestCode)
-      } catch (e: Exception) {
-        if (ContextCompat.checkSelfPermission(
-            activity,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-          )
-          != PackageManager.PERMISSION_GRANTED
-        ) {
+  val requestPermissionDialog: AlertDialog? = null;
+  fun checkAndRequestPermission(context: Context) {
+    if (ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+      ) != PackageManager.PERMISSION_GRANTED
+    ) {
+      val dialog = AlertDialog.Builder(this).setTitle(R.string.request_permission_title)
+        .setMessage(R.string.request_permission_message)
+        .setPositiveButton(R.string.ok) { dialog, which ->
           ActivityCompat.requestPermissions(
-            activity, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-            requestCode
+            this,
+            arrayOf<String>(
+              Manifest.permission.WRITE_EXTERNAL_STORAGE,
+              Manifest.permission.READ_EXTERNAL_STORAGE
+            ),
+            1
           )
-        }
-      }
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-      // For Android 6 (Marshmallow) to Android 10, use WRITE_EXTERNAL_STORAGE
-      if (ContextCompat.checkSelfPermission(
-          activity,
-          Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) != PackageManager.PERMISSION_GRANTED
-      )
-        ActivityCompat.requestPermissions(
-          activity,
-          arrayOf(
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-          ),
-          requestCode
-        )
+          dialog.dismiss()
+        }.create()
+      dialog.show()
+    } else if (ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+      ) != PackageManager.PERMISSION_GRANTED
+    ) {
+      val dialog = AlertDialog.Builder(this).setTitle(R.string.request_permission_title)
+        .setMessage(R.string.request_permission_message)
+        .setPositiveButton(R.string.ok) { dialog, which ->
+          ActivityCompat.requestPermissions(
+            this,
+            arrayOf<String>(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            1
+          )
+          dialog.dismiss()
+        }.create()
+      dialog.show()
     }
   }
 }

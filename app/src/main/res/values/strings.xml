@@ -810,4 +810,5 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="unknown">Unknown</string>
   <string name="codec">HW+</string>
   <string name="player_decoders">Decoders</string>
+  <string name="more_options">More Options</string>
 </resources>

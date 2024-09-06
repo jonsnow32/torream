@@ -50,18 +50,23 @@ android {
     buildConfig = true
   }
 
-
-
-
   sourceSets {
     getByName("main") {
-      jni.setSrcDirs(emptyList<File>()) // This prevents the auto generation of Android.mk
       jniLibs.srcDir("src/main/jni") // This is not necessary unless you have precompiled libraries in your project.
       jniLibs.srcDirs("src/main/libs")
     }
   }
 
-
+  flavorDimensions ("default")
+  productFlavors {
+    create("default") {
+      isDefault = true
+    }
+    create("api29") {
+      targetSdk = 29
+      versionNameSuffix = "-oldapi"
+    }
+  }
 
   buildTypes {
     release {

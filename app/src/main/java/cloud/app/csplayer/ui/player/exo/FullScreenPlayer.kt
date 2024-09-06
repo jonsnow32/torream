@@ -281,8 +281,8 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
   }
 
   override fun subtitlesChanged() {
-    playerBinding?.playerSubtitleOffsetBtt?.isGone =
-      player.getCurrentPreferredSubtitle() == null
+//    playerBinding?.playerSubtitleOffsetBtt?.isGone =
+//      player.getCurrentPreferredSubtitle() == null
   }
 
   private fun restoreOrientationWithSensor(activity: Activity) {
@@ -691,7 +691,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
       //TITLE
       playerVideoTitleRez.startAnimation(fadeAnimation)
-      playerEpisodeFiller.startAnimation(fadeAnimation)
       playerVideoTitle.startAnimation(fadeAnimation)
       playerTopHolder.startAnimation(fadeAnimation)
       // BOTTOM
@@ -724,8 +723,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       playerTopHolder.isGone = isGone
       //player_episodes_button?.isVisible = !isGone && hasEpisodes
       playerVideoTitle.isGone = togglePlayerTitleGone
-//        player_video_title_rez?.isGone = isGone
-      playerEpisodeFiller.isGone = isGone
       playerCenterMenu.isGone = isGone
       playerLock.isGone = !isShowing
       playerGoBackHolder.isGone = isGone
@@ -1437,9 +1434,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         setRemainingTimeCounter(false)
       }
 
-      skipChapterButton.setOnClickListener {
-        player.handleEvent(CSPlayerEvent.SkipCurrentChapter)
-      }
 
       playerRotateBtt.setOnClickListener {
         autoHide()
@@ -1473,9 +1467,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         toggleLock()
       }
 
-      playerSubtitleOffsetBtt.setOnClickListener {
-        showSubtitleOffsetDialog()
-      }
 
       exoRew.setOnClickListener {
         autoHide()
@@ -1499,7 +1490,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         showMirrorsDialogue()
       }
 
-      playerTracksBtt.setOnClickListener {
+      playerSubtitlesBtt.setOnClickListener {
         showTracksDialogue()
       }
 

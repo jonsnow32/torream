@@ -973,7 +973,6 @@ class CSPlayerFragment : FullScreenPlayer() {
       }
     }
 
-    playerBinding?.playerEpisodeFillerHolder?.isVisible = false
     playerBinding?.playerVideoTitle?.text = playerVideoTitle
   }
 
@@ -1046,49 +1045,7 @@ class CSPlayerFragment : FullScreenPlayer() {
     if (timestampShowState == show) return
     skipIndex++
     timestampShowState = show
-    playerBinding?.skipChapterButton?.apply {
-      val showWidth = 170.toPx
-      val noShowWidth = 10.toPx
-      //if((show && width == showWidth) || (!show && width == noShowWidth)) {
-      //    return
-      //}
-      val to = if (show) showWidth else noShowWidth
-      val from = if (!show) showWidth else noShowWidth
 
-      skipAnimator?.cancel()
-      isVisible = true
-
-      // just in case
-      val lay = layoutParams
-      lay.width = from
-      layoutParams = lay
-      skipAnimator = ValueAnimator.ofInt(
-        from, to
-      ).apply {
-        addListener(onEnd = {
-          if (show) {
-            if (!isShowing) {
-              // Automatically request focus if the menu is not opened
-              playerBinding?.skipChapterButton?.requestFocus()
-            }
-          } else {
-            playerBinding?.skipChapterButton?.isVisible = false
-            if (!isShowing) {
-              // Automatically return focus to play pause
-              playerBinding?.playerPausePlay?.requestFocus()
-            }
-          }
-        })
-        addUpdateListener { valueAnimator ->
-          val value = valueAnimator.animatedValue as Int
-          val layoutParams: ViewGroup.LayoutParams = layoutParams
-          layoutParams.width = value
-          setLayoutParams(layoutParams)
-        }
-        duration = 500
-        start()
-      }
-    }
   }
 
   override fun onTimestampSkipped(timestamp: SkipStamp) {
@@ -1099,11 +1056,6 @@ class CSPlayerFragment : FullScreenPlayer() {
     if (timestamp != null) {
       //playerBinding?.skipChapterButton?.setText(timestamp.uiText)
       displayTimeStamp(true)
-      val currentIndex = skipIndex
-      playerBinding?.skipChapterButton?.handler?.postDelayed({
-        if (skipIndex == currentIndex)
-          displayTimeStamp(false)
-      }, 6000)
     } else {
       displayTimeStamp(false)
     }
