@@ -578,10 +578,8 @@ class CSPlayerFragment : FullScreenPlayer() {
         trackDialog.show()
         selectTrackDialog = trackDialog
 
-        val videosList = binding.videoTracksList
         val audioList = binding.autoTracksList
 
-        binding.videoTracksHolder.isVisible = currentVideoTracks.size > 1
         binding.audioTracksHolder.isVisible = currentAudioTracks.size > 1
 
         fun dismiss() {
@@ -599,22 +597,11 @@ class CSPlayerFragment : FullScreenPlayer() {
             ?: (if (format.height == NO_VALUE || format.width == NO_VALUE) index else "${format.width}x${format.height}").toString()
         })
 
-        videosList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-        videosList.adapter = videosArrayAdapter
-
         // Sometimes the data is not the same because some data gets resolved at different stages i think
         var videoIndex = currentVideoTracks.indexOf(tracks.currentVideoTrack).takeIf {
           it != -1
         } ?: currentVideoTracks.indexOfFirst {
           tracks.currentVideoTrack?.id == it.id
-        }
-
-        videosList.setSelection(videoIndex)
-        videosList.setItemChecked(videoIndex, true)
-
-        videosList.setOnItemClickListener { _, _, which, _ ->
-          videoIndex = which
-          videosList.setItemChecked(which, true)
         }
 
         trackDialog.setOnDismissListener {
@@ -1140,6 +1127,5 @@ class CSPlayerFragment : FullScreenPlayer() {
       player.release()
       activity?.popCurrentPage()
     }
-
   }
 }

@@ -3,6 +3,7 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
   android:background="@null"
   android:orientation="vertical">
 
@@ -15,41 +16,9 @@
     android:orientation="horizontal">
 
     <LinearLayout
-      android:id="@+id/video_tracks_holder"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_weight="50"
-      android:layout_margin="10dp"
-      android:orientation="vertical">
-
-      <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_rowWeight="1"
-        android:layout_marginTop="10dp"
-        android:paddingStart="?android:attr/listPreferredItemPaddingStart"
-        android:paddingTop="10dp"
-        android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
-        android:paddingBottom="10dp"
-        android:text="@string/video_tracks"
-        android:textColor="?attr/textColor"
-        android:textSize="20sp"
-        android:textStyle="bold" />
-
-      <ListView
-        android:id="@+id/video_tracks_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_rowWeight="1"
-        android:nextFocusRight="@id/audio_tracks_holder"
-        android:requiresFadingEdge="vertical"
-        tools:listitem="@layout/sort_bottom_single_choice" />
-    </LinearLayout>
-
-    <LinearLayout
       android:id="@+id/audio_tracks_holder"
       android:layout_width="0dp"
-      android:layout_height="wrap_content"
+      android:layout_height="match_parent"
       android:layout_weight="50"
       android:orientation="vertical">
 
@@ -58,8 +27,8 @@
       <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_margin="10dp"
+        android:orientation="horizontal"
         tools:ignore="UseCompoundDrawables">
 
         <LinearLayout
@@ -111,8 +80,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_rowWeight="1"
-        android:nextFocusLeft="@id/video_tracks_list"
-        android:nextFocusRight="@id/apply_btt"
+        android:nextFocusRight="@id/sort_subtitles"
+        android:descendantFocusability="beforeDescendants"
         android:requiresFadingEdge="vertical"
         tools:listfooter="@layout/sort_bottom_footer_add_choice"
         tools:listitem="@layout/sort_bottom_single_choice" />
@@ -121,7 +90,7 @@
     <LinearLayout
       android:id="@+id/sort_subtitles_holder"
       android:layout_width="0dp"
-      android:layout_height="wrap_content"
+      android:layout_height="match_parent"
       android:layout_weight="50"
       android:orientation="vertical">
 
@@ -131,8 +100,8 @@
       <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_margin="10dp"
+        android:orientation="horizontal"
         tools:ignore="UseCompoundDrawables">
 
         <LinearLayout
@@ -179,15 +148,36 @@
           android:visibility="gone" />
       </LinearLayout>
 
+<!--      <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:orientation="vertical">-->
+
+<!--        <TextView-->
+<!--          style="@style/CheckLabel"-->
+<!--          android:layout_width="match_parent"-->
+<!--          android:layout_height="wrap_content"-->
+<!--          android:foreground="@drawable/outline_drawable_forced"-->
+<!--          app:drawableStartCompat="@drawable/ic_baseline_add_24"-->
+<!--          android:text="@string/player_load_subtitles" />-->
+
+<!--        <TextView-->
+<!--          style="@style/CheckLabel"-->
+<!--          android:layout_width="match_parent"-->
+<!--          android:layout_height="wrap_content"-->
+<!--          android:foreground="@drawable/outline_drawable_forced"-->
+<!--          app:drawableStartCompat="@drawable/ic_baseline_add_24"-->
+<!--          android:text="@string/player_load_subtitles_online" />-->
+<!--      </LinearLayout>-->
+
       <ListView
         android:id="@+id/sort_subtitles"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_rowWeight="1"
         android:listSelector="@drawable/outline_drawable_forced"
-        android:nextFocusLeft="@id/sort_providers"
+        android:nextFocusLeft="@id/auto_tracks_list"
         android:nextFocusRight="@id/apply_btt"
-        android:nextFocusUp="@id/subtitles_click_settings"
         android:nextFocusDown="@id/apply_btt"
         android:requiresFadingEdge="vertical"
         tools:layout_height="200dp"

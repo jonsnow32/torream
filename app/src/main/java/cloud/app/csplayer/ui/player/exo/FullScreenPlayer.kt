@@ -1490,7 +1490,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         showMirrorsDialogue()
       }
 
-      playerSubtitlesBtt.setOnClickListener {
+      playerTracksBtt.setOnClickListener {
         showTracksDialogue()
       }
 
