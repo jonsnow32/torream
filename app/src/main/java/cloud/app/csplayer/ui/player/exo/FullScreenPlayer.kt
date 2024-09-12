@@ -178,6 +178,10 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     throw NotImplementedError()
   }
 
+  open fun showVideoDialogue() {
+    throw NotImplementedError()
+  }
+
   open fun openOnlineSubPicker(
     context: Context,
     loadResponse: List<SubtitleData>?,
@@ -728,6 +732,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       playerGoBackHolder.isGone = isGone
       playerSkipEpisode.isClickable = !isGone
       playerSourcesBtt.isGone = isGone
+      moreOptions.isGone = true
     }
   }
 
@@ -976,9 +981,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
             currentClickCount = 0
           }
 
-          // call auto hide as it wont hide when you have your finger down
-          autoHide()
-
           // reset variables
           isCurrentTouchValid = false
           currentTouchStart = null
@@ -1206,14 +1208,12 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
           KeyEvent.KEYCODE_DPAD_UP_RIGHT -> {
             if (!isShowing) {
               return true
-            } else {
-              autoHide()
             }
           }
 
           // netflix capture back and hide ~monke
           KeyEvent.KEYCODE_BACK -> {
-            if (isShowing && context?.isTvOrEmulator() == true) {
+            if (isShowing) {
               onClickChange()
               return true
             }
@@ -1408,9 +1408,19 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     }
 
     playerBinding?.apply {
+
+      playerMoreOptionsBtt.setOnClickListener {
+        moreOptions.isGone = moreOptions.isGone.not()
+        if(moreOptions.isGone == false)
+          moreOptions.requestFocus()
+      }
+
+
       playerPausePlay.setOnClickListener {
-        autoHide()
         player.handleEvent(CSPlayerEvent.PlayPauseToggle)
+        if(isShowing) {
+          autoHide()
+        }
       }
 
       ytOverlay.performListener(object : YouTubeOverlay.PerformListener {
@@ -1436,45 +1446,37 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
 
       playerRotateBtt.setOnClickListener {
-        autoHide()
         toggleRotate()
       }
 
       // init clicks
       playerResizeBtt.setOnClickListener {
-        autoHide()
         nextResize()
         setReizeIcon()
       }
 
       playerSpeedBtt.setOnClickListener {
-        autoHide()
         showSpeedDialog()
       }
 
       playerSkipOp.setOnClickListener {
-        autoHide()
         skipOp()
       }
 
       playerSkipEpisode.setOnClickListener {
-        autoHide()
         player.handleEvent(CSPlayerEvent.NextEpisode)
       }
 
       playerLock.setOnClickListener {
-        autoHide()
         toggleLock()
       }
 
 
       exoRew.setOnClickListener {
-        autoHide()
         rewind()
       }
 
       exoFfwd.setOnClickListener {
-        autoHide()
         fastForward()
       }
 
@@ -1484,7 +1486,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       }
 
       playerGoSetting.setOnClickListener {
-        findNavController().navigate(R.id.navigation_settings_player)
+        findNavController().navigate(R.id.action_navigation_global_to_navigation_settings_player)
       }
       playerSourcesBtt.setOnClickListener {
         showMirrorsDialogue()
@@ -1492,6 +1494,9 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
       playerTracksBtt.setOnClickListener {
         showTracksDialogue()
+      }
+      playerVideoTracks.setOnClickListener {
+        showVideoDialogue()
       }
 
       // it is !not! a bug that you cant touch the right side, it does not register inputs on navbar or status bar
@@ -1538,7 +1543,6 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
           }
 
           MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_BUTTON_RELEASE -> {
-            autoHide()
           }
         }
         return@setOnTouchListener false

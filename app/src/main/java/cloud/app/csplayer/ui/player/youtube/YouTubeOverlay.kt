@@ -36,6 +36,7 @@ class YouTubeOverlay(context: Context, private val attrs: AttributeSet?) :
     this.listener = listener;
   }
 
+
   constructor(context: Context) : this(context, null) {
     // Hide overlay initially when added programmatically
     this.visibility = View.INVISIBLE
@@ -131,6 +132,10 @@ class YouTubeOverlay(context: Context, private val attrs: AttributeSet?) :
   }
 
 
+  override fun onDetachedFromWindow() {
+    performListener = null
+    super.onDetachedFromWindow()
+  }
   private var performListener: PerformListener? = null
 
   /**
@@ -278,7 +283,7 @@ class YouTubeOverlay(context: Context, private val attrs: AttributeSet?) :
 
     val shouldForward = (posX >= with/2)
 
-     
+
     // YouTube behavior: show overlay on MOTION_UP
     // But check whether the first double tap is in invalid area
     if (this.visibility != View.VISIBLE) {

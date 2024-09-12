@@ -147,8 +147,6 @@ class SettingsFragment : Fragment() {
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
-
     binding?.apply {
       listOf(
         settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
@@ -184,7 +182,7 @@ class SettingsFragment : Fragment() {
         activity?.showNginxTextInputDialog("Your Link", text, 16, {
         }, {
           activity?.navigate(
-            R.id.global_to_navigation_mvp_player,
+            R.id.global_to_navigation_player,
             bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
           )
         });

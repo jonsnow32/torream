@@ -25,6 +25,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentPlayerBinding
 import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
 import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
+import cloud.app.csplayer.databinding.PlayerSelectVideoTracksBinding
 import cloud.app.csplayer.ui.player.CSPlayerEvent
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
 import cloud.app.csplayer.ui.player.PlayerEventSource
@@ -57,11 +58,9 @@ import cloud.app.csplayer.utils.observe
 import kotlinx.coroutines.Job
 import java.io.File
 
-
 class CSPlayerFragment : FullScreenPlayer() {
 
   private val viewModel by viewModels<CSPlayerViewModel>()
-
   private var titleRez = 3
   private var limitTitle = 0
   private var allLinks: Set<Pair<ExtractorLink?, ExtractorUri?>> = setOf()
@@ -555,8 +554,70 @@ class CSPlayerFragment : FullScreenPlayer() {
     }
   }
 
-  var selectTrackDialog: Dialog? = null
+  var selectVideoDialog: Dialog? = null
+  override fun showVideoDialogue() {
+    try {
+      //println("CURRENT SELECTED :$currentSelectedSubtitles of $currentSubs")
+      context?.let { ctx ->
+        val tracks = player.getVideoTracks()
 
+        val isPlaying = player.getIsPlaying()
+        player.handleEvent(CSPlayerEvent.Pause)
+
+        val currentVideoTracks = tracks.allVideoTracks.sortedBy {
+          it.height?.times(-1)
+        }
+        val binding: PlayerSelectVideoTracksBinding =
+          PlayerSelectVideoTracksBinding.inflate(LayoutInflater.from(ctx), null, false)
+        val trackDialog = Dialog(ctx, R.style.AlertDialogCustom)
+        trackDialog.setContentView(binding.root)
+        trackDialog.show()
+        selectVideoDialog = trackDialog
+
+        fun dismiss() {
+          if (isPlaying) {
+            player.handleEvent(CSPlayerEvent.Play)
+          }
+          activity?.hideSystemUI()
+        }
+
+        val videosArrayAdapter =
+          ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+
+        videosArrayAdapter.addAll(currentVideoTracks.mapIndexed { index, format ->
+          format.label
+            ?: (if (format.height == NO_VALUE || format.width == NO_VALUE) index else "${format.width}x${format.height}").toString()
+        })
+
+        // Sometimes the data is not the same because some data gets resolved at different stages i think
+        var videoIndex = currentVideoTracks.indexOf(tracks.currentVideoTrack).takeIf {
+          it != -1
+        } ?: currentVideoTracks.indexOfFirst {
+          tracks.currentVideoTrack?.id == it.id
+        }
+
+        trackDialog.setOnDismissListener {
+          dismiss()
+        }
+        binding.cancelBtt.setOnClickListener {
+          trackDialog.dismissSafe(activity)
+        }
+        binding.applyBtt.setOnClickListener {
+          val currentVideo = currentVideoTracks.getOrNull(videoIndex)
+          val width = currentVideo?.width ?: NO_VALUE
+          val height = currentVideo?.height ?: NO_VALUE
+          if (width != NO_VALUE && height != NO_VALUE) {
+            player.setMaxVideoSize(width, height, currentVideo?.id)
+          }
+          trackDialog.dismissSafe(activity)
+        }
+      }
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
+  var selectTrackDialog: Dialog? = null
   @OptIn(UnstableApi::class)
   override fun showTracksDialogue() {
     try {

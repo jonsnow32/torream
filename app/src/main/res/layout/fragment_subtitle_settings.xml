@@ -1,47 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
   android:id="@+id/subs_root"
   android:layout_width="match_parent"
-  android:layout_height="wrap_content"
-  android:background="?attr/primaryBlackBackground"
-  android:orientation="vertical">
-
-  <TextView
+  android:layout_height="match_parent">
+  <com.google.android.material.appbar.AppBarLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/primaryGrayBackground"
-    android:paddingStart="20dp"
-    android:paddingTop="20dp"
-    android:paddingEnd="20dp"
-    android:paddingBottom="10dp"
-    android:text="@string/subtitles_settings"
-    android:textColor="?attr/textColor"
-    android:textSize="20sp"
-    android:textStyle="bold" />
+    android:id="@+id/subtitle_settings_appbar"
+    app:liftOnScrollTargetViewId="@id/subtitle_setting_scrollView"
+    android:background="@android:color/transparent">
 
-  <FrameLayout
-    android:layout_width="match_parent"
-    android:layout_height="75sp">
-
-    <ImageView
+    <com.google.android.material.appbar.MaterialToolbar
+      android:id="@+id/subtitle_settings_toolbar"
       android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:contentDescription="@string/preview_background_img_des"
-      android:scaleType="centerCrop"
-      android:src="@drawable/subtitles_preview_background" />
+      android:layout_height="wrap_content"
+      android:layout_marginHorizontal="8dp"
+      app:layout_scrollEffect="compress"
+      app:layout_collapseMode="pin"
+      app:layout_scrollFlags="scroll|enterAlwaysCollapsed|snap"
+      app:titleTextColor="?attr/textColor"
+      app:title="@string/subtitles_settings" />
 
-    <androidx.media3.ui.SubtitleView
-      android:id="@+id/subtitle_text"
+    <FrameLayout
       android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:layout_gravity="center"
-      android:foregroundGravity="center" />
-  </FrameLayout>
+      android:layout_height="75sp">
 
-  <ScrollView
+      <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/preview_background_img_des"
+        android:scaleType="centerCrop"
+        android:src="@drawable/subtitles_preview_background" />
+
+      <androidx.media3.ui.SubtitleView
+        android:id="@+id/subtitle_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:foregroundGravity="center" />
+    </FrameLayout>
+
+  </com.google.android.material.appbar.AppBarLayout>
+
+  <View
+    android:id="@+id/appBarOutline"
+    style="@style/AppBarOutline"
+    app:layout_anchor="@id/subtitle_settings_toolbar"
+    app:layout_anchorGravity="bottom" />
+
+  <androidx.core.widget.NestedScrollView
+    android:id="@+id/subtitle_setting_scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
     android:background="?attr/primaryBlackBackground">
 
     <LinearLayout
@@ -193,10 +206,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fontFamily="@font/google_sans"
-        android:nextFocusLeft="@id/apply_btt"
-        android:nextFocusRight="@id/cancel_btt"
+        android:nextFocusLeft="@id/reset_all_subtitle_settings"
+        android:nextFocusRight="@id/reset_all_subtitle_settings"
         android:nextFocusUp="@id/subtitles_filter_sub_lang"
-        android:nextFocusDown="@id/apply_btt"
+        android:nextFocusDown="@id/reset_all_subtitle_settings"
         android:text="@string/uppercase_all_subtitles"
         app:drawableEndCompat="@null" />
 
@@ -258,6 +271,6 @@
           android:text="@string/sort_cancel" />
       </LinearLayout>
     </LinearLayout>
-  </ScrollView>
+  </androidx.core.widget.NestedScrollView>
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

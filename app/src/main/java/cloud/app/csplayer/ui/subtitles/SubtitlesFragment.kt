@@ -235,6 +235,22 @@ class SubtitlesFragment : Fragment() {
       context?.getExternalFilesDir(null)?.absolutePath.toString() + "/Fonts"
     )
 
+    if(isTvOrEmulator()) {
+      binding?.subtitleSettingScrollView?.viewTreeObserver?.addOnGlobalFocusChangeListener { oldFocus, newFocus ->
+        if (newFocus != null && oldFocus != null) {
+          val scrollY = binding?.subtitleSettingScrollView?.scrollY ?: 0
+
+          // Check if the focus is moving down and expand the AppBar
+          if (newFocus.y > oldFocus.y) {
+            binding?.subtitleSettingsAppbar?.setExpanded(false, true)
+          }
+          // Check if the focus is moving up and collapse the AppBar
+          else if (newFocus.y < oldFocus.y && scrollY == 0) {
+            binding?.subtitleSettingsAppbar?.setExpanded(true, true)
+          }
+        }
+      }
+    }
     fixPaddingStatusbar(binding?.subsRoot)
 
     state = requireContext().getCurrentSavedStyle()
@@ -596,4 +612,6 @@ class SubtitlesFragment : Fragment() {
       }
     }
   }
+
+
 }
