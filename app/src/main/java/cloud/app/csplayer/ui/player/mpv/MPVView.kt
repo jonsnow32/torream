@@ -15,11 +15,12 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_DOUBLE
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_FLAG
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_INT64
+import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_NODE
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_NONE
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
 import kotlin.reflect.KProperty
 
-internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs){
+internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs) {
   override fun initOptions() {
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
@@ -206,7 +207,8 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
       Property("loop-playlist"),
       Property("loop-file"),
       Property("shuffle", MPV_FORMAT_FLAG),
-      Property("hwdec-current")
+      Property("hwdec-current"),
+      Property("end_file", MPV_FORMAT_NODE)
     )
 
     for ((name, format) in p)
@@ -245,16 +247,56 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         continue
       }
       val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
-      val lang = MPVLib.getPropertyString("track-list/$i/lang")
+
       val title = MPVLib.getPropertyString("track-list/$i/title")
       val selected = MPVLib.getPropertyBoolean("track-list/$i/selected")
+      val decoder = MPVLib.getPropertyString("track-list/$i/decoder")
+      var trackName = title;
 
-      val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
-        context.getString(R.string.ui_track_title_lang, mpvId, title, lang)
-      else if (!lang.isNullOrEmpty() || !title.isNullOrEmpty())
-        context.getString(R.string.ui_track_text, mpvId, (lang ?: "") + (title ?: ""))
-      else
-        context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
+      when (type) {
+        "video" -> {
+          if (trackName.isNullOrEmpty()) {
+            val demux_w = MPVLib.getPropertyInt("track-list/$i/demux-w")
+            val demux_h = MPVLib.getPropertyInt("track-list/$i/demux-h")
+
+            trackName = context.getString(
+              R.string.ui_video_track_text,
+              mpvId,
+              demux_w,
+              demux_h,
+            )
+          }
+        }
+
+        "audio" -> {
+          if (trackName.isNullOrEmpty()) {
+            val audioChannel = MPVLib.getPropertyString("track-list/$i/audio-channels")
+            val lang = MPVLib.getPropertyString("track-list/$i/lang")
+            if (!lang.isNullOrEmpty())
+              trackName = context.getString(R.string.ui_audio_track, mpvId, audioChannel, lang)
+          }
+
+
+        }
+
+        "sub" -> {
+          if (trackName.isNullOrEmpty()) {
+            val lang = MPVLib.getPropertyString("track-list/$i/lang")
+            if (!lang.isNullOrEmpty())
+              trackName = context.getString(R.string.ui_track_text, mpvId, lang)
+          }
+        }
+
+        else -> {
+          context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
+        }
+      }
+
+      if (trackName.isNullOrEmpty()) {
+        trackName =
+          context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
+      }
+
       tracks.getValue(type).add(
         Track(
           mpvId = mpvId,
@@ -262,6 +304,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
           selected = selected
         )
       )
+
     }
   }
 
@@ -325,7 +368,6 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
   val estimatedVfFps: Double?
     get() = MPVLib.getPropertyDouble("estimated-vf-fps")
-
 
 
   /**

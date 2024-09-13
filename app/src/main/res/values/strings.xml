@@ -800,6 +800,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="pref_video_interpolation_sync_default" translatable="false">audio</string>
   <string name="ui_track_title_lang" translatable="false" >%1$d. %2$s (%3$s)</string>
   <string name="ui_track_text" translatable="false" >%1$d. %2$s</string>
+  <string name="ui_audio_track" translatable="false" >%1$d. %2$s %3$s</string>
+  <string name="ui_video_track_text" translatable="false" >%1d. %2$dx%3$d</string>
   <string name="format_fixed_number" translatable="false">%.0f</string>
   <string name="format_seconds" translatable="false">%.1f s</string>
   <string name="ui_track" translatable="false">#%d</string>

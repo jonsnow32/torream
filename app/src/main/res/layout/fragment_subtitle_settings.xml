@@ -41,14 +41,14 @@
         android:layout_gravity="center"
         android:foregroundGravity="center" />
     </FrameLayout>
+    <View
+      android:id="@+id/appBarOutline"
+      style="@style/AppBarOutline"
+      app:layout_anchor="@id/subtitle_settings_toolbar"
+      app:layout_anchorGravity="bottom" />
 
   </com.google.android.material.appbar.AppBarLayout>
 
-  <View
-    android:id="@+id/appBarOutline"
-    style="@style/AppBarOutline"
-    app:layout_anchor="@id/subtitle_settings_toolbar"
-    app:layout_anchorGravity="bottom" />
 
   <androidx.core.widget.NestedScrollView
     android:id="@+id/subtitle_setting_scrollView"
