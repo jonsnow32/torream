@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.StrictMode
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -26,6 +27,7 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
+import cloud.app.csplayer.ui.player.PLaybackResult
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.mpv.MPVUtils
 import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
@@ -95,7 +97,7 @@ var app = Requests(responseParser = object : ResponseParser {
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private lateinit var binding: ActivityMainBinding;
-  private var result: Pair<Int, Long>? = null;
+  private var result: PLaybackResult? = null;
   lateinit var mSessionManager: SessionManager
   private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
 
@@ -138,7 +140,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     CommonActivitty.init(this)
     MPVUtils.copyAssets(this)
     super.onCreate(savedInstanceState)
-    checkAndRequestPermission(this)
     try {
       if (isCastApiAvailable()) {
         mSessionManager = CastContext.getSharedInstance(this).sessionManager
@@ -162,12 +163,19 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
     }
 
-    activityResultEvent = { code, position ->
+    activityResultEvent = { result  ->
       // Do something with the result value
-      result = Pair(code, position)
+      this.result = result
     }
 
     handleAppIntent(intent)
+
+    StrictMode.setThreadPolicy(
+      StrictMode.ThreadPolicy.Builder()
+        .detectAll()
+        .penaltyLog()
+        .build()
+    )
   }
 
   override fun onRequestPermissionsResult(
@@ -195,9 +203,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   override fun finish() {
     result?.let {
       val resultIntent = Intent().apply {
-        putExtra("position", it.second)
+        putExtra("position", it.position)
+        putExtra("end_by", it.reason)
       }
-      setResult(it.first, resultIntent)
+      setResult(it.code, resultIntent)
     }
     super.finish()
   }
@@ -501,45 +510,5 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       return true
     }
     return super.dispatchKeyEvent(event)
-  }
-
-  val requestPermissionDialog: AlertDialog? = null;
-  fun checkAndRequestPermission(context: Context) {
-    if (ContextCompat.checkSelfPermission(
-        this,
-        Manifest.permission.READ_EXTERNAL_STORAGE
-      ) != PackageManager.PERMISSION_GRANTED
-    ) {
-      val dialog = AlertDialog.Builder(this).setTitle(R.string.request_permission_title)
-        .setMessage(R.string.request_permission_message)
-        .setPositiveButton(R.string.ok) { dialog, which ->
-          ActivityCompat.requestPermissions(
-            this,
-            arrayOf<String>(
-              Manifest.permission.WRITE_EXTERNAL_STORAGE,
-              Manifest.permission.READ_EXTERNAL_STORAGE
-            ),
-            1
-          )
-          dialog.dismiss()
-        }.create()
-      dialog.show()
-    } else if (ContextCompat.checkSelfPermission(
-        this,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-      ) != PackageManager.PERMISSION_GRANTED
-    ) {
-      val dialog = AlertDialog.Builder(this).setTitle(R.string.request_permission_title)
-        .setMessage(R.string.request_permission_message)
-        .setPositiveButton(R.string.ok) { dialog, which ->
-          ActivityCompat.requestPermissions(
-            this,
-            arrayOf<String>(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-            1
-          )
-          dialog.dismiss()
-        }.create()
-      dialog.show()
-    }
   }
 }

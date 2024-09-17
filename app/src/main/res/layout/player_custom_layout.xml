@@ -455,7 +455,7 @@
               android:gravity="start|center"
               android:nextFocusRight="@id/player_video_tracks"
               android:nextFocusDown="@id/player_video_tracks"
-              android:text="@string/pick_subtitle"
+              android:text="@string/tracks"
               app:icon="@drawable/track_source_merge_24dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -466,8 +466,8 @@
               android:nextFocusRight="@id/player_speed_btt"
               android:nextFocusUp="@id/player_tracks_btt"
               android:nextFocusDown="@id/player_speed_btt"
-              android:text="@string/video_tracks"
-              app:icon="@drawable/media3_notification_small_icon" />
+              android:text="@string/qualities"
+              app:icon="@drawable/high_quality_24dp" />
 
 
             <com.google.android.material.button.MaterialButton
@@ -670,16 +670,27 @@
                 android:id="@+id/player_skip_episode"
                 style="@style/VideoButton"
                 android:nextFocusLeft="@id/player_skip_op"
-                android:nextFocusRight="@id/player_more_options_btt"
+                android:nextFocusRight="@id/player_subttile_offset"
                 android:nextFocusUp="@id/exo_progress"
-                android:nextFocusDown="@id/player_more_options_btt"
+                android:nextFocusDown="@id/player_subttile_offset"
                 android:text="@string/next_episode"
                 app:icon="@drawable/ic_baseline_skip_next_24" />
 
               <com.google.android.material.button.MaterialButton
-                android:id="@+id/player_more_options_btt"
+                android:id="@+id/player_subttile_offset"
                 style="@style/VideoButton"
                 android:nextFocusLeft="@id/player_skip_episode"
+                android:nextFocusRight="@id/player_more_options_btt"
+                android:nextFocusUp="@id/exo_progress"
+                android:nextFocusDown="@id/player_more_options_btt"
+                android:text="@string/subtitle_offset"
+                app:icon="@drawable/ic_outline_subtitles_24" />
+
+
+              <com.google.android.material.button.MaterialButton
+                android:id="@+id/player_more_options_btt"
+                style="@style/VideoButton"
+                android:nextFocusLeft="@id/player_subttile_offset"
                 android:nextFocusRight="@id/more_options"
                 android:nextFocusUp="@id/exo_progress"
                 android:nextFocusDown="@id/player_lock"

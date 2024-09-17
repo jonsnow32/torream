@@ -73,7 +73,7 @@ class SettingsFragment : Fragment() {
 
     fun Fragment?.setToolBarScrollFlags() {
       if (this?.isTvOrEmulator() == true) {
-        val settingsAppbar = this?.view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
+        val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
 
         settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
           scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL

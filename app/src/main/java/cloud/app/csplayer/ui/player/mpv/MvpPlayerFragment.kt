@@ -59,6 +59,7 @@ import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
 import cloud.app.csplayer.databinding.PlayerSelectVideoTracksBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
+import cloud.app.csplayer.ui.player.PLaybackResult
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
 import cloud.app.csplayer.ui.player.exo.PlayerResize
@@ -103,6 +104,8 @@ enum class DecodeMode {
 }
 
 class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
+
+  private var isSameEpisode: Boolean = false;
 
   private val viewModel by viewModels<CSPlayerViewModel>()
 
@@ -542,14 +545,19 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerGoBack.setOnClickListener {
-        activity?.popCurrentPage()
+
         player?.timePos
           ?.let {
             CommonActivitty.activityResultEvent?.invoke(
-              Activity.RESULT_OK,
-              it.toLong()
+              PLaybackResult(
+                Activity.RESULT_OK,
+                it.toLong() * 1000L,
+                "cancel"
+              )
             )
           }
+
+        activity?.popCurrentPage()
       }
 
       playerGoSetting.setOnClickListener {
@@ -820,8 +828,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
           activity?.hideSystemUI()
         }
 
-
-
         trackDialog.setOnDismissListener {
           dismiss()
         }
@@ -892,8 +898,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
             }
           }
         }
-
-
 
         binding.subtitlesEncodingFormat.apply {
           val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
@@ -1617,8 +1621,9 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   }
 
   override fun event(eventId: Int) {
-    if (eventId == MPVLib.mpvEventId.MPV_EVENT_SHUTDOWN)
-      finishWithResult(if (playbackHasStarted) RESULT_OK else RESULT_CANCELED)
+    if (eventId == MPVLib.mpvEventId.MPV_EVENT_SHUTDOWN) {
+
+    }
 
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_START_FILE) {
       for (c in onloadCommands)
@@ -1643,7 +1648,10 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   private fun eventPropertyUi(property: String, dummy: Any?, metaUpdated: Boolean) {
     if (!activityIsForeground) return
     when (property) {
-      "track-list" -> player?.loadTracks()
+      "track-list" -> {
+        player?.loadTracks()
+      }
+
       "video-format" -> {
         //updateAudioUI()
       }
@@ -1675,6 +1683,14 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       "time-pos" -> updatePlaybackPos(value.toInt())
       "playlist-pos", "playlist-count" -> {
         //updatePlaylistButtons()
+      }
+
+      "end_file_reason" -> {
+        finishWithResult(
+          if (playbackHasStarted) RESULT_OK else RESULT_CANCELED,
+          true,
+          value.toInt()
+        )
       }
     }
   }
@@ -1751,7 +1767,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     playerBinding?.playerVideoTitleRez?.text = psc.meta.formatArtistAlbum()
   }
 
-  private fun finishWithResult(code: Int, includeTimePos: Boolean = false) {
+  private fun finishWithResult(code: Int, includeTimePos: Boolean = false, endFileReason: Int) {
     // Refer to http://mpv-android.github.io/mpv-android/intent.html
     // FIXME: should track end-file events to accurately report OK vs CANCELED
     if (activity?.isFinishing == true) // only count first call
@@ -1764,7 +1780,46 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       result.putExtra("duration", psc.duration.toInt())
     }
     requireActivity().setResult(code, result)
-    //finish()
+
+
+
+    when (endFileReason) {
+      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_EOF -> {
+        CommonActivitty.activityResultEvent?.invoke(
+          PLaybackResult(
+            code,
+            psc.position * 1000L,
+            resources.getString(R.string.end_of_file)
+          )
+        )
+        playlistNext()
+      }
+
+      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_QUIT,
+      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_STOP,
+
+      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_ERROR -> {
+        CommonActivitty.activityResultEvent?.invoke(
+          PLaybackResult(
+            code,
+            psc.position * 1000L,
+            resources.getString(R.string.source_error)
+          )
+        )
+
+        showToast(resources.getString(R.string.source_error))
+        if (isSameEpisode) {
+          activity?.finish()
+        } else {
+          playlistNext()
+        }
+      }
+
+      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_REDIRECT -> {
+
+      }
+    }
+    //
   }
 
   override fun onPause() {

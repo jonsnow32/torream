@@ -39,6 +39,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
 import cloud.app.csplayer.ui.player.CSPlayerEvent
+import cloud.app.csplayer.ui.player.PLaybackResult
 import cloud.app.csplayer.ui.player.PlayerEventSource
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
@@ -558,7 +559,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     try {
       playerBinding?.apply {
         val width = resources.displayMetrics.widthPixels
-        ytOverlay.onDoubleTapProgressUp(width, width/2.0f - 20.0f, playerView?.height!!/2.0f)
+        ytOverlay.onDoubleTapProgressUp(width, width / 2.0f - 20.0f, playerView?.height!! / 2.0f)
       }
       player.seekTime(-fastForwardTime)
     } catch (e: Exception) {
@@ -571,7 +572,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       playerBinding?.apply {
         val width = resources.displayMetrics.widthPixels
         val height = resources.displayMetrics.heightPixels
-        ytOverlay.onDoubleTapProgressUp(width, width/2.0f + 20.0f, height/2.0f)
+        ytOverlay.onDoubleTapProgressUp(width, width / 2.0f + 20.0f, height / 2.0f)
       }
       player.seekTime(fastForwardTime)
     } catch (e: Exception) {
@@ -1411,14 +1412,14 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
       playerMoreOptionsBtt.setOnClickListener {
         moreOptions.isGone = moreOptions.isGone.not()
-        if(moreOptions.isGone == false)
+        if (moreOptions.isGone == false)
           moreOptions.requestFocus()
       }
 
 
       playerPausePlay.setOnClickListener {
         player.handleEvent(CSPlayerEvent.PlayPauseToggle)
-        if(isShowing) {
+        if (isShowing) {
           autoHide()
         }
       }
@@ -1482,7 +1483,15 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
       playerGoBack.setOnClickListener {
         activity?.popCurrentPage()
-        player.getPosition()?.let{CommonActivitty.activityResultEvent?.invoke(Activity.RESULT_OK, it)}
+        player.getPosition()?.let {
+          CommonActivitty.activityResultEvent?.invoke(
+            PLaybackResult(
+              Activity.RESULT_OK,
+              it,
+              "cancel"
+            )
+          )
+        }
       }
 
       playerGoSetting.setOnClickListener {
@@ -1566,15 +1575,20 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
 
   @OptIn(UnstableApi::class)
   private fun setReizeIcon() {
-    when(playerView?.resizeMode) {
+    when (playerView?.resizeMode) {
       AspectRatioFrameLayout.RESIZE_MODE_FIT -> {
-        playerBinding?.playerResizeBtt?.icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_fit_24, null)
+        playerBinding?.playerResizeBtt?.icon =
+          ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_fit_24, null)
       }
+
       AspectRatioFrameLayout.RESIZE_MODE_FILL -> {
-        playerBinding?.playerResizeBtt?.icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_stretch_24, null)
+        playerBinding?.playerResizeBtt?.icon =
+          ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_stretch_24, null)
       }
+
       AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> {
-        playerBinding?.playerResizeBtt?.icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_zoom_24, null)
+        playerBinding?.playerResizeBtt?.icon =
+          ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_resize_zoom_24, null)
       }
 
       else -> {

@@ -251,7 +251,9 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
       val title = MPVLib.getPropertyString("track-list/$i/title")
       val selected = MPVLib.getPropertyBoolean("track-list/$i/selected")
       val decoder = MPVLib.getPropertyString("track-list/$i/decoder")
-      var trackName = title;
+      var trackName = if(title.isNullOrEmpty()) null else context.getString(
+        R.string.ui_track_text, mpvId,title
+      );
 
       when (type) {
         "video" -> {

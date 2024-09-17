@@ -169,4 +169,13 @@ public class MPVLib {
           public static final int MPV_LOG_LEVEL_DEBUG=60;
           public static final int MPV_LOG_LEVEL_TRACE=70;
      }
+
+  public static class mpvEndFileReason {
+    public static final int MPV_END_FILE_REASON_EOF = 0;
+    public static final int MPV_END_FILE_REASON_STOP = 2;
+    public static final int MPV_END_FILE_REASON_QUIT = 3;
+    public static final int MPV_END_FILE_REASON_ERROR = 4;
+    public static final int MPV_END_FILE_REASON_REDIRECT = 5;
+  }
+
 }

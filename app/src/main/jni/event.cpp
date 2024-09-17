@@ -98,15 +98,17 @@ void *event_thread(void *arg) {
                 sendPropertyUpdateToJava(env, mp_property);
                 break;
             default:
-
                 ALOGV("event: %s\n", mpv_event_name(mp_event->event_id));
                 sendEventToJava(env, mp_event->event_id);
-
-//                if (mp_event->event_id == MPV_EVENT_END_FILE) {
-//                    mpv_event_end_file *endFile = (mpv_event_end_file *) mp_event;
-//                    ALOGV("end file reason: %d\n", endFile->reason);
-//                }
-
+                if (mp_event->event_id == MPV_EVENT_END_FILE) {
+                    mpv_event_end_file *endFile = (mpv_event_end_file *) mp_event->data;
+                    mpv_event_property eventProperty;
+                    eventProperty.name = "end_file_reason";
+                    eventProperty.format = MPV_FORMAT_INT64;
+                    eventProperty.data = malloc(sizeof(int));
+                    *(int *)eventProperty.data = endFile->reason;
+                    sendPropertyUpdateToJava(env, &eventProperty);
+                }
                 break;
         }
     }

@@ -28,6 +28,7 @@ import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
 import cloud.app.csplayer.databinding.PlayerSelectVideoTracksBinding
 import cloud.app.csplayer.ui.player.CSPlayerEvent
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
+import cloud.app.csplayer.ui.player.PLaybackResult
 import cloud.app.csplayer.ui.player.PlayerEventSource
 import cloud.app.csplayer.ui.player.SkipStamp
 import cloud.app.csplayer.ui.player.exo.CSPlayer.Companion.preferredAudioTrackLanguage
@@ -618,6 +619,7 @@ class CSPlayerFragment : FullScreenPlayer() {
   }
 
   var selectTrackDialog: Dialog? = null
+
   @OptIn(UnstableApi::class)
   override fun showTracksDialogue() {
     try {
@@ -811,8 +813,11 @@ class CSPlayerFragment : FullScreenPlayer() {
   override fun playerError(exception: Throwable) {
     player.getPosition()?.let {
       CommonActivitty.activityResultEvent?.invoke(
-        Activity.RESULT_OK,
-        it
+        PLaybackResult(
+          Activity.RESULT_OK,
+          it,
+          exception.message
+        )
       )
     }
     Log.i(TAG, "playerError = $currentSelectedLink")
@@ -851,8 +856,10 @@ class CSPlayerFragment : FullScreenPlayer() {
 
     player.getPosition()?.let {
       CommonActivitty.activityResultEvent?.invoke(
-        Activity.RESULT_OK,
-        it
+        PLaybackResult(
+          Activity.RESULT_OK,
+          it
+        )
       )
     }
     activity?.finish()
@@ -914,8 +921,10 @@ class CSPlayerFragment : FullScreenPlayer() {
 
     player.getPosition()?.let {
       CommonActivitty.activityResultEvent?.invoke(
-        Activity.RESULT_OK,
-        it
+        PLaybackResult(
+          Activity.RESULT_OK,
+          it
+        )
       )
     }
   }
@@ -998,7 +1007,7 @@ class CSPlayerFragment : FullScreenPlayer() {
   }
 
   private fun getPlayerVideoTitle(): String {
-    if(isNextEpisode)
+    if (isNextEpisode)
       return currentSelectedLink?.first?.source ?: ""
     else
       return currentSelectedLink?.first?.name ?: ""

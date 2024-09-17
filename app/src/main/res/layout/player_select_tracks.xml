@@ -123,7 +123,6 @@
             android:textColor="?attr/textColor"
             android:textSize="20sp"
             android:textStyle="bold" />
-
           <TextView
             android:id="@+id/subtitles_encoding_format"
             android:layout_width="wrap_content"

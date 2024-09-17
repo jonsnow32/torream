@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.View.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import cloud.app.csplayer.ui.player.PLaybackResult
 import cloud.app.csplayer.ui.subtitles.ChromecastSubtitlesFragment
 import cloud.app.csplayer.ui.subtitles.ChromecastSubtitlesFragment.Companion.getCurrentSavedStyle
 import cloud.app.csplayer.utils.CastHelper.awaitLinks
@@ -273,8 +274,10 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                     val currentPosition = remoteMediaClient?.approximateStreamPosition
                     if (currentDuration != null && currentPosition != null) {
                       CommonActivitty.activityResultEvent?.invoke(
+                        PLaybackResult(
                         Activity.RESULT_OK,
                         currentPosition
+                        )
                       )
                     }
                     //    DataStoreHelper.setViewPos(epData.id, currentPosition, currentDuration)

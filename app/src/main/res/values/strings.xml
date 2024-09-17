@@ -813,4 +813,5 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="codec">HW+</string>
   <string name="player_decoders">Decoders</string>
   <string name="more_options">More Options</string>
+    <string name="end_of_file">End of file</string>
 </resources>
