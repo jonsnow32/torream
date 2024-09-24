@@ -16,11 +16,11 @@
       android:id="@+id/subtitle_settings_toolbar"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginHorizontal="8dp"
       app:layout_scrollEffect="compress"
       app:layout_collapseMode="pin"
       app:layout_scrollFlags="scroll|enterAlwaysCollapsed|snap"
       app:titleTextColor="?attr/textColor"
+      app:navigationIconTint="?attr/iconColor"
       app:title="@string/subtitles_settings" />
 
     <FrameLayout

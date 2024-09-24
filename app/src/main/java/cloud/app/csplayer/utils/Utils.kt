@@ -375,10 +375,10 @@ object Utils {
     var i = 0
 
     while (i < bytes.size) {
-      val triplet = (base64Chars.indexOf(bytes[i].toChar()) shl 18) or
-        (base64Chars.indexOf(bytes[i + 1].toChar()) shl 12) or
-        (if (bytes[i + 2] != '='.toByte()) base64Chars.indexOf(bytes[i + 2].toChar()) shl 6 else 0) or
-        if (bytes[i + 3] != '='.toByte()) base64Chars.indexOf(bytes[i + 3].toChar()) else 0
+      val triplet = (base64Chars.indexOf(bytes[i].toInt().toChar()) shl 18) or
+        (base64Chars.indexOf(bytes[i + 1].toInt().toChar()) shl 12) or
+        (if (bytes[i + 2] != '='.code.toByte()) base64Chars.indexOf(bytes[i + 2].toInt().toChar()) shl 6 else 0) or
+        if (bytes[i + 3] != '='.code.toByte()) base64Chars.indexOf(bytes[i + 3].toInt().toChar()) else 0
 
       val char1 = triplet shr 16 and 0xFF
       val char2 = triplet shr 8 and 0xFF

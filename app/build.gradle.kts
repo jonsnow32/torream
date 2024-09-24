@@ -1,9 +1,10 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("com.android.application")
   id("org.jetbrains.kotlin.android")
+  id("com.google.devtools.ksp")
+  id("com.google.dagger.hilt.android")
 }
 
 val abiCodes = mapOf(
@@ -21,6 +22,7 @@ android {
   buildFeatures {
     viewBinding = true
   }
+
 
   defaultConfig {
     applicationId = "cloud.app.csplayer"
@@ -57,7 +59,8 @@ android {
     }
   }
 
-  flavorDimensions ("default")
+
+  flavorDimensions += listOf("default")
   productFlavors {
     create("default") {
       isDefault = true
@@ -102,27 +105,27 @@ android {
 dependencies {
 
   implementation("androidx.core:core-ktx:1.13.1")
-  implementation("androidx.appcompat:appcompat:1.6.1")
+  implementation("androidx.appcompat:appcompat:1.7.0")
   implementation("androidx.preference:preference-ktx:1.2.1")
   implementation("com.google.android.material:material:1.12.0")
-  implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
-  implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.0")
-  implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.0")
-  implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.0")
-  implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+  implementation("androidx.navigation:navigation-ui-ktx:2.8.1")
+  implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
+  implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
+  implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.6")
+  implementation("androidx.navigation:navigation-fragment-ktx:2.8.1")
 
-  val media3_version = "1.2.0"
+  val media3Version = "1.4.1"
   // Media 3 (ExoPlayer)
-  implementation("androidx.media3:media3-ui:$media3_version")
-  implementation("androidx.media3:media3-cast:$media3_version")
-  implementation("androidx.media3:media3-common:$media3_version")
-  implementation("androidx.media3:media3-session:$media3_version")
-  implementation("androidx.media3:media3-exoplayer:$media3_version")
+  implementation("androidx.media3:media3-ui:$media3Version")
+  implementation("androidx.media3:media3-cast:$media3Version")
+  implementation("androidx.media3:media3-common:$media3Version")
+  implementation("androidx.media3:media3-session:$media3Version")
+  implementation("androidx.media3:media3-exoplayer:$media3Version")
   implementation("com.google.android.mediahome:video:1.0.0")
-  implementation("androidx.media3:media3-exoplayer-hls:$media3_version")
-  implementation("androidx.media3:media3-exoplayer-dash:$media3_version")
-  implementation("androidx.media3:media3-datasource-okhttp:$media3_version")
-  implementation("androidx.media3:media3-extractor:$media3_version")
+  implementation("androidx.media3:media3-exoplayer-hls:$media3Version")
+  implementation("androidx.media3:media3-exoplayer-dash:$media3Version")
+  implementation("androidx.media3:media3-datasource-okhttp:$media3Version")
+  implementation("androidx.media3:media3-extractor:$media3Version")
   implementation("com.github.recloudstream:media-ffmpeg:1.1.0")
 
   // UI Stuff
@@ -133,9 +136,14 @@ dependencies {
   implementation("com.github.Blatzar:NiceHttp:0.4.11")
 
   // Others
-  implementation("org.mozilla:rhino:1.7.13")
-  implementation("com.github.albfernandez:juniversalchardet:2.4.0")
+  implementation("org.mozilla:rhino:1.7.15")
+  implementation("com.github.albfernandez:juniversalchardet:2.5.0")
   implementation("org.conscrypt:conscrypt-android:2.5.2")
+
+  //Dependence injection
+  implementation("com.google.dagger:hilt-android:2.48.1")
+  ksp("com.google.dagger:hilt-android-compiler:2.48.1")
+
   // Testing
   testImplementation("junit:junit:4.13.2")
   androidTestImplementation("androidx.test.ext:junit:1.1.5")

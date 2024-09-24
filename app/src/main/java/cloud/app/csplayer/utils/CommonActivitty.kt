@@ -20,7 +20,7 @@ import androidx.core.view.children
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.FocusDirection
 import cloud.app.csplayer.R
-import cloud.app.csplayer.ui.player.PLaybackResult
+import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.exo.TAG
 import cloud.app.csplayer.utils.AppUtils.isRtl
@@ -39,7 +39,7 @@ object CommonActivitty {
   var isInPIPMode: Boolean = false
   var playerEventListener: ((PlayerEventType) -> Unit)? = null
   var keyEventListener: ((Pair<KeyEvent?, Boolean>) -> Boolean)? = null
-  var activityResultEvent: ((PLaybackResult) -> Unit)? = null
+  var activityResultEvent: ((PlayBackResult) -> Unit)? = null
   val displayMetrics: DisplayMetrics = Resources.getSystem().displayMetrics
 
   // screenWidth and screenHeight does always

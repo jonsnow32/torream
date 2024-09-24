@@ -7,6 +7,8 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
@@ -14,6 +16,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
+import android.provider.Settings
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.Editable
@@ -21,6 +24,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -58,16 +62,30 @@ import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
 import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
 import cloud.app.csplayer.databinding.PlayerSelectVideoTracksBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
+import cloud.app.csplayer.ui.player.CSPlayerEvent
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
-import cloud.app.csplayer.ui.player.PLaybackResult
+import cloud.app.csplayer.ui.player.PlayBackResult
+import cloud.app.csplayer.ui.player.PlayerEventSource
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
+import cloud.app.csplayer.ui.player.exo.DOUBLE_TAB_MAXIMUM_HOLD_TIME
+import cloud.app.csplayer.ui.player.exo.DOUBLE_TAB_MINIMUM_TIME_BETWEEN
+import cloud.app.csplayer.ui.player.exo.DOUBLE_TAB_PAUSE_PERCENTAGE
+import cloud.app.csplayer.ui.player.exo.FullScreenPlayer
+import cloud.app.csplayer.ui.player.exo.FullScreenPlayer.Companion.convertTimeToString
+import cloud.app.csplayer.ui.player.exo.HORIZONTAL_MULTIPLIER
+import cloud.app.csplayer.ui.player.exo.MINIMUM_HORIZONTAL_SWIPE
+import cloud.app.csplayer.ui.player.exo.MINIMUM_SEEK_TIME
+import cloud.app.csplayer.ui.player.exo.MINIMUM_VERTICAL_SWIPE
 import cloud.app.csplayer.ui.player.exo.PlayerResize
+import cloud.app.csplayer.ui.player.exo.VERTICAL_MULTIPLIER
 import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
 import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
+import cloud.app.csplayer.utils.CommonActivitty.screenHeight
+import cloud.app.csplayer.utils.CommonActivitty.screenWidth
 import cloud.app.csplayer.utils.DataStore
 import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.ExtractorUri
@@ -96,11 +114,20 @@ import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastState
 import java.io.File
+import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.round
 
 enum class DecodeMode {
   hwDec,
   swDec
+}
+
+enum class TouchAction {
+  Brightness,
+  Volume,
+  Time,
 }
 
 class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
@@ -511,7 +538,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
 
       playerRotateBtt.setOnClickListener {
-        //toggleRotate()
+        toggleRotate()
       }
 
       // init clicks
@@ -549,8 +576,8 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         player?.timePos
           ?.let {
             CommonActivitty.activityResultEvent?.invoke(
-              PLaybackResult(
-                Activity.RESULT_OK,
+              PlayBackResult(
+                RESULT_OK,
                 it.toLong() * 1000L,
                 "cancel"
               )
@@ -580,9 +607,9 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       // it is !not! a bug that you cant touch the right side, it does not register inputs on navbar or status bar
-//      playerHolder.setOnTouchListener { callView, event ->
-//        return@setOnTouchListener handleMotionEvent(callView, event)
-//      }
+      playerHolder.setOnTouchListener { callView, event ->
+        return@setOnTouchListener handleMotionEvent(callView, event)
+      }
 
       playerMediaRouteButton.apply {
         val chromecastSupport = true;//api?.hasChromecastSupport == true
@@ -612,6 +639,392 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         }
       }
     }
+  }
+
+  @SuppressLint("SetTextI18n")
+  private fun handleMotionEvent(view: View?, event: MotionEvent?): Boolean {
+    if (event == null || view == null) return false
+    val currentTouch = Utils.Vector2(event.x, event.y)
+    val startTouch = currentTouchStart
+
+    playerBinding?.apply {
+      playerIntroPlay.isGone = true
+
+      when (event.action) {
+        MotionEvent.ACTION_DOWN -> {
+          // validates if the touch is inside of the player area
+          isCurrentTouchValid = isValidTouch(currentTouch.x, currentTouch.y)
+          /*if (isCurrentTouchValid && player_episode_list?.isVisible == true) {
+              player_episode_list?.isVisible = false
+          } else*/ if (isCurrentTouchValid) {
+            currentTouchStartTime = System.currentTimeMillis()
+            currentTouchStart = currentTouch
+            currentTouchLast = currentTouch
+            currentTouchStartPlayerTime = player?.timePos?.toLong()
+
+            getBrightness()?.let {
+              currentRequestedBrightness = it
+            }
+            (activity?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager)?.let { audioManager ->
+              val currentVolume =
+                audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+              val maxVolume =
+                audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+
+              currentRequestedVolume = currentVolume.toFloat() / maxVolume.toFloat()
+            }
+          }
+        }
+
+        MotionEvent.ACTION_UP -> {
+          if (isCurrentTouchValid && !isLocked) {
+            // seek time
+            if (swipeHorizontalEnabled && currentTouchAction == TouchAction.Time) {
+              val startTime = currentTouchStartPlayerTime
+              if (startTime != null) {
+                calculateNewTime(
+                  startTime,
+                  startTouch,
+                  currentTouch
+                )?.let { seekTo ->
+                  if (abs(seekTo - startTime) > MINIMUM_SEEK_TIME) {
+                    player?.timePos = (seekTo.toDouble())
+                  }
+                }
+              }
+            }
+          }
+         //  see if click is eligible for seek 10s
+          val holdTime = currentTouchStartTime?.minus(System.currentTimeMillis())
+          if (isCurrentTouchValid // is valid
+            && currentTouchAction == null // no other action like swiping is taking place
+            && currentLastTouchAction == null // last action was none, this prevents mis input random seek
+            && holdTime != null
+            && holdTime < DOUBLE_TAB_MAXIMUM_HOLD_TIME // it is a click not a long hold
+          ) {
+            if (!isLocked
+              && (System.currentTimeMillis() - currentLastTouchEndTime) < DOUBLE_TAB_MINIMUM_TIME_BETWEEN // the time since the last action is short
+            ) {
+              currentClickCount++
+
+              if (currentClickCount >= 1) { // have double clicked
+                currentDoubleTapIndex++
+                if (doubleTapPauseEnabled) { // you can pause if your tap is in the middle of the screen
+                  when {
+                    currentTouch.x < screenWidth / 2 - (DOUBLE_TAB_PAUSE_PERCENTAGE * screenWidth) -> {
+                      if (doubleTapEnabled)
+                        doubleTapRewind()
+                    }
+
+                    currentTouch.x > screenWidth / 2 + (DOUBLE_TAB_PAUSE_PERCENTAGE * screenWidth) -> {
+                      if (doubleTapEnabled)
+                        doubleTapForawd()
+                    }
+
+                    else -> {
+                      togglePlayPause()
+                    }
+                  }
+                } else if (doubleTapEnabled) {
+                  if (currentTouch.x < screenWidth / 2) {
+                    doubleTapRewind()
+                  } else {
+                    doubleTapForawd()
+                  }
+                }
+              }
+            } else {
+              // is a valid click but not fast enough for seek
+              currentClickCount = 0
+//              autoHide()
+              toggleShowDelayed()
+            }
+          } else {
+            currentClickCount = 0
+          }
+
+          // reset variables
+          isCurrentTouchValid = false
+          currentTouchStart = null
+          currentLastTouchAction = currentTouchAction
+          currentTouchAction = null
+          currentTouchStartPlayerTime = null
+          currentTouchLast = null
+          currentTouchStartTime = null
+
+          // resets UI
+          playerTimeText.isVisible = false
+          playerProgressbarLeftHolder.isVisible = false
+          playerProgressbarRightHolder.isVisible = false
+
+          currentLastTouchEndTime = System.currentTimeMillis()
+        }
+
+        MotionEvent.ACTION_MOVE -> {
+          // if current touch is valid
+          if (startTouch != null && isCurrentTouchValid && !isLocked) {
+            // action is unassigned and can therefore be assigned
+            if (currentTouchAction == null) {
+              val diffFromStart = startTouch - currentTouch
+
+              if (swipeVerticalEnabled) {
+                if (abs(diffFromStart.y * 100 / screenHeight) > MINIMUM_VERTICAL_SWIPE) {
+                  // left = Brightness, right = Volume, but the UI is reversed to show the UI better
+                  currentTouchAction = if (startTouch.x < screenWidth / 2) {
+                    // hide the UI if you hold brightness to show screen better, better UX
+                    if (isShowing) {
+                      isShowing = false
+                      animateLayoutChanges()
+                    }
+                    TouchAction.Brightness
+                  } else {
+                    TouchAction.Volume
+                  }
+                }
+              }
+              if (swipeHorizontalEnabled) {
+                if (abs(diffFromStart.x * 100 / screenHeight) > MINIMUM_HORIZONTAL_SWIPE) {
+                  currentTouchAction =
+                    TouchAction.Time
+                }
+              }
+            }
+
+            // display action
+            val lastTouch = currentTouchLast
+            if (lastTouch != null) {
+              val diffFromLast = lastTouch - currentTouch
+              val verticalAddition =
+                diffFromLast.y * VERTICAL_MULTIPLIER / screenHeight.toFloat()
+
+              // update UI
+              playerTimeText.isVisible = false
+              playerProgressbarLeftHolder.isVisible = false
+              playerProgressbarRightHolder.isVisible = false
+
+              when (currentTouchAction) {
+                TouchAction.Time -> {
+                  // this simply updates UI as the seek logic happens on release
+                  // startTime is rounded to make the UI sync in a nice way
+                  val startTime =
+                    currentTouchStartPlayerTime
+                  if (startTime != null) {
+                    calculateNewTime(
+                      startTime,
+                      startTouch,
+                      currentTouch
+                    )?.let { newMs ->
+                      val skipMs = newMs - startTime
+                      playerTimeText.apply {
+                        text =
+                          "${convertTimeToString(newMs)} [${
+                            (if (abs(skipMs) < 0) "" else (if (skipMs > 0) "+" else "-"))
+                          }${convertTimeToString(abs(skipMs))}]"
+                        isVisible = true
+                      }
+                    }
+                  }
+                }
+
+                TouchAction.Brightness -> {
+                  playerProgressbarRightHolder.isVisible = true
+                  val lastRequested = currentRequestedBrightness
+                  currentRequestedBrightness =
+                    min(
+                      1.0f,
+                      max(currentRequestedBrightness + verticalAddition, 0.0f)
+                    )
+
+                  // this is to not spam request it, just in case it fucks over someone
+                  if (lastRequested != currentRequestedBrightness)
+                    setBrightness(currentRequestedBrightness)
+
+                  // max is set high to make it smooth
+                  playerProgressbarRight.max = 100_000
+                  playerProgressbarRight.progress =
+                    max(2_000, (currentRequestedBrightness * 100_000f).toInt())
+
+                  playerProgressbarRightIcon.setImageResource(
+                    brightnessIcons[min( // clamp the value just in case
+                      brightnessIcons.size - 1,
+                      max(
+                        0,
+                        round(currentRequestedBrightness * (brightnessIcons.size - 1)).toInt()
+                      )
+                    )]
+                  )
+                }
+
+                TouchAction.Volume -> {
+                  (activity?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager)?.let { audioManager ->
+                    playerProgressbarLeftHolder.isVisible = true
+                    val maxVolume =
+                      audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                    val currentVolume =
+                      audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+
+                    // clamps volume and adds swipe
+                    currentRequestedVolume =
+                      min(
+                        1.0f,
+                        max(currentRequestedVolume + verticalAddition, 0.0f)
+                      )
+
+                    // max is set high to make it smooth
+                    playerProgressbarLeft.max = 100_000
+                    playerProgressbarLeft.progress =
+                      max(2_000, (currentRequestedVolume * 100_000f).toInt())
+
+                    playerProgressbarLeftIcon.setImageResource(
+                      volumeIcons[min( // clamp the value just in case
+                        volumeIcons.size - 1,
+                        max(
+                          0,
+                          round(currentRequestedVolume * (volumeIcons.size - 1)).toInt()
+                        )
+                      )]
+                    )
+
+                    // this is used instead of set volume because old devices does not support it
+                    val desiredVolume =
+                      round(currentRequestedVolume * maxVolume).toInt()
+                    if (desiredVolume != currentVolume) {
+                      val newVolumeAdjusted =
+                        if (desiredVolume < currentVolume) AudioManager.ADJUST_LOWER else AudioManager.ADJUST_RAISE
+
+                      audioManager.adjustStreamVolume(
+                        AudioManager.STREAM_MUSIC,
+                        newVolumeAdjusted,
+                        0
+                      )
+                    }
+                  }
+                }
+
+                else -> Unit
+              }
+            }
+          }
+        }
+      }
+    }
+    currentTouchLast = currentTouch
+    return true
+  }
+
+  private var currentDoubleTapIndex = 0
+  private fun toggleShowDelayed() {
+    if (doubleTapEnabled || doubleTapPauseEnabled) {
+      val index = currentDoubleTapIndex
+      playerBinding?.playerHolder?.postDelayed({
+        if (index == currentDoubleTapIndex) {
+          autoHide()
+          toggleControls()
+        }
+      }, DOUBLE_TAB_MINIMUM_TIME_BETWEEN)
+    } else {
+      autoHide()
+      toggleControls()
+    }
+  }
+
+  private fun doubleTapRewind() {
+    try {
+      playerBinding?.apply {
+        val width = resources.displayMetrics.widthPixels
+        ytOverlay.onDoubleTapProgressUp(width, width / 2.0f - 20.0f, player?.height!! / 2.0f)
+      }
+      player?.timePos = player?.timePos?.plus(-fastForwardTime / 1000)
+
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
+  private fun doubleTapForawd() {
+    try {
+      playerBinding?.apply {
+        val width = resources.displayMetrics.widthPixels
+        val height = resources.displayMetrics.heightPixels
+        ytOverlay.onDoubleTapProgressUp(width, width / 2.0f + 20.0f, height / 2.0f)
+      }
+      player?.timePos = player?.timePos?.plus(fastForwardTime / 1000)
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+  private fun calculateNewTime(
+    startTime: Long?,
+    touchStart: Utils.Vector2?,
+    touchEnd: Utils.Vector2?
+  ): Long? {
+    if (touchStart == null || touchEnd == null || startTime == null) return null
+    val diffX = (touchEnd.x - touchStart.x) * HORIZONTAL_MULTIPLIER / screenWidth.toFloat()
+    val duration = psc.durationSec.toLong() ?: return null
+    return max(
+      min(
+        startTime + ((duration * (diffX * diffX)) * (if (diffX < 0) -1 else 1)).toLong(),
+        duration
+      ), 0
+    )
+  }
+
+  private fun getBrightness(): Float? {
+    return if (useTrueSystemBrightness) {
+      try {
+        Settings.System.getInt(
+          context?.contentResolver,
+          Settings.System.SCREEN_BRIGHTNESS
+        ) / 255f
+      } catch (e: Exception) {
+        // because true system brightness requires
+        // permission, this is a lazy way to check
+        // as it will throw an error if we do not have it
+        useTrueSystemBrightness = false
+        return getBrightness()
+      }
+    } else {
+      try {
+        activity?.window?.attributes?.screenBrightness
+      } catch (e: Exception) {
+        logError(e)
+        null
+      }
+    }
+  }
+
+  private fun setBrightness(brightness: Float) {
+    if (useTrueSystemBrightness) {
+      try {
+        Settings.System.putInt(
+          context?.contentResolver,
+          Settings.System.SCREEN_BRIGHTNESS_MODE,
+          Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+        )
+
+        Settings.System.putInt(
+          context?.contentResolver,
+          Settings.System.SCREEN_BRIGHTNESS, (brightness * 255).toInt()
+        )
+      } catch (e: Exception) {
+        useTrueSystemBrightness = false
+        setBrightness(brightness)
+      }
+    } else {
+      try {
+        val lp = activity?.window?.attributes
+        lp?.screenBrightness = brightness
+        activity?.window?.attributes = lp
+      } catch (e: Exception) {
+        logError(e)
+      }
+    }
+  }
+  private fun isValidTouch(rawX: Float, rawY: Float): Boolean {
+    val statusHeight = statusBarHeight ?: 0
+    // val navHeight = navigationBarHeight ?: 0
+    // nav height is removed because screenWidth already takes into account that
+    return rawY > statusHeight && rawX < screenWidth //- navHeight
   }
 
   private fun handleKeyEvent(event: KeyEvent, hasNavigated: Boolean): Boolean {
@@ -1293,12 +1706,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   private var currentRequestedVolume: Float = 0.0f
   private var currentRequestedBrightness: Float = 1.0f
 
-  enum class TouchAction {
-    Brightness,
-    Volume,
-    Time,
-  }
-
   private var currentTapIndex = 0
   protected fun autoHide() {
     currentTapIndex++
@@ -1544,7 +1951,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-
   protected fun exitFullscreen() {
     //if (lockRotation)
     activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
@@ -1707,7 +2113,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     // Use property observation instead.
     //updateStats()
   }
-
+  private var firstTime = false;
   private fun eventPropertyUi(property: String, value: Double) {
     if (!activityIsForeground) return
     when (property) {
@@ -1717,40 +2123,46 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       "video-params/aspect", "video-params/rotate" -> {
-//        updateOrientation()
-//        updatePiPParams()
+        updateOrientation()
+        //updatePiPParams()
       }
     }
   }
 
-  //  private fun updateOrientation(initial: Boolean = false) {
-//    // screen orientation is fixed (Android TV)
-//    if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT))
-//      return
-//
-//    if (autoRotationMode != "auto") {
-//      if (!initial)
-//        return // don't reset at runtime
-//      requestedOrientation = when (autoRotationMode) {
-//        "landscape" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-//        "portrait" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-//        else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-//      }
-//    }
-//    if (initial || player.vid == -1)
-//      return
-//
-//    val ratio = player.getVideoAspect()?.toFloat() ?: 0f
-//    if (ratio == 0f || ratio in (1f / ASPECT_RATIO_MIN) .. ASPECT_RATIO_MIN) {
-//      // video is square, let Android do what it wants
-//      requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-//      return
-//    }
-//    requestedOrientation = if (ratio > 1f)
-//      ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-//    else
-//      ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-//  }
+  private fun updateOrientation() {
+
+    if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT))
+      return
+    val ratio = player?.getVideoAspect()?.toFloat() ?: 0f
+    if (ratio == 0f || ratio in (1f / ASPECT_RATIO_MIN) .. ASPECT_RATIO_MIN) {
+      // video is square, let Android do what it wants
+      activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+      return
+    }
+    activity?.requestedOrientation = if (ratio > 1f)
+      ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    else
+      ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+
+  }
+
+  private fun toggleRotate() {
+    toggleOrientationWithSensor()
+  }
+
+  private fun toggleOrientationWithSensor() {
+    val currentOrientation = resources.configuration.orientation
+    var orientation = 0
+    when (currentOrientation) {
+      Configuration.ORIENTATION_LANDSCAPE ->
+        orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+
+      Configuration.ORIENTATION_PORTRAIT ->
+        orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    }
+    activity?.requestedOrientation = orientation
+  }
+
   private fun eventPropertyUi(property: String, value: String, metaUpdated: Boolean) {
     if (!activityIsForeground) return
     when (property) {
@@ -1786,7 +2198,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     when (endFileReason) {
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_EOF -> {
         CommonActivitty.activityResultEvent?.invoke(
-          PLaybackResult(
+          PlayBackResult(
             code,
             psc.position * 1000L,
             resources.getString(R.string.end_of_file)
@@ -1800,7 +2212,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_ERROR -> {
         CommonActivitty.activityResultEvent?.invoke(
-          PLaybackResult(
+          PlayBackResult(
             code,
             psc.position * 1000L,
             resources.getString(R.string.source_error)

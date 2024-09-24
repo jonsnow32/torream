@@ -8,7 +8,7 @@ data class SaveCaptionStyle(
   @JsonProperty("foregroundColor") var foregroundColor: Int,
   @JsonProperty("backgroundColor") var backgroundColor: Int,
   @JsonProperty("windowColor") var windowColor: Int,
-  @JsonProperty("edgeType") var edgeType: @CaptionStyleCompat.EdgeType Int,
+  @JsonProperty("edgeType") var edgeType: Int,
   @JsonProperty("edgeColor") var edgeColor: Int,
   @FontRes
   @JsonProperty("typeface") var typeface: Int?,

@@ -1,8 +1,6 @@
 package cloud.app.csplayer
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -15,8 +13,6 @@ import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -27,7 +23,7 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
-import cloud.app.csplayer.ui.player.PLaybackResult
+import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.mpv.MPVUtils
 import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
@@ -59,6 +55,7 @@ import com.google.android.gms.cast.framework.SessionManager
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
+import dagger.hilt.android.AndroidEntryPoint
 import kotlin.reflect.KClass
 
 
@@ -94,10 +91,10 @@ var app = Requests(responseParser = object : ResponseParser {
 }).apply {
   defaultHeaders = mapOf("user-agent" to USER_AGENT)
 }
-
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private lateinit var binding: ActivityMainBinding;
-  private var result: PLaybackResult? = null;
+  private var result: PlayBackResult? = null;
   lateinit var mSessionManager: SessionManager
   private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
 

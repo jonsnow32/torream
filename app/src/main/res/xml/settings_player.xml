@@ -2,7 +2,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto">
 
-  <PreferenceCategory android:title="@string/pref_category_player_layout">
+  <PreferenceCategory android:title="@string/pref_category_player_layout"
+    app:isPreferenceVisible="false">
     <Preference
       android:icon="@drawable/ic_baseline_text_format_24"
       android:key="@string/prefer_limit_title_key"
@@ -40,6 +41,7 @@
       android:summary="@string/picture_in_picture_des"
       android:title="@string/picture_in_picture"
       app:defaultValue="true"
+      app:isPreferenceVisible="false"
       app:key="@string/pip_enabled_key" />
     <SwitchPreferenceCompat
       android:icon="@drawable/ic_baseline_aspect_ratio_24"
@@ -84,6 +86,7 @@
       android:summary="@string/auto_rotate_video_desc"
       android:title="@string/auto_rotate_video"
       app:defaultValue="false"
+      app:isPreferenceVisible="false"
       app:key="@string/auto_rotate_video_key" />
   </PreferenceCategory>
 
@@ -124,7 +127,7 @@
       android:title="@string/double_tap_to_seek_amount_settings"
       app:adjustable="true"
       app:defaultValue="10"
-      app:icon="@drawable/go_forward_30"
+      app:icon="@drawable/forward_10_24dp"
       app:key="@string/double_tap_seek_time_key"
       app:min="5"
       app:seekBarIncrement="5"

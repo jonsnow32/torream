@@ -39,7 +39,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
 import cloud.app.csplayer.ui.player.CSPlayerEvent
-import cloud.app.csplayer.ui.player.PLaybackResult
+import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.player.PlayerEventSource
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
@@ -65,7 +65,6 @@ import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isLayout
-import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.setText
 import cloud.app.csplayer.utils.txt
 import com.google.android.gms.cast.framework.CastButtonFactory
@@ -77,7 +76,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
 
-const val MINIMUM_SEEK_TIME = 7000L         // when swipe seeking
+const val MINIMUM_SEEK_TIME = 7L         // when swipe seeking
 const val MINIMUM_VERTICAL_SWIPE = 2.0f     // in percentage
 const val MINIMUM_HORIZONTAL_SWIPE = 2.0f   // in percentage
 const val VERTICAL_MULTIPLIER = 2.0f
@@ -797,7 +796,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       }
     }
 
-    private fun convertTimeToString(sec: Long): String {
+    fun convertTimeToString(sec: Long): String {
       val rsec = sec % 60L
       val min = ceil((sec - rsec) / 60.0).toInt()
       val rmin = min % 60L
@@ -1472,20 +1471,28 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         toggleLock()
       }
 
-
+      exoRew.setImageResource(R.drawable.netflix_skip_forward)
+      exoRew.scaleX = -1.0f;
+      exoRewText.text = (fastForwardTime / 1000).toString()
       exoRew.setOnClickListener {
         rewind()
       }
 
+
+      exoFfwd.setImageResource(R.drawable.netflix_skip_forward)
+      exoFfwd.scaleX = 1.0f;
+      exoFfwdText.text = (fastForwardTime / 1000).toString()
       exoFfwd.setOnClickListener {
         fastForward()
       }
+
+
 
       playerGoBack.setOnClickListener {
         activity?.popCurrentPage()
         player.getPosition()?.let {
           CommonActivitty.activityResultEvent?.invoke(
-            PLaybackResult(
+            PlayBackResult(
               Activity.RESULT_OK,
               it,
               "cancel"

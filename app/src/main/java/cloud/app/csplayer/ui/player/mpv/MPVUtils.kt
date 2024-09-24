@@ -30,7 +30,7 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-internal object MPVUtils {
+object MPVUtils {
     fun copyAssets(context: Context) {
         val assetManager = context.assets
         val files = arrayOf("subfont.ttf", "cacert.pem")

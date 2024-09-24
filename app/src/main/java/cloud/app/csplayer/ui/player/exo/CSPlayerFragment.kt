@@ -14,7 +14,6 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
-import androidx.core.animation.addListener
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.media3.common.Format.NO_VALUE
@@ -28,7 +27,7 @@ import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
 import cloud.app.csplayer.databinding.PlayerSelectVideoTracksBinding
 import cloud.app.csplayer.ui.player.CSPlayerEvent
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
-import cloud.app.csplayer.ui.player.PLaybackResult
+import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.player.PlayerEventSource
 import cloud.app.csplayer.ui.player.SkipStamp
 import cloud.app.csplayer.ui.player.exo.CSPlayer.Companion.preferredAudioTrackLanguage
@@ -46,7 +45,6 @@ import cloud.app.csplayer.utils.SubtitleHelper.languages
 import cloud.app.csplayer.utils.SubtitleOrigin
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.UIHelper.popCurrentPage
-import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
@@ -813,7 +811,7 @@ class CSPlayerFragment : FullScreenPlayer() {
   override fun playerError(exception: Throwable) {
     player.getPosition()?.let {
       CommonActivitty.activityResultEvent?.invoke(
-        PLaybackResult(
+        PlayBackResult(
           Activity.RESULT_OK,
           it,
           exception.message
@@ -856,7 +854,7 @@ class CSPlayerFragment : FullScreenPlayer() {
 
     player.getPosition()?.let {
       CommonActivitty.activityResultEvent?.invoke(
-        PLaybackResult(
+        PlayBackResult(
           Activity.RESULT_OK,
           it
         )
@@ -921,7 +919,7 @@ class CSPlayerFragment : FullScreenPlayer() {
 
     player.getPosition()?.let {
       CommonActivitty.activityResultEvent?.invoke(
-        PLaybackResult(
+        PlayBackResult(
           Activity.RESULT_OK,
           it
         )

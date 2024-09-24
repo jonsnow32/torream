@@ -104,12 +104,10 @@ class SettingsFragment : Fragment() {
 
       settingsToolbar.apply {
         setTitle(title)
-        if (isTvOrEmulator()) {
-          setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
-          children.firstOrNull { it is ImageView }?.tag = getString(R.string.tv_no_focus_tag)
-          setNavigationOnClickListener {
-            activity?.onBackPressedDispatcher?.onBackPressed()
-          }
+        setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
+        children.firstOrNull { it is ImageView }?.tag = getString(R.string.tv_no_focus_tag)
+        setNavigationOnClickListener {
+          activity?.onBackPressedDispatcher?.onBackPressed()
         }
       }
       UIHelper.fixPaddingStatusbar(settingsAppBar)
@@ -182,7 +180,7 @@ class SettingsFragment : Fragment() {
         activity?.showNginxTextInputDialog("Your Link", text, 16, {
         }, {
           activity?.navigate(
-            R.id.global_to_navigation_mvp_player,
+            R.id.global_to_navigation_player,
             bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
           )
         });

@@ -13,6 +13,8 @@ import cloud.app.csplayer.utils.Qualities
 import cloud.app.csplayer.utils.SubtitleData
 import cloud.app.csplayer.utils.SubtitleHelper
 import cloud.app.csplayer.utils.SubtitleOrigin
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 const val EXTRA_POSITION = "position" // long
 const val EXTRA_TITLE = "title" // string
@@ -25,8 +27,8 @@ const val EXTRA_SUBTITLE_LIST = "subtitles" // string[]
 const val EXTRA_SUBTITLE_START_INDEX = "subtitle_start_index" //int
 const val EXTRA_HAS_AD = "has_ad" // boolean
 
-
-class CSPlayerViewModel(private val arguments: SavedStateHandle) : ViewModel() {
+@HiltViewModel
+class CSPlayerViewModel @Inject constructor(private val arguments: SavedStateHandle) : ViewModel() {
 
   private val _allLinks = MutableLiveData<Set<Pair<ExtractorLink?, ExtractorUri?>>>()
   val allLinks: LiveData<Set<Pair<ExtractorLink?, ExtractorUri?>>> = _allLinks

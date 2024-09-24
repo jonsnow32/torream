@@ -11,10 +11,13 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.Dimension
+import androidx.annotation.StringRes
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.children
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import androidx.media3.common.text.Cue
@@ -36,8 +39,11 @@ import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.DataStore.setKey
 import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SingleSelectionHelper.showMultiDialog
+import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.isTvOrEmulator
+import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.appbar.MaterialToolbar
 import java.io.File
 
 const val SUBTITLE_KEY = "subtitle_settings"
@@ -218,6 +224,7 @@ class SubtitlesFragment : Fragment() {
     //return inflater.inflate(R.layout.subtitle_settings, container, false)
   }
 
+
   private lateinit var state: SaveCaptionStyle
   private var hide: Boolean = true
 
@@ -225,6 +232,7 @@ class SubtitlesFragment : Fragment() {
     super.onDestroy()
     onColorSelectedEvent -= ::onColorSelected
   }
+
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
@@ -251,6 +259,17 @@ class SubtitlesFragment : Fragment() {
         }
       }
     }
+
+    val settingsToolbar = view.findViewById<MaterialToolbar>(R.id.subtitle_settings_toolbar) ?: return
+    settingsToolbar.apply {
+      setTitle(title)
+      setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
+      children.firstOrNull { it is ImageView }?.tag = getString(R.string.tv_no_focus_tag)
+      setNavigationOnClickListener {
+        activity?.onBackPressedDispatcher?.onBackPressed()
+      }
+    }
+
     fixPaddingStatusbar(binding?.subsRoot)
 
     state = requireContext().getCurrentSavedStyle()
