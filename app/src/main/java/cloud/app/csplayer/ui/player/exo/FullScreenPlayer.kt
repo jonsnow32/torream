@@ -285,8 +285,8 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
   }
 
   override fun subtitlesChanged() {
-//    playerBinding?.playerSubtitleOffsetBtt?.isGone =
-//      player.getCurrentPreferredSubtitle() == null
+    playerBinding?.playerSubttileOffset?.isGone =
+      player.getCurrentPreferredSubtitle() == null
   }
 
   private fun restoreOrientationWithSensor(activity: Activity) {
@@ -1471,6 +1471,11 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         toggleLock()
       }
 
+      playerSubttileOffset.setOnClickListener {
+        showSubtitleOffsetDialog()
+      }
+
+
       exoRew.setImageResource(R.drawable.netflix_skip_forward)
       exoRew.scaleX = -1.0f;
       exoRewText.text = (fastForwardTime / 1000).toString()
@@ -1521,31 +1526,31 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
       }
 
       playerMediaRouteButton.apply {
-        val chromecastSupport = true;//api?.hasChromecastSupport == true
+        val chromecastSupport = false
         alpha = if (chromecastSupport) 1f else 0.3f
         if (!chromecastSupport) {
           setOnClickListener {
             showToast(
-              R.string.no_chromecast_support_toast,
+              R.string.coming_soon,
               Toast.LENGTH_LONG
             )
           }
         }
-        activity?.let { act ->
-          if (act.isCastApiAvailable()) {
-            try {
-              CastButtonFactory.setUpMediaRouteButton(act, this)
-              val castContext = CastContext.getSharedInstance(act.applicationContext)
-              isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
-              // this shit leaks for some reason
-              //castContext.addCastStateListener { state ->
-              //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
-              //}
-            } catch (e: Exception) {
-              logError(e)
-            }
-          }
-        }
+//        activity?.let { act ->
+//          if (act.isCastApiAvailable()) {
+//            try {
+//              CastButtonFactory.setUpMediaRouteButton(act, this)
+//              val castContext = CastContext.getSharedInstance(act.applicationContext)
+//              isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
+//              // this shit leaks for some reason
+//              //castContext.addCastStateListener { state ->
+//              //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
+//              //}
+//            } catch (e: Exception) {
+//              logError(e)
+//            }
+//          }
+//        }
       }
       exoProgress.setOnTouchListener { _, event ->
         // this makes the bar not disappear when sliding

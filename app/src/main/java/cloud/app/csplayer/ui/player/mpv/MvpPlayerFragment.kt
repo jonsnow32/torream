@@ -612,7 +612,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerMediaRouteButton.apply {
-        val chromecastSupport = true;//api?.hasChromecastSupport == true
+        val chromecastSupport = false
         alpha = if (chromecastSupport) 1f else 0.3f
         if (!chromecastSupport) {
           setOnClickListener {
@@ -622,21 +622,21 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
             )
           }
         }
-        activity?.let { act ->
-          if (act.isCastApiAvailable()) {
-            try {
-              CastButtonFactory.setUpMediaRouteButton(act, this)
-              val castContext = CastContext.getSharedInstance(act.applicationContext)
-              isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
-              // this shit leaks for some reason
-              //castContext.addCastStateListener { state ->
-              //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
-              //}
-            } catch (e: Exception) {
-              logError(e)
-            }
-          }
-        }
+//        activity?.let { act ->
+//          if (act.isCastApiAvailable()) {
+//            try {
+//              CastButtonFactory.setUpMediaRouteButton(act, this)
+//              val castContext = CastContext.getSharedInstance(act.applicationContext)
+//              isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
+//              // this shit leaks for some reason
+//              //castContext.addCastStateListener { state ->
+//              //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
+//              //}
+//            } catch (e: Exception) {
+//              logError(e)
+//            }
+//          }
+//        }
       }
     }
   }
