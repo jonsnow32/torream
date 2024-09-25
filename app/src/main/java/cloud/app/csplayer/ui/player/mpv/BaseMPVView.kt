@@ -63,14 +63,16 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
    */
 
   fun getHeader(additionHeaders: Map<String, String>?) : Map<String, String> {
-    return mapOf(
-      "accept" to "*/*",
+
+    return additionHeaders?: emptyMap()
+//    return mapOf(
+//      "accept" to "*/*",
 //      "sec-ch-ua" to "\"Chromium\";v=\"91\", \" Not;A Brand\";v=\"99\"",
 //      "sec-ch-ua-mobile" to "?0",
 //      "sec-fetch-user" to "?1",
 //      "sec-fetch-mode" to "navigate",
 //      "sec-fetch-dest" to "video"
-    ).plus(additionHeaders ?: emptyMap())// Adds the headers from the provider, e.g Authorization
+//    ).plus(additionHeaders ?: emptyMap())// Adds the headers from the provider, e.g Authorization
   }
 
   fun playFile(filePath: String, headers: Map<String, String>?) {
@@ -91,7 +93,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
         } else {
           if(headerList.isNotEmpty())
             headerList = headerList.plus(",")
-          headerList = headerList.plus("$key: $value");
+          headerList = headerList.plus("$key: ${value.replace(",","\\,")}");
         }
       }
       if(headerList.isNotEmpty()){
@@ -134,12 +136,13 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
       for((key, value) in getHeader(headers)) {
         if(key.lowercase() == "referer") {
           MPVLib.setPropertyString("referrer", value)
-        } else if(key.lowercase() == "user-agent") {
+        } else if(key.lowercase() == "user-agent")
+        {
           MPVLib.setPropertyString("user-agent", value)
         } else {
           if(headerList.isNotEmpty())
             headerList = headerList.plus(",")
-          headerList = headerList.plus("$key: $value");
+          headerList = headerList.plus("$key: ${value.replace(",","\\,")}")
         }
       }
       if(headerList.isNotEmpty()){
