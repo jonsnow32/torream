@@ -28,7 +28,7 @@
   </action>
 
   <action
-    android:id="@+id/global_to_navigation_mvp_player"
+    android:id="@+id/global_to_navigation_mpv_player"
     app:destination="@id/mvpFragmentPlayer"
     app:enterAnim="@anim/enter_anim"
     app:exitAnim="@anim/exit_anim"
@@ -163,7 +163,6 @@
       android:id="@+id/action_firstFragment_to_secondFragment"
       app:destination="@id/navigation_settings_player"
       app:popUpToInclusive="false" />
-
   </fragment>
 
   <fragment

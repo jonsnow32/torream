@@ -149,7 +149,7 @@
           android:layout_height="wrap_content"
           android:orientation="vertical"
           app:layout_constraintBottom_toBottomOf="parent"
-          app:layout_constraintEnd_toStartOf="@+id/linearLayout4"
+          app:layout_constraintEnd_toStartOf="@+id/top_right_holder"
           app:layout_constraintStart_toEndOf="@+id/player_go_back_holder"
           app:layout_constraintTop_toTopOf="parent">
 
@@ -160,6 +160,7 @@
             android:layout_marginBottom="2.5dp"
             android:gravity="center"
             android:textColor="@color/white"
+            android:layout_marginTop="20dp"
             tools:text="1920x1080" />
 
           <TextView
@@ -174,7 +175,7 @@
         </LinearLayout>
 
         <LinearLayout
-          android:id="@+id/linearLayout4"
+          android:id="@+id/top_right_holder"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:orientation="horizontal"

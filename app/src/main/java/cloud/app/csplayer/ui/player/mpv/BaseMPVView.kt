@@ -32,8 +32,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     // would crash before the surface is attached
     MPVLib.setOptionString("force-window", "no")
     // need to idle at least once for playFile() logic to work
-    MPVLib.setOptionString("idle", "once")
-
+    MPVLib.setOptionString("idle", "yes")
     holder.addCallback(this)
     observeProperties()
   }
@@ -56,15 +55,16 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
   protected abstract fun observeProperties()
 
   private var filePath: String? = null
+  private var playList: List<String>? = null
   private var headers: Map<String, String>? = null
 
   /**
    * Set the first file to be played once the player is ready.
    */
 
-  fun getHeader(additionHeaders: Map<String, String>?) : Map<String, String> {
+  fun getHeader(additionHeaders: Map<String, String>?): Map<String, String> {
 
-    return additionHeaders?: emptyMap()
+    return additionHeaders ?: emptyMap()
 //    return mapOf(
 //      "accept" to "*/*",
 //      "sec-ch-ua" to "\"Chromium\";v=\"91\", \" Not;A Brand\";v=\"99\"",
@@ -85,18 +85,18 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
 //      }
 
       var headerList = "";
-        for((key, value) in getHeader(headers)) {
-        if(key.lowercase() == "referer") {
+      for ((key, value) in getHeader(headers)) {
+        if (key.lowercase() == "referer") {
           MPVLib.setPropertyString("referrer", value)
-        } else if(key.lowercase() == "user-agent") {
+        } else if (key.lowercase() == "user-agent") {
           MPVLib.setPropertyString("user-agent", value)
         } else {
-          if(headerList.isNotEmpty())
+          if (headerList.isNotEmpty())
             headerList = headerList.plus(",")
-          headerList = headerList.plus("$key: ${value.replace(",","\\,")}");
+          headerList = headerList.plus("$key: ${value.replace(",", "\\,")}");
         }
       }
-      if(headerList.isNotEmpty()){
+      if (headerList.isNotEmpty()) {
         MPVLib.setPropertyString("http-header-fields", headerList)
       }
       MPVLib.command(arrayOf("loadfile", this.filePath))
@@ -107,6 +107,40 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
       MPVLib.setPropertyString("vo", voInUse)
     }
   }
+
+  fun playPlayList(playList: List<String>, headers: Map<String, String>?) {
+    this.headers = headers;
+    if (this.playList != null) {
+//      val headerList = getHeader(headers).entries.joinToString(",") { "${it.key}: ${it.value}" }
+//      headerList?.let {
+//        MPVLib.setPropertyString("http-header-fields", headerList)
+//      }
+      var headerList = "";
+      for ((key, value) in getHeader(headers)) {
+        if (key.lowercase() == "referer") {
+          MPVLib.setPropertyString("referrer", value)
+        } else if (key.lowercase() == "user-agent") {
+          MPVLib.setPropertyString("user-agent", value)
+        } else {
+          if (headerList.isNotEmpty())
+            headerList = headerList.plus(",")
+          headerList = headerList.plus("$key: ${value.replace(",", "\\,")}");
+        }
+      }
+      if (headerList.isNotEmpty()) {
+        MPVLib.setPropertyString("http-header-fields", headerList)
+      }
+      playList.forEach {
+        MPVLib.command(arrayOf("loadfile", it, "append-play"))
+      }
+
+      this.playList = null
+    } else {
+      // We disable video output when the context disappears, enable it back
+      MPVLib.setPropertyString("vo", voInUse)
+    }
+  }
+
 
   private var voInUse: String = "gpu"
 
@@ -133,24 +167,43 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
 
     if (filePath != null) {
       var headerList = "";
-      for((key, value) in getHeader(headers)) {
-        if(key.lowercase() == "referer") {
+      for ((key, value) in getHeader(headers)) {
+        if (key.lowercase() == "referer") {
           MPVLib.setPropertyString("referrer", value)
-        } else if(key.lowercase() == "user-agent")
-        {
+        } else if (key.lowercase() == "user-agent") {
           MPVLib.setPropertyString("user-agent", value)
         } else {
-          if(headerList.isNotEmpty())
+          if (headerList.isNotEmpty())
             headerList = headerList.plus(",")
-          headerList = headerList.plus("$key: ${value.replace(",","\\,")}")
+          headerList = headerList.plus("$key: ${value.replace(",", "\\,")}")
         }
       }
-      if(headerList.isNotEmpty()){
+      if (headerList.isNotEmpty()) {
         MPVLib.setPropertyString("http-header-fields", headerList)
       }
       MPVLib.command(arrayOf("loadfile", filePath as String))
 
       filePath = null
+    } else if (playList != null) {
+      var headerList = "";
+      for ((key, value) in getHeader(headers)) {
+        if (key.lowercase() == "referer") {
+          MPVLib.setPropertyString("referrer", value)
+        } else if (key.lowercase() == "user-agent") {
+          MPVLib.setPropertyString("user-agent", value)
+        } else {
+          if (headerList.isNotEmpty())
+            headerList = headerList.plus(",")
+          headerList = headerList.plus("$key: ${value.replace(",", "\\,")}");
+        }
+      }
+      if (headerList.isNotEmpty()) {
+        MPVLib.setPropertyString("http-header-fields", headerList)
+      }
+      playList?.forEach {
+        MPVLib.command(arrayOf("loadfile", it, "append-play"))
+      }
+      this.playList = null
     } else {
       // We disable video output when the context disappears, enable it back
       MPVLib.setPropertyString("vo", voInUse)
@@ -169,6 +222,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     filePath = null
     super.onDetachedFromWindow()
   }
+
   companion object {
     private const val TAG = "mpv"
   }

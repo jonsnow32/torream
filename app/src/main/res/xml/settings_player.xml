@@ -2,8 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto">
 
-  <PreferenceCategory android:title="@string/pref_category_player_layout"
-    app:isPreferenceVisible="false">
+  <PreferenceCategory android:title="@string/pref_category_player_layout">
     <Preference
       android:icon="@drawable/ic_baseline_text_format_24"
       android:key="@string/prefer_limit_title_key"
@@ -11,6 +10,7 @@
       android:title="@string/limit_title" />
 
     <Preference
+      app:isPreferenceVisible="false"
       android:icon="@drawable/ic_baseline_text_format_24"
       android:key="@string/prefer_limit_title_rez_key"
       android:layout="@layout/custom_preference"

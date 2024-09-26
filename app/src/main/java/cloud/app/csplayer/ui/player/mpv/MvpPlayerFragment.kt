@@ -2,7 +2,6 @@ package cloud.app.csplayer.ui.player.mpv
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
@@ -24,7 +23,6 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
-import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -42,7 +40,6 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
 import androidx.appcompat.app.AppCompatActivity.RESULT_OK
-import androidx.core.animation.addListener
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -62,16 +59,13 @@ import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
 import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
 import cloud.app.csplayer.databinding.PlayerSelectVideoTracksBinding
 import cloud.app.csplayer.databinding.SubtitleOffsetBinding
-import cloud.app.csplayer.ui.player.CSPlayerEvent
 import cloud.app.csplayer.ui.player.CSPlayerViewModel
 import cloud.app.csplayer.ui.player.PlayBackResult
-import cloud.app.csplayer.ui.player.PlayerEventSource
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
 import cloud.app.csplayer.ui.player.exo.DOUBLE_TAB_MAXIMUM_HOLD_TIME
 import cloud.app.csplayer.ui.player.exo.DOUBLE_TAB_MINIMUM_TIME_BETWEEN
 import cloud.app.csplayer.ui.player.exo.DOUBLE_TAB_PAUSE_PERCENTAGE
-import cloud.app.csplayer.ui.player.exo.FullScreenPlayer
 import cloud.app.csplayer.ui.player.exo.FullScreenPlayer.Companion.convertTimeToString
 import cloud.app.csplayer.ui.player.exo.HORIZONTAL_MULTIPLIER
 import cloud.app.csplayer.ui.player.exo.MINIMUM_HORIZONTAL_SWIPE
@@ -80,7 +74,6 @@ import cloud.app.csplayer.ui.player.exo.MINIMUM_VERTICAL_SWIPE
 import cloud.app.csplayer.ui.player.exo.PlayerResize
 import cloud.app.csplayer.ui.player.exo.VERTICAL_MULTIPLIER
 import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
-import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
@@ -110,9 +103,6 @@ import cloud.app.csplayer.utils.observe
 import cloud.app.csplayer.utils.setText
 import cloud.app.csplayer.utils.txt
 import com.github.rubensousa.previewseekbar.PreviewBar
-import com.google.android.gms.cast.framework.CastButtonFactory
-import com.google.android.gms.cast.framework.CastContext
-import com.google.android.gms.cast.framework.CastState
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.max
@@ -263,7 +253,11 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       allLinks = it
       //currentSelectedLink = allLinks.first()
     }
+    observe(viewModel.isSameEpisode) {
+      isSameEpisode = it;
+    }
     observe(viewModel.currentLinkIndex) {
+
       normalSafeApiCall {
         loadLink(allLinks.elementAt(it))
       }
@@ -694,7 +688,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
               }
             }
           }
-         //  see if click is eligible for seek 10s
+          //  see if click is eligible for seek 10s
           val holdTime = currentTouchStartTime?.minus(System.currentTimeMillis())
           if (isCurrentTouchValid // is valid
             && currentTouchAction == null // no other action like swiping is taking place
@@ -953,6 +947,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       logError(e)
     }
   }
+
   private fun calculateNewTime(
     startTime: Long?,
     touchStart: Utils.Vector2?,
@@ -1020,6 +1015,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
+
   private fun isValidTouch(rawX: Float, rawY: Float): Boolean {
     val statusHeight = statusBarHeight ?: 0
     // val navHeight = navigationBarHeight ?: 0
@@ -1480,7 +1476,34 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun loadLink(link: Pair<ExtractorLink?, ExtractorUri?>, sub: SubtitleData? = null) {
+  private fun loadPlayList() {
+    if (decodeMode == DecodeMode.swDec) {
+      pushOption("hwdec", "no")
+    }
+//    pushOption(
+//      "force-media-title",
+//      currentSelectedLink?.first?.name ?: currentSelectedLink?.first?.url!!
+//    )
+
+    pushOption(
+      "start",
+      "${if (psc.position > 0) psc.positionSec else (currentSelectedLink?.first?.position ?: 0L) / 1000}"
+    )
+
+    player?.playPlayList(
+      allLinks.map { it.first?.url ?: "" },
+        allLinks.first().first?.headers
+    )
+    playerBinding?.playerBuffering?.isVisible = true
+
+    try {
+      uiReset()
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
+  private fun loadLink(link: Pair<ExtractorLink?, ExtractorUri?>, sub: SubtitleData? = null, nextEpisode: Boolean = false) {
     currentSelectedLink = link
     if (decodeMode == DecodeMode.swDec) {
       pushOption("hwdec", "no")
@@ -1490,15 +1513,23 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       currentSelectedLink?.first?.name ?: currentSelectedLink?.first?.url!!
     )
 
-    pushOption(
-      "start",
-      "${if (psc.position > 0) psc.positionSec else (currentSelectedLink?.first?.position ?: 0L) / 1000}"
-    )
+    if(nextEpisode) {
+      pushOption(
+        "start",
+        "0"
+      )
+    } else {
+      pushOption(
+        "start",
+        "${if (psc.position > 0) psc.positionSec else (currentSelectedLink?.first?.position ?: 0L) / 1000}"
+      )
+    }
 
     player?.playFile(
       currentSelectedLink?.first?.url ?: "",
       currentSelectedLink?.first?.headers
     )
+
     playerBinding?.playerBuffering?.isVisible = true
 
     try {
@@ -1887,6 +1918,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       playerSkipEpisode.isClickable = !isGone
       playerSourcesBtt.isGone = isGone
       moreOptions.isGone = true
+      playerSubttileOffset.isGone = true
     }
   }
 
@@ -2028,7 +2060,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
   override fun event(eventId: Int) {
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_SHUTDOWN) {
-
+      Log.v(TAG, "MPV_EVENT_SHUTDOWN")
     }
 
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_START_FILE) {
@@ -2113,6 +2145,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     // Use property observation instead.
     //updateStats()
   }
+
   private var firstTime = false;
   private fun eventPropertyUi(property: String, value: Double) {
     if (!activityIsForeground) return
@@ -2134,7 +2167,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT))
       return
     val ratio = player?.getVideoAspect()?.toFloat() ?: 0f
-    if (ratio == 0f || ratio in (1f / ASPECT_RATIO_MIN) .. ASPECT_RATIO_MIN) {
+    if (ratio == 0f || ratio in (1f / ASPECT_RATIO_MIN)..ASPECT_RATIO_MIN) {
       // video is square, let Android do what it wants
       activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
       return
@@ -2175,8 +2208,23 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   }
 
   private fun updateMetadataDisplay() {
-    playerBinding?.playerVideoTitle?.text = psc.meta.formatTitle()
-    playerBinding?.playerVideoTitleRez?.text = psc.meta.formatArtistAlbum()
+    playerBinding?.playerVideoTitleRez?.text = psc.meta.formatTitle()
+    //playerBinding?.playerVideoTitleRez?.text = psc.meta.formatArtistAlbum()
+    val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireActivity())
+    val limitTitle = settingsManager.getInt(requireActivity().getString(R.string.prefer_limit_title_key), 0)
+    currentSelectedLink?.first?.url?.let { playerVideoTitle ->
+      //Hide title, if set in setting
+      if (limitTitle <= 0) {
+        playerBinding?.playerVideoTitle?.text = playerVideoTitle
+      } else {
+        //Truncate video title if it exceeds limit
+        val differenceInLength = playerVideoTitle.length - limitTitle
+        val margin = 3 //If the difference is smaller than or equal to this value, ignore it
+        if (limitTitle > 0 && differenceInLength > margin) {
+          playerBinding?.playerVideoTitle?.text = playerVideoTitle.substring(0, limitTitle - 1) + "..."
+        }
+      }
+    }
   }
 
   private fun finishWithResult(code: Int, includeTimePos: Boolean = false, endFileReason: Int) {
@@ -2193,8 +2241,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
     requireActivity().setResult(code, result)
 
-
-
     when (endFileReason) {
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_EOF -> {
         CommonActivitty.activityResultEvent?.invoke(
@@ -2204,11 +2250,22 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
             resources.getString(R.string.end_of_file)
           )
         )
-        playlistNext()
+        if (!isSameEpisode) {
+          val sourceIndex = allLinks.indexOf(currentSelectedLink)
+          try {
+            MPVLib.command(arrayOf("stop"))
+            val link = allLinks.elementAt(sourceIndex + 1)
+            loadLink(link, currentSelectedSubtitles, true)
+            showToast(resources.getString(R.string.next_episode))
+          } catch (e: Exception) {
+            logError(e)
+            activity?.finish()
+          }
+        } else {
+          activity?.finish()
+        }
       }
 
-      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_QUIT,
-      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_STOP,
 
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_ERROR -> {
         CommonActivitty.activityResultEvent?.invoke(
@@ -2218,13 +2275,16 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
             resources.getString(R.string.source_error)
           )
         )
-
         showToast(resources.getString(R.string.source_error))
-        if (isSameEpisode) {
-          activity?.finish()
-        } else {
-          playlistNext()
-        }
+      }
+
+      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_QUIT,
+      MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_STOP -> {
+//        if (isSameEpisode) {
+//          activity?.finish()
+//        } else {
+//          playlistNext()
+//        }
       }
 
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_REDIRECT -> {

@@ -23,6 +23,8 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
+import cloud.app.csplayer.ui.player.EXTRA_IS_SAME_EPISODE
+import cloud.app.csplayer.ui.player.EXTRA_USE_MPV
 import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.mpv.MPVUtils
@@ -91,6 +93,7 @@ var app = Requests(responseParser = object : ResponseParser {
 }).apply {
   defaultHeaders = mapOf("user-agent" to USER_AGENT)
 }
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private lateinit var binding: ActivityMainBinding;
@@ -160,7 +163,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
     }
 
-    activityResultEvent = { result  ->
+    activityResultEvent = { result ->
       // Do something with the result value
       this.result = result
     }
@@ -225,8 +228,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     if (intent.action == Intent.ACTION_VIEW) {
       val navBuilder = NavOptions.Builder()
       val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true, true).build()
+
+      val useMpv = extras.getBoolean(EXTRA_USE_MPV, false)
+      var id = R.id.global_to_navigation_player;
+//      if (useMpv) {
+//        id = R.id.global_to_navigation_mpv_player;
+//      }
+
+      id = R.id.global_to_navigation_mpv_player;
       navigate(
-        R.id.global_to_navigation_mvp_player,
+        id,
         extras,
         navOptions
       )

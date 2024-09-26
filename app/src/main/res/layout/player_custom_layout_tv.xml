@@ -200,77 +200,13 @@
       android:layout_height="match_parent"
       android:padding="16dp">
 
-      <FrameLayout
+      <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/player_top_holder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <LinearLayout
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginStart="80dp"
-          android:layout_marginTop="20dp"
-          android:layout_marginEnd="32dp"
-          android:orientation="vertical">
-
-          <TextView
-            android:id="@+id/player_video_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            tools:text="Hello world" />
-
-          <TextView
-            android:id="@+id/player_video_title_rez"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            tools:text="1920x1080" />
-
-        </LinearLayout>
-
-        <androidx.mediarouter.app.MediaRouteButton
-          android:id="@+id/player_media_route_button"
-          android:layout_width="70dp"
-          android:layout_height="70dp"
-          android:layout_gravity="end"
-          android:layout_margin="5dp"
-          android:mediaRouteTypes="user"
-          android:visibility="gone"
-          app:layout_constraintRight_toRightOf="parent"
-          app:layout_constraintTop_toTopOf="parent" />
-
-        <FrameLayout
-          android:id="@+id/player_go_setting_holder"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_gravity="end"
-          android:layout_margin="5dp">
-
-          <ImageView
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center"
-            android:contentDescription="@string/go_back_img_des"
-            android:src="@drawable/ic_outline_settings_24"
-            app:tint="@android:color/white" />
-
-          <ImageView
-            android:id="@+id/player_go_setting"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
-            android:layout_gravity="center"
-            android:background="@drawable/video_tap_button_always_white"
-            android:clickable="true"
-            android:contentDescription="@string/go_back_img_des"
-            android:focusable="true"
-            android:tag="@string/tv_no_focus_tag" />
-        </FrameLayout>
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <FrameLayout
           android:id="@+id/player_go_back_holder"
@@ -290,16 +226,96 @@
 
           <ImageView
             android:id="@+id/player_go_back"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_gravity="center"
             android:background="@drawable/video_tap_button_always_white"
             android:clickable="true"
             android:contentDescription="@string/go_back_img_des"
             android:focusable="true"
-            android:tag="@string/tv_no_focus_tag" />
+            app:tint="?attr/iconColor" />
         </FrameLayout>
-      </FrameLayout>
+
+        <LinearLayout
+          android:id="@+id/title_holder"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:orientation="vertical"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toStartOf="@+id/top_right_holder"
+          app:layout_constraintStart_toEndOf="@+id/player_go_back_holder"
+          app:layout_constraintTop_toTopOf="parent">
+
+          <TextView
+            android:id="@+id/player_video_title_rez"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="2.5dp"
+            android:gravity="center"
+            android:textColor="@color/white"
+            tools:text="1920x1080" />
+
+          <TextView
+            android:id="@+id/player_video_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:visibility="visible"
+            tools:text="Hello world" />
+        </LinearLayout>
+
+        <LinearLayout
+          android:id="@+id/top_right_holder"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:orientation="horizontal"
+          android:gravity="center_vertical"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintTop_toTopOf="parent">
+
+          <FrameLayout
+            android:id="@+id/player_go_setting_holder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+              android:id="@+id/player_go_setting"
+              android:layout_width="50dp"
+              android:layout_height="50dp"
+              android:layout_gravity="center"
+              android:background="@drawable/video_tap_button_always_white"
+              android:clickable="true"
+              android:contentDescription="@string/go_back_img_des"
+              android:focusable="true"
+              android:tag="@string/tv_no_focus_tag" />
+
+            <ImageView
+              android:layout_width="30dp"
+              android:layout_height="30dp"
+              android:layout_gravity="center"
+              android:contentDescription="@string/go_back_img_des"
+              android:src="@drawable/ic_outline_settings_24"
+              app:tint="@android:color/white" />
+
+
+          </FrameLayout>
+
+          <androidx.mediarouter.app.MediaRouteButton
+            android:id="@+id/player_media_route_button"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:mediaRouteTypes="user"
+            android:visibility="gone"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+        </LinearLayout>
+
+
+
+      </androidx.constraintlayout.widget.ConstraintLayout>
 
 
       <androidx.constraintlayout.widget.ConstraintLayout

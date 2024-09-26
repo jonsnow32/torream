@@ -22,6 +22,7 @@ const val EXTRA_TITLE = "title" // string
 const val EXTRA_VIDEO_URLS_NAME_HEADERS = "video_url_headers" // string["url1", "base64(headers1)", "url2", "base64(headers2)" ...]
 const val EXTRA_VIDEO_START_INDEX = "video_start_index" //int
 const val EXTRA_IS_SAME_EPISODE = "is_same_episode" // boolean
+const val EXTRA_USE_MPV = "use_mpv" // boolean = "is_use_lag" // boolean
 
 const val EXTRA_SUBTITLE_LIST = "subtitles" // string[]
 const val EXTRA_SUBTITLE_START_INDEX = "subtitle_start_index" //int
