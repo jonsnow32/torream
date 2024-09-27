@@ -25,6 +25,7 @@ import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.toPx
+import cloud.app.csplayer.utils.Utils.isARM
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.isLayout
 import cloud.app.csplayer.utils.isTvOrEmulator
@@ -177,10 +178,15 @@ class SettingsFragment : Fragment() {
             text = copy;
         }
 
+        var id = R.id.global_to_navigation_player;
+        if(isARM()) {
+          id = R.id.global_to_navigation_mpv_player;
+        }
+
         activity?.showNginxTextInputDialog("Your Link", text, 16, {
         }, {
           activity?.navigate(
-            R.id.global_to_navigation_mpv_player,
+            id,
             bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
           )
         });

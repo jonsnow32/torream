@@ -398,6 +398,28 @@ object Utils {
     return result
   }
 
+
+  fun getDeviceArchitecture(): String {
+    val arch = System.getProperty("os.arch") ?: return "Unknown"
+    return when {
+      arch.startsWith("arm") -> "ARM"
+      arch.startsWith("aarch64") -> "ARM64"
+      arch.startsWith("x86") -> "Intel"
+      arch.startsWith("x86_64") -> "Intel 64"
+      else -> "Unknown"
+    }
+  }
+
+  fun isARM(): Boolean {
+    val arch = getDeviceArchitecture()
+    return arch.startsWith("ARM")
+  }
+
+  fun isIntel(): Boolean {
+    val arch = getDeviceArchitecture()
+    return arch.startsWith("Intel")
+  }
+
   const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
 
 }

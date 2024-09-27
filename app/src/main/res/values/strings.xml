@@ -796,7 +796,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <!-- Value from default config. -->
 
 
-  <string name="commit_hash" translatable="false">389372e</string>
+  <string name="commit_hash" translatable="false">f9b908e</string>
   <string name="pref_video_interpolation_sync_default" translatable="false">audio</string>
   <string name="ui_track_title_lang" translatable="false" >%1$d. %2$s (%3$s)</string>
   <string name="ui_track_text" translatable="false" >%1$d. %2$s</string>

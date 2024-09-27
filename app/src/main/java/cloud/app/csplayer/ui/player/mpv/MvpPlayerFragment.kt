@@ -550,7 +550,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerSkipEpisode.setOnClickListener {
-        //mvpPlayer?.handleEvent(CSPlayerEvent.NextEpisode)
+        playNext()
       }
 
       playerLock.setOnClickListener {
@@ -566,14 +566,14 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerGoBack.setOnClickListener {
-
         player?.timePos
           ?.let {
             CommonActivitty.activityResultEvent?.invoke(
               PlayBackResult(
                 RESULT_OK,
                 it.toLong() * 1000L,
-                "cancel"
+                "cancel",
+                if(isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
               )
             )
           }
@@ -1492,7 +1492,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
     player?.playPlayList(
       allLinks.map { it.first?.url ?: "" },
-        allLinks.first().first?.headers
+      allLinks.first().first?.headers
     )
     playerBinding?.playerBuffering?.isVisible = true
 
@@ -1503,8 +1503,13 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun loadLink(link: Pair<ExtractorLink?, ExtractorUri?>, sub: SubtitleData? = null, nextEpisode: Boolean = false) {
+  private fun loadLink(
+    link: Pair<ExtractorLink?, ExtractorUri?>,
+    sub: SubtitleData? = null,
+    nextEpisode: Boolean = false
+  ) {
     currentSelectedLink = link
+
     if (decodeMode == DecodeMode.swDec) {
       pushOption("hwdec", "no")
     }
@@ -1513,7 +1518,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       currentSelectedLink?.first?.name ?: currentSelectedLink?.first?.url!!
     )
 
-    if(nextEpisode) {
+    if (nextEpisode) {
       pushOption(
         "start",
         "0"
@@ -1906,6 +1911,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         togglePlayerTitleGone = true
       }
     }
+
     playerBinding?.apply {
       playerLockHolder.isGone = isGone
       playerVideoBar.isGone = isGone
@@ -1915,10 +1921,11 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       playerCenterMenu.isGone = isGone
       playerLock.isGone = !isShowing
       playerGoBackHolder.isGone = isGone
-      playerSkipEpisode.isClickable = !isGone
       playerSourcesBtt.isGone = isGone
       moreOptions.isGone = true
       playerSubttileOffset.isGone = true
+      playerSkipEpisode.isGone = isSameEpisode
+      playerBinding?.playerSkipEpisode?.isGone = isSameEpisode || (allLinks.indexOf(currentSelectedLink) >= allLinks.size - 1)
     }
   }
 
@@ -2134,7 +2141,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   }
 
   private fun updatePlaybackPos(position: Int) {
-    playerBinding?.exoPosition?.text = MPVUtils.prettyTime(position)
+    playerBinding?.exoPosition?.text = MPVUtils.prettyTime(position.toLong())
     val diff = psc.durationSec - position
     playerBinding?.exoDuration?.text = if (diff <= 0)
       "-00:00"
@@ -2211,7 +2218,8 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     playerBinding?.playerVideoTitleRez?.text = psc.meta.formatTitle()
     //playerBinding?.playerVideoTitleRez?.text = psc.meta.formatArtistAlbum()
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireActivity())
-    val limitTitle = settingsManager.getInt(requireActivity().getString(R.string.prefer_limit_title_key), 0)
+    val limitTitle =
+      settingsManager.getInt(requireActivity().getString(R.string.prefer_limit_title_key), 0)
     currentSelectedLink?.first?.url?.let { playerVideoTitle ->
       //Hide title, if set in setting
       if (limitTitle <= 0) {
@@ -2221,10 +2229,39 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         val differenceInLength = playerVideoTitle.length - limitTitle
         val margin = 3 //If the difference is smaller than or equal to this value, ignore it
         if (limitTitle > 0 && differenceInLength > margin) {
-          playerBinding?.playerVideoTitle?.text = playerVideoTitle.substring(0, limitTitle - 1) + "..."
+          playerBinding?.playerVideoTitle?.text =
+            playerVideoTitle.substring(0, limitTitle - 1) + "..."
         }
       }
     }
+  }
+
+  private fun playNext() {
+
+    val sourceIndex = allLinks.indexOf(currentSelectedLink)
+    CommonActivitty.activityResultEvent?.invoke(
+      PlayBackResult(
+        RESULT_OK,
+        psc.positionSec,
+        resources.getString(R.string.end_of_file),
+        sourceIndex + 1
+      )
+    )
+
+    if (sourceIndex >= allLinks.size - 1) {
+      playerBinding?.playerSkipEpisode?.isGone = true
+    } else {
+      try {
+        MPVLib.command(arrayOf("stop"))
+        val link = allLinks.elementAt(sourceIndex + 1)
+        loadLink(link, currentSelectedSubtitles, true)
+        showToast(resources.getString(R.string.next_episode))
+      } catch (e: Exception) {
+        logError(e)
+        showToast(resources.getString(R.string.next_episode))
+      }
+    }
+
   }
 
   private fun finishWithResult(code: Int, includeTimePos: Boolean = false, endFileReason: Int) {
@@ -2243,24 +2280,8 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
     when (endFileReason) {
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_EOF -> {
-        CommonActivitty.activityResultEvent?.invoke(
-          PlayBackResult(
-            code,
-            psc.position * 1000L,
-            resources.getString(R.string.end_of_file)
-          )
-        )
         if (!isSameEpisode) {
-          val sourceIndex = allLinks.indexOf(currentSelectedLink)
-          try {
-            MPVLib.command(arrayOf("stop"))
-            val link = allLinks.elementAt(sourceIndex + 1)
-            loadLink(link, currentSelectedSubtitles, true)
-            showToast(resources.getString(R.string.next_episode))
-          } catch (e: Exception) {
-            logError(e)
-            activity?.finish()
-          }
+          playNext()
         } else {
           activity?.finish()
         }
@@ -2271,8 +2292,9 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         CommonActivitty.activityResultEvent?.invoke(
           PlayBackResult(
             code,
-            psc.position * 1000L,
-            resources.getString(R.string.source_error)
+            psc.positionSec,
+            resources.getString(R.string.source_error),
+            if(isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
           )
         )
         showToast(resources.getString(R.string.source_error))

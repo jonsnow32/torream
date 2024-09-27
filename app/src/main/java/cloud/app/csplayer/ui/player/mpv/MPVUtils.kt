@@ -29,6 +29,7 @@ import java.io.*
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 object MPVUtils {
     fun copyAssets(context: Context) {
@@ -78,14 +79,14 @@ object MPVUtils {
                 context.resources.displayMetrics).toInt()
     }
 
-    fun prettyTime(d: Int, sign: Boolean = false): String {
+    fun prettyTime(d: Long, sign: Boolean = false): String {
         if (sign)
             return (if (d >= 0) "+" else "-") + prettyTime(abs(d))
 
-        val hours = d / 3600
+        val hours = d / 3600L
         val minutes = d % 3600 / 60
         val seconds = d % 60
-        if (hours == 0)
+        if (hours == 0L)
             return "%02d:%02d".format(minutes, seconds)
         return "%d:%02d:%02d".format(hours, minutes, seconds)
     }
@@ -270,9 +271,9 @@ object MPVUtils {
             private set
 
         /** playback position in seconds */
-        val positionSec get() = (position / 1000).toInt()
+        val positionSec get() = (position / 1000)
         /** duration in seconds */
-        val durationSec get() = (duration / 1000f).roundToInt()
+        val durationSec get() = (duration / 1000f).roundToLong()
 
         /** callback for properties of type <code>MPV_FORMAT_NONE</code> */
         fun update(property: String): Boolean {

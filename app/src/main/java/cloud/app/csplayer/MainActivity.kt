@@ -45,6 +45,7 @@ import cloud.app.csplayer.utils.UIHelper.colorFromAttribute
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
 import cloud.app.csplayer.utils.Utils.USER_AGENT
+import cloud.app.csplayer.utils.Utils.isARM
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
@@ -97,7 +98,7 @@ var app = Requests(responseParser = object : ResponseParser {
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private lateinit var binding: ActivityMainBinding;
-  private var result: PlayBackResult? = null;
+  private var result = mutableListOf<PlayBackResult>()
   lateinit var mSessionManager: SessionManager
   private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
 
@@ -165,7 +166,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
     activityResultEvent = { result ->
       // Do something with the result value
-      this.result = result
+      if(isSameEpisode) {
+        this.result.clear();
+        this.result.add(result);
+      } else {
+        val older = this.result.firstOrNull { it.episode == result.episode }
+        if(older != null) {
+          this.result.remove(older);
+          this.result.add(result);
+        } else {
+          this.result.add(result);
+          }
+      }
     }
 
     handleAppIntent(intent)
@@ -200,21 +212,28 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     super.onStop()
   }
 
+  private var isSameEpisode =  true;
   override fun finish() {
-    result?.let {
-      val resultIntent = Intent().apply {
-        putExtra("position", it.position)
-        putExtra("end_by", it.reason)
+    if(isSameEpisode) {
+      result.first().apply {
+        val resultIntent = Intent().apply {
+          putExtra("position", position)
+          putExtra("end_by", reason)
+        }
+        setResult(code, resultIntent)
       }
-      setResult(it.code, resultIntent)
+    } else {
+      var positions =  result.map { "${it.episode}:${it.position}" }
+      val resultIntent = Intent().apply {
+        putExtra("playlist", true)
+        putExtra("positions", positions.joinToString(separator = ","))
+        putExtra("end_by", result.last().reason)
+      }
+      setResult(result.last().code, resultIntent)
     }
     super.finish()
   }
 
-  //  override fun onSupportNavigateUp(): Boolean {
-//    val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
-//    return navController.navigateUp() || super.onSupportNavigateUp()
-//  }
   private fun NavDestination.matchDestination(@IdRes destId: Int): Boolean =
     hierarchy.any { it.id == destId }
 
@@ -229,13 +248,19 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       val navBuilder = NavOptions.Builder()
       val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true, true).build()
 
-      val useMpv = extras.getBoolean(EXTRA_USE_MPV, false)
-      var id = R.id.global_to_navigation_player;
+      isSameEpisode = extras.getBoolean(EXTRA_IS_SAME_EPISODE, true)
+
+//      val useMpv = extras.getBoolean(EXTRA_USE_MPV, false)
+//      var id = R.id.global_to_navigation_player;
 //      if (useMpv) {
 //        id = R.id.global_to_navigation_mpv_player;
 //      }
 
-      id = R.id.global_to_navigation_mpv_player;
+      var id = R.id.global_to_navigation_player;
+      if(isARM()) {
+        id = R.id.global_to_navigation_mpv_player;
+      }
+
       navigate(
         id,
         extras,
