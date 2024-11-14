@@ -1,16 +1,27 @@
 package cloud.app.csplayer.ui.settings
 
+import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+import android.database.Cursor
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
+import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -27,6 +38,7 @@ import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils.isARM
 import cloud.app.csplayer.utils.Utils.logError
+import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import cloud.app.csplayer.utils.isLayout
 import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.txt
@@ -167,6 +179,7 @@ class SettingsFragment : Fragment() {
       if (context?.isLayout(LayoutMode.Tv.id) == true) {
         settingsGeneral.requestFocus()
       }
+
       urlBtn.setOnClickListener {
         var text =
           if(BuildConfig.DEBUG) "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" else "";
@@ -191,6 +204,10 @@ class SettingsFragment : Fragment() {
           )
         });
       }
+
+      openLocal.setOnClickListener {
+        openLocalVideo(videoResultLauncher)
+      }
     }
     val appVersion = BuildConfig.VERSION_NAME
     val commitInfo = getString(R.string.commit_hash)
@@ -208,5 +225,47 @@ class SettingsFragment : Fragment() {
     }
 
     UIHelper.fixPaddingStatusbar(binding?.settingsProfile)
+  }
+
+  private fun openLocalVideo(videoResultLauncher: ActivityResultLauncher<Intent>) {
+    val intent = Intent().apply {
+      action = Intent.ACTION_GET_CONTENT
+      type = "video/*"
+      addCategory(Intent.CATEGORY_OPENABLE)
+      addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // Grant temporary read permission
+    }
+
+    // For Android versions before API 19, use Intent.ACTION_PICK
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+      intent.action = Intent.ACTION_PICK
+      intent.data = MediaStore.Video.Media.INTERNAL_CONTENT_URI
+    }
+
+    // Launch the intent to open the file chooser
+    normalSafeApiCall {
+      videoResultLauncher.launch(
+        Intent.createChooser(
+          intent,
+          getString(R.string.open_local_video)
+        )
+      )
+    }
+  }
+
+  private val videoResultLauncher = registerForActivityResult(
+    ActivityResultContracts.StartActivityForResult()
+  ) { result ->
+    if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+    val selectedVideoUri = result?.data?.data ?: return@registerForActivityResult
+
+    var id = R.id.global_to_navigation_player;
+    if(isARM()) {
+      id = R.id.global_to_navigation_mpv_player;
+    }
+    activity?.navigate(
+      id,
+      bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(selectedVideoUri.toString(),"user_url_1", "").toTypedArray())
+    )
+
   }
 }

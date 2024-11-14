@@ -28,8 +28,8 @@ android {
     applicationId = "cloud.app.csplayer"
     minSdk = 21
     targetSdk = 33
-    versionCode = 106
-    versionName = "1.0.6"
+    versionCode = 107
+    versionName = "1.0.7"
 
     // Reads local.properties
     val localProperties = gradleLocalProperties(rootDir)

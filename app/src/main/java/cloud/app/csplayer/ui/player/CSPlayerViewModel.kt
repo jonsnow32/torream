@@ -59,7 +59,7 @@ class CSPlayerViewModel @Inject constructor(private val arguments: SavedStateHan
       urls.forEachIndexed { index, s ->
         val headerMap = mutableMapOf<String, String>()
         val source = names[index]
-        if(!headerStrings[index].isNullOrEmpty()) {
+        if(headerStrings[index].isNotEmpty()) {
           headerStrings[index].split(".|.").apply {
             val keys = filterIndexed() { index, s -> index % 2 == 0 }
             val values = filterIndexed() { index, s -> index % 2 != 0 }

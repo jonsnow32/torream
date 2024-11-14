@@ -1096,6 +1096,18 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
             if (isShowing) {
               toggleControls()
               return true
+            } else {
+              player?.timePos
+                ?.let {
+                  CommonActivitty.activityResultEvent?.invoke(
+                    PlayBackResult(
+                      RESULT_OK,
+                      it.toLong() * 1000L,
+                      "cancel",
+                      if(isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
+                    )
+                  )
+                }
             }
           }
         }
@@ -1530,8 +1542,10 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       )
     }
 
+    val uri = Uri.parse(currentSelectedLink?.first?.url)
+
     player?.playFile(
-      currentSelectedLink?.first?.url ?: "",
+      resolveUri(uri) ?: "",
       currentSelectedLink?.first?.headers
     )
 
@@ -2283,6 +2297,16 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         if (!isSameEpisode) {
           playNext()
         } else {
+          player?.timePos
+            ?.let {
+              CommonActivitty.activityResultEvent?.invoke(
+                PlayBackResult(
+                  RESULT_OK,
+                  it.toLong() * 1000L,
+                  "finish"
+                )
+              )
+            }
           activity?.finish()
         }
       }
@@ -2372,6 +2396,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     } else if (!shouldBackground) {
       player?.paused = true;
     }
+
     super.onPause()
 
     if (shouldBackground) {
