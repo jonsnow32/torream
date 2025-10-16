@@ -49,3 +49,6 @@
     public static int w(...);
     public static int e(...);
 }
+
+# Add contents of missing_rules.txt here
+-keep class com.facebook.infer.annotation.** { *; }

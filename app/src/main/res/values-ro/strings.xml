@@ -23,7 +23,7 @@
 \n%1$s -&gt; %2$s</string>
     <string name="filler" formatted="true">Filler</string>
     <string name="duration_format" formatted="true">%d min</string>
-    <!-- <string name="app_name">CSPlayer</string> -->
+    <!--  -->
     <string name="title_home">Prima pagină</string>
     <string name="title_search">Căutare</string>
     <string name="title_downloads">Descărcări</string>
@@ -269,7 +269,7 @@
     <string name="resize_fill">Întindere</string>
     <string name="resize_zoom">Mărire</string>
     <string name="legal_notice">Aviz juridic (declinarea responsabilității și drepturi de autor)</string>
-    <string name="legal_notice_text">Orice probleme legale privind conținutul acestei aplicații ar trebui să fie rezolvate cu furnizorii și gazdele actuale de fișiere, întrucât noi nu suntem afiliați cu aceștia. În caz de încălcare a drepturilor de autor, vă rugăm să contactați direct părțile responsabile sau site-urile de streaming. Aplicația este destinată exclusiv utilizării educaționale și personale. CSPlayer 3 nu găzduiește niciun fel de conținut în aplicație și nu are niciun control asupra conținutului media care este pus sau retras. CSPlayer 3 funcționează ca orice alt motor de căutare, cum ar fi Google. CSPlayer 3 nu găzduiește, nu încarcă și nu gestionează niciun videoclip, film sau conținut. Pur și simplu navighează, adună și afișează linkuri într-o interfață convenabilă și ușor de utilizat. Pur și simplu, acesta extrage paginile web ale unor terțe părți care sunt accesibile publicului prin intermediul oricărui browser web obișnuit. Este responsabilitatea utilizatorului de a evita orice acțiune care ar putea încălca legile care guvernează locația sa. Utilizați CSPlayer 3 pe propria răspundere.</string>
+    <string name="legal_notice_text">Orice probleme legale privind conținutul acestei aplicații ar trebui să fie rezolvate cu furnizorii și gazdele actuale de fișiere, întrucât noi nu suntem afiliați cu aceștia. În caz de încălcare a drepturilor de autor, vă rugăm să contactați direct părțile responsabile sau site-urile de streaming. Aplicația este destinată exclusiv utilizării educaționale și personale. HexaPlayer nu găzduiește niciun fel de conținut în aplicație și nu are niciun control asupra conținutului media care este pus sau retras. HexaPlayer funcționează ca orice alt motor de căutare, cum ar fi Google. HexaPlayer nu găzduiește, nu încarcă și nu gestionează niciun videoclip, film sau conținut. Pur și simplu navighează, adună și afișează linkuri într-o interfață convenabilă și ușor de utilizat. Pur și simplu, acesta extrage paginile web ale unor terțe părți care sunt accesibile publicului prin intermediul oricărui browser web obișnuit. Este responsabilitatea utilizatorului de a evita orice acțiune care ar putea încălca legile care guvernează locația sa. Utilizați HexaPlayer pe propria răspundere.</string>
     <string name="category_general">General</string>
     <string name="random_button_settings">Aleatoriu</string>
     <string name="random_button_settings_desc">Afișați butonul aleatoriu pe pagina de start și în bibliotecă</string>
@@ -375,7 +375,7 @@
     <string name="history">Istoric</string>
     <string name="action_mark_as_watched">Marcați ca vizionat</string>
     <string name="autoplay_next_settings">Redă automat următorul episod</string>
-    <string name="app_name">CSPlayer</string>
+
     <string name="play_trailer_button">Vizionează trailerul</string>
     <string name="update_started">Actualizarea a început</string>
     <string name="episode_sync_settings">Actualizați progresul ceasului</string>
@@ -385,7 +385,7 @@
     <string name="library">Librărie</string>
     <string name="test_log">Log</string>
     <string name="browser">Browser</string>
-    <string name="play_with_app_name">Joacă cu CSPlayer</string>
+    <string name="play_with_app_name">Joacă cu HexaPlayer</string>
     <string name="automatic_plugin_updates">Actualizare plugin automată</string>
     <string name="automatic_plugin_download">Descarcă plugin-uri automat</string>
     <string name="others">Altele</string>
@@ -483,7 +483,7 @@
     <string name="safe_mode_description">Toate extensiile au fost dezactivate din cauza unei defecțiuni pentru a vă ajuta să o găsiți pe cea care cauzează probleme.</string>
     <string name="update_notification_downloading">Se descarcă actualizarea aplicației…</string>
     <string name="player_settings_play_in_browser">Browser web</string>
-    <string name="blank_repo_message">CSPlayer nu are niciun site instalat din start. Trebuie să instalați site-urile din depozite.
+    <string name="blank_repo_message">HexaPlayer nu are niciun site instalat din start. Trebuie să instalați site-urile din depozite.
 \n
 \nAlăturați-vă Discord-ului nostru sau căutați online.</string>
     <string name="batch_download_start_format" formatted="true">A început să descarce %1$d %2$s…</string>

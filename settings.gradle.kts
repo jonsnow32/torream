@@ -12,6 +12,9 @@ dependencyResolutionManagement {
     google()
     mavenCentral()
     maven("https://jitpack.io")
+    // IronSource repository
+    maven("https://android-sdk.is.com/")
+
   }
 }
 

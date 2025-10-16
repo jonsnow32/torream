@@ -47,7 +47,8 @@
   <string name="dns_key" translatable="false">dns_key</string>
   <string name="jsdelivr_proxy_key" translatable="false">jsdelivr_proxy_key</string>
   <string name="download_path_key" translatable="false">download_path_key</string>
-  <string name="app_name_download_path" translatable="false">CSPlayer</string>
+  <string name="app_name_download_path" translatable="false">HexaPlayer</string>
+  <string name="app_name" translatable="false">HexaPlayer</string>
   <string name="app_layout_key" translatable="false">app_layout_key</string>
   <string name="primary_color_key" translatable="false">primary_color_key</string>
   <string name="restore_key" translatable="false">restore_key</string>
@@ -105,8 +106,8 @@
   <string name="new_update_format" formatted="true">New update found!\n%1$s -&gt; %2$s</string>
   <string name="filler" formatted="true">Filler</string>
   <string name="duration_format" formatted="true">%d min</string>
-  <string name="app_name">CSPlayer</string>
-  <string name="play_with_app_name">Play with CSPlayer</string>
+
+  <string name="play_with_app_name">Play with HexaPlayer</string>
   <string name="title_home">Home</string>
   <string name="title_search">Search</string>
   <string name="title_downloads">Downloads</string>
@@ -350,6 +351,7 @@
   <string name="nsfw_singular">NSFW</string>
   <string name="other_singular">Video</string>
   <string name="source_error">Source error</string>
+  <string name="fallback_to_software_decoding">Hardware decoder failed, trying software decoding…</string>
   <string name="remote_error">Remote error</string>
   <string name="render_error">Renderer error</string>
   <string name="unexpected_error">Unexpected player error</string>
@@ -421,14 +423,14 @@
 
         The app is purely for educational and personal use.
 
-        CSPlayer 3 does not host any content on the app, and has no control over what media is put up or taken down.
-        CSPlayer 3 functions like any other search engine, such as Google. CSPlayer 3 does not host, upload or
+        HexaPlayer does not host any content on the app, and has no control over what media is put up or taken down.
+        HexaPlayer functions like any other search engine, such as Google. HexaPlayer does not host, upload or
         manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient,
         user-friendly interface.
 
         It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the
         responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use
-        CSPlayer 3 at your own risk.
+        HexaPlayer at your own risk.
     </string>
   <string name="pref_category_bypass">ISP Bypasses</string>
   <string name="pref_category_links">Links</string>
@@ -603,7 +605,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="plugins_disabled" formatted="true">Disabled: %d</string>
   <string name="plugins_not_downloaded" formatted="true">Not downloaded: %d</string>
   <string name="plugins_updated" formatted="true">Updated %d plugins</string>
-  <string name="blank_repo_message">CSPlayer has no sites installed by default. You need to install the sites from repositories.
+  <string name="blank_repo_message">HexaPlayer has no sites installed by default. You need to install the sites from repositories.
 \n
 \nJoin our Discord or search online.</string>
   <string name="view_public_repositories_button">View community repositories</string>
@@ -660,14 +662,14 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="ok">OK</string>
   <string name="battery_dialog_title">Disable Battery optimization</string>
   <string name="battery_dialog_message">To ensure uninterrupted downloads and notifications for subscribed
-        TV shows, CSPlayer needs permission to run in background. By pressing "OK", you\'ll be directed to App info.
+        TV shows, HexaPlayer needs permission to run in background. By pressing "OK", you\'ll be directed to App info.
         There, scroll to 𝘼𝙥𝙥 𝙗𝙖𝙩𝙩𝙚𝙧𝙮 𝙪𝙨𝙖𝙜𝙚 and set battery usage to 𝙐𝙣𝙧𝙚𝙨𝙩𝙧𝙞𝙘𝙩𝙚𝙙. Please note, this permission
         does not mean CS3 will drain your battery. It will only operate in the background when necessary, such as
         when receiving notifications or downloading videos from official extensions. If you choose to cancel,
         you can adjust this setting later in 𝙂𝙚𝙣𝙚𝙧𝙖𝙡 𝙎𝙚𝙩𝙩𝙞𝙣𝙜𝙨.</string>
   <string name="battery_optimisation_key" translatable="false">battery_optimisation</string>
   <string name="app_unrestricted_toast">App battery usage is already set to unrestricted</string>
-  <string name="app_info_intent_error">Unable to open CSPlayer\'s App info.</string>
+  <string name="app_info_intent_error">Unable to open HexaPlayer\'s App info.</string>
   <string name="update_notification_downloading">Downloading app update…</string>
   <string name="update_notification_installing">Installing app update…</string>
   <string name="update_notification_failed">Could not install the new version of the app</string>
@@ -760,13 +762,13 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="favorite">Favorite</string>
   <string name="unfavorite">Unfavorite</string>
   <!-- For Biometrics -->
-  <string name="biometric_authentication_title">Unlock CSPlayer</string>
+  <string name="biometric_authentication_title">Unlock HexaPlayer</string>
   <string name="biometric_setting">Lock with Biometrics</string>
   <string name="password_pin_authentication_title">Password/PIN Authentication</string>
   <string name="biometric_unsupported">Biometric authentication is not supported on this device</string>
   <string name="biometric_setting_summary">Unlock the app with Fingerprint, Face ID, PIN, Pattern and Password.</string>
   <string name="biometric_prompt_description">This screen was closed due to multiple failed attempts. Please restart the application.</string>
-  <string name="biometric_warning">Your CSPlayer data has been backed up now. Although the possibility of this is very low, all devices can behave differently. In the rare case, that you get locked out from accessing the app, clear the app data completely and restore from a backup. We are very sorry for any inconvenience arising from this.</string>
+  <string name="biometric_warning">Your HexaPlayer data has been backed up now. Although the possibility of this is very low, all devices can behave differently. In the rare case, that you get locked out from accessing the app, clear the app data completely and restore from a backup. We are very sorry for any inconvenience arising from this.</string>
   <string name="music_singlar">Music</string>
   <string name="audio_book_singular">Audio Book</string>
   <string name="custom_media_singluar">Media</string>
@@ -815,4 +817,6 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="more_options">More Options</string>
     <string name="end_of_file">End of file</string>
     <string name="open_local_video">Open local video</string>
+  <string name="ad_testing">Ad testing</string>
+  <string name="ad_key">ad_key_pref</string>
 </resources>

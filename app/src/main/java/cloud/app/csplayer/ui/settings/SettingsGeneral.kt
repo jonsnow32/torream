@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
@@ -25,6 +26,9 @@ import cloud.app.csplayer.utils.SubtitleHelper
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.isLayout
 import com.fasterxml.jackson.annotation.JsonProperty
+import androidx.core.content.edit
+import androidx.core.view.isGone
+import cloud.app.csplayer.BuildConfig
 
 // Change local language settings in the app.
 fun getCurrentLocale(context: Context): String {
@@ -320,11 +324,18 @@ class SettingsGeneral : PreferenceFragmentCompat() {
         getString(R.string.dns_pref),
         true,
         {}) {
-        settingsManager.edit().putInt(getString(R.string.dns_pref), prefValues[it]).apply()
+        settingsManager.edit { putInt(getString(R.string.dns_pref), prefValues[it]) }
         context?.let { ctx -> app.initClient(ctx) }
       }
       return@setOnPreferenceClickListener true
     }
+
+    getPref(R.string.ad_key)?.setOnPreferenceClickListener {
+      findNavController().navigate(R.id.adTestFragment)
+      return@setOnPreferenceClickListener true
+    }
+
+
 
     fun getDownloadDirs(): List<String> {
 //      return normalSafeApiCall {
@@ -379,6 +390,8 @@ class SettingsGeneral : PreferenceFragmentCompat() {
 //        }
 //      }
       return@setOnPreferenceClickListener true
+    }?.apply {
+      view?.isGone = BuildConfig.DEBUG
     }
   }
 }

@@ -26,7 +26,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -40,7 +39,7 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
 import androidx.appcompat.app.AppCompatActivity.RESULT_OK
-import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
@@ -220,6 +219,9 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   private var currentSelectedLink: Pair<ExtractorLink?, ExtractorUri?>? = null
   private var currentSelectedSubtitles: SubtitleData? = null
 
+  // Track if we've already retried with software decoding
+  private var triedSwDecFallback = false
+
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
@@ -243,8 +245,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    BackgroundPlaybackService.createNotificationChannel(requireActivity())
-
     player?.addObserver(this)
     player?.initialize(requireActivity().filesDir.path, requireActivity().cacheDir.path)
 
@@ -286,7 +286,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
     mediaSession = initMediaSession()
     updateMediaSession()
-    BackgroundPlaybackService.mediaToken = mediaSession?.sessionToken
 
     audioManager = activity?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
@@ -1110,6 +1109,8 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
                 }
             }
           }
+
+          else -> return false
         }
       }
     }
@@ -1522,8 +1523,16 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   ) {
     currentSelectedLink = link
 
-    if (decodeMode == DecodeMode.swDec) {
+    // Force software decoding on emulator or if already in swDec mode
+    if (decodeMode == DecodeMode.swDec || context?.isTvOrEmulator() == true) {
       pushOption("hwdec", "no")
+      // Additional options to ensure software decoding on emulator
+      pushOption("vd-lavc-software-fallback", "yes")
+      pushOption("ad-lavc-downmix", "yes")
+      // Force software video decoder to avoid goldfish decoder issues
+      pushOption("vd", "lavc:h264")
+      // Disable hardware accelerated codecs that might trigger goldfish
+      pushOption("hwdec-codecs", "")
     }
     pushOption(
       "force-media-title",
@@ -1804,7 +1813,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     // Suppress any further callbacks
     activityIsForeground = false
 
-    BackgroundPlaybackService.mediaToken = null
     mediaSession?.let {
       it.isActive = false
       it.release()
@@ -1816,9 +1824,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
     audioFocusRequest = null
 
-    // take the background service with us
-    stopServiceRunnable.run()
-
     player?.removeObserver(this)
     player?.destroy()
 
@@ -1828,11 +1833,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     super.onDestroyView()
   }
 
-  private val stopServiceRunnable = Runnable {
-    val intent = Intent(requireActivity(), BackgroundPlaybackService::class.java)
-    requireActivity().applicationContext.stopService(intent)
-
-  }
 
   private fun toggleControls() {
     isShowing = !isShowing
@@ -1997,10 +1997,11 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
   protected fun enterFullscreen() {
     activity?.hideSystemUI()
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      val params = activity?.window?.attributes
-      params?.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-      activity?.window?.attributes = params
+    // Use WindowCompat to allow drawing edge-to-edge (including display cutout)
+    try {
+      activity?.let { WindowCompat.setDecorFitsSystemWindows(it.window, false) }
+    } catch (e: Exception) {
+      logError(e)
     }
   }
 
@@ -2011,9 +2012,11 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     // simply resets brightness and notch settings that might have been overridden
     val lp = activity?.window?.attributes
     lp?.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      lp?.layoutInDisplayCutoutMode =
-        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+    try {
+      // Restore decor fitting to default so system bars are not overlaid
+      activity?.let { WindowCompat.setDecorFitsSystemWindows(it.window, true) }
+    } catch (e: Exception) {
+      logError(e)
     }
     activity?.window?.attributes = lp
     activity?.showSystemUI()
@@ -2313,15 +2316,34 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
 
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_ERROR -> {
-        CommonActivitty.activityResultEvent?.invoke(
-          PlayBackResult(
-            code,
-            psc.positionSec,
-            resources.getString(R.string.source_error),
-            if(isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
+        // Try to get a detailed error message from mpv
+        val mpvError = try {
+          MPVLib.getPropertyString("playback-abort-reason")
+            ?: MPVLib.getPropertyString("property-text")
+            ?: MPVLib.getPropertyString("event-log-message")
+        } catch (e: Exception) {
+          null
+        }
+        val errorMsg = mpvError?.takeIf { it.isNotBlank() } ?: resources.getString(R.string.source_error)
+        // Fallback: if hardware decoder error and not yet retried, try software decoding
+        if (!triedSwDecFallback && errorMsg.contains("mediacodec", true)) {
+          triedSwDecFallback = true
+          decodeMode = DecodeMode.swDec
+          showToast(getString(R.string.fallback_to_software_decoding))
+          // Reload the file with software decoding
+          currentSelectedLink?.let { loadLink(it) }
+        } else {
+          CommonActivitty.activityResultEvent?.invoke(
+            PlayBackResult(
+              code,
+              psc.positionSec,
+              errorMsg,
+              if(isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
+            )
           )
-        )
-        showToast(resources.getString(R.string.source_error))
+          showToast(errorMsg)
+          Log.e(TAG, "mpv playback error: $errorMsg")
+        }
       }
 
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_QUIT,
@@ -2379,10 +2401,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   private fun onPauseImpl() {
     val fmt = MPVLib.getPropertyString("video-format")
     val shouldBackground = shouldBackground()
-    if (shouldBackground && !fmt.isNullOrEmpty())
-      BackgroundPlaybackService.thumbnail = MPVLib.grabThumbnail(THUMB_SIZE)
-    else
-      BackgroundPlaybackService.thumbnail = null
+
     // media session uses the same thumbnail
     updateMediaSession()
 
@@ -2398,13 +2417,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
 
     super.onPause()
-
-    if (shouldBackground) {
-      Log.v(TAG, "Resuming playback in background")
-      stopServiceHandler.removeCallbacks(stopServiceRunnable)
-      val serviceIntent = Intent(requireActivity(), BackgroundPlaybackService::class.java)
-      ContextCompat.startForegroundService(requireActivity(), serviceIntent)
-    }
   }
 
   private fun savePosition() {

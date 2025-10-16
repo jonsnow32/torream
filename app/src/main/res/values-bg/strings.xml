@@ -20,8 +20,7 @@
 \n%1$s -&gt; %2$s</string>
     <string formatted="true" name="filler">Шаблон</string>
     <string formatted="true" name="duration_format">%d мин</string>
-    <string name="app_name">CSPlayer</string>
-    <string name="play_with_app_name">Пусни с CSPlayer</string>
+    <string name="play_with_app_name">Пусни с HexaPlayer</string>
     <string name="title_home">Начало</string>
     <string name="title_search">Търсене</string>
     <string name="title_downloads">Изтегляния</string>
@@ -416,7 +415,7 @@
     <string formatted="true" name="plugins_disabled">Деактивирано: %d</string>
     <string formatted="true" name="plugins_not_downloaded">Не е изтеглено: %d</string>
     <string formatted="true" name="plugins_updated">Актуализирани %d плъгини</string>
-    <string name="blank_repo_message">CSPlayer няма инсталирани сайтове по подразбиране. Трябва да инсталирате сайтовете от хранилища.
+    <string name="blank_repo_message">HexaPlayer няма инсталирани сайтове по подразбиране. Трябва да инсталирате сайтовете от хранилища.
 \n
 \nПрисъединете се към нашия Дискорд или потърсете онлайн.</string>
     <string name="view_public_repositories_button">Вижте хранилищата на общността</string>

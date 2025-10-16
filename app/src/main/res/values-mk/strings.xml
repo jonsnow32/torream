@@ -6,7 +6,7 @@
     <string name="new_update_format" formatted="true">"Пронајдена нова верзија!
 \n%1$s -&gt;  %2$s"</string>
     <string name="filler" formatted="true">Филтер</string>
-    <string name="app_name">CSPlayer</string>
+
     <string name="title_home">Дома</string>
     <string name="title_search">Барај</string>
     <string name="title_downloads">Превземања</string>
@@ -411,7 +411,7 @@
     <string name="documentaries_singular">Документарец</string>
     <string name="stream">Стрим</string>
     <string name="duration_format" formatted="true">%d мин</string>
-    <string name="play_with_app_name">Играј со CSPlayer</string>
+    <string name="play_with_app_name">Играј со HexaPlayer</string>
     <string name="play_trailer_button">Пушти трејлер</string>
     <string name="chromecast_subtitles_settings_des">Поставки за преводи на Chromecast</string>
     <string name="title">Наслов</string>
@@ -480,7 +480,7 @@
     <string name="plugin_downloaded">Приклучокот е преземен</string>
     <string name="plugin_load_fail" formatted="true">Не може да се вчита %s</string>
     <string name="setup_extensions_subtext">Преземете ја листата на сајтови што сакате да ги користите</string>
-    <string name="blank_repo_message">CSPlayer нема стандардно инсталирани локации. Треба да ги инсталирате сајтовите од складиштата.
+    <string name="blank_repo_message">HexaPlayer нема стандардно инсталирани локации. Треба да ги инсталирате сајтовите од складиштата.
 \n
 \nПоради отстранување на DMCA без мозок од страна на Sky UK Limited 🤮 не можеме да ја поврземе локацијата на складиштето во апликацијата.
 \n

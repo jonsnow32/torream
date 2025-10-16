@@ -59,6 +59,12 @@
       android:summary="@string/dns_pref_summary"
       android:title="@string/dns_pref" />
 
+    <Preference
+      android:icon="@drawable/outline_ad_24"
+      android:key="@string/ad_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/ad_testing" />
+
   </PreferenceCategory>
 
 

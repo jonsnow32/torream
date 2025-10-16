@@ -17,7 +17,7 @@ val abiCodes = mapOf(
 
 android {
   namespace = "cloud.app.csplayer"
-  compileSdk = 34
+  compileSdk = 36
 
   buildFeatures {
     viewBinding = true
@@ -27,12 +27,12 @@ android {
   defaultConfig {
     applicationId = "cloud.app.csplayer"
     minSdk = 21
-    targetSdk = 33
-    versionCode = 107
-    versionName = "1.0.7"
+    targetSdk = 36
+    versionCode = 116
+    versionName = "1.1.6"
 
     // Reads local.properties
-    val localProperties = gradleLocalProperties(rootDir)
+    val localProperties = gradleLocalProperties(rootDir, providers)
 
     buildConfigField(
       "long",
@@ -47,7 +47,19 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+    // Support for 16 KB page sizes
+    ndk.abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+    ndk.debugSymbolLevel = "FULL"
   }
+
+  packaging {
+    jniLibs {
+      useLegacyPackaging = false
+      // Keep debug symbols for better crash reports
+      keepDebugSymbols += listOf("**/*.so")
+    }
+  }
+
   buildFeatures {
     buildConfig = true
   }
@@ -66,7 +78,7 @@ android {
       isDefault = true
     }
     create("api29") {
-      targetSdk = 29
+      targetSdk = 34
       versionNameSuffix = "-oldapi"
     }
   }
@@ -84,7 +96,7 @@ android {
     debug {
       isDebuggable = true
       applicationIdSuffix = ".debug"
-      resValue("string", "app_name", "CSPlayer-Debug")
+      resValue("string", "app_name", "HexaPlayer-Debug")
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
@@ -104,6 +116,10 @@ android {
 
 dependencies {
 
+  // Needed for EdgeToEdge helper
+  implementation("androidx.activity:activity:1.9.0")
+  implementation("androidx.activity:activity-ktx:1.9.0")
+
   implementation("androidx.core:core-ktx:1.13.1")
   implementation("androidx.appcompat:appcompat:1.7.0")
   implementation("androidx.preference:preference-ktx:1.2.1")
@@ -113,6 +129,8 @@ dependencies {
   implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
   implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.6")
   implementation("androidx.navigation:navigation-fragment-ktx:2.8.1")
+  implementation("androidx.navigation:navigation-fragment-ktx:2.9.5")
+  implementation("androidx.navigation:navigation-ui-ktx:2.9.5")
 
   val media3Version = "1.4.1"
   // Media 3 (ExoPlayer)
@@ -138,7 +156,6 @@ dependencies {
   // Others
   implementation("org.mozilla:rhino:1.7.15")
   implementation("com.github.albfernandez:juniversalchardet:2.5.0")
-  implementation("org.conscrypt:conscrypt-android:2.5.2")
 
   //Dependence injection
   implementation("com.google.dagger:hilt-android:2.48.1")
@@ -149,5 +166,13 @@ dependencies {
   androidTestImplementation("androidx.test.ext:junit:1.1.5")
   androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
-}
+  //Ads
+  implementation("com.google.android.gms:play-services-ads:23.1.0")
+  implementation("com.ironsource.sdk:mediationsdk:8.10.0")
+  implementation("com.applovin:applovin-sdk:13.3.1")
+  implementation("com.unity3d.ads:unity-ads:4.16.1")
+  implementation("com.vungle:vungle-ads:7.5.1")
 
+  //logging
+  implementation("com.jakewharton.timber:timber:5.0.1")
+}

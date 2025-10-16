@@ -4,6 +4,7 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
+  android:background="?android:statusBarColor"
   android:id="@+id/settings_appbar">
 
   <com.google.android.material.appbar.MaterialToolbar
@@ -12,7 +13,7 @@
     android:layout_height="wrap_content"
     android:descendantFocusability="afterDescendants"
     app:layout_scrollFlags="scroll|enterAlways"
-    app:navigationIconTint="?attr/iconColor"
+    app:navigationIconTint="?attr/textColor"
     app:titleTextColor="?attr/textColor"
     tools:title="Overlord" />
 </com.google.android.material.appbar.AppBarLayout>

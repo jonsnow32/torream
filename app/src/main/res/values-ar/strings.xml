@@ -15,8 +15,7 @@
     <string name="new_update_format" formatted="true">يوجد تحديث جديد!
 \n%1$s -&gt; %2$s</string>
     <string name="duration_format" formatted="true">%d دقيقة</string>
-    <string name="app_name">CSPlayer</string>
-    <string name="play_with_app_name">تشغيل بواسطة CSPlayer</string>
+    <string name="play_with_app_name">تشغيل بواسطة HEXA</string>
     <string name="title_home">الرئيسية</string>
     <string name="title_search">البحث</string>
     <string name="title_downloads">التنزيلات</string>
@@ -279,7 +278,7 @@
     <string name="resize_zoom">تكبير</string>
     <string name="legal_notice">إخلاء مسؤولية</string>
     <string name="legal_notice_key" translatable="false">legal_notice_key</string>
-    <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them. In case of copyright infringement, please directly contact the responsible parties or the streaming websites. The app is purely for educational and personal use. CSPlayer 3 does not host any content on the app, and has no control over what media is put up or taken down. CSPlayer 3 functions like any other search engine, such as Google. CSPlayer 3 does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface. It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use CSPlayer 3 at your own risk.</string>
+    <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them. In case of copyright infringement, please directly contact the responsible parties or the streaming websites. The app is purely for educational and personal use. HexaPlayer does not host any content on the app, and has no control over what media is put up or taken down. HexaPlayer functions like any other search engine, such as Google. HexaPlayer does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface. It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use HexaPlayer at your own risk.</string>
     <string name="category_general">عام</string>
     <string name="random_button_settings">زر العشوائي</string>
     <string name="random_button_settings_desc">إظهار زر عشوائي على الصفحة الرئيسية والمكتبة</string>
@@ -429,7 +428,7 @@
     <string name="plugins_downloaded" formatted="true">تم تحميل: %d</string>
     <string name="plugins_disabled" formatted="true">مُعطل %d</string>
     <string name="plugins_not_downloaded" formatted="true">غير مُحمل: %d</string>
-    <string name="blank_repo_message">لا يحتوي CSPlayer على مواقع مثبتة افتراضيًا. تحتاج إلى تثبيت المواقع من المستودعات.
+    <string name="blank_repo_message">لا يحتوي HexaPlayer على مواقع مثبتة افتراضيًا. تحتاج إلى تثبيت المواقع من المستودعات.
 \n
 \nانضم إلى ديسكورد أو ابحث عبر الإنترنت.</string>
     <string name="view_public_repositories_button">عرض مستودعات المجتمع</string>
@@ -632,7 +631,7 @@
     <string name="biometric_authentication_title">فتح سحابة البث</string>
     <string name="password_pin_authentication_title">مصادقة كلمة المرور/رقم التعريف الشخصي</string>
     <string name="biometric_prompt_description">تم إغلاق هذه الشاشة بسبب عدة محاولات فاشلة. الرجاء إعادة تشغيل التطبيق.</string>
-    <string name="biometric_warning">لقد تم الآن نسخ بيانات CSPlayer احتياطيًا. على الرغم من أن احتمال حدوث ذلك منخفض جدًا، إلا أن جميع الأجهزة يمكن أن تتصرف بشكل مختلف. في الحالات النادرة، التي يتم فيها منعك من الوصول إلى التطبيق، قم بمسح بيانات التطبيق بالكامل واستعادتها من نسخة احتياطية. نحن نأسف جدًا لأي إزعاج ناتج عن هذا.</string>
+    <string name="biometric_warning">لقد تم الآن نسخ بيانات HexaPlayer احتياطيًا. على الرغم من أن احتمال حدوث ذلك منخفض جدًا، إلا أن جميع الأجهزة يمكن أن تتصرف بشكل مختلف. في الحالات النادرة، التي يتم فيها منعك من الوصول إلى التطبيق، قم بمسح بيانات التطبيق بالكامل واستعادتها من نسخة احتياطية. نحن نأسف جدًا لأي إزعاج ناتج عن هذا.</string>
     <string name="resume_remaining" formatted="true">%s
 \nمتبقي</string>
     <string name="favorite">المفضلة</string>

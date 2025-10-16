@@ -6,19 +6,19 @@
   <uses-permission android:name="android.permission.INTERNET" /> <!-- unless you only use cs3 as a player for downloaded stuff, you need this -->
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- Downloads -->
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- Downloads on low api devices -->
-  <uses-permission
-    android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-    tools:ignore="ScopedStorage" /> <!-- Plugin API -->
+<!--  <uses-permission-->
+<!--    android:name="android.permission.MANAGE_EXTERNAL_STORAGE"-->
+<!--    tools:ignore="ScopedStorage" /> &lt;!&ndash; Plugin API &ndash;&gt;-->
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!-- some dependency needs this -->
   <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /> <!-- Used for player vertical slide -->
-  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /> <!-- Used for app update -->
+<!--  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /> &lt;!&ndash; Used for app update &ndash;&gt;-->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Used for app notifications on Android 13+ -->
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- Used for update service -->
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+  <!-- Removed FOREGROUND_SERVICE_MEDIA_PLAYBACK - app does not need background video playback -->
   <!-- Required for getting arbitrary Aniyomi packages  -->
-  <uses-permission
-    android:name="android.permission.QUERY_ALL_PACKAGES"
-    tools:ignore="QueryAllPackagesPermission" />
+<!--  <uses-permission-->
+<!--    android:name="android.permission.QUERY_ALL_PACKAGES"-->
+<!--    tools:ignore="QueryAllPackagesPermission" />-->
 
   <!-- Fixes android tv fuckery -->
   <uses-feature
@@ -51,11 +51,16 @@
     android:usesCleartextTraffic="true"
     tools:targetApi="31">
 
+    <!-- Declare 16KB page size support -->
+    <property
+      android:name="android.app.16kb_page_size.enabled"
+      android:value="true" />
 
     <service
       android:foregroundServiceType="dataSync"
       android:name=".utils.PackageInstallerService"
-      android:exported="false" />
+      android:exported="false"
+      tools:ignore="ForegroundServicePermission" />
 
 
     <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
@@ -121,17 +126,19 @@
         android:resource="@xml/provider_paths" />
     </provider>
 
-    <service
-      android:name=".ui.player.mpv.BackgroundPlaybackService"
-      android:foregroundServiceType="mediaPlayback"
-      android:exported="false" />
-    <receiver android:name=".ui.player.mpv.NotificationButtonReceiver" android:exported="false">
-      <intent-filter>
-        <action android:name="cloud.app.csplayer.ui.player.mpv.PLAY_PAUSE" />
-        <action android:name="cloud.app.csplayer.ui.player.mpv.ACTION_PREV" />
-        <action android:name="cloud.app.csplayer.ui.player.mpv.ACTION_NEXT" />
-      </intent-filter>
-    </receiver>
+    <!-- Removed BackgroundPlaybackService - app does not need background playback -->
+    <!-- Removed NotificationButtonReceiver - no longer needed without background service -->
+
+    <!-- AdMob App ID (Replace with your actual AdMob App ID) -->
+    <meta-data
+      android:name="com.google.android.gms.ads.APPLICATION_ID"
+      android:value="ca-app-pub-3940256099942544~3347511713"/>
+
+    <!-- Fix for Firebase Analytics and AdMob conflict -->
+    <property
+      android:name="android.adservices.AD_SERVICES_CONFIG"
+      android:resource="@xml/gma_ad_services_config"
+      tools:replace="android:resource" />
   </application>
 
 </manifest>

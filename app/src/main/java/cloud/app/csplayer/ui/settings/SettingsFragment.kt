@@ -4,12 +4,8 @@ import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-import android.database.Cursor
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
@@ -21,7 +17,6 @@ import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
-import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -36,7 +31,7 @@ import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.toPx
-import cloud.app.csplayer.utils.Utils.isARM
+import cloud.app.csplayer.utils.Utils.isMPVSupported
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import cloud.app.csplayer.utils.isLayout
@@ -72,6 +67,7 @@ class SettingsFragment : Fragment() {
       if (isTvOrEmulator()) {
         listView?.setPadding(0, 0, 0, 100.toPx)
       }
+
     }
 
     fun PreferenceFragmentCompat.setToolBarScrollFlags() {
@@ -192,7 +188,7 @@ class SettingsFragment : Fragment() {
         }
 
         var id = R.id.global_to_navigation_player;
-        if(isARM()) {
+        if(isMPVSupported()) {
           id = R.id.global_to_navigation_mpv_player;
         }
 
@@ -258,10 +254,12 @@ class SettingsFragment : Fragment() {
     if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
     val selectedVideoUri = result?.data?.data ?: return@registerForActivityResult
 
-    var id = R.id.global_to_navigation_player;
-    if(isARM()) {
-      id = R.id.global_to_navigation_mpv_player;
-    }
+//    var id = R.id.global_to_navigation_player;
+//    if(isMPVSupported()) {
+//      id = R.id.global_to_navigation_mpv_player;
+//    }
+
+    var id = R.id.global_to_navigation_mpv_player;
     activity?.navigate(
       id,
       bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(selectedVideoUri.toString(),"user_url_1", "").toTypedArray())

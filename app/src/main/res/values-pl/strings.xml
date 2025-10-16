@@ -14,7 +14,7 @@
   <string name="go_back_img_des">Wstecz</string>
   <string name="home_change_provider_img_des">Zmień źródło</string>
   <string name="preview_background_img_des">Pogląd tła</string>
-  <string name="app_name">CSPlayer</string>
+
   <string name="title_home">Główna</string>
   <string name="title_search">Szukaj</string>
   <string name="title_downloads">Pobrane</string>
@@ -394,7 +394,7 @@
   <string name="plugins_disabled" formatted="true">Wyłączono: %d</string>
   <string name="plugins_not_downloaded" formatted="true">Nie pobrano: %d</string>
   <string name="plugins_updated">Zaaktualizowano %d rozszerzeń</string>
-  <string name="blank_repo_message">CSPlayer nie ma domyślnie zainstalowanych żadnych witryn. Musisz zainstalować witryny z repozytoriów.
+  <string name="blank_repo_message">HexaPlayer nie ma domyślnie zainstalowanych żadnych witryn. Musisz zainstalować witryny z repozytoriów.
 \n
 \nDołącz do naszego Discorda lub poszukaj online.</string>
   <string name="view_public_repositories_button">Zobacz repozytoria społeczności</string>
@@ -431,7 +431,7 @@
   <string name="history">Historia</string>
   <string name="clipboard_too_large">Za dużo tekstu. Nie można skopiować do schowka.</string>
   <string name="network_adress_example">https://example.com/example.mp4</string>
-  <string name="play_with_app_name">Odtwórz w CSPlayer</string>
+  <string name="play_with_app_name">Odtwórz w HexaPlayer</string>
   <string name="skip_type_format" formatted="true">Pomiń %s</string>
   <string name="next_episode_time_hour_format" formatted="true">%1$dh %2$dm</string>
   <string name="yes">Tak</string>
@@ -598,10 +598,10 @@
   <string name="biometric_setting">Zablokuj za pomocą biometrii</string>
   <string name="password_pin_authentication_title">Uwierzytelnianie hasłem/kodem PIN</string>
   <string name="biometric_prompt_description">Ten ekran został zamknięty z powodu wielu nieudanych prób. Uruchom ponownie aplikację.</string>
-  <string name="biometric_authentication_title">Odblokuj CSPlayer</string>
+  <string name="biometric_authentication_title">Odblokuj HexaPlayer</string>
   <string name="biometric_unsupported">To urządzenie nie obsługuje uwierzytelniania biometrycznego</string>
   <string name="biometric_setting_summary">Odblokuj aplikację za pomocą odcisku palca, identyfikatora twarzy, kodu PIN, wzoru i hasła.</string>
-  <string name="biometric_warning">Kopia zapasowa Twoich danych CSPlayer została teraz utworzona. Chociaż prawdopodobieństwo tego jest bardzo niskie, wszystkie urządzenia mogą zachowywać się inaczej. W rzadkich przypadkach, gdy dostęp do aplikacji zostanie zablokowany, należy całkowicie wyczyścić dane aplikacji i przywrócić je z kopii zapasowej. Bardzo nam przykro z powodu wszelkich niedogodności z tym związanych.</string>
+  <string name="biometric_warning">Kopia zapasowa Twoich danych HexaPlayer została teraz utworzona. Chociaż prawdopodobieństwo tego jest bardzo niskie, wszystkie urządzenia mogą zachowywać się inaczej. W rzadkich przypadkach, gdy dostęp do aplikacji zostanie zablokowany, należy całkowicie wyczyścić dane aplikacji i przywrócić je z kopii zapasowej. Bardzo nam przykro z powodu wszelkich niedogodności z tym związanych.</string>
   <string name="unfavorite">Usuń z ulubionych</string>
   <string name="resume_remaining" formatted="true">%s
 \npozostało</string>

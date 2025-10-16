@@ -20,7 +20,6 @@
 \n%1$s -&gt; %2$s</string>
     <string name="filler" formatted="true">Výplň</string>
     <string name="duration_format" formatted="true">%d min</string>
-    <string name="app_name">CSPlayer</string>
     <string name="title_home">Domů</string>
     <string name="title_search">Hledat</string>
     <string name="title_downloads">Stahování</string>
@@ -261,7 +260,7 @@
     <string name="resize_fill">Roztáhnout</string>
     <string name="resize_zoom">Přiblížit</string>
     <string name="legal_notice">Odmítnutí odpovědnosti</string>
-    <string name="legal_notice_text" translatable="false">Jakékoli právní otázky týkající se obsahu této aplikace je třeba řešit se samotnými hostiteli a poskytovateli souborů, protože s nimi nejsme nijak spojeni. V případě porušení autorských práv se obraťte přímo na odpovědné strany nebo na webové stránky, na kterých se streamování odehrává. Aplikace je určena výhradně pro vzdělávací a osobní účely. CSPlayer 3 v aplikaci nehostuje žádný obsah a nemá žádnou kontrolu nad tím, jaká média jsou v aplikaci umístěna nebo odstraněna. CSPlayer 3 funguje jako jakýkoli jiný vyhledávač, například Google. Služba CSPlayer 3 nehostuje, nenahrává ani nespravuje žádná videa, filmy ani obsah. Pouze vyhledává, agreguje a zobrazuje odkazy v pohodlném, uživatelsky přívětivém rozhraní. Pouze shromažďuje webové stránky třetích stran, které jsou veřejně přístupné prostřednictvím jakéhokoli běžného webového prohlížeče. Je odpovědností uživatele, aby se vyvaroval jakýchkoli akcí, které by mohly porušovat zákony platné v jeho lokalitě. Použijte CSPlayer 3 na vlastní nebezpečí.</string>
+    <string name="legal_notice_text" translatable="false">Jakékoli právní otázky týkající se obsahu této aplikace je třeba řešit se samotnými hostiteli a poskytovateli souborů, protože s nimi nejsme nijak spojeni. V případě porušení autorských práv se obraťte přímo na odpovědné strany nebo na webové stránky, na kterých se streamování odehrává. Aplikace je určena výhradně pro vzdělávací a osobní účely. HexaPlayer v aplikaci nehostuje žádný obsah a nemá žádnou kontrolu nad tím, jaká média jsou v aplikaci umístěna nebo odstraněna. HexaPlayer funguje jako jakýkoli jiný vyhledávač, například Google. Služba HexaPlayer nehostuje, nenahrává ani nespravuje žádná videa, filmy ani obsah. Pouze vyhledává, agreguje a zobrazuje odkazy v pohodlném, uživatelsky přívětivém rozhraní. Pouze shromažďuje webové stránky třetích stran, které jsou veřejně přístupné prostřednictvím jakéhokoli běžného webového prohlížeče. Je odpovědností uživatele, aby se vyvaroval jakýchkoli akcí, které by mohly porušovat zákony platné v jeho lokalitě. Použijte HexaPlayer na vlastní nebezpečí.</string>
     <string name="category_general">Obecné</string>
     <string name="random_button_settings">Náhodné tlačítko</string>
     <string name="random_button_settings_desc">Zobrazit na domovské stránce a v knihovně náhodné tlačítko</string>
@@ -369,7 +368,7 @@
     <string name="action_mark_as_watched">Označit jako zhlédnuté</string>
     <string name="history">Historie</string>
     <string name="next_episode_time_min_format" formatted="true">%dm</string>
-    <string name="play_with_app_name">Přehrát s CSPlayer</string>
+    <string name="play_with_app_name">Přehrát s HexaPlayer</string>
     <string name="autoplay_next_settings_des">Přehrát další epizodu po skončení aktuální</string>
     <string name="show_trailers_settings">Zobrazit trailery</string>
     <string name="pref_filter_search_quality">Skrýt vybranou kvalitu videa ve výsledcích vyhledávání</string>
@@ -436,7 +435,7 @@
     <string name="plugin_downloaded">Doplněk stažen</string>
     <string name="is_adult">18+</string>
     <string name="batch_download_start_format" formatted="true">Spuštěno stahování %1$d %2$s…</string>
-    <string name="blank_repo_message">CSPlayer nemá ve výchozím nastavení nainstalované žádné zdroje. Je třeba je nainstalovat z repozitářů.
+    <string name="blank_repo_message">HexaPlayer nemá ve výchozím nastavení nainstalované žádné zdroje. Je třeba je nainstalovat z repozitářů.
 \n
 \nPřipojte se na náš Discord nebo hledejte na internetu.</string>
     <string name="plugins_disabled" formatted="true">Zakázáno: %d</string>
@@ -618,13 +617,13 @@
     <string name="subscribe_tooltip">Oznámení o nové epizodě</string>
     <string name="recommendations_tooltip">Zobrazit doporučené</string>
     <string name="speed_setting_summary">Přidá nastavení rychlosti do přehrávače</string>
-    <string name="biometric_authentication_title">Odemknout CSPlayer</string>
+    <string name="biometric_authentication_title">Odemknout HexaPlayer</string>
     <string name="biometric_setting">Zamknout biometrikou</string>
     <string name="password_pin_authentication_title">Ověření heslem/PINem</string>
     <string name="biometric_unsupported">Biometrické ověření není na tomto zařízení podporováno</string>
     <string name="biometric_setting_summary">Odemkněte aplikaci otiskem prstu, obličejem, PINem, gestem nebo heslem.</string>
     <string name="biometric_prompt_description">Tato obrazovka byla po několika nezdařilých pokusech uzavřena. Restartujte prosím aplikaci.</string>
-    <string name="biometric_warning">Vaše data z aplikace CSPlayer byla nyní zálohována. Ačkoli je tato možnost velmi malá, různá zařízení se mohou chovat různě. Ve výjimečném případě, že se vám přístup k aplikaci zablokuje, data aplikace zcela vymažte a obnovte je ze zálohy. Velmi se omlouváme za případné nepříjemnosti z toho plynoucí.</string>
+    <string name="biometric_warning">Vaše data z aplikace HexaPlayer byla nyní zálohována. Ačkoli je tato možnost velmi malá, různá zařízení se mohou chovat různě. Ve výjimečném případě, že se vám přístup k aplikaci zablokuje, data aplikace zcela vymažte a obnovte je ze zálohy. Velmi se omlouváme za případné nepříjemnosti z toho plynoucí.</string>
     <string name="unfavorite">Odebrat z oblíbených</string>
     <string name="resume_remaining" formatted="true">%s
 \nzbývá</string>

@@ -19,7 +19,7 @@
 \n%1$s -&gt; %2$s</string>
     <string name="filler" formatted="true">Filler</string>
     <string name="duration_format" formatted="true">%d mnt</string>
-    <string name="app_name">CSPlayer</string>
+
     <string name="title_home">Beranda</string>
     <string name="title_search">Cari</string>
     <string name="title_downloads">Download</string>
@@ -259,7 +259,7 @@
     <string name="resize_fill">Regang</string>
     <string name="resize_zoom">Zoom</string>
     <string name="legal_notice">Disclaimer</string>
-    <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them. In case of copyright infringement, please directly contact the responsible parties or the streaming websites. The app is purely for educational and personal use. CSPlayer 3 does not host any content on the app, and has no control over what media is put up or taken down. CSPlayer 3 functions like any other search engine, such as Google. CSPlayer 3 does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface. It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use CSPlayer 3 at your own risk.</string>
+    <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them. In case of copyright infringement, please directly contact the responsible parties or the streaming websites. The app is purely for educational and personal use. HexaPlayer does not host any content on the app, and has no control over what media is put up or taken down. HexaPlayer functions like any other search engine, such as Google. HexaPlayer does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface. It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use HexaPlayer at your own risk.</string>
     <string name="category_general">Umum</string>
     <string name="random_button_settings">Tombol Acak</string>
     <string name="random_button_settings_desc">Tampilkan tombol acak di Beranda dan Pustaka</string>
@@ -392,7 +392,7 @@
     <string name="pref_category_app_updates">Perbarui Aplikasi</string>
     <string name="pref_category_backup">Cadangkan</string>
     <string name="pref_category_extensions">Ekstensi</string>
-    <string name="play_with_app_name">Putar di CSPlayer</string>
+    <string name="play_with_app_name">Putar di HexaPlayer</string>
     <string name="pref_filter_search_quality">Sembunyikan kualitas video terpilih di pencarian</string>
     <string name="season_format">%1$s %2$d%3$s</string>
     <string name="livestreams">Siaran langsung</string>
@@ -408,7 +408,7 @@
     <string name="plugins_updated" formatted="true">%d plugin diperbarui</string>
     <string name="view_public_repositories_button">Lihat Repositori dari Group</string>
     <string name="view_public_repositories_button_short">List Umum</string>
-    <string name="blank_repo_message">CSPlayer tidak memiliki situs yang terinstal secara default. Anda perlu menginstal situs-situs dari repositori.
+    <string name="blank_repo_message">HexaPlayer tidak memiliki situs yang terinstal secara default. Anda perlu menginstal situs-situs dari repositori.
 \n
 \nBergabunglah dengan Discord kami atau cari secara online.</string>
     <string name="repository_url_hint">Alamat Repositori</string>
@@ -615,13 +615,13 @@
     <string name="subscribe_tooltip">Notifikasi episode baru</string>
     <string name="recommendations_tooltip">Tampilkan rekomendasi</string>
     <string name="test_extensions">Menguji semua Ekstensi</string>
-    <string name="biometric_warning">Data CSPlayer Anda telah dicadangkan. Meskipun peluang terjadinya kasus ini sangat kecil dan jarang terjadi, tetapi semua perangkat berperilaku berbeda. Jika Anda ada dalam situasi terburuk, misalnya gagal untuk mengakses aplikasi, segera hapus data aplikasi sepenuhnya dan pulihkan data cadangan. Kami mohon maaf atas segala ketidaknyamanan yang mungkin ditimbulkan.</string>
+    <string name="biometric_warning">Data HexaPlayer Anda telah dicadangkan. Meskipun peluang terjadinya kasus ini sangat kecil dan jarang terjadi, tetapi semua perangkat berperilaku berbeda. Jika Anda ada dalam situasi terburuk, misalnya gagal untuk mengakses aplikasi, segera hapus data aplikasi sepenuhnya dan pulihkan data cadangan. Kami mohon maaf atas segala ketidaknyamanan yang mungkin ditimbulkan.</string>
     <string name="password_pin_authentication_title">Otentikasi Kata Sandi/PIN</string>
     <string name="biometric_unsupported">Otentikasi biometrik tidak didukung di perangkat ini</string>
     <string name="biometric_setting_summary">Buka kunci aplikasi dengan Sidik Jari, ID Wajah, PIN, Pola, dan Kata Sandi.</string>
     <string name="biometric_prompt_description">Layar ini ditutup setelah mengalami beberapa kali percobaan yang gagal. Anda harus memulai ulang aplikasi ini.</string>
     <string name="unfavorite">Batalkan favorit</string>
-    <string name="biometric_authentication_title">Buka kunci CSPlayer</string>
+    <string name="biometric_authentication_title">Buka kunci HexaPlayer</string>
     <string name="resume_remaining" formatted="true">%s
 \ntersisa</string>
     <string name="favorite">Favorit</string>

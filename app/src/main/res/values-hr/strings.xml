@@ -33,8 +33,8 @@
 \n%1$s -&gt; %2$s</string>
     <string name="filler" formatted="true">Umetak</string>
     <string name="duration_format" formatted="true">%d min</string>
-    <string name="app_name">CSPlayer</string>
-    <string name="play_with_app_name">Reproduciraj s CSPlayer-om</string>
+
+    <string name="play_with_app_name">Reproduciraj s HexaPlayer-om</string>
     <string name="title_home">Početna stranica</string>
     <string name="title_search">Pretraži</string>
     <string name="title_downloads">Preuzimanja</string>
@@ -294,7 +294,7 @@
     <string name="resize_fill">Rastegni</string>
     <string name="resize_zoom">Zoom</string>
     <string name="legal_notice">Obavijest</string>
-    <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them. In case of copyright infringement, please directly contact the responsible parties or the streaming websites. The app is purely for educational and personal use. CSPlayer 3 does not host any content on the app, and has no control over what media is put up or taken down. CSPlayer 3 functions like any other search engine, such as Google. CSPlayer 3 does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface. It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use CSPlayer 3 at your own risk.</string>
+    <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them. In case of copyright infringement, please directly contact the responsible parties or the streaming websites. The app is purely for educational and personal use. HexaPlayer does not host any content on the app, and has no control over what media is put up or taken down. HexaPlayer functions like any other search engine, such as Google. HexaPlayer does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface. It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use HexaPlayer at your own risk.</string>
     <string name="category_general">Općenito</string>
     <string name="random_button_settings">Random gumb</string>
     <string name="random_button_settings_desc">Prikaži gumb za slučajni odabir reprodukcija na početnoj stranici i biblioteci</string>
@@ -431,7 +431,7 @@
     <string name="plugins_downloaded" formatted="true">Preuzeto: %d</string>
     <string name="plugins_disabled" formatted="true">Onemogućeno: %d</string>
     <string name="plugins_not_downloaded" formatted="true">Nepreuzeto: %d</string>
-    <string name="blank_repo_message">CSPlayer nema instalirane web stranice prema zadanim postavkama. Morate instalirati stranice iz repozitorija.
+    <string name="blank_repo_message">HexaPlayer nema instalirane web stranice prema zadanim postavkama. Morate instalirati stranice iz repozitorija.
 \n
 \nPridružite se našem Discordu ili tražite online.</string>
     <string name="view_public_repositories_button">Pregledajte repozitorije zajednice</string>
@@ -625,7 +625,7 @@
     <string name="resume_remaining" formatted="true">%s
 \npreostalo</string>
     <string name="clipboard_permission_error">Greška u pristupanju međuspremnika. Pokušaj ponovo.</string>
-    <string name="biometric_authentication_title">Otključaj CSPlayer</string>
+    <string name="biometric_authentication_title">Otključaj HexaPlayer</string>
     <string name="password_pin_authentication_title">Lozinka/PIN autentifikacija</string>
     <string name="biometric_unsupported">Ovaj uređaj ne podržava biometrijsku autentifikaciju</string>
     <string name="biometric_prompt_description">Ovaj je ekran zatvoren zbog višestrukih neuspjelih pokušaja. Pokrenite aplikaciju ponovo.</string>

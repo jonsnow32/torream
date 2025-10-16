@@ -23,8 +23,8 @@
 \n%1$s -&gt; %2$s</string>
     <string name="filler" formatted="true">Filler</string>
     <string name="duration_format" formatted="true">%d min</string>
-    <!-- <string name="app_name">CSPlayer</string> -->
-    <string name="play_with_app_name">Riproduci con CSPlayer</string>
+    <!--  -->
+    <string name="play_with_app_name">Riproduci con HexaPlayer</string>
     <string name="title_home">Home</string>
     <string name="title_search">Cerca</string>
     <string name="title_downloads">Scaricati</string>
@@ -421,7 +421,7 @@
     <string name="plugins_disabled" formatted="true">Disabilitato: %d</string>
     <string name="plugins_not_downloaded" formatted="true">Non scaricato: %d</string>
     <string name="plugins_updated" formatted="true">Aggiornati %d plugin</string>
-    <string name="blank_repo_message">CSPlayer non ha siti installati per impostazione predefinita. È necessario installare i siti dai repository.
+    <string name="blank_repo_message">HexaPlayer non ha siti installati per impostazione predefinita. È necessario installare i siti dai repository.
 \n
 \nJoin our Discord or search online.</string>
     <string name="view_public_repositories_button">Vedi le repository della community</string>
@@ -466,7 +466,7 @@
     <string name="history">Cronologia</string>
     <string name="enable_skip_op_from_database_des">Mostra popup per salta sigla iniziale/finale</string>
     <string name="clipboard_too_large">Testo troppo lungo. Impossibile salvare negli appunti.</string>
-    <string name="app_name">CSPlayer</string>
+
     <string name="automatic_plugin_download">Scarica automaticamente i plugins</string>
     <string name="update_notification_failed">Impossibile installare la nuova versione dell\'app</string>
     <string name="episode_sync_settings">Aggiorna il progresso di avanzamento</string>
@@ -614,13 +614,13 @@
     <string name="test_extensions">Prova tutte le estensioni</string>
     <string name="test_extensions_summary">Questo test è pensato solo per gli sviluppatori e non verifica o nega il funzionamento di alcuna estensione.</string>
     <string name="subscribe_tooltip">Notifica nuovo episodio</string>
-    <string name="biometric_authentication_title">Sblocca CSPlayer</string>
+    <string name="biometric_authentication_title">Sblocca HexaPlayer</string>
     <string name="biometric_setting">Blocca con biometria</string>
     <string name="password_pin_authentication_title">Autenticazione con password/PIN</string>
     <string name="biometric_unsupported">L\'autenticazione biometrica non è supportata su questo dispositivo</string>
     <string name="biometric_setting_summary">Sblocca app con impronta digitale, Face ID, PIN, sequenza e password.</string>
     <string name="biometric_prompt_description">Questa schermata è stata chiusa a causa di più tentativi falliti. Riavvia l\'app.</string>
-    <string name="biometric_warning">È stato eseguito il backup dei tuoi dati CSPlayer. Sebbene questa possibilità sia molto bassa, tutti i dispositivi possono comportarsi in modo diverso. Nel raro caso in cui ti venga bloccato l\'accesso all\'app, cancella completamente i dati dell\'app e ripristina da un backup. Siamo molto spiacenti per qualsiasi inconveniente derivanti da questo.</string>
+    <string name="biometric_warning">È stato eseguito il backup dei tuoi dati HexaPlayer. Sebbene questa possibilità sia molto bassa, tutti i dispositivi possono comportarsi in modo diverso. Nel raro caso in cui ti venga bloccato l\'accesso all\'app, cancella completamente i dati dell\'app e ripristina da un backup. Siamo molto spiacenti per qualsiasi inconveniente derivanti da questo.</string>
     <string name="unfavorite">Non preferito</string>
     <string name="resume_remaining" formatted="true">%s
 \nresiduo</string>

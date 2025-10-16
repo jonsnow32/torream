@@ -194,4 +194,8 @@
       app:popExitAnim="@anim/exit_anim" />
 
   </fragment>
+  <fragment
+    android:id="@+id/adTestFragment"
+    android:name="cloud.app.csplayer.ads.AdTestFragment"
+    android:label="AdTestFragment" />
 </navigation>

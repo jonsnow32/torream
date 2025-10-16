@@ -241,7 +241,6 @@ interface IPlayer {
   )
 
   fun releaseCallbacks()
-
   fun updateSubtitleStyle(style: SaveCaptionStyle)
   fun saveData()
   fun getCurrentMedias(): MediaItem?

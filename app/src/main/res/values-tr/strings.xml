@@ -35,8 +35,8 @@
 \n%1$s -&gt; %2$s</string>
   <string name="filler" formatted="true">Filler</string>
   <string name="duration_format" formatted="true">%d dakika</string>
-  <string name="app_name">CSPlayer</string>
-  <string name="play_with_app_name">CSPlayer ile oynat</string>
+
+  <string name="play_with_app_name">HexaPlayer ile oynat</string>
   <string name="title_home">Ana sayfa</string>
   <string name="title_search">Arama</string>
   <string name="title_downloads">İndirilenler</string>
@@ -304,7 +304,7 @@
   <string name="resize_zoom">Yakınlaştır</string>
   <string name="legal_notice">Yasal Uyarı</string>
   <string name="legal_notice_key" translatable="false">legal_notice_key</string>
-  <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them. In case of copyright infringement, please directly contact the responsible parties or the streaming websites. The app is purely for educational and personal use. CSPlayer 3 does not host any content on the app, and has no control over what media is put up or taken down. CSPlayer 3 functions like any other search engine, such as Google. CSPlayer 3 does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface. It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use CSPlayer 3 at your own risk.</string>
+  <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them. In case of copyright infringement, please directly contact the responsible parties or the streaming websites. The app is purely for educational and personal use. HexaPlayer does not host any content on the app, and has no control over what media is put up or taken down. HexaPlayer functions like any other search engine, such as Google. HexaPlayer does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface. It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use HexaPlayer at your own risk.</string>
   <string name="category_general">Genel</string>
   <string name="random_button_settings">Rastgele İçerik</string>
   <string name="random_button_settings_desc">Anasayfada ve Kütüphanede rastgele düğmesini göster</string>
@@ -455,7 +455,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="plugins_disabled" formatted="true">Devre dışı: %d</string>
   <string name="plugins_not_downloaded" formatted="true">İndirilmeyen: %d</string>
   <string name="plugins_updated" formatted="true">%d eklenti(ler) güncellendi</string>
-  <string name="blank_repo_message">CSPlayer, varsayılan olarak hiçbir site ile gelmez. Siteleri depolardan kurmanız gerekir.
+  <string name="blank_repo_message">HexaPlayer, varsayılan olarak hiçbir site ile gelmez. Siteleri depolardan kurmanız gerekir.
 \n
 \nDiscord\'umuza katılın veya çevrimiçi arama yapın.</string>
   <string name="view_public_repositories_button">Topluluk depolarını görüntüle</string>
@@ -641,13 +641,13 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="test_extensions">Bütün eklentileri test edin</string>
   <string name="test_extensions_summary">Bu Test yalnızca geliştiricilere yöneliktir ve herhangi bir uzantının çalışmasını doğrulamaz veya reddetmez.</string>
   <string name="subscribe_tooltip">Yeni bölüm bildirimi</string>
-  <string name="biometric_authentication_title">CSPlayer\'in Kilidini aç</string>
+  <string name="biometric_authentication_title">HexaPlayer\'in Kilidini aç</string>
   <string name="biometric_setting">Biyometri ile Kilitle</string>
   <string name="password_pin_authentication_title">Şifre/PIN Kimlik Doğrulama</string>
   <string name="biometric_unsupported">Biyometrik kimlik doğrulama bu cihazda desteklenmiyor</string>
   <string name="biometric_setting_summary">Parmak İzi, Yüz Kimliği, PIN, Desen ve Parola ile uygulamanın kilidini açın.</string>
   <string name="biometric_prompt_description">Bu pencere çok sayıda başarısız deneme nedeniyle kapandı. Lütfen uygulamayı yeniden başlatın.</string>
-  <string name="biometric_warning">CSPlayer verileriniz artık yedeklenmiştir. Bunun olasılığı çok düşük olsa da tüm cihazlar farklı davranabilir. Nadiren de olsa uygulamaya erişiminizin kilitlenmesi durumunda, uygulama verilerini tamamen temizleyin ve bir yedekten geri yükleyin. Bu durumdan kaynaklanan rahatsızlıklardan dolayı çok üzgünüz.</string>
+  <string name="biometric_warning">HexaPlayer verileriniz artık yedeklenmiştir. Bunun olasılığı çok düşük olsa da tüm cihazlar farklı davranabilir. Nadiren de olsa uygulamaya erişiminizin kilitlenmesi durumunda, uygulama verilerini tamamen temizleyin ve bir yedekten geri yükleyin. Bu durumdan kaynaklanan rahatsızlıklardan dolayı çok üzgünüz.</string>
   <string name="favorite">Favori</string>
   <string name="unfavorite">Favorilerden kaldır</string>
   <string name="resume_remaining" formatted="true">%s

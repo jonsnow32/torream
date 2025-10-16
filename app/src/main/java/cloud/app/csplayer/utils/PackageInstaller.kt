@@ -9,6 +9,8 @@ import android.content.IntentSender
 import android.content.pm.PackageInstaller
 import android.os.Build
 import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.core.content.IntentSanitizer
 import cloud.app.csplayer.R
 import cloud.app.csplayer.utils.Coroutines.main
 import cloud.app.csplayer.utils.Utils.logError
@@ -56,11 +58,77 @@ class ApkInstaller(private val service: PackageInstallerService) {
                 PackageInstaller.STATUS_FAILURE
             )) {
                 PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                    val userAction = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
-                    userAction?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(userAction)
+                    // Fix for Intent Redirection vulnerability using IntentSanitizer
+                    val userAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+                    }
+
+                    // Sanitize and validate the intent before launching
+                    userAction?.let { action ->
+                        // Validate the intent first
+                        if (!isValidPackageInstallerIntent(action)) {
+                            logError(SecurityException("Rejected untrusted intent redirection attempt"))
+                            return
+                        }
+
+                        try {
+                            // Use IntentSanitizer to ensure the intent is safe
+                            val sanitizedIntent = IntentSanitizer.Builder()
+                                .allowAction(Intent.ACTION_VIEW)
+                                .allowData { true } // Allow any data URI for package installer
+                                .allowType { true } // Allow any MIME type
+                                .allowFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                .allowFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                .allowComponent { component ->
+                                    // Only allow system package installers
+                                    component.packageName == "com.android.packageinstaller" ||
+                                    component.packageName == "com.google.android.packageinstaller" ||
+                                    component.packageName == "com.android.settings"
+                                }
+                                .build()
+                                .sanitizeByFiltering(action)
+
+                            sanitizedIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(sanitizedIntent)
+                        } catch (e: Exception) {
+                            logError(e)
+                            // If sanitization fails, create a new safe intent with only the data
+                            // Create a new safe intent instead of using the untrusted one
+                            val safeIntent = Intent(Intent.ACTION_VIEW).apply {
+                                data = action.data
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            }
+                            try {
+                                context.startActivity(safeIntent)
+                            } catch (ex: Exception) {
+                                logError(ex)
+                            }
+                        }
+                    }
                 }
             }
+        }
+
+        /**
+         * Validates that the intent is a legitimate system PackageInstaller intent
+         * to prevent Intent Redirection attacks
+         */
+        private fun isValidPackageInstallerIntent(intent: Intent): Boolean {
+            // Only allow intents with no component set (system will resolve it)
+            // or intents explicitly targeting the system package installer
+            val component = intent.component
+            val isSystemComponent = component == null ||
+                   component.packageName == "com.android.packageinstaller" ||
+                   component.packageName == "com.google.android.packageinstaller" ||
+                   component.packageName == "com.android.settings"
+
+            // Also validate the action is safe
+            val hasSafeAction = intent.action == Intent.ACTION_VIEW || intent.action == null
+
+            return isSystemComponent && hasSafeAction
         }
     }
 
@@ -140,8 +208,13 @@ class ApkInstaller(private val service: PackageInstallerService) {
     }
 
     init {
-        service.registerReceiver(installActionReceiver, IntentFilter(INSTALL_ACTION))
+        // Register receiver with proper export flag using ContextCompat for all Android versions
+        ContextCompat.registerReceiver(
+            service,
+            installActionReceiver,
+            IntentFilter(INSTALL_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         service.receivers.add(installActionReceiver)
     }
 }
-

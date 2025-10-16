@@ -13,6 +13,7 @@ import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -24,7 +25,6 @@ import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
 import cloud.app.csplayer.ui.player.EXTRA_IS_SAME_EPISODE
-import cloud.app.csplayer.ui.player.EXTRA_USE_MPV
 import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.mpv.MPVUtils
@@ -41,11 +41,10 @@ import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
 import cloud.app.csplayer.utils.GlobalEvent.onDialogDismissedEvent
 import cloud.app.csplayer.utils.InAppUpdater.Companion.runAutoUpdate
 import cloud.app.csplayer.utils.UIHelper
-import cloud.app.csplayer.utils.UIHelper.colorFromAttribute
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
 import cloud.app.csplayer.utils.Utils.USER_AGENT
-import cloud.app.csplayer.utils.Utils.isARM
+import cloud.app.csplayer.utils.Utils.isMPVSupported
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
@@ -83,7 +82,7 @@ var app = Requests(responseParser = object : ResponseParser {
   override fun <T : Any> parseSafe(text: String, kClass: KClass<T>): T? {
     return try {
       mapper.readValue(text, kClass.java)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
       null
     }
   }
@@ -97,7 +96,7 @@ var app = Requests(responseParser = object : ResponseParser {
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
-  private lateinit var binding: ActivityMainBinding;
+  private lateinit var binding: ActivityMainBinding
   private var result = mutableListOf<PlayBackResult>()
   lateinit var mSessionManager: SessionManager
   private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
@@ -134,13 +133,19 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
-
-    app.initClient(this)
     loadThemes()
+    super.onCreate(savedInstanceState)
+
+    // Move heavy I/O operations to background thread to avoid ANR
+    ioSafe {
+      app.initClient(this@MainActivity)
+      MPVUtils.copyAssets(this@MainActivity)
+    }
+
     updateLocale()
     CommonActivitty.init(this)
-    MPVUtils.copyAssets(this)
-    super.onCreate(savedInstanceState)
+
+    @Suppress("DEPRECATION")
     try {
       if (isCastApiAvailable()) {
         mSessionManager = CastContext.getSharedInstance(this).sessionManager
@@ -150,7 +155,15 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
     binding = ActivityMainBinding.inflate(layoutInflater)
     val view = binding.root
-    setContentView(view);
+    setContentView(view)
+
+    // Use AndroidX EdgeToEdge helper which handles decor fitting and system bar styling.
+    try {
+      // Use WindowCompat to disable fitting system windows so the app can draw edge-to-edge.
+      WindowCompat.setDecorFitsSystemWindows(window, false)
+    } catch (e: Exception) {
+      logError(e)
+    }
 
     val navHostFragment =
       supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
@@ -166,17 +179,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
     activityResultEvent = { result ->
       // Do something with the result value
-      if(isSameEpisode) {
-        this.result.clear();
-        this.result.add(result);
+      if (isSameEpisode) {
+        this.result.clear()
+        this.result.add(result)
       } else {
         val older = this.result.firstOrNull { it.episode == result.episode }
-        if(older != null) {
-          this.result.remove(older);
-          this.result.add(result);
+        if (older != null) {
+          this.result.remove(older)
+          this.result.add(result)
         } else {
-          this.result.add(result);
-          }
+          this.result.add(result)
+        }
       }
     }
 
@@ -212,9 +225,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     super.onStop()
   }
 
-  private var isSameEpisode =  true;
+  private var isSameEpisode = true
   override fun finish() {
-    if(isSameEpisode) {
+    if (isSameEpisode) {
       result.first().apply {
         val resultIntent = Intent().apply {
           putExtra("position", position)
@@ -223,7 +236,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         setResult(code, resultIntent)
       }
     } else {
-      var positions =  result.map { "${it.episode}:${it.position}" }
+      val positions = result.map { "${it.episode}:${it.position}" }
       val resultIntent = Intent().apply {
         putExtra("playlist", true)
         putExtra("positions", positions.joinToString(separator = ","))
@@ -237,7 +250,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private fun NavDestination.matchDestination(@IdRes destId: Int): Boolean =
     hierarchy.any { it.id == destId }
 
-  override fun onNewIntent(intent: Intent?) {
+  override fun onNewIntent(intent: Intent) {
     handleAppIntent(intent)
     super.onNewIntent(intent)
   }
@@ -256,9 +269,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 //        id = R.id.global_to_navigation_mpv_player;
 //      }
 
-      var id = R.id.global_to_navigation_player;
-      if(isARM()) {
-        id = R.id.global_to_navigation_mpv_player;
+      var id = R.id.global_to_navigation_player
+      if (isMPVSupported()) {
+        id = R.id.global_to_navigation_mpv_player
       }
 
       navigate(
@@ -271,6 +284,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
   private var backPressedCallback: OnBackPressedCallback? = null
 
+  @Suppress("DEPRECATION")
   private fun attachBackPressedCallback() {
     if (backPressedCallback == null) {
       backPressedCallback = object : OnBackPressedCallback(true) {
@@ -279,8 +293,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
               ?.navigateUp() == false
           ) {
             showConfirmExitDialog()
-            window?.navigationBarColor =
-              colorFromAttribute(R.attr.primaryGrayBackground)
+            // Avoid calling deprecated Window.setNavigationBarColor on newer Android.
+            // Rely on theme or WindowCompat/decor fitting for system bar styling.
           }
         }
       }
@@ -470,7 +484,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       else -> null
     }?.let { playerEvent ->
       playerEventListener?.invoke(playerEvent)
-      return true;
+      return true
     }
 
     //when (keyCode) {

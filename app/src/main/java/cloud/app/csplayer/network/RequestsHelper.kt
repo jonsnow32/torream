@@ -11,12 +11,9 @@ import okhttp3.Cache
 import okhttp3.Headers
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
-import org.conscrypt.Conscrypt
 import java.io.File
-import java.security.Security
 
 fun Requests.initClient(context: Context): OkHttpClient {
-  normalSafeApiCall { Security.insertProviderAt(Conscrypt.newProvider(), 1) }
   val settingsManager = PreferenceManager.getDefaultSharedPreferences(context)
   val dns = settingsManager.getInt(context.getString(R.string.dns_pref), 0)
   baseClient = OkHttpClient.Builder()

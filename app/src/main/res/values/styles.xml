@@ -157,7 +157,13 @@
     <item name="android:background">@drawable/dub_bg_color</item>
     <item name="android:text">@string/app_dubbed_text</item>
     <item name="android:textColor">@color/dubColorText</item>
-  </style>
+  </style>'
+
+ l
+ vcxol\]
+  412;p]
+  x
+
 
   <style name="SubButton" parent="@style/SearchBox">
     <item name="android:background">@drawable/sub_bg_color</item>
@@ -719,7 +725,7 @@
     <!--<item name="android:layout_marginStart">10dp</item>-->
     <item name="android:layout_marginEnd">5dp</item>
     <item name="textAllCaps">false</item>
-    <item name="android:textSize">13sp</item>
+    <item name="android:textSize">16sp</item>
   </style>
 
   <style name="MultiSelectButton" parent="BlackButton">

@@ -52,7 +52,7 @@ The data collected is used for the following purposes:
 ## Data Retention & Deletion
 - Firebase retains analytics and crash data for a limited period (in accordance with Google’s retention policies).  
 - Users may **request deletion of their data** by contacting us at:  
-📧 **your-support-email@example.com**  
+📧 **csplayerhelper@gmail.com*  
 
 Upon request, we will coordinate with Firebase to remove identifiable user data where applicable.
 

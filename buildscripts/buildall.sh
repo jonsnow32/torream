@@ -121,6 +121,7 @@ build () {
 	if [ "$1" == "mpv-android" ]; then
 		pushd ..
 		BUILDSCRIPT=buildscripts/scripts/$1.sh
+
 	else
 		pushd deps/$1
 		BUILDSCRIPT=../../scripts/$1.sh

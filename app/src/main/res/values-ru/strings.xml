@@ -37,10 +37,10 @@
   <string name="new_update_format" formatted="true">Новое обновление найдено!
 \n%1$s -&gt; %2$s</string>
   <string name="filler" formatted="true">Заполнитель</string>
-  <string name="app_name">CSPlayer</string>
+
   <string name="action_remove_from_bookmarks">Убирать</string>
   <string name="app_dub_sub_episode_text_format" formatted="true">%1$s Серия %2$d</string>
-  <string name="play_with_app_name">Смотреть с CSPlayer</string>
+  <string name="play_with_app_name">Смотреть с HexaPlayer</string>
   <string name="title_home">Главная</string>
   <string name="title_search">Поиск</string>
   <string name="title_downloads">Загрузки</string>
@@ -421,7 +421,7 @@
   <string name="trailer">Трейлер</string>
   <string name="single_plugin_disabled" formatted="true">%s (отключено)</string>
   <string name="next">Далее</string>
-  <string name="blank_repo_message">В CSPlayer по умолчанию не установлены сайты. Вам необходимо установить сайты из репозиториев.
+  <string name="blank_repo_message">В HexaPlayer по умолчанию не установлены сайты. Вам необходимо установить сайты из репозиториев.
 \nПрисоединяйтесь к нашему Discord-серверу или найдите в интернете.</string>
   <string name="error_invalid_data">Недопустимые данные</string>
   <string name="resolution_and_title">Разрешение и название</string>

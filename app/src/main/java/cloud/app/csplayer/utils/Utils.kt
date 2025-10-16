@@ -22,7 +22,6 @@ import cloud.app.csplayer.utils.DataStore.mapper
 import cloud.app.csplayer.utils.UIHelper.toPx
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.lang.ref.WeakReference
-import java.util.Base64
 import kotlin.math.sqrt
 
 object Utils {
@@ -418,6 +417,47 @@ object Utils {
   fun isIntel(): Boolean {
     val arch = getDeviceArchitecture()
     return arch.startsWith("Intel")
+  }
+
+  /**
+   * Detect if device uses 16KB page size
+   * Devices with Android 15+ on certain architectures may require 16KB page alignment
+   */
+  fun is16KBPageSizeDevice(): Boolean {
+    // Android 15 (API 35+) devices may use 16KB pages
+    if (Build.VERSION.SDK_INT >= 35) {
+      try {
+        // Check page size through system property
+        val pageSize = System.getProperty("ro.product.build.16k_page.enabled")
+        if (pageSize == "true") {
+          return true
+        }
+      } catch (e: Exception) {
+        // Ignore
+      }
+      // Some newer ARM64 devices use 16KB pages by default
+      return isARM() && Build.VERSION.SDK_INT >= 35
+    }
+    return false
+  }
+
+  /**
+   * Check if MPV player is supported on this device
+   * MPV requires native libraries that must be compiled with 16KB page size support
+   */
+  fun isMPVSupported(): Boolean {
+    // MPV is only available on ARM devices
+    if (!isARM()) {
+      return false
+    }
+    // Check if device requires 16KB page size
+    // If so, MPV is only supported if libraries were compiled with 16KB support
+    if (is16KBPageSizeDevice()) {
+      // For now, return false until native libraries are rebuilt with 16KB support
+      // This will fallback to ExoPlayer which doesn't have this issue
+      return false
+    }
+    return true
   }
 
   const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"

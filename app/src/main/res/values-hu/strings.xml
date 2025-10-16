@@ -14,7 +14,7 @@
 \n%1$s -&gt; %2$s</string>
     <string name="duration_format" formatted="true">%d perc</string>
     <string name="app_dub_sub_episode_text_format" formatted="true">%1$sEp%2$d</string>
-    <string name="app_name">CSPlayer</string>
+
     <string name="preview_background_img_des">Háttér Előnézet</string>
     <string name="download_failed">Letöltés sikertelen</string>
     <string name="download">Letöltés</string>
@@ -428,7 +428,7 @@
     <string name="subtitles_remove_captions">Zárt feliratok eltávolítása a feliratokból</string>
     <string name="is_adult">18+</string>
     <string name="delete_repository_plugins">Ez az összes tároló bővítményt is törli</string>
-    <string name="blank_repo_message">A CSPlayer alapértelmezés szerint nem telepített webhelyeket. A webhelyeket a tárolókból kell telepítenie.
+    <string name="blank_repo_message">A HexaPlayer alapértelmezés szerint nem telepített webhelyeket. A webhelyeket a tárolókból kell telepítenie.
 \n
 \nCsatlakozz a Discord-unkhoz vagy keress online.</string>
     <string name="extension_version">Verzió</string>

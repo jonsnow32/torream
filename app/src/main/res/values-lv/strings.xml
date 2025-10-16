@@ -15,8 +15,7 @@
     <string name="new_update_format" formatted="true">Jauns atjauninājums atrasts!
 \n%1$s -&gt; %2$s</string>
     <string name="duration_format" formatted="true">%d galvenais</string>
-    <string name="app_name">Claudstream</string>
-    <string name="play_with_app_name">Atskaņo ar CSPlayer</string>
+    <string name="play_with_app_name">Atskaņo ar HexaPlayer</string>
     <string name="title_home">Mājas</string>
     <string name="title_search">Meklēt</string>
     <string name="search_hint_site" formatted="true">Meklēt %s…</string>
@@ -502,7 +501,7 @@
     <string name="quality_webrip">Web</string>
     <string name="quality_sdr">SDR</string>
     <string name="resolution">Rezulūcija</string>
-    <string name="blank_repo_message">CSPlayer pēc noklusējuma nav instalēta neviena vietne. Vietnes jāinstalē no krātuvēm.
+    <string name="blank_repo_message">HexaPlayer pēc noklusējuma nav instalēta neviena vietne. Vietnes jāinstalē no krātuvēm.
 \n
 \nSky UK Limited bezsmadzeņu DMCA noņemšanas dēļ mēs nevaram saistīt ar repozitorija vietni lietotnē.
 \n
