@@ -2,9 +2,7 @@ package cloud.app.csplayer.utils
 
 import android.content.Context
 import android.util.Log
-import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.view.isGone
 import androidx.core.view.isVisible

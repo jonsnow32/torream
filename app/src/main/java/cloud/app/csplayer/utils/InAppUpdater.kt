@@ -17,7 +17,6 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.app
 import cloud.app.csplayer.utils.Coroutines.ioSafe
 import cloud.app.csplayer.utils.DataStore.deleteFileOnExit
-import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.parseJson

@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
@@ -19,7 +18,7 @@ import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+import androidx.core.view.WindowCompat
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -44,7 +43,6 @@ import cloud.app.csplayer.ui.player.PlayerEventSource
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
 import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
-import cloud.app.csplayer.utils.AppUtils.isCastApiAvailable
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
@@ -67,9 +65,6 @@ import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isLayout
 import cloud.app.csplayer.utils.setText
 import cloud.app.csplayer.utils.txt
-import com.google.android.gms.cast.framework.CastButtonFactory
-import com.google.android.gms.cast.framework.CastContext
-import com.google.android.gms.cast.framework.CastState
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
@@ -368,10 +363,11 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
   protected fun enterFullscreen() {
     if (isFullScreenPlayer) {
       activity?.hideSystemUI()
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && fullscreenNotch) {
-        val params = activity?.window?.attributes
-        params?.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        activity?.window?.attributes = params
+      // Allow drawing edge-to-edge including display cutout via WindowCompat
+      try {
+        activity?.let { WindowCompat.setDecorFitsSystemWindows(it.window, false) }
+      } catch (e: Exception) {
+        logError(e)
       }
     }
     updateOrientation()
@@ -384,9 +380,10 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
     // simply resets brightness and notch settings that might have been overridden
     val lp = activity?.window?.attributes
     lp?.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      lp?.layoutInDisplayCutoutMode =
-        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+    try {
+      activity?.let { WindowCompat.setDecorFitsSystemWindows(it.window, true) }
+    } catch (e: Exception) {
+      logError(e)
     }
     activity?.window?.attributes = lp
     activity?.showSystemUI()

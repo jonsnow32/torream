@@ -6,13 +6,13 @@ import android.view.View
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
+import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getFolderSize
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getPref
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setUpToolbar
 import cloud.app.csplayer.ui.subtitles.ChromecastSubtitlesFragment
-import cloud.app.csplayer.ui.subtitles.SubtitlesFragment
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
 import cloud.app.csplayer.utils.SingleSelectionHelper.showBottomDialog
 import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
@@ -107,7 +107,7 @@ class SettingsPlayer : PreferenceFragmentCompat() {
         }
 
         getPref(R.string.subtitle_settings_key)?.setOnPreferenceClickListener {
-            SubtitlesFragment.push(activity, false)
+            MPVSubtitleFragment.push(activity, false)
             return@setOnPreferenceClickListener true
         }
 

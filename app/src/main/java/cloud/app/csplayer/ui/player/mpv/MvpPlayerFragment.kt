@@ -79,6 +79,9 @@ import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
 import cloud.app.csplayer.utils.CommonActivitty.screenHeight
 import cloud.app.csplayer.utils.CommonActivitty.screenWidth
 import cloud.app.csplayer.utils.DataStore
+import cloud.app.csplayer.model.SaveCaptionStyle
+import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
+import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.ExtractorUri
 import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
@@ -119,6 +122,7 @@ enum class TouchAction {
   Time,
 }
 
+@OptIn(UnstableApi::class)
 class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
   private var isSameEpisode: Boolean = false;
@@ -1144,13 +1148,18 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun updateDecoderButton() {
-    if (playerBinding?.playerCodecBtt?.isVisible == true) {
-      playerBinding?.playerCodecBtt?.text = when (player?.hwdecActive) {
-        "mediacodec" -> "HW+"
-        "no" -> "SW"
-        else -> "HW"
-      }
+  private fun updateDecoderButton(hwdecValue: String? = null) {
+    if (playerBinding?.playerCodecBtt?.isVisible != true) return
+    val hwdec = hwdecValue ?: try {
+      player?.hwdecActive
+    } catch (e: Exception) {
+      null
+    }
+
+    playerBinding?.playerCodecBtt?.text = when (hwdec) {
+      "mediacodec" -> "HW+"
+      "no" -> "SW"
+      else -> "HW"
     }
   }
 
@@ -1677,6 +1686,18 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
   }
 
+  private fun loadSavedSubStyle() {
+    try {
+      context?.let { ctx ->
+        val savedStyle: SaveCaptionStyle? = try { ctx.getKey("subtitle_settings") } catch (_: Exception) { null }
+        if (savedStyle != null) {
+          MPVSubtitleFragment.applyToMPV(ctx, savedStyle)
+        }
+      }
+    } catch (_: Throwable) {
+    }
+  }
+
   fun nextResize() {
     resizeMode = (resizeMode + 1) % PlayerResize.values().size
     resize(resizeMode, true)
@@ -2092,6 +2113,32 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         MPVLib.command(c)
       onloadCommands.clear()
       playbackHasStarted = true
+      // Re-apply saved subtitle styling after a file starts to ensure libass picks up options
+      try {
+        context?.let { ctx ->
+          val savedStyle: SaveCaptionStyle? = try { ctx.getKey("subtitle_settings") } catch (_: Exception) { null }
+          if (savedStyle != null) {
+            MPVSubtitleFragment.applyToMPV(ctx, savedStyle)
+          }
+
+          // Diagnostic info: list fonts dir and subtitle-related properties
+          try {
+            val fontsDir = java.io.File(ctx.filesDir, "fonts")
+            val fontFiles = fontsDir.listFiles()?.map { it.name }?.joinToString(", ") ?: "(none)"
+            val sid = MPVApi.getPropertyInt("sid") ?: -1
+            val subFontProp = try { MPVApi.getPropertyString("sub-font") } catch (_: Throwable) { null }
+            val subFontsDirProp = try { MPVApi.getPropertyString("sub-fonts-dir") } catch (_: Throwable) { null }
+            val debug = "fontsDir=${fontsDir.absolutePath}; files=$fontFiles; sid=$sid; sub-font=$subFontProp; sub-fonts-dir=$subFontsDirProp"
+            android.util.Log.v(TAG, "Subtitle debug: $debug")
+            // show brief toast to notify developer of where to look in logs
+            try {
+              showToast("Subtitle debug: ${if (fontFiles.length > 100) fontFiles.substring(0,100) + "..." else fontFiles}")
+            } catch (_: Throwable) {}
+          } catch (_: Throwable) {}
+
+        }
+      } catch (_: Throwable) {
+      }
     }
     if (!activityIsForeground) return
     eventUiHandler.post {
@@ -2119,6 +2166,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
 
       "hwdec-current" -> {
+        // property-only notification: refresh UI by querying current value (safe)
         updateDecoderButton()
       }
     }
@@ -2225,6 +2273,11 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     when (property) {
       "speed" -> {
         //updateSpeedButton()
+      }
+
+      "hwdec-current" -> {
+        // Use the value delivered by the event instead of querying MPV synchronously
+        updateDecoderButton(value)
       }
     }
     if (metaUpdated)

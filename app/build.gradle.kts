@@ -28,8 +28,8 @@ android {
     applicationId = "cloud.app.csplayer"
     minSdk = 21
     targetSdk = 36
-    versionCode = 116
-    versionName = "1.1.6"
+    versionCode = 117
+    versionName = "1.1.7"
 
     // Reads local.properties
     val localProperties = gradleLocalProperties(rootDir, providers)
@@ -172,6 +172,7 @@ dependencies {
   implementation("com.applovin:applovin-sdk:13.3.1")
   implementation("com.unity3d.ads:unity-ads:4.16.1")
   implementation("com.vungle:vungle-ads:7.5.1")
+
 
   //logging
   implementation("com.jakewharton.timber:timber:5.0.1")

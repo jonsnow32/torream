@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.os.TransactionTooLargeException
 import android.util.Log
 import android.view.View
+import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
@@ -20,6 +21,7 @@ import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.getSystemService
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavOptions
@@ -194,5 +196,35 @@ object UIHelper {
     val inputMethodManager =
       view.context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager?
     inputMethodManager?.showSoftInput(view, 0)
+  }
+
+  /**
+   * Sets the system bar colors in a way that avoids deprecated APIs on Android 15+.
+   * Uses WindowInsetsController for bar appearance on API 30+.
+   * Falls back to legacy methods on older versions.
+   */
+  fun Window.setSystemBarColors(statusBarColor: Int, navigationBarColor: Int, lightBars: Boolean = true) {
+      when {
+          Build.VERSION.SDK_INT >= 34 -> {
+              // On Android 15+, avoid deprecated setStatusBarColor/setNavigationBarColor
+              val controller = WindowInsetsControllerCompat(this, decorView)
+              controller.isAppearanceLightStatusBars = lightBars
+              controller.isAppearanceLightNavigationBars = lightBars
+              // Bar colors should be set via theme or systemBarAppearance, not directly
+          }
+          Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+              // On Android 11-14, use WindowInsetsControllerCompat for bar appearance
+              val controller = WindowInsetsControllerCompat(this, decorView)
+              controller.isAppearanceLightStatusBars = lightBars
+              controller.isAppearanceLightNavigationBars = lightBars
+              this.statusBarColor = statusBarColor
+              this.navigationBarColor = navigationBarColor
+          }
+          else -> {
+              // On older versions, use legacy APIs
+              this.statusBarColor = statusBarColor
+              this.navigationBarColor = navigationBarColor
+          }
+      }
   }
 }

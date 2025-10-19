@@ -1,5 +1,6 @@
 package cloud.app.csplayer.ui.player.mpv
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.os.Environment
@@ -11,6 +12,7 @@ import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.core.content.ContextCompat
+import androidx.media3.common.util.UnstableApi
 import cloud.app.csplayer.R
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_DOUBLE
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_FLAG
@@ -18,9 +20,15 @@ import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_INT64
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_NODE
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_NONE
 import cloud.app.csplayer.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
+import cloud.app.csplayer.utils.isTvOrEmulator
+import cloud.app.csplayer.utils.DataStore.getKey
+import cloud.app.csplayer.model.SaveCaptionStyle
+import timber.log.Timber
 import kotlin.reflect.KProperty
 
+@UnstableApi
 internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs) {
+  @SuppressLint("LogNotTimber")
   override fun initOptions() {
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
@@ -35,22 +43,23 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         "gpu"
     )
 
-    // hwdec
-    val hwdec = if (sharedPreferences.getBoolean("hardware_decoding", true))
+    // hwdec - Force software decoding on emulators to prevent goldfish decoder issues
+    val hwdec = if (sharedPreferences.getBoolean("hardware_decoding", true) && !context.isTvOrEmulator()) {
       "auto"
-    else
+    } else {
       "no"
+    }
 
     // vo: set display fps as reported by android
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       val disp = ContextCompat.getDisplayOrDefault(context)
       val refreshRate = disp.mode.refreshRate
 
-      Log.v(TAG, "Display ${disp.displayId} reports FPS of $refreshRate")
+      Timber.tag(TAG).v("Display ${disp.displayId} reports FPS of $refreshRate")
       MPVLib.setOptionString("display-fps-override", refreshRate.toString())
     } else {
-      Log.v(
-        TAG, "Android version too old, disabling refresh rate functionality " +
+      Timber.tag(TAG).v(
+        "Android version too old, disabling refresh rate functionality " +
           "(${Build.VERSION.SDK_INT} < ${Build.VERSION_CODES.M})"
       )
     }
@@ -110,7 +119,21 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     MPVLib.setOptionString("gpu-context", "android")
     MPVLib.setOptionString("opengl-es", "yes")
     MPVLib.setOptionString("hwdec", hwdec)
-    MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
+
+    // Additional emulator-specific settings to prevent goldfish decoder
+    if (context.isTvOrEmulator()) {
+      // Completely disable hardware decoding and force software fallback
+      MPVLib.setOptionString("hwdec-codecs", "")
+      MPVLib.setOptionString("vd-lavc-software-fallback", "yes")
+      MPVLib.setOptionString("ad-lavc-downmix", "yes")
+      // Force libavcodec software decoder
+      MPVLib.setOptionString("vd", "lavc")
+      // Disable MediaCodec entirely to prevent goldfish selection
+      MPVLib.setOptionString("android-surface-size", "0x0")
+      Log.v(TAG, "Emulator detected: Forcing software decoding to prevent goldfish decoder issues")
+    } else {
+      MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
+    }
     MPVLib.setOptionString("ao", "audiotrack,opensles")
     MPVLib.setOptionString("tls-verify", "yes")
     MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
@@ -125,6 +148,123 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     screenshotDir.mkdirs()
     MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
     MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
+
+    // Audio decoding robustness: ignore errors to prevent crashes on corrupted AAC streams
+    MPVLib.setOptionString("ad-lavc-error-recognition", "2")  // 2 = ignore errors
+    MPVLib.setOptionString("ad-lavc-skip-frame", "nokey")    // Skip non-key frames on errors
+
+    // Video decoding robustness: ignore errors to prevent crashes on corrupted H.264 streams
+    MPVLib.setOptionString("vd-lavc-error-recognition", "2")  // 2 = ignore errors
+    MPVLib.setOptionString("vd-lavc-skip-frame", "nokey")    // Skip non-key frames on errors
+
+    // Subtitle/font settings: allow overriding via preferences and ensure a fonts dir for libass
+    val subtitleFontsDir = java.io.File(this.context.filesDir, "fonts")
+    if (!subtitleFontsDir.exists()) subtitleFontsDir.mkdirs()
+    // If there are no fonts shipped to the fonts dir, copy a bundled fallback font so libass
+    // has a usable font. This helps when external font copying failed and prevents libass
+    // from rendering with a missing font.
+    try {
+      val hasAnyFonts = subtitleFontsDir.listFiles()?.any { it.isFile } == true
+      if (!hasAnyFonts) {
+        try {
+          // Try to copy a fallback font if available from assets
+          // Font resources (R.font.*) cannot be directly copied, so we skip this
+          // libass will use its built-in fallback font
+        } catch (_: Exception) {
+          // ignore — best effort fallback
+        }
+      }
+    } catch (_: Exception) {}
+    MPVLib.setOptionString("sub-fonts-dir", subtitleFontsDir.path)
+
+    // Try to load full saved subtitle style (preferred) from DataStore
+    try {
+      // DataStore.getKey is an extension used elsewhere; import path: cloud.app.csplayer.utils.DataStore.getKey
+      val savedStyle: SaveCaptionStyle? = try {
+        context.getKey<SaveCaptionStyle>("subtitle_settings")
+      } catch (ex: Exception) {
+        null
+      }
+
+      if (savedStyle != null) {
+        // helper to convert Android ARGB color int to mpv color string (#RRGGBB or #AARRGGBB)
+        fun colorToMpvHex(color: Int): String {
+          val a = (color ushr 24) and 0xFF
+          val r = (color ushr 16) and 0xFF
+          val g = (color ushr 8) and 0xFF
+          val b = color and 0xFF
+          return if (a in 0..254) String.format("#%02X%02X%02X%02X", a, r, g, b) else String.format("#%02X%02X%02X", r, g, b)
+        }
+
+        // apply colors (use MPVLib to set options before native init completes)
+        MPVLib.setOptionString("sub-color", colorToMpvHex(savedStyle.foregroundColor))
+        MPVLib.setOptionString("sub-bg-color", colorToMpvHex(savedStyle.backgroundColor))
+        MPVLib.setOptionString("sub-window-color", colorToMpvHex(savedStyle.edgeColor))
+        MPVLib.setOptionString("sub-border-color", colorToMpvHex(savedStyle.edgeColor))
+
+        // font size (convert SP -> px)
+        savedStyle.fixedTextSize?.let { sp ->
+          val px = android.util.TypedValue.applyDimension(
+            android.util.TypedValue.COMPLEX_UNIT_SP,
+            sp,
+            resources.displayMetrics
+          ).toInt()
+          MPVLib.setOptionString("sub-font-size", px.toString())
+        }
+
+        // edge / shadow mapping
+        when (savedStyle.edgeType) {
+          androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_NONE -> MPVLib.setOptionString("sub-border-size", "0")
+          androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_OUTLINE -> MPVLib.setOptionString("sub-border-size", "2")
+          else -> MPVLib.setOptionString("sub-shadow-offset", "2")
+        }
+
+        // try to copy any selected font file into filesDir/fonts and set sub-font to filename (without ext)
+        savedStyle.typefaceFilePath?.let { path ->
+          try {
+            val src = java.io.File(path)
+            if (src.exists()) {
+              val dst = java.io.File(this.context.filesDir, "fonts/${src.name}")
+              if (!dst.exists()) {
+                src.copyTo(dst)
+              }
+              val fontName = dst.nameWithoutExtension
+              MPVLib.setOptionString("sub-font", fontName)
+            }
+          } catch (e: Exception) {
+            // ignore
+          }
+        }
+
+      } else {
+        // fallback to older per-key SharedPreferences approach
+        val subFont = sharedPreferences.getString("subtitle_font", "")
+        val subFontSize = sharedPreferences.getString("subtitle_font_size", "")
+        val subColor = sharedPreferences.getString("subtitle_color", "")
+        val subBorderColor = sharedPreferences.getString("subtitle_border_color", "")
+        val subShadowColor = sharedPreferences.getString("subtitle_shadow_color", "")
+
+        if (!subFont.isNullOrBlank()) MPVLib.setOptionString("sub-font", subFont)
+        if (!subFontSize.isNullOrBlank()) MPVLib.setOptionString("sub-font-size", subFontSize)
+        if (!subColor.isNullOrBlank()) MPVLib.setOptionString("sub-color", subColor)
+        if (!subBorderColor.isNullOrBlank()) MPVLib.setOptionString("sub-border-color", subBorderColor)
+        if (!subShadowColor.isNullOrBlank()) MPVLib.setOptionString("sub-shadow-color", subShadowColor)
+      }
+    } catch (e: Exception) {
+      // If DataStore utilities are not accessible for whatever reason, fall back to preferences
+      val subFont = sharedPreferences.getString("subtitle_font", "")
+      val subFontSize = sharedPreferences.getString("subtitle_font_size", "")
+      val subColor = sharedPreferences.getString("subtitle_color", "")
+      val subBorderColor = sharedPreferences.getString("subtitle_border_color", "")
+      val subShadowColor = sharedPreferences.getString("subtitle_shadow_color", "")
+
+      if (!subFont.isNullOrBlank()) MPVLib.setOptionString("sub-font", subFont)
+      if (!subFontSize.isNullOrBlank()) MPVLib.setOptionString("sub-font-size", subFontSize)
+      if (!subColor.isNullOrBlank()) MPVLib.setOptionString("sub-color", subColor)
+      if (!subBorderColor.isNullOrBlank()) MPVLib.setOptionString("sub-border-color", subBorderColor)
+      if (!subShadowColor.isNullOrBlank()) MPVLib.setOptionString("sub-shadow-color", subShadowColor)
+    }
+
   }
 
   override fun postInitOptions() {
@@ -197,18 +337,18 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
       Property("pause", MPV_FORMAT_FLAG),
       Property("paused-for-cache", MPV_FORMAT_FLAG),
       Property("speed", MPV_FORMAT_STRING),
-      Property("track-list"),
+      Property("track-list", MPV_FORMAT_NODE),
       Property("video-params/aspect", MPV_FORMAT_DOUBLE),
       Property("video-params/rotate", MPV_FORMAT_DOUBLE),
       Property("playlist-pos", MPV_FORMAT_INT64),
       Property("playlist-count", MPV_FORMAT_INT64),
-      Property("video-format"),
+      Property("video-format", MPV_FORMAT_STRING),
       Property("media-title", MPV_FORMAT_STRING),
-      Property("metadata"),
+      Property("metadata", MPV_FORMAT_NODE),
       Property("loop-playlist"),
       Property("loop-file"),
       Property("shuffle", MPV_FORMAT_FLAG),
-      Property("hwdec-current"),
+      Property("hwdec-current", MPV_FORMAT_STRING),
       Property("end_file", MPV_FORMAT_NODE)
     )
 
@@ -238,20 +378,20 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
       // pseudo-track to allow disabling audio/subs
       list.add(Track(0, context.getString(R.string.track_off)))
     }
-    val count = MPVLib.getPropertyInt("track-list/count")!!
+    val count = MPVApi.getPropertyInt("track-list/count") ?: return
     // Note that because events are async, properties might disappear at any moment
     // so use ?: continue instead of !!
     for (i in 0 until count) {
-      val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
+      val type = MPVApi.getPropertyString("track-list/$i/type") ?: continue
       if (!tracks.containsKey(type)) {
         Log.w(TAG, "Got unknown track type: $type")
         continue
       }
-      val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
+      val mpvId = MPVApi.getPropertyInt("track-list/$i/id") ?: continue
 
-      val title = MPVLib.getPropertyString("track-list/$i/title")
-      val selected = MPVLib.getPropertyBoolean("track-list/$i/selected")
-      val decoder = MPVLib.getPropertyString("track-list/$i/decoder")
+      val title = MPVApi.getPropertyString("track-list/$i/title")
+      val selected = MPVApi.getPropertyBoolean("track-list/$i/selected")
+      val decoder = MPVApi.getPropertyString("track-list/$i/decoder")
       var trackName = if(title.isNullOrEmpty()) null else context.getString(
         R.string.ui_track_text, mpvId,title
       );
@@ -259,8 +399,8 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
       when (type) {
         "video" -> {
           if (trackName.isNullOrEmpty()) {
-            val demux_w = MPVLib.getPropertyInt("track-list/$i/demux-w")
-            val demux_h = MPVLib.getPropertyInt("track-list/$i/demux-h")
+            val demux_w = MPVApi.getPropertyInt("track-list/$i/demux-w")
+            val demux_h = MPVApi.getPropertyInt("track-list/$i/demux-h")
 
             trackName = context.getString(
               R.string.ui_video_track_text,
@@ -273,8 +413,8 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
         "audio" -> {
           if (trackName.isNullOrEmpty()) {
-            val audioChannel = MPVLib.getPropertyString("track-list/$i/audio-channels")
-            val lang = MPVLib.getPropertyString("track-list/$i/lang")
+            val audioChannel = MPVApi.getPropertyString("track-list/$i/audio-channels")
+            val lang = MPVApi.getPropertyString("track-list/$i/lang")
             if (!lang.isNullOrEmpty())
               trackName = context.getString(R.string.ui_audio_track, mpvId, audioChannel, lang)
           }
@@ -284,7 +424,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
         "sub" -> {
           if (trackName.isNullOrEmpty()) {
-            val lang = MPVLib.getPropertyString("track-list/$i/lang")
+            val lang = MPVApi.getPropertyString("track-list/$i/lang")
             if (!lang.isNullOrEmpty())
               trackName = context.getString(R.string.ui_track_text, mpvId, lang)
           }
@@ -304,7 +444,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         Track(
           mpvId = mpvId,
           name = trackName,
-          selected = selected
+          selected = selected ?: false
         )
       )
 
@@ -315,10 +455,10 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
   fun loadPlaylist(): MutableList<PlaylistItem> {
     val playlist = mutableListOf<PlaylistItem>()
-    val count = MPVLib.getPropertyInt("playlist-count")!!
+    val count = MPVApi.getPropertyInt("playlist-count") ?: return playlist
     for (i in 0 until count) {
-      val filename = MPVLib.getPropertyString("playlist/$i/filename")!!
-      val title = MPVLib.getPropertyString("playlist/$i/title")
+      val filename = MPVApi.getPropertyString("playlist/$i/filename") ?: continue
+      val title = MPVApi.getPropertyString("playlist/$i/title")
       playlist.add(PlaylistItem(index = i, filename = filename, title = title))
     }
     return playlist
@@ -328,10 +468,10 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
   fun loadChapters(): MutableList<Chapter> {
     val chapters = mutableListOf<Chapter>()
-    val count = MPVLib.getPropertyInt("chapter-list/count")!!
+    val count = MPVApi.getPropertyInt("chapter-list/count") ?: return chapters
     for (i in 0 until count) {
-      val title = MPVLib.getPropertyString("chapter-list/$i/title")
-      val time = MPVLib.getPropertyDouble("chapter-list/$i/time")!!
+      val title = MPVApi.getPropertyString("chapter-list/$i/title")
+      val time = MPVApi.getPropertyDouble("chapter-list/$i/time") ?: continue
       chapters.add(
         Chapter(
           index = i,
@@ -350,15 +490,19 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     set(paused) = MPVLib.setPropertyBoolean("pause", paused!!)
 
   var timePos: Double?
-    get() = MPVLib.getPropertyDouble("time-pos/full")
-    set(progress) = MPVLib.setPropertyDouble("time-pos", progress!!)
+    get() = MPVApi.getPropertyDouble("time-pos/full")
+    set(progress) {
+      if (progress != null && progress >= 0.0) {
+        MPVLib.setPropertyDouble("time-pos", progress)
+      }
+    }
 
   /** name of currently active hardware decoder or "no" */
   val hwdecActive: String
-    get() = MPVLib.getPropertyString("hwdec-current") ?: "no"
+    get() = MPVApi.getPropertyString("hwdec-current") ?: "no"
 
   var playbackSpeed: Double?
-    get() = MPVLib.getPropertyDouble("speed")
+    get() = MPVApi.getPropertyDouble("speed")
     set(speed) = MPVLib.setPropertyDouble("speed", speed!!)
 
   var subDelay: Double?
@@ -377,10 +521,10 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
    * Returns the video aspect ratio. Rotation is taken into account.z
    */
   fun getVideoAspect(): Double? {
-    return MPVLib.getPropertyDouble("video-params/aspect")?.let {
+    return MPVApi.getPropertyDouble("video-params/aspect")?.let {
       if (it < 0.001)
         return 0.0
-      val rot = MPVLib.getPropertyInt("video-params/rotate") ?: 0
+      val rot = MPVApi.getPropertyInt("video-params/rotate") ?: 0
       if (rot % 180 == 90)
         1.0 / it
       else
@@ -390,9 +534,12 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
   class TrackDelegate(private val name: String) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): Int {
-      val v = MPVLib.getPropertyString(name)
-      // we can get null here for "no" or other invalid value
-      return v?.toIntOrNull() ?: -1
+      // Try integer getter first
+      val intVal = MPVApi.getPropertyInt(name)
+      if (intVal != null) return intVal
+      // Fallback: try string getter and parse integer if present
+      val s = try { MPVApi.getPropertyString(name) } catch (_: Exception) { null }
+      return s?.toIntOrNull() ?: -1
     }
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
