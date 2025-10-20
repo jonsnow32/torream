@@ -25,6 +25,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.os.BundleCompat
 import androidx.core.widget.addTextChangedListener
 import cloud.app.csplayer.R
+import timber.log.Timber
 import java.io.*
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -45,14 +46,14 @@ object MPVUtils {
                 // Note that .available() officially returns an *estimated* number of bytes available
                 // this is only true for generic streams, asset streams return the full file size
                 if (outFile.length() == ins.available().toLong()) {
-                    Log.v(TAG, "Skipping copy of asset file (exists same size): $filename")
+                  Timber.tag(TAG).v("Skipping copy of asset file (exists same size): $filename")
                     continue
                 }
                 out = FileOutputStream(outFile)
                 ins.copyTo(out)
-                Log.w(TAG, "Copied asset file: $filename")
+              Timber.tag(TAG).w("Copied asset file: $filename")
             } catch (e: IOException) {
-                Log.e(TAG, "Failed to copy asset file: $filename", e)
+              Timber.tag(TAG).e(e, "Failed to copy asset file: $filename")
             } finally {
                 ins?.close()
                 out?.close()

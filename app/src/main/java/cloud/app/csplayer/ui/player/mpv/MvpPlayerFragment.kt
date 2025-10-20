@@ -110,6 +110,8 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
+import androidx.core.net.toUri
+import timber.log.Timber
 
 enum class DecodeMode {
   hwDec,
@@ -251,6 +253,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     super.onViewCreated(view, savedInstanceState)
     player?.addObserver(this)
     player?.initialize(requireActivity().filesDir.path, requireActivity().cacheDir.path)
+
 
 
     observe(viewModel.allLinks) {
@@ -1375,6 +1378,9 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
           player?.aid = audioIndexStart
           player?.sid = subtitleIndex
 
+          // Reload tracks to update the selected state
+          player?.loadTracks()
+
           trackDialog.dismissSafe(activity)
         }
       }
@@ -1525,6 +1531,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
+  @SuppressLint("UseKtx")
   private fun loadLink(
     link: Pair<ExtractorLink?, ExtractorUri?>,
     sub: SubtitleData? = null,
@@ -1533,16 +1540,16 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     currentSelectedLink = link
 
     // Force software decoding on emulator or if already in swDec mode
-    if (decodeMode == DecodeMode.swDec || context?.isTvOrEmulator() == true) {
-      pushOption("hwdec", "no")
-      // Additional options to ensure software decoding on emulator
-      pushOption("vd-lavc-software-fallback", "yes")
-      pushOption("ad-lavc-downmix", "yes")
-      // Force software video decoder to avoid goldfish decoder issues
-      pushOption("vd", "lavc:h264")
-      // Disable hardware accelerated codecs that might trigger goldfish
-      pushOption("hwdec-codecs", "")
-    }
+//    if (decodeMode == DecodeMode.swDec || context?.isTvOrEmulator() == true) {
+//      pushOption("hwdec", "no")
+//      // Additional options to ensure software decoding on emulator
+//      pushOption("vd-lavc-software-fallback", "yes")
+//      pushOption("ad-lavc-downmix", "yes")
+//      // Force software video decoder to avoid goldfish decoder issues
+//      pushOption("vd", "lavc:h264")
+//      // Disable hardware accelerated codecs that might trigger goldfish
+//      pushOption("hwdec-codecs", "")
+//    }
     pushOption(
       "force-media-title",
       currentSelectedLink?.first?.name ?: currentSelectedLink?.first?.url!!
@@ -1560,7 +1567,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       )
     }
 
-    val uri = Uri.parse(currentSelectedLink?.first?.url)
+    val uri = currentSelectedLink?.first?.url?.toUri()!!
 
     player?.playFile(
       resolveUri(uri) ?: "",
@@ -1682,8 +1689,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     updateDecoderButton()
     resetRewindText()
     updateMetadataDisplay()
-    player?.loadTracks()
-
   }
 
   private fun loadSavedSubStyle() {
@@ -2105,7 +2110,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
   override fun event(eventId: Int) {
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_SHUTDOWN) {
-      Log.v(TAG, "MPV_EVENT_SHUTDOWN")
+      Timber.tag(TAG).v("MPV_EVENT_SHUTDOWN")
     }
 
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_START_FILE) {
@@ -2113,32 +2118,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         MPVLib.command(c)
       onloadCommands.clear()
       playbackHasStarted = true
-      // Re-apply saved subtitle styling after a file starts to ensure libass picks up options
-      try {
-        context?.let { ctx ->
-          val savedStyle: SaveCaptionStyle? = try { ctx.getKey("subtitle_settings") } catch (_: Exception) { null }
-          if (savedStyle != null) {
-            MPVSubtitleFragment.applyToMPV(ctx, savedStyle)
-          }
-
-          // Diagnostic info: list fonts dir and subtitle-related properties
-          try {
-            val fontsDir = java.io.File(ctx.filesDir, "fonts")
-            val fontFiles = fontsDir.listFiles()?.map { it.name }?.joinToString(", ") ?: "(none)"
-            val sid = MPVApi.getPropertyInt("sid") ?: -1
-            val subFontProp = try { MPVApi.getPropertyString("sub-font") } catch (_: Throwable) { null }
-            val subFontsDirProp = try { MPVApi.getPropertyString("sub-fonts-dir") } catch (_: Throwable) { null }
-            val debug = "fontsDir=${fontsDir.absolutePath}; files=$fontFiles; sid=$sid; sub-font=$subFontProp; sub-fonts-dir=$subFontsDirProp"
-            android.util.Log.v(TAG, "Subtitle debug: $debug")
-            // show brief toast to notify developer of where to look in logs
-            try {
-              showToast("Subtitle debug: ${if (fontFiles.length > 100) fontFiles.substring(0,100) + "..." else fontFiles}")
-            } catch (_: Throwable) {}
-          } catch (_: Throwable) {}
-
-        }
-      } catch (_: Throwable) {
-      }
     }
     if (!activityIsForeground) return
     eventUiHandler.post {
@@ -2157,10 +2136,6 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   private fun eventPropertyUi(property: String, dummy: Any?, metaUpdated: Boolean) {
     if (!activityIsForeground) return
     when (property) {
-      "track-list" -> {
-        player?.loadTracks()
-      }
-
       "video-format" -> {
         //updateAudioUI()
       }
@@ -2193,6 +2168,35 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       "time-pos" -> updatePlaybackPos(value.toInt())
       "playlist-pos", "playlist-count" -> {
         //updatePlaylistButtons()
+      }
+
+      "track-list/count" -> {
+        // Track list count changed - tracks are now available, load them
+        if (value > 0) {
+          Timber.tag(TAG).d("track-list/count changed to $value - loading tracks")
+          player?.loadTracks()
+
+          // CRITICAL FIX: Auto-enable first subtitle track if available
+          // This ensures subtitles are visible after being loaded
+          try {
+            val subTracks = player?.tracks?.get("sub")
+            if (subTracks != null && subTracks.size > 1) { // > 1 because index 0 is "no subs"
+              // Check if no subtitle is currently selected
+              val currentSid = MPVApi.getPropertyInt("sid") ?: -1
+              if (currentSid <= 0) {
+                // Auto-select first real subtitle track (index 1, since 0 is "off")
+                val firstSubTrack = subTracks.getOrNull(1)
+                if (firstSubTrack != null && firstSubTrack.mpvId > 0) {
+                  player?.sid = firstSubTrack.mpvId
+                  Timber.tag(TAG)
+                    .v("Auto-enabled subtitle track: ${firstSubTrack.name} (id=${firstSubTrack.mpvId})")
+                }
+              }
+            }
+          } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Failed to auto-enable subtitle track")
+          }
+        }
       }
 
       "end_file_reason" -> {

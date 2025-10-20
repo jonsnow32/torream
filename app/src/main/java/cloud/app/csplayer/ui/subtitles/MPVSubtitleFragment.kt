@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.DisplayMetrics
+import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -155,86 +156,137 @@ class MPVSubtitleFragment : Fragment() {
       val window = colorToMpvHex(style.windowColor)
       val edge = colorToMpvHex(style.edgeColor)
 
-      // Prefer sending set commands at runtime to change options reliably
+      Log.d("MPVSubtitle", "Applying subtitle style - fg: $fg, bg: $bg, window: $window, edge: $edge, fontSize: ${style.fixedTextSize}")
+
+      // Get current subtitle track ID and current position
+      val curSid = MPVApi.getPropertyInt("sid") ?: -1
+      val curTime = MPVApi.getPropertyDouble("time-pos") ?: 0.0
+      // Check subtitle format/codec
+      val subCodec = MPVApi.getPropertyString("track-list/$curSid/codec")
+      val subTitle = MPVApi.getPropertyString("track-list/$curSid/title")
+      Log.d("MPVSubtitle", "Current subtitle track ID: $curSid, time: $curTime")
+      Log.d("MPVSubtitle", "Subtitle codec: $subCodec, title: $subTitle")
+
+      // CRITICAL: For runtime subtitle styling to work, we need to:
+      // 1. Set the override FIRST before any other subtitle property
+      // 2. Use "yes" instead of "strip" for runtime changes (strip only works at init)
+      // 3. Clear any cached subtitle state
+      // 4. Force complete subtitle track reload
+
       try {
-        MPVApi.command(arrayOf("set", "sub-color", fg))
-        MPVApi.command(arrayOf("set", "sub-bg-color", bg))
-        MPVApi.command(arrayOf("set", "sub-window-color", window))
-        MPVApi.command(arrayOf("set", "sub-border-color", edge))
-      } catch (_: Exception) {
-        // ignore
+        // First, completely disable subtitles
+        MPVApi.command(arrayOf("set", "sid", "no"))
+        Log.d("MPVSubtitle", "Disabled subtitles")
+      } catch (e: Exception) {
+        Log.e("MPVSubtitle", "Failed to disable subtitles", e)
       }
 
-      // Font size (use set command)
+      // Wait a moment for MPV to process the disable
+      Thread.sleep(10)
+
+      // Ensure subtitles are visible
+      try {
+        MPVApi.command(arrayOf("set", "sub-visibility", "yes"))
+        Log.d("MPVSubtitle", "Enabled subtitle visibility")
+      } catch (e: Exception) {
+        Log.e("MPVSubtitle", "Failed to enable subtitle visibility", e)
+      }
+
+      // Set override mode - "yes" works better for runtime than "strip"
+      try {
+        MPVApi.command(arrayOf("set", "sub-ass-override", "yes"))
+        Log.d("MPVSubtitle", "Set sub-ass-override to yes")
+      } catch (e: Exception) {
+        Log.e("MPVSubtitle", "Failed to set sub-ass-override", e)
+      }
+
+      // Apply font size first (most important)
       style.fixedTextSize?.let { sp ->
         val px = getPixels(sp)
+        Log.d("MPVSubtitle", "Setting sub-font-size to $px pixels")
         try {
           MPVApi.command(arrayOf("set", "sub-font-size", px.toString()))
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+          Log.e("MPVSubtitle", "Failed to set sub-font-size", e)
         }
       }
 
-      // Edge type -> map to border/shadow
+      // Apply colors
+      try {
+        MPVApi.command(arrayOf("set", "sub-color", fg))
+        Log.d("MPVSubtitle", "Set sub-color to $fg")
+      } catch (e: Exception) {
+        Log.e("MPVSubtitle", "Failed to set sub-color", e)
+      }
+
+      try {
+        MPVApi.command(arrayOf("set", "sub-border-color", edge))
+      } catch (e: Exception) {
+        Log.e("MPVSubtitle", "Failed to set sub-border-color", e)
+      }
+
+      // Border/shadow based on edge type
       when (style.edgeType) {
         CaptionStyleCompat.EDGE_TYPE_NONE -> {
           MPVApi.command(arrayOf("set", "sub-border-size", "0"))
           MPVApi.command(arrayOf("set", "sub-shadow-offset", "0"))
         }
-
         CaptionStyleCompat.EDGE_TYPE_OUTLINE -> {
-          MPVApi.command(arrayOf("set", "sub-border-size", "2"))
+          MPVApi.command(arrayOf("set", "sub-border-size", "2.5"))
           MPVApi.command(arrayOf("set", "sub-shadow-offset", "0"))
         }
-
-        CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW,
-        CaptionStyleCompat.EDGE_TYPE_DEPRESSED,
-        CaptionStyleCompat.EDGE_TYPE_RAISED -> {
+        else -> {
           MPVApi.command(arrayOf("set", "sub-border-size", "0"))
-          MPVApi.command(arrayOf("set", "sub-shadow-offset", "2"))
+          MPVApi.command(arrayOf("set", "sub-shadow-offset", "1.5"))
         }
       }
 
-      // Typeface file: copy to mpv fonts dir (app filesDir/fonts) and tell mpv to use it
+      // Font if specified
       val copied = copyFontToMpvFontsDir(context, style.typefaceFilePath)
       if (copied != null) {
         val fontFile = File(copied)
-        val fontName = fontFile.nameWithoutExtension
-        // Try several ways to set font: family name, filename, absolute path
         try {
-          MPVApi.command(arrayOf("set", "sub-font", fontName))
-        } catch (_: Exception) {
-        }
-        try {
-          MPVApi.command(arrayOf("set", "sub-font", fontFile.name))
-        } catch (_: Exception) {
-        }
-        try {
-          MPVApi.command(arrayOf("set", "sub-font", fontFile.absolutePath))
+          MPVApi.command(arrayOf("set", "sub-font", fontFile.nameWithoutExtension))
         } catch (_: Exception) {
         }
       }
 
-      // Force mpv to reload subtitles so libass applies new style/font at runtime.
+      // Additional settings
+      try {
+        MPVApi.command(arrayOf("set", "sub-scale", "1.0"))
+        MPVApi.command(arrayOf("set", "sub-blur", "0"))
+      } catch (_: Exception) {
+      }
+
+      // CRITICAL: Force MPV to reload subtitle rendering engine
       try {
         MPVApi.command(arrayOf("sub-reload"))
-      } catch (_: Exception) {
-      }
-      // Some builds require toggling sid; do it with slight delay to ensure sub-reload executed
-      try {
-        val curSid = MPVApi.getPropertyInt("sid") ?: -1
-        if (curSid > 0) {
-          // toggle off/on asynchronously
-          Handler(Looper.getMainLooper()).postDelayed({
-            try { MPVApi.command(arrayOf("set", "sid", "0")) } catch (_: Exception) {}
-            Handler(Looper.getMainLooper()).postDelayed({
-              try { MPVApi.command(arrayOf("set", "sid", curSid.toString())) } catch (_: Exception) {}
-            }, 120)
-          }, 120)
-        }
-      } catch (_: Exception) {
+        Log.d("MPVSubtitle", "Reloaded subtitle rendering")
+      } catch (e: Exception) {
+        Log.e("MPVSubtitle", "Failed to reload subtitles", e)
       }
 
-      // Elevation is UI-only for the app overlay; not applied to mpv itself.
+      // Re-enable subtitle track if it was active
+      if (curSid > 0) {
+        // Use a longer delay to ensure settings are applied
+        Handler(Looper.getMainLooper()).postDelayed({
+          try {
+            MPVApi.command(arrayOf("set", "sid", curSid.toString()))
+            Log.d("MPVSubtitle", "Re-enabled subtitle track $curSid")
+
+            // Force subtitle position update to current time to refresh display
+            Handler(Looper.getMainLooper()).postDelayed({
+              try {
+                MPVApi.command(arrayOf("seek", "0", "relative+exact"))
+                Log.d("MPVSubtitle", "Refreshed subtitle display")
+              } catch (_: Exception) {
+              }
+            }, 50)
+          } catch (e: Exception) {
+            Log.e("MPVSubtitle", "Failed to re-enable subtitles", e)
+          }
+        }, 150)
+      }
     }
   }
 

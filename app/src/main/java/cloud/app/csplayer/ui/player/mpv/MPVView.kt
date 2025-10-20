@@ -6,11 +6,11 @@ import android.os.Build
 import android.os.Environment
 import android.preference.PreferenceManager
 import android.util.AttributeSet
-import android.util.Log
 import android.view.InputDevice
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.SurfaceHolder
 import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import cloud.app.csplayer.R
@@ -28,6 +28,15 @@ import kotlin.reflect.KProperty
 
 @UnstableApi
 internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs) {
+
+  // Cache expensive operations
+  private val displayMetrics by lazy { resources.displayMetrics }
+  private val subtitleFontsDir by lazy {
+    java.io.File(context.filesDir, "fonts").also {
+      if (!it.exists()) it.mkdirs()
+    }
+  }
+
   @SuppressLint("LogNotTimber")
   override fun initOptions() {
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -64,39 +73,31 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
       )
     }
 
-    // set non-complex options
-    data class Property(val preference_name: String, val mpv_option: String)
-
+    // set non-complex options - optimized with apply
     val opts = arrayOf(
-      Property("default_audio_language", "alang"),
-      Property("default_subtitle_language", "slang"),
-
-      // vo-related
-      Property("video_scale", "scale"),
-      Property("video_scale_param1", "scale-param1"),
-      Property("video_scale_param2", "scale-param2"),
-
-      Property("video_downscale", "dscale"),
-      Property("video_downscale_param1", "dscale-param1"),
-      Property("video_downscale_param2", "dscale-param2"),
-
-      Property("video_tscale", "tscale"),
-      Property("video_tscale_param1", "tscale-param1"),
-      Property("video_tscale_param2", "tscale-param2")
+      "default_audio_language" to "alang",
+      "default_subtitle_language" to "slang",
+      "video_scale" to "scale",
+      "video_scale_param1" to "scale-param1",
+      "video_scale_param2" to "scale-param2",
+      "video_downscale" to "dscale",
+      "video_downscale_param1" to "dscale-param1",
+      "video_downscale_param2" to "dscale-param2",
+      "video_tscale" to "tscale",
+      "video_tscale_param1" to "tscale-param1",
+      "video_tscale_param2" to "tscale-param2"
     )
 
     for ((preference_name, mpv_option) in opts) {
-      val preference = sharedPreferences.getString(preference_name, "")
-      if (!preference.isNullOrBlank())
-        MPVLib.setOptionString(mpv_option, preference)
+      sharedPreferences.getString(preference_name, null)?.takeIf { it.isNotBlank() }?.let {
+        MPVLib.setOptionString(mpv_option, it)
+      }
     }
 
-    val debandMode = sharedPreferences.getString("video_debanding", "")
-    if (debandMode == "gradfun") {
-      // lower the default radius (16) to improve performance
-      MPVLib.setOptionString("vf", "gradfun=radius=12")
-    } else if (debandMode == "gpu") {
-      MPVLib.setOptionString("deband", "yes")
+    // Deband mode optimization
+    when (sharedPreferences.getString("video_debanding", "")) {
+      "gradfun" -> MPVLib.setOptionString("vf", "gradfun=radius=12")
+      "gpu" -> MPVLib.setOptionString("deband", "yes")
     }
 
     val vidsync = sharedPreferences.getString(
@@ -120,151 +121,158 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     MPVLib.setOptionString("opengl-es", "yes")
     MPVLib.setOptionString("hwdec", hwdec)
 
-    // Additional emulator-specific settings to prevent goldfish decoder
-    if (context.isTvOrEmulator()) {
-      // Completely disable hardware decoding and force software fallback
-      MPVLib.setOptionString("hwdec-codecs", "")
-      MPVLib.setOptionString("vd-lavc-software-fallback", "yes")
-      MPVLib.setOptionString("ad-lavc-downmix", "yes")
-      // Force libavcodec software decoder
-      MPVLib.setOptionString("vd", "lavc")
-      // Disable MediaCodec entirely to prevent goldfish selection
-      MPVLib.setOptionString("android-surface-size", "0x0")
-      Log.v(TAG, "Emulator detected: Forcing software decoding to prevent goldfish decoder issues")
-    } else {
-      MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
-    }
+//    // Additional emulator-specific settings to prevent goldfish decoder
+//    val isTvOrEmulator = context.isTvOrEmulator()
+//    if (isTvOrEmulator) {
+//      // Completely disable hardware decoding and force software fallback
+//      MPVLib.setOptionString("hwdec-codecs", "")
+//      MPVLib.setOptionString("vd-lavc-software-fallback", "yes")
+//      MPVLib.setOptionString("ad-lavc-downmix", "yes")
+//      MPVLib.setOptionString("vd", "lavc")
+//      MPVLib.setOptionString("android-surface-size", "0x0")
+//      Timber.tag(TAG).v("Emulator detected: Forcing software decoding to prevent goldfish decoder issues")
+//    } else {
+//      MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
+//    }
+
     MPVLib.setOptionString("ao", "audiotrack,opensles")
     MPVLib.setOptionString("tls-verify", "yes")
-    MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
+    MPVLib.setOptionString("tls-ca-file", "${context.filesDir.path}/cacert.pem")
     MPVLib.setOptionString("input-default-bindings", "yes")
+
     // Limit demuxer cache since the defaults are too high for mobile devices
     val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
-    MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
-    MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
-    //
-    val screenshotDir =
-      Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+    val cacheBytes = (cacheMegs * 1024 * 1024).toString()
+    MPVLib.setOptionString("demuxer-max-bytes", cacheBytes)
+    MPVLib.setOptionString("demuxer-max-back-bytes", cacheBytes)
+
+    // Screenshot directory setup
+    val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
     screenshotDir.mkdirs()
     MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
     MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
 
-    // Audio decoding robustness: ignore errors to prevent crashes on corrupted AAC streams
+    // Audio/Video decoding robustness: ignore errors to prevent crashes
     MPVLib.setOptionString("ad-lavc-error-recognition", "2")  // 2 = ignore errors
-    MPVLib.setOptionString("ad-lavc-skip-frame", "nokey")    // Skip non-key frames on errors
+    MPVLib.setOptionString("ad-lavc-skip-frame", "nokey")
+    MPVLib.setOptionString("vd-lavc-error-recognition", "2")
+    MPVLib.setOptionString("vd-lavc-skip-frame", "nokey")
 
-    // Video decoding robustness: ignore errors to prevent crashes on corrupted H.264 streams
-    MPVLib.setOptionString("vd-lavc-error-recognition", "2")  // 2 = ignore errors
-    MPVLib.setOptionString("vd-lavc-skip-frame", "nokey")    // Skip non-key frames on errors
-
-    // Subtitle/font settings: allow overriding via preferences and ensure a fonts dir for libass
-    val subtitleFontsDir = java.io.File(this.context.filesDir, "fonts")
-    if (!subtitleFontsDir.exists()) subtitleFontsDir.mkdirs()
-    // If there are no fonts shipped to the fonts dir, copy a bundled fallback font so libass
-    // has a usable font. This helps when external font copying failed and prevents libass
-    // from rendering with a missing font.
-    try {
-      val hasAnyFonts = subtitleFontsDir.listFiles()?.any { it.isFile } == true
-      if (!hasAnyFonts) {
-        try {
-          // Try to copy a fallback font if available from assets
-          // Font resources (R.font.*) cannot be directly copied, so we skip this
-          // libass will use its built-in fallback font
-        } catch (_: Exception) {
-          // ignore — best effort fallback
-        }
-      }
-    } catch (_: Exception) {}
+    // Subtitle/font settings: use cached subtitleFontsDir
     MPVLib.setOptionString("sub-fonts-dir", subtitleFontsDir.path)
+    MPVLib.setOptionString("sub-ass-override", "yes")
+    MPVLib.setOptionString("sub-visibility", "yes")
 
-    // Try to load full saved subtitle style (preferred) from DataStore
-    try {
-      // DataStore.getKey is an extension used elsewhere; import path: cloud.app.csplayer.utils.DataStore.getKey
-      val savedStyle: SaveCaptionStyle? = try {
-        context.getKey<SaveCaptionStyle>("subtitle_settings")
-      } catch (ex: Exception) {
-        null
-      }
+    Timber.tag(TAG).v("Set sub-ass-override to yes and sub-visibility to yes - will use custom subtitle styling")
 
-      if (savedStyle != null) {
-        // helper to convert Android ARGB color int to mpv color string (#RRGGBB or #AARRGGBB)
-        fun colorToMpvHex(color: Int): String {
-          val a = (color ushr 24) and 0xFF
-          val r = (color ushr 16) and 0xFF
-          val g = (color ushr 8) and 0xFF
-          val b = color and 0xFF
-          return if (a in 0..254) String.format("#%02X%02X%02X%02X", a, r, g, b) else String.format("#%02X%02X%02X", r, g, b)
-        }
+    // Load and apply subtitle settings - optimized with extracted method
+    applySubtitleSettings(sharedPreferences)
+  }
 
-        // apply colors (use MPVLib to set options before native init completes)
-        MPVLib.setOptionString("sub-color", colorToMpvHex(savedStyle.foregroundColor))
-        MPVLib.setOptionString("sub-bg-color", colorToMpvHex(savedStyle.backgroundColor))
-        MPVLib.setOptionString("sub-window-color", colorToMpvHex(savedStyle.edgeColor))
-        MPVLib.setOptionString("sub-border-color", colorToMpvHex(savedStyle.edgeColor))
+  /**
+   * Optimized method to apply subtitle settings from DataStore or SharedPreferences
+   * Eliminates duplicate code and improves maintainability
+   */
+  private fun applySubtitleSettings(sharedPreferences: android.content.SharedPreferences) {
+    // Try to load saved subtitle style from DataStore first
+    val savedStyle: SaveCaptionStyle? = runCatching {
+      context.getKey<SaveCaptionStyle>("subtitle_settings")
+    }.getOrNull()
 
-        // font size (convert SP -> px)
-        savedStyle.fixedTextSize?.let { sp ->
-          val px = android.util.TypedValue.applyDimension(
-            android.util.TypedValue.COMPLEX_UNIT_SP,
-            sp,
-            resources.displayMetrics
-          ).toInt()
-          MPVLib.setOptionString("sub-font-size", px.toString())
-        }
+    if (savedStyle != null) {
+      applySubtitleStyle(savedStyle)
+    } else {
+      // Fallback to SharedPreferences
+      applyLegacySubtitleSettings(sharedPreferences)
+    }
+  }
 
-        // edge / shadow mapping
-        when (savedStyle.edgeType) {
-          androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_NONE -> MPVLib.setOptionString("sub-border-size", "0")
-          androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_OUTLINE -> MPVLib.setOptionString("sub-border-size", "2")
-          else -> MPVLib.setOptionString("sub-shadow-offset", "2")
-        }
+  /**
+   * Apply subtitle style from SaveCaptionStyle object
+   */
+  private fun applySubtitleStyle(style: SaveCaptionStyle) {
+    // Apply colors
+    MPVLib.setOptionString("sub-color", colorToMpvHex(style.foregroundColor))
+    MPVLib.setOptionString("sub-bg-color", colorToMpvHex(style.backgroundColor))
+    MPVLib.setOptionString("sub-window-color", colorToMpvHex(style.edgeColor))
+    MPVLib.setOptionString("sub-border-color", colorToMpvHex(style.edgeColor))
 
-        // try to copy any selected font file into filesDir/fonts and set sub-font to filename (without ext)
-        savedStyle.typefaceFilePath?.let { path ->
-          try {
-            val src = java.io.File(path)
-            if (src.exists()) {
-              val dst = java.io.File(this.context.filesDir, "fonts/${src.name}")
-              if (!dst.exists()) {
-                src.copyTo(dst)
-              }
-              val fontName = dst.nameWithoutExtension
-              MPVLib.setOptionString("sub-font", fontName)
-            }
-          } catch (e: Exception) {
-            // ignore
-          }
-        }
-
-      } else {
-        // fallback to older per-key SharedPreferences approach
-        val subFont = sharedPreferences.getString("subtitle_font", "")
-        val subFontSize = sharedPreferences.getString("subtitle_font_size", "")
-        val subColor = sharedPreferences.getString("subtitle_color", "")
-        val subBorderColor = sharedPreferences.getString("subtitle_border_color", "")
-        val subShadowColor = sharedPreferences.getString("subtitle_shadow_color", "")
-
-        if (!subFont.isNullOrBlank()) MPVLib.setOptionString("sub-font", subFont)
-        if (!subFontSize.isNullOrBlank()) MPVLib.setOptionString("sub-font-size", subFontSize)
-        if (!subColor.isNullOrBlank()) MPVLib.setOptionString("sub-color", subColor)
-        if (!subBorderColor.isNullOrBlank()) MPVLib.setOptionString("sub-border-color", subBorderColor)
-        if (!subShadowColor.isNullOrBlank()) MPVLib.setOptionString("sub-shadow-color", subShadowColor)
-      }
-    } catch (e: Exception) {
-      // If DataStore utilities are not accessible for whatever reason, fall back to preferences
-      val subFont = sharedPreferences.getString("subtitle_font", "")
-      val subFontSize = sharedPreferences.getString("subtitle_font_size", "")
-      val subColor = sharedPreferences.getString("subtitle_color", "")
-      val subBorderColor = sharedPreferences.getString("subtitle_border_color", "")
-      val subShadowColor = sharedPreferences.getString("subtitle_shadow_color", "")
-
-      if (!subFont.isNullOrBlank()) MPVLib.setOptionString("sub-font", subFont)
-      if (!subFontSize.isNullOrBlank()) MPVLib.setOptionString("sub-font-size", subFontSize)
-      if (!subColor.isNullOrBlank()) MPVLib.setOptionString("sub-color", subColor)
-      if (!subBorderColor.isNullOrBlank()) MPVLib.setOptionString("sub-border-color", subBorderColor)
-      if (!subShadowColor.isNullOrBlank()) MPVLib.setOptionString("sub-shadow-color", subShadowColor)
+    // Font size (convert SP -> px) - use cached displayMetrics
+    style.fixedTextSize?.let { sp ->
+      val px = android.util.TypedValue.applyDimension(
+        android.util.TypedValue.COMPLEX_UNIT_SP,
+        sp,
+        displayMetrics
+      ).toInt()
+      MPVLib.setOptionString("sub-font-size", px.toString())
     }
 
+    // Edge / shadow mapping
+    when (style.edgeType) {
+      androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_NONE ->
+        MPVLib.setOptionString("sub-border-size", "0")
+      androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_OUTLINE ->
+        MPVLib.setOptionString("sub-border-size", "2")
+      else ->
+        MPVLib.setOptionString("sub-shadow-offset", "2")
+    }
+
+    // Copy and set font file if specified
+    style.typefaceFilePath?.let { path ->
+      runCatching {
+        val src = java.io.File(path)
+        if (src.exists()) {
+          val dst = java.io.File(subtitleFontsDir, src.name)
+          if (!dst.exists()) {
+            src.copyTo(dst, overwrite = false)
+          }
+          MPVLib.setOptionString("sub-font", dst.nameWithoutExtension)
+        }
+      }
+    }
+  }
+
+  /**
+   * Apply legacy subtitle settings from SharedPreferences
+   */
+  private fun applyLegacySubtitleSettings(prefs: android.content.SharedPreferences) {
+    prefs.getString("subtitle_font", null)?.takeIf { it.isNotBlank() }?.let {
+      MPVLib.setOptionString("sub-font", it)
+    }
+
+    prefs.getString("subtitle_font_size", null)?.takeIf { it.isNotBlank() }?.let { size ->
+      size.toDoubleOrNull()?.takeIf { it > 0 }?.let {
+        MPVLib.setOptionString("sub-font-size", it.toString())
+      }
+    }
+
+    prefs.getString("subtitle_color", null)?.takeIf { it.isNotBlank() }?.let {
+      MPVLib.setOptionString("sub-color", it)
+    }
+
+    prefs.getString("subtitle_border_color", null)?.takeIf { it.isNotBlank() }?.let {
+      MPVLib.setOptionString("sub-border-color", it)
+    }
+
+    prefs.getString("subtitle_shadow_color", null)?.takeIf { it.isNotBlank() }?.let {
+      MPVLib.setOptionString("sub-shadow-color", it)
+    }
+  }
+
+  /**
+   * Convert Android ARGB color int to mpv color string (#RRGGBB or #AARRGGBB)
+   * Optimized with bit shifting
+   */
+  private fun colorToMpvHex(color: Int): String {
+    val a = (color ushr 24) and 0xFF
+    val r = (color ushr 16) and 0xFF
+    val g = (color ushr 8) and 0xFF
+    val b = color and 0xFF
+    return if (a in 0..254) {
+      String.format("#%02X%02X%02X%02X", a, r, g, b)
+    } else {
+      String.format("#%02X%02X%02X", r, g, b)
+    }
   }
 
   override fun postInitOptions() {
@@ -273,35 +281,37 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
   }
 
   fun onPointerEvent(event: MotionEvent): Boolean {
-    assert(event.isFromSource(InputDevice.SOURCE_CLASS_POINTER))
+    if (!event.isFromSource(InputDevice.SOURCE_CLASS_POINTER)) return false
+
     if (event.actionMasked == MotionEvent.ACTION_SCROLL) {
       val h = event.getAxisValue(MotionEvent.AXIS_HSCROLL)
       val v = event.getAxisValue(MotionEvent.AXIS_VSCROLL)
-      if (h > 0)
-        MPVLib.command(arrayOf("keypress", "WHEEL_RIGHT", "$h"))
-      else if (h < 0)
-        MPVLib.command(arrayOf("keypress", "WHEEL_LEFT", "${-h}"))
-      if (v > 0)
-        MPVLib.command(arrayOf("keypress", "WHEEL_UP", "$v"))
-      else if (v < 0)
-        MPVLib.command(arrayOf("keypress", "WHEEL_DOWN", "${-v}"))
+
+      when {
+        h > 0 -> MPVLib.command(arrayOf("keypress", "WHEEL_RIGHT", "$h"))
+        h < 0 -> MPVLib.command(arrayOf("keypress", "WHEEL_LEFT", "${-h}"))
+      }
+
+      when {
+        v > 0 -> MPVLib.command(arrayOf("keypress", "WHEEL_UP", "$v"))
+        v < 0 -> MPVLib.command(arrayOf("keypress", "WHEEL_DOWN", "${-v}"))
+      }
+
       return true
     }
     return false
   }
 
   fun onKey(event: KeyEvent): Boolean {
-    if (event.action == KeyEvent.ACTION_MULTIPLE)
-      return false
-    if (KeyEvent.isModifierKey(event.keyCode))
-      return false
+    if (event.action == KeyEvent.ACTION_MULTIPLE) return false
+    if (KeyEvent.isModifierKey(event.keyCode)) return false
 
-    var mapped = KeyMapping.map.get(event.keyCode)
+    var mapped = KeyMapping.map[event.keyCode]
     if (mapped == null) {
       // Fallback to produced glyph
       if (!event.isPrintingKey) {
         if (event.repeatCount == 0)
-          Log.d(TAG, "Unmapped non-printable key ${event.keyCode}")
+          Timber.tag(TAG).d("Unmapped non-printable key ${event.keyCode}")
         return false
       }
 
@@ -314,14 +324,15 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     if (event.repeatCount > 0)
       return true // eat event but ignore it, mpv has its own key repeat
 
-    val mod: MutableList<String> = mutableListOf()
-    event.isShiftPressed && mod.add("shift")
-    event.isCtrlPressed && mod.add("ctrl")
-    event.isAltPressed && mod.add("alt")
-    event.isMetaPressed && mod.add("meta")
+    val mod = buildList {
+      if (event.isShiftPressed) add("shift")
+      if (event.isCtrlPressed) add("ctrl")
+      if (event.isAltPressed) add("alt")
+      if (event.isMetaPressed) add("meta")
+      add(mapped)
+    }
 
     val action = if (event.action == KeyEvent.ACTION_DOWN) "keydown" else "keyup"
-    mod.add(mapped)
     MPVLib.command(arrayOf(action, mod.joinToString("+")))
 
     return true
@@ -337,7 +348,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
       Property("pause", MPV_FORMAT_FLAG),
       Property("paused-for-cache", MPV_FORMAT_FLAG),
       Property("speed", MPV_FORMAT_STRING),
-      Property("track-list", MPV_FORMAT_NODE),
+      Property("track-list/count", MPV_FORMAT_INT64),
       Property("video-params/aspect", MPV_FORMAT_DOUBLE),
       Property("video-params/rotate", MPV_FORMAT_DOUBLE),
       Property("playlist-pos", MPV_FORMAT_INT64),
@@ -372,82 +383,80 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
     "sub" to arrayListOf()
   )
 
+
   fun loadTracks() {
+    if (!MPVState.isInitialized()) {
+      Timber.tag(TAG).w("loadTracks() called before MPV initialization - skipping")
+      return
+    }
+
+    Timber.tag(TAG).d("loadTracks() called - checking track-list/count")
+    val count = MPVApi.getPropertyInt("track-list/count")
+
+    if (count == null) {
+      Timber.tag(TAG).w("loadTracks() - track-list/count returned null (MPV not ready)")
+      return
+    }
+
+    if (count == 0) {
+      Timber.tag(TAG).w("loadTracks() - track-list/count is 0 (no tracks available yet)")
+      return
+    }
+
+    Timber.tag(TAG).d("loadTracks() - found $count tracks")
+
     for (list in tracks.values) {
       list.clear()
       // pseudo-track to allow disabling audio/subs
       list.add(Track(0, context.getString(R.string.track_off)))
     }
-    val count = MPVApi.getPropertyInt("track-list/count") ?: return
+
     // Note that because events are async, properties might disappear at any moment
-    // so use ?: continue instead of !!
     for (i in 0 until count) {
       val type = MPVApi.getPropertyString("track-list/$i/type") ?: continue
       if (!tracks.containsKey(type)) {
-        Log.w(TAG, "Got unknown track type: $type")
+        Timber.tag(TAG).w("Got unknown track type: $type")
         continue
       }
       val mpvId = MPVApi.getPropertyInt("track-list/$i/id") ?: continue
 
       val title = MPVApi.getPropertyString("track-list/$i/title")
-      val selected = MPVApi.getPropertyBoolean("track-list/$i/selected")
-      val decoder = MPVApi.getPropertyString("track-list/$i/decoder")
-      var trackName = if(title.isNullOrEmpty()) null else context.getString(
-        R.string.ui_track_text, mpvId,title
-      );
+      val selected = MPVApi.getPropertyBoolean("track-list/$i/selected") ?: false
 
-      when (type) {
-        "video" -> {
-          if (trackName.isNullOrEmpty()) {
-            val demux_w = MPVApi.getPropertyInt("track-list/$i/demux-w")
-            val demux_h = MPVApi.getPropertyInt("track-list/$i/demux-h")
-
-            trackName = context.getString(
-              R.string.ui_video_track_text,
-              mpvId,
-              demux_w,
-              demux_h,
-            )
+      val trackName = when {
+        !title.isNullOrEmpty() -> context.getString(R.string.ui_track_text, mpvId, title)
+        type.contains("video") -> {
+          val demux_w = MPVApi.getPropertyInt("track-list/$i/demux-w")
+          val demux_h = MPVApi.getPropertyInt("track-list/$i/demux-h")
+          context.getString(R.string.ui_video_track_text, mpvId, demux_w, demux_h)
+        }
+        type == "audio" -> {
+          val audioChannel = MPVApi.getPropertyString("track-list/$i/audio-channels")
+          val lang = MPVApi.getPropertyString("track-list/$i/lang")
+          if (!lang.isNullOrEmpty()) {
+            context.getString(R.string.ui_audio_track, mpvId, audioChannel, lang)
+          } else {
+            context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
           }
         }
-
-        "audio" -> {
-          if (trackName.isNullOrEmpty()) {
-            val audioChannel = MPVApi.getPropertyString("track-list/$i/audio-channels")
-            val lang = MPVApi.getPropertyString("track-list/$i/lang")
-            if (!lang.isNullOrEmpty())
-              trackName = context.getString(R.string.ui_audio_track, mpvId, audioChannel, lang)
-          }
-
-
-        }
-
-        "sub" -> {
-          if (trackName.isNullOrEmpty()) {
-            val lang = MPVApi.getPropertyString("track-list/$i/lang")
-            if (!lang.isNullOrEmpty())
-              trackName = context.getString(R.string.ui_track_text, mpvId, lang)
+        type == "sub" -> {
+          val lang = MPVApi.getPropertyString("track-list/$i/lang")
+          if (!lang.isNullOrEmpty()) {
+            context.getString(R.string.ui_track_text, mpvId, lang)
+          } else {
+            context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
           }
         }
-
-        else -> {
-          context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
-        }
-      }
-
-      if (trackName.isNullOrEmpty()) {
-        trackName =
-          context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
+        else -> context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
       }
 
       tracks.getValue(type).add(
         Track(
           mpvId = mpvId,
           name = trackName,
-          selected = selected ?: false
+          selected = selected
         )
       )
-
     }
   }
 
@@ -518,18 +527,14 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
 
 
   /**
-   * Returns the video aspect ratio. Rotation is taken into account.z
+   * Returns the video aspect ratio. Rotation is taken into account.
    */
   fun getVideoAspect(): Double? {
-    return MPVApi.getPropertyDouble("video-params/aspect")?.let {
-      if (it < 0.001)
-        return 0.0
-      val rot = MPVApi.getPropertyInt("video-params/rotate") ?: 0
-      if (rot % 180 == 90)
-        1.0 / it
-      else
-        it
-    }
+    val aspect = MPVApi.getPropertyDouble("video-params/aspect") ?: return null
+    if (aspect < 0.001) return 0.0
+
+    val rot = MPVApi.getPropertyInt("video-params/rotate") ?: 0
+    return if (rot % 180 == 90) 1.0 / aspect else aspect
   }
 
   class TrackDelegate(private val name: String) {
@@ -563,15 +568,16 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
   fun cycleHwdec() = MPVLib.command(arrayOf("cycle-values", "hwdec", "auto", "no"))
 
   fun cycleSpeed() {
-    val speeds = arrayOf(0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)
+    val speeds = doubleArrayOf(0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)
     val currentSpeed = playbackSpeed ?: 1.0
     val index = speeds.indexOfFirst { it > currentSpeed }
     playbackSpeed = speeds[if (index == -1) 0 else index]
   }
 
   fun getRepeat(): Int {
-    return when (MPVLib.getPropertyString("loop-playlist") +
-      MPVLib.getPropertyString("loop-file")) {
+    val loopPlaylist = MPVLib.getPropertyString("loop-playlist") ?: "no"
+    val loopFile = MPVLib.getPropertyString("loop-file") ?: "no"
+    return when ("$loopPlaylist$loopFile") {
       "noinf" -> 2
       "infno" -> 1
       else -> 0
@@ -595,18 +601,40 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
   }
 
   fun changeShuffle(cycle: Boolean, value: Boolean = true) {
-    // Use the 'shuffle' property to store the shuffled state, since changing
-    // it at runtime doesn't do anything.
     val state = getShuffle()
     val newState = if (cycle) state.xor(value) else value
-    if (state == newState)
-      return
+    if (state == newState) return
+
     MPVLib.command(arrayOf(if (newState) "playlist-shuffle" else "playlist-unshuffle"))
     MPVLib.setPropertyBoolean("shuffle", newState)
+  }
+
+  // Helper function to change subtitle font size at runtime
+  fun setSubtitleFontSize(size: String) {
+    if (!MPVState.isInitialized()) return
+
+    size.toDoubleOrNull()?.takeIf { it > 0 }?.let { fontSize ->
+      runCatching {
+        MPVApi.command(arrayOf("set", "sub-font-size", fontSize.toString()))
+      }
+    }
+  }
+
+  // Helper function to change subtitle font size from SP to pixels
+  fun setSubtitleFontSizeFromSp(sp: Float) {
+    if (!MPVState.isInitialized()) return
+
+    runCatching {
+      val px = android.util.TypedValue.applyDimension(
+        android.util.TypedValue.COMPLEX_UNIT_SP,
+        sp,
+        displayMetrics
+      ).toInt()
+      MPVApi.command(arrayOf("set", "sub-font-size", px.toString()))
+    }
   }
 
   companion object {
     private const val TAG = "mpv"
   }
-
 }

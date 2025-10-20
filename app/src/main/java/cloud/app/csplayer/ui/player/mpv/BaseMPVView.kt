@@ -11,11 +11,28 @@ import android.widget.Toast
 import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
+import timber.log.Timber
 
 // Contains only the essential code needed to get a picture on the screen
 
 abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attrs),
   SurfaceHolder.Callback {
+
+  /**
+   * Callback interface for MPV initialization completion
+   */
+  interface OnMPVInitializedListener {
+    fun onMPVInitialized()
+  }
+
+  private var onMPVInitializedListener: OnMPVInitializedListener? = null
+
+  /**
+   * Set a listener to be notified when MPV initialization is complete
+   */
+  fun setOnMPVInitializedListener(listener: OnMPVInitializedListener?) {
+    this.onMPVInitializedListener = listener
+  }
 
   /**
    * Initialize libmpv.
@@ -31,40 +48,14 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     for (opt in arrayOf("gpu-shader-cache-dir", "icc-cache-dir"))
       MPVLib.setOptionString(opt, cacheDir)
     initOptions()
-
     MPVLib.init()
-
-    /* set hardcoded options */
     postInitOptions()
-    // would crash before the surface is attached
     MPVLib.setOptionString("force-window", "no")
-    // need to idle at least once for playFile() logic to work
     MPVLib.setOptionString("idle", "yes")
     holder.addCallback(this)
 
-    // Log observer to catch ffmpeg / h264 errors and report to UI
-    mpvLogObserver = object : MPVLib.LogObserver {
-      override fun logMessage(prefix: String, level: Int, text: String) {
-        try {
-          // Always log for debugging
-          Log.v("mpv-logger", "[$prefix] $text")
-
-          val lower = text.lowercase()
-          val now = System.currentTimeMillis()
-          // If message mentions libass or fonts, surface it (they often are info-level)
-          val isFontIssue = lower.contains("libass") || lower.contains("font") || lower.contains("fontconfig") || lower.contains("can't find") || lower.contains("couldn't find") || lower.contains("no such file") || lower.contains("ass:")
-
-          if (isFontIssue || level <= MPVLib.mpvLogLevel.MPV_LOG_LEVEL_ERROR) {
-            if (now - lastErrorShownAt > 3000) {
-              lastErrorShownAt = now
-              mainHandler.post {
-                Toast.makeText(context, text, Toast.LENGTH_LONG).show()
-              }
-            }
-          }
-        } catch (_: Throwable) {
-        }
-      }
+    mpvLogObserver = MPVLib.LogObserver { prefix, level, text ->
+      Timber.tag("mpv-logger").v("[$prefix] $text")
     }
     MPVLib.addLogObserver(mpvLogObserver)
   }
@@ -107,12 +98,9 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
   // Handler to delay marking MPV as initialized to avoid races with native threads
   private val mpvInitHandler = Handler(Looper.getMainLooper())
   private var mpvInitRunnable: Runnable? = null
-
-  // Log observer to catch ffmpeg / h264 errors and report to UI
+  private var mpvDetachRunnable: Runnable? = null
   private var mpvLogObserver: MPVLib.LogObserver? = null
   private val mainHandler = Handler(Looper.getMainLooper())
-  // debounce to avoid spamming the user with repeated log messages
-  private var lastErrorShownAt: Long = 0
 
   /**
    * Set the first file to be played once the player is ready.
@@ -200,54 +188,8 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
     MPVLib.setOptionString("force-window", "yes")
 
-    // Store pending file/playlist for after initialization
-    val pendingFile = filePath
-    val pendingList = playList?.toList()
-    val pendingHeaders = headers
-
-    if (pendingFile != null) {
-      var headerList = ""
-      for ((key, value) in getHeader(pendingHeaders)) {
-        if (key.lowercase() == "referer") {
-          MPVLib.setPropertyString("referrer", value)
-        } else if (key.lowercase() == "user-agent") {
-          MPVLib.setPropertyString("user-agent", value)
-        } else {
-          if (headerList.isNotEmpty())
-            headerList = headerList.plus(",")
-          headerList = headerList.plus("$key: ${value.replace(",", "\\,")}")
-        }
-      }
-      if (headerList.isNotEmpty()) {
-        MPVLib.setPropertyString("http-header-fields", headerList)
-      }
-      MPVLib.command(arrayOf("loadfile", pendingFile as String))
-
-      filePath = null
-    } else if (pendingList != null) {
-      var headerList = ""
-      for ((key, value) in getHeader(pendingHeaders)) {
-        if (key.lowercase() == "referer") {
-          MPVLib.setPropertyString("referrer", value)
-        } else if (key.lowercase() == "user-agent") {
-          MPVLib.setPropertyString("user-agent", value)
-        } else {
-          if (headerList.isNotEmpty())
-            headerList = headerList.plus(",")
-          headerList = headerList.plus("$key: ${value.replace(",", "\\,")}")
-        }
-      }
-      if (headerList.isNotEmpty()) {
-        MPVLib.setPropertyString("http-header-fields", headerList)
-      }
-      pendingList.forEach {
-        MPVLib.command(arrayOf("loadfile", it, "append-play"))
-      }
-      this.playList = null
-    } else {
-      // We disable video output when the context disappears, enable it back
-      MPVLib.setPropertyString("vo", voInUse)
-    }
+    // We disable video output when the context disappears, enable it back
+    MPVLib.setPropertyString("vo", voInUse)
 
     // Delay marking mpv initialized slightly to avoid races where native threads are still
     // setting up internal state. If the native instance isn't ready yet, marking initialized
@@ -263,20 +205,12 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
       }
       MPVState.setInitialized(true)
 
-      // After mpv is initialized, try to apply saved subtitle style (if present).
-      try {
-        val savedStyle: SaveCaptionStyle? = try {
-          context.getKey<SaveCaptionStyle>("subtitle_settings")
-        } catch (_: Exception) {
-          null
-        }
-        if (savedStyle != null) {
-          MPVSubtitleFragment.applyToMPV(context, savedStyle)
-        }
-      } catch (_: Throwable) {
-      }
+      // NOTE: Subtitle styling is already applied in initOptions() before MPVLib.init()
+      // Runtime subtitle style changes via MPVSubtitleFragment.applyToMPV() do NOT work reliably
+      // Users must restart playback for new subtitle settings to take effect
 
       // Check if there's a pending playback that came in after surface creation
+      // This handles the case where playFile() was called before MPV was initialized
       if (filePath != null) {
         val file = filePath
         filePath = null
@@ -286,6 +220,9 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
         playList = null
         playPlayList(list!!, headers)
       }
+
+      // Notify listener that MPV initialization is complete
+      onMPVInitializedListener?.onMPVInitialized()
     }
     // Reduce delay from 2000ms to 100ms to start playback faster
     mpvInitHandler.postDelayed(mpvInitRunnable!!, 100)
@@ -293,17 +230,28 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
 
   override fun surfaceDestroyed(holder: SurfaceHolder) {
     Log.w(TAG, "detaching surface")
-    // Mark not initialized before calling native teardown to ensure other threads don't call into
-    // native mpv while it is being destroyed.
-    // Cancel any pending initialization and mark not initialized immediately
+
+    // Cancel any pending initialization
     mpvInitRunnable?.let { mpvInitHandler.removeCallbacks(it) }
     mpvInitRunnable = null
+
+    // Cancel any pending detach operation
+    mpvDetachRunnable?.let { mpvInitHandler.removeCallbacks(it) }
+    mpvDetachRunnable = null
+
+    // Mark not initialized BEFORE any native calls to prevent race conditions
     MPVState.setInitialized(false)
 
-    MPVLib.setPropertyString("vo", "null")
-    MPVLib.setOptionString("force-window", "no")
-    MPVLib.detachSurface()
-    // FIXME: race condition here because detachSurface just sets a property and that is async
+    // Detach surface immediately and synchronously
+    // The original async approach caused crashes because the handler would execute
+    // after the surface/context was already destroyed
+    try {
+      MPVLib.setPropertyString("vo", "null")
+      MPVLib.setOptionString("force-window", "no")
+      MPVLib.detachSurface()
+    } catch (e: Exception) {
+      Log.e(TAG, "Error during surface detachment", e)
+    }
   }
 
   override fun onDetachedFromWindow() {

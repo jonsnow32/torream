@@ -20,6 +20,9 @@ import androidx.core.app.ServiceCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 import cloud.app.csplayer.MainActivity
 import cloud.app.csplayer.R
+import timber.log.Timber
+import androidx.core.graphics.scale
+import androidx.core.graphics.get
 
 /*
     All this service does is
@@ -68,9 +71,9 @@ class BackgroundPlaybackService : Service(), MPVLib.EventObserver {
 
             builder.setColorized(true)
             // scale thumbnail to a single color in two steps
-            val b1 = Bitmap.createScaledBitmap(it, 16, 16, true)
-            val b2 = Bitmap.createScaledBitmap(b1, 1, 1, true)
-            builder.setColor(b2.getPixel(0, 0))
+            val b1 = it.scale(16, 16)
+            val b2 = b1.scale(1, 1)
+            builder.setColor(b2[0, 0])
             b2.recycle(); b1.recycle()
         }
 
@@ -105,13 +108,13 @@ class BackgroundPlaybackService : Service(), MPVLib.EventObserver {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.v(TAG, "BackgroundPlaybackService: starting")
+      Timber.tag(TAG).v("BackgroundPlaybackService: starting")
 
         // read some metadata
 
         cachedMetadata.readAll()
         paused = MPVLib.getPropertyBoolean("pause")
-        shouldShowPrevNext = MPVLib.getPropertyInt("playlist-count") ?: 0 > 1
+        shouldShowPrevNext = (MPVLib.getPropertyInt("playlist-count") ?: 0) > 1
 
         // create notification and turn this into a "foreground service"
 
@@ -132,7 +135,7 @@ class BackgroundPlaybackService : Service(), MPVLib.EventObserver {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIFICATION_ID)
 
-        Log.v(TAG, "BackgroundPlaybackService: destroyed")
+      Timber.tag(TAG).v("BackgroundPlaybackService: destroyed")
     }
 
     override fun onBind(intent: Intent): IBinder? { return null }
