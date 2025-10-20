@@ -7,6 +7,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
+import android.content.res.Configuration.UI_MODE_NIGHT_MASK
+import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Resources
 import android.os.Build
 import android.os.Bundle
@@ -41,6 +43,10 @@ object UIHelper {
       this.dismiss()
     }
   }
+
+  fun Context.isNightMode() =
+    resources.configuration.uiMode and UI_MODE_NIGHT_MASK != UI_MODE_NIGHT_NO
+
 
   fun Context.getStatusBarHeight(): Int {
     if (isTvOrEmulator()) {

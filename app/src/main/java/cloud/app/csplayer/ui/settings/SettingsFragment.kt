@@ -15,6 +15,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
@@ -67,7 +69,17 @@ class SettingsFragment : Fragment() {
       if (isTvOrEmulator()) {
         listView?.setPadding(0, 0, 0, 100.toPx)
       }
-
+      ViewCompat.setOnApplyWindowInsetsListener(listView) { view, insets ->
+        val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        val displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+        view.setPadding(
+          maxOf(systemBars.left, displayCutout.left),
+          0,
+          maxOf(systemBars.right, displayCutout.right),
+          systemBars.bottom
+        )
+        insets
+      }
     }
 
     fun PreferenceFragmentCompat.setToolBarScrollFlags() {
@@ -155,6 +167,21 @@ class SettingsFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     binding?.apply {
+
+      UIHelper.fixPaddingStatusbar(binding?.settingsProfile)
+
+      ViewCompat.setOnApplyWindowInsetsListener(binding!!.root) { view, insets ->
+        val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        val displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+        view.setPadding(
+          maxOf(systemBars.left, displayCutout.left),
+          maxOf(systemBars.top, displayCutout.top),
+          maxOf(systemBars.right, displayCutout.right),
+          systemBars.bottom
+        )
+        insets
+      }
+
       listOf(
         settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
         settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
@@ -220,7 +247,8 @@ class SettingsFragment : Fragment() {
       true
     }
 
-    UIHelper.fixPaddingStatusbar(binding?.settingsProfile)
+
+
   }
 
   private fun openLocalVideo(videoResultLauncher: ActivityResultLauncher<Intent>) {
