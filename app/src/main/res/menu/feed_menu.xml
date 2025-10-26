@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto">
+  <item
+    android:id="@+id/displayType"
+    android:icon="@drawable/outline_grid_view_24"
+    android:title="@string/show_mode"
+    app:showAsAction="always" />
+
+  <item
+    android:id="@+id/sort"
+    android:icon="@drawable/outline_sort_24"
+    android:title="@string/show_mode"
+    app:showAsAction="ifRoom" />
+
+</menu>

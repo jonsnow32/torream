@@ -819,4 +819,10 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
     <string name="open_local_video">Open local video</string>
   <string name="ad_testing">Ad testing</string>
   <string name="ad_key">ad_key_pref</string>
+
+  <string name="ad_choices_description" translatable="false">Ad choices</string>
+  <string name="app_icon_description" translatable="false">App icon</string>
+  <string name="duration_placeholder">00:00:00</string>
+  <string name="empty">Empty</string>
+  <string name="show_mode">Show mode</string>
 </resources>

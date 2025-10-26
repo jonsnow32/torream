@@ -233,4 +233,9 @@ object UIHelper {
           }
       }
   }
+  fun Context.resolveStyledDimension(attr: Int): Int {
+    val typed = theme.obtainStyledAttributes(intArrayOf(attr))
+    val itemWidth = typed.getDimensionPixelSize(typed.getIndex(0), 0)
+    return itemWidth
+  }
 }

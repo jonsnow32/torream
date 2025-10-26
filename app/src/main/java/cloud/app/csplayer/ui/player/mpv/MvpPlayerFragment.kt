@@ -579,7 +579,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
                 RESULT_OK,
                 it.toLong() * 1000L,
                 "cancel",
-                if(isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
+                if (isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
               )
             )
           }
@@ -1110,7 +1110,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
                       RESULT_OK,
                       it.toLong() * 1000L,
                       "cancel",
-                      if(isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
+                      if (isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
                     )
                   )
                 }
@@ -1305,6 +1305,19 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
           }
           subtitleList.addFooterView(loadFromFileFooter)
 
+
+          val loadFromNetworkFooter: TextView =
+            layoutInflater.inflate(
+              R.layout.sort_bottom_footer_add_choice,
+              null
+            ) as TextView
+
+          loadFromNetworkFooter.text = ctx.getString(R.string.player_load_subtitles_online)
+          loadFromNetworkFooter.setOnClickListener {
+            showToast("Not implemented yet", Toast.LENGTH_SHORT)
+          }
+          subtitleList.addFooterView(loadFromNetworkFooter)
+
           val subsArrayAdapter =
             ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
           subsArrayAdapter.addAll(currentSubtitleTracks.map { it.name })
@@ -1316,7 +1329,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
           subtitleList.setItemChecked(subtitleIndex, true)
 
           subtitleList.setOnItemClickListener { _, _, which, _ ->
-            if (which > currentSubtitleTracks.size) {
+            if (which > currentSubtitleTracks.size - 1) {
               // Since android TV is funky the setOnItemClickListener will be triggered
               // instead of setOnClickListener when selecting. To override this we programmatically
               // click the view when selecting an item outside the list.
@@ -1694,7 +1707,11 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
   private fun loadSavedSubStyle() {
     try {
       context?.let { ctx ->
-        val savedStyle: SaveCaptionStyle? = try { ctx.getKey("subtitle_settings") } catch (_: Exception) { null }
+        val savedStyle: SaveCaptionStyle? = try {
+          ctx.getKey("subtitle_settings")
+        } catch (_: Exception) {
+          null
+        }
         if (savedStyle != null) {
           MPVSubtitleFragment.applyToMPV(ctx, savedStyle)
         }
@@ -1965,7 +1982,8 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       moreOptions.isGone = true
       playerSubttileOffset.isGone = true
       playerSkipEpisode.isGone = isSameEpisode
-      playerBinding?.playerSkipEpisode?.isGone = isSameEpisode || (allLinks.indexOf(currentSelectedLink) >= allLinks.size - 1)
+      playerBinding?.playerSkipEpisode?.isGone =
+        isSameEpisode || (allLinks.indexOf(currentSelectedLink) >= allLinks.size - 1)
     }
   }
 
@@ -2381,7 +2399,8 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
         } catch (e: Exception) {
           null
         }
-        val errorMsg = mpvError?.takeIf { it.isNotBlank() } ?: resources.getString(R.string.source_error)
+        val errorMsg =
+          mpvError?.takeIf { it.isNotBlank() } ?: resources.getString(R.string.source_error)
         // Fallback: if hardware decoder error and not yet retried, try software decoding
         if (!triedSwDecFallback && errorMsg.contains("mediacodec", true)) {
           triedSwDecFallback = true
@@ -2395,7 +2414,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
               code,
               psc.positionSec,
               errorMsg,
-              if(isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
+              if (isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
             )
           )
           showToast(errorMsg)
@@ -2634,7 +2653,7 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       // mpv supports data URIs but needs data:// to pass it through correctly
       "data" -> "data://${data.schemeSpecificPart}"
       "http", "https", "rtmp", "rtmps", "rtp", "rtsp", "mms", "mmst", "mmsh", "tcp", "udp", "lavf"
-      -> data.toString()
+        -> data.toString()
 
       else -> data.path
     }

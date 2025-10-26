@@ -7,6 +7,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import cloud.app.csplayer.ads.AdLoadStrategy
 import cloud.app.csplayer.ads.providers.AdProvider
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -30,6 +31,7 @@ class AdManager @Inject constructor(
     private var actionCount = 0
     private var lastAdShownTime = 0L
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun initialize(context: Context) {
         GlobalScope.launch {
             try {

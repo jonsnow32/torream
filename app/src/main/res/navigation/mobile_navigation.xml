@@ -3,7 +3,7 @@
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:id="@+id/mobile_navigation"
-  app:startDestination="@id/navigation_settings">
+  app:startDestination="@id/feedFragment">
 
   <action
     android:id="@+id/global_to_navigation_player"
@@ -223,4 +223,8 @@
     android:id="@+id/adTestFragment"
     android:name="cloud.app.csplayer.ads.AdTestFragment"
     android:label="AdTestFragment" />
+  <fragment
+    android:id="@+id/feedFragment"
+    android:name="cloud.app.csplayer.ui.feed.FeedFragment"
+    android:label="FeedFragment" />
 </navigation>

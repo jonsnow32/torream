@@ -34,4 +34,11 @@
   <dimen name="cpv_color_preference_normal">28dp</dimen>
   <dimen name="cpv_color_preference_large">40dp</dimen>
     <dimen name="control_icon_size">35dp</dimen>
+
+  <dimen name="media_cover_width">120dp</dimen>
+  <dimen name="media_cover_height">180dp</dimen>
+  <dimen name="video_width">200dp</dimen>
+  <dimen name="audio_width">100dp</dimen>
+  <dimen name="shelf_item_width">110dp</dimen>
+  <dimen name="shelf_item_heigh">110dp</dimen>
 </resources>

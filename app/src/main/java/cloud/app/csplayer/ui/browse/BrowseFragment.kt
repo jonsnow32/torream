@@ -23,9 +23,5 @@ class BrowseFragment: Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-
-    binding.gotoSettingBtn.setOnClickListener {
-      findNavController().navigate(R.id.navigation_settings, null, null)
-    }
   }
 }

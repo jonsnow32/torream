@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <attr name="itemCoverSize" format="dimension" />
+
     <declare-styleable name="FlowLayout_Layout">
         <attr name="itemSpacing" format="dimension" />
     </declare-styleable>
