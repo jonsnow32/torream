@@ -825,4 +825,5 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="duration_placeholder">00:00:00</string>
   <string name="empty">Empty</string>
   <string name="show_mode">Show mode</string>
+    <string name="number_placeholder">10 items</string>
 </resources>

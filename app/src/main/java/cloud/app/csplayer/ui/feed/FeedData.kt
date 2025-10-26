@@ -1,6 +1,5 @@
 package cloud.app.csplayer.ui.feed
 
-import android.net.Uri
 import cloud.app.csplayer.databinding.ItemAudioBinding
 import cloud.app.csplayer.databinding.ItemVideoBinding
 import cloud.app.csplayer.model.Audio
@@ -14,15 +13,21 @@ import cloud.app.csplayer.model.Video
 sealed class FeedData {
 
   enum class Type {
-    Video, Audio, Folder, PlayList,
+    Video,
+    VideoSmall,
+    Audio,
+    AudioSmall,
+    Folder,
+    FolderSmall,
+    PlayList,
+    PlayListSmall,
     Ad,
-    HorizontalList;
+    HorizontalList
   }
 
   abstract val id: String
   abstract val title: String
   abstract val type: Type
-
 
   data class AdItem(
     override val id: String,
@@ -43,9 +48,15 @@ sealed class FeedData {
   data class VideoItem(
     override val id: String,
     override val title: String,
-    val video: Video
-  ) : FeedData() {
+    val video: Video,
     override val type: Type = Type.Video
+  ) : FeedData() {
+
+    init {
+      require(type == Type.Video || type == Type.VideoSmall) {
+        "VideoItem.type must be Video or VideoSmall, but was $type"
+      }
+    }
 
     companion object {
       fun ItemVideoBinding.bind(item: VideoItem) {
@@ -59,9 +70,15 @@ sealed class FeedData {
   data class AudioItem(
     override val id: String,
     override val title: String,
-    val audio: Audio
+    override val type: Type = Type.Audio,
+    val audio: Audio,
   ) : FeedData() {
-    override val type: Type = Type.Audio
+
+    init {
+      require(type == Type.Audio || type == Type.AudioSmall) {
+        "AudioItem.type must be Audio or AudioSmall, but was $type"
+      }
+    }
 
     companion object {
       fun ItemAudioBinding.bind(item: AudioItem) {
@@ -75,16 +92,14 @@ sealed class FeedData {
   data class FolderItem(
     override val id: String,
     override val title: String,
-    val folder: Folder
+    override var type: Type = Type.Folder,
+    val folder: Folder,
   ) : FeedData() {
-    override val type: Type = Type.Folder
-  }
 
-  data class PlayListItem(
-    override val id: String,
-    override val title: String,
-    val items: List<MediaItem>
-  ) : FeedData() {
-    override val type: Type = Type.PlayList
+    init {
+      require(type == Type.Folder || type == Type.FolderSmall) {
+        "FolderItem.type must be Folder or FolderSmall, but was $type"
+      }
+    }
   }
 }

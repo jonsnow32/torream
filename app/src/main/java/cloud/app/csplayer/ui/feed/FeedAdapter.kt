@@ -7,12 +7,14 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.ui.adapter.GridAdapter
 import cloud.app.csplayer.ui.feed.viewholders.AdViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.AudioSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.FolderSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.VideoSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolder
 import cloud.app.csplayer.utils.observe
-import kotlinx.coroutines.flow.combine
 
 class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClickListener) :
   ListAdapter<FeedData, FeedViewHolder<*>>(DiffCallback), GridAdapter {
@@ -35,9 +37,14 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
       FeedData.Type.Folder,
       FeedData.Type.PlayList,
       FeedData.Type.Ad,
-      FeedData.Type.HorizontalList -> count
-      FeedData.Type.Video -> 2
-      FeedData.Type.Audio -> 1
+      FeedData.Type.HorizontalList,
+      FeedData.Type.Video,
+      FeedData.Type.Audio -> count
+
+      FeedData.Type.VideoSmall -> 2
+      FeedData.Type.AudioSmall -> 1
+      FeedData.Type.FolderSmall -> 2
+      FeedData.Type.PlayListSmall -> TODO()
     }
 
   override fun onCreateViewHolder(
@@ -48,10 +55,14 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
     return when (type) {
       FeedData.Type.HorizontalList -> HorizontalListViewHolder(parent, clickListener, viewPool)
       FeedData.Type.Ad -> AdViewHolder(parent)
-      FeedData.Type.Video -> VideoViewHolder(parent)
-      FeedData.Type.Audio -> AudioViewHolder(parent)
-      FeedData.Type.Folder -> FolderViewHolder(parent)
+      FeedData.Type.Video -> VideoViewHolder(parent, clickListener)
+      FeedData.Type.Audio -> AudioViewHolder(parent, clickListener)
+      FeedData.Type.Folder -> FolderViewHolder(parent, clickListener)
       FeedData.Type.PlayList -> TODO()
+      FeedData.Type.VideoSmall -> VideoSmallViewHolder(parent, clickListener)
+      FeedData.Type.AudioSmall -> AudioSmallViewHolder(parent, clickListener)
+      FeedData.Type.FolderSmall -> FolderSmallViewHolder(parent, clickListener)
+      FeedData.Type.PlayListSmall -> TODO()
     }
   }
 
@@ -63,9 +74,15 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
     when (holder) {
       is HorizontalListViewHolder -> if (feed is FeedData.HorizontalList) holder.bind(feed)
       is AdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
-      is VideoViewHolder -> if (feed is FeedData.VideoItem) holder.bind(feed)
-      is AudioViewHolder -> if (feed is FeedData.AudioItem) holder.bind(feed)
-      is FolderViewHolder -> if (feed is FeedData.FolderItem) holder.bind(feed)
+
+      is VideoViewHolder,
+      is VideoSmallViewHolder -> if (feed is FeedData.VideoItem) holder.bind(feed)
+
+      is AudioViewHolder,
+      is AudioSmallViewHolder -> if (feed is FeedData.AudioItem) holder.bind(feed)
+
+      is FolderViewHolder,
+      is FolderSmallViewHolder -> if (feed is FeedData.FolderItem) holder.bind(feed)
       else -> {}
     }
   }

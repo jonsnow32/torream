@@ -14,6 +14,7 @@ import cloud.app.csplayer.ui.adapter.GridAdapter
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.feed.FeedAdapter.Companion.getFeedAdapter
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
+import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -57,20 +58,29 @@ class FeedFragment : Fragment(), FeedClickListener {
       binding.root.contentDescription = title
     }
 
+    observe(viewModel.displayType) {
+      when(it) {
+        FeedViewModel.DisplayType.LIST -> binding.toolbar.menu.findItem(R.id.displayType)
+          .setIcon(R.drawable.outline_grid_view_24)
+        FeedViewModel.DisplayType.GRID -> binding.toolbar.menu.findItem(R.id.displayType)
+          .setIcon(R.drawable.outline_view_agenda_24)
+      }
+    }
     binding.toolbar.setOnMenuItemClickListener {
       when (it.itemId) {
         R.id.displayType -> {
-
+          viewModel.changeDisplayType()
         }
         R.id.sort -> {
         }
       }
       true
     }
+
   }
 
   override fun onItemClick(item: FeedData) {
-    TODO("Not yet implemented")
+    showToast("item: ${item.title}")
   }
 
 }

@@ -44,7 +44,8 @@
     <item name="iconColor">@color/iconColor</item>
     <item name="white">@color/white</item>
     <item name="black">@color/black</item>
-    <item name="itemCoverSize">110dp</item>
+    <item name="itemCoverSize">90dp</item>
+    <item name="itemCoverSize2x">180dp</item>
 
     <item name="download_icon_color">?attr/white</item>
     <item name="download_fill_color">?attr/white</item>
@@ -905,5 +906,22 @@
     <item name="android:layout_marginTop">-1dp</item>
     <item name="android:translationZ">1dp</item>
     <item name="android:background">?colorOutlineVariant</item>
+  </style>
+
+  <!-- MediaItem style with custom bordered selectable background
+       Uses @drawable/selectable_item_background_bordered which provides:
+       - 1dp border with ?attr/colorOutline
+       - 4dp rounded corners
+       - Ripple effect on API 21+ (drawable-v21)
+       - State selector for pre-API 21 (drawable)
+       Alternative: @drawable/selectable_item_background_bordered_rounded (8dp corners, 2dp border, colorPrimary)
+  -->
+  <style name="MediaItem">
+    <item name="android:background">@drawable/selectable_item_background_bordered</item>
+    <item name="android:baselineAligned">false</item>
+    <item name="android:clickable">true</item>
+    <item name="android:clipToPadding">false</item>
+    <item name="android:focusable">true</item>
+    <item name="android:paddingBottom">8dp</item>
   </style>
 </resources>

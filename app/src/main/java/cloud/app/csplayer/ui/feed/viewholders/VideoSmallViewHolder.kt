@@ -3,14 +3,15 @@ package cloud.app.csplayer.ui.feed.viewholders
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import cloud.app.csplayer.databinding.ItemVideoBinding
+import cloud.app.csplayer.databinding.ItemVideoSmallBinding
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
 
-class VideoViewHolder(
+class VideoSmallViewHolder(
   parent: ViewGroup,
   val clickListener: FeedClickListener,
-  val binding: ItemVideoBinding = ItemVideoBinding.inflate(
+  val binding: ItemVideoSmallBinding = ItemVideoSmallBinding.inflate(
     LayoutInflater.from(parent.context), parent, false
   )
 ) : FeedViewHolder<FeedData.VideoItem>(binding.root) {

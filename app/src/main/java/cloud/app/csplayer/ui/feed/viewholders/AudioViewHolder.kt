@@ -3,11 +3,13 @@ package cloud.app.csplayer.ui.feed.viewholders
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import cloud.app.csplayer.databinding.ItemAudioBinding
+import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
 
 class AudioViewHolder(
   parent: ViewGroup,
+  val clickListener: FeedClickListener,
   val binding: ItemAudioBinding = ItemAudioBinding.inflate(
     LayoutInflater.from(parent.context), parent, false
   )
@@ -16,5 +18,9 @@ class AudioViewHolder(
     binding.title.text = feed.audio.title
     binding.subtitle.text = feed.audio.description
     //binding.imgCover = feed.audio.cover.toma
+
+    binding.root.setOnClickListener {
+      clickListener.onItemClick(feed)
+    }
   }
 }

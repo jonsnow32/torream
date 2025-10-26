@@ -37,7 +37,7 @@ interface GridAdapter {
 
   companion object {
     fun configureGridLayout(
-      recycler: RecyclerView, gridAdapter: GridAdapter, even: Boolean = true, itemSpacingDp: Int = 8
+      recycler: RecyclerView, gridAdapter: GridAdapter, even: Boolean = false, itemSpacingDp: Int = 8
     ) {
       val context = recycler.context
       val itemWidth = context.resolveStyledDimension(R.attr.itemCoverSize)
@@ -73,17 +73,17 @@ interface GridAdapter {
           val newSpanCount = calculateSpanCount(width)
           if (layoutManager.spanCount != newSpanCount) {
             layoutManager.spanCount = newSpanCount
-            layoutManager.spanSizeLookup.invalidateSpanIndexCache()
-            recycledViewPool.clear()
-            requestLayout()
+//            layoutManager.spanSizeLookup.invalidateSpanIndexCache()
+//            recycledViewPool.clear()
+//            requestLayout()
           }
         }
       }
 
       // Optional: Add item decoration for visual spacing
-      if (recycler.itemDecorationCount == 0) {
-        recycler.addItemDecoration(GridSpacingDecoration(itemSpacing, false))
-      }
+//      if (recycler.itemDecorationCount == 0) {
+//        recycler.addItemDecoration(GridSpacingDecoration(itemSpacing, false))
+//      }
     }
 
     class GridSpacingDecoration(

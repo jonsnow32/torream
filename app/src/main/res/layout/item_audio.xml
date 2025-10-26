@@ -1,17 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:clipToPadding="false"
+  style="@style/MediaItem"
   android:gravity="center"
   android:orientation="horizontal"
   android:paddingHorizontal="20dp"
-  android:paddingTop="8dp"
-  android:background="@drawable/outline"
-  android:baselineAligned="false">
+  android:paddingTop="8dp">
 
   <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="@dimen/audio_width"
@@ -22,14 +19,14 @@
       android:id="@+id/imgCover"
       android:layout_width="match_parent"
       android:layout_height="0dp"
-      app:layout_constraintTop_toTopOf="parent"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintDimensionRatio="1:1"
+      android:importantForAccessibility="no"
       android:scaleType="centerCrop"
       android:src="@drawable/outline_music_note_24"
-      android:importantForAccessibility="no" />
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintDimensionRatio="1:1"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Duration overlay (bottom-end) -->
     <TextView
@@ -38,13 +35,13 @@
       android:layout_height="wrap_content"
       android:layout_marginEnd="6dp"
       android:layout_marginBottom="6dp"
-      android:paddingStart="6dp"
-      android:paddingEnd="6dp"
-      android:paddingTop="2dp"
-      android:paddingBottom="2dp"
       android:background="@drawable/duration_background"
-      android:text="@string/duration_placeholder"
       android:importantForAccessibility="no"
+      android:paddingStart="6dp"
+      android:paddingTop="2dp"
+      android:paddingEnd="6dp"
+      android:paddingBottom="2dp"
+      android:text="@string/duration_placeholder"
       app:layout_constraintBottom_toBottomOf="parent"
       app:layout_constraintEnd_toEndOf="parent" />
 
