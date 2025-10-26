@@ -132,6 +132,10 @@ dependencies {
   implementation("androidx.navigation:navigation-fragment-ktx:2.9.5")
   implementation("androidx.navigation:navigation-ui-ktx:2.9.5")
 
+  // Paging 3
+  implementation("androidx.paging:paging-runtime-ktx:3.2.1")
+  implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
   val media3Version = "1.4.1"
   // Media 3 (ExoPlayer)
   implementation("androidx.media3:media3-ui:$media3Version")

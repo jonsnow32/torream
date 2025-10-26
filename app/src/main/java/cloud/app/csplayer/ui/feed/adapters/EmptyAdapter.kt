@@ -1,4 +1,4 @@
-package cloud.app.csplayer.ui.feed
+package cloud.app.csplayer.ui.feed.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

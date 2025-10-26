@@ -24,15 +24,23 @@
     app:layout_anchor="@id/appBarLayout"
     app:layout_anchorGravity="bottom" />
 
-  <androidx.recyclerview.widget.RecyclerView
-    android:id="@+id/rvFeed"
+  <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clipToPadding="false"
-    android:contentDescription="@string/browser"
-    android:paddingHorizontal="8dp"
-    android:paddingVertical="8dp"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:listitem="@layout/item_video" />
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+    <androidx.recyclerview.widget.RecyclerView
+      android:id="@+id/rvFeed"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:clipToPadding="false"
+      android:contentDescription="@string/browser"
+      android:paddingHorizontal="8dp"
+      android:paddingVertical="8dp"
+      tools:listitem="@layout/item_video" />
+
+  </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

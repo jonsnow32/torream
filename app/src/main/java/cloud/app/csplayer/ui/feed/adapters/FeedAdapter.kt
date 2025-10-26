@@ -1,11 +1,19 @@
-package cloud.app.csplayer.ui.feed
+package adapters
 
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.ui.adapter.GridAdapter
+import cloud.app.csplayer.ui.feed.FeedClickListener
+import cloud.app.csplayer.ui.feed.FeedData
+import cloud.app.csplayer.ui.feed.FeedViewHolder
+import cloud.app.csplayer.ui.feed.FeedViewModel
+import cloud.app.csplayer.ui.feed.adapters.EmptyAdapter
+import cloud.app.csplayer.ui.feed.adapters.ErrorAdapter
+import cloud.app.csplayer.ui.feed.adapters.FeedAdapterWithStates
+import cloud.app.csplayer.ui.feed.adapters.LoadingAdapter
 import cloud.app.csplayer.ui.feed.viewholders.AdViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioViewHolder
@@ -16,8 +24,9 @@ import cloud.app.csplayer.ui.feed.viewholders.VideoViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolder
 import cloud.app.csplayer.utils.observe
 
+
 class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClickListener) :
-  ListAdapter<FeedData, FeedViewHolder<*>>(DiffCallback), GridAdapter {
+  PagingDataAdapter<FeedData, FeedViewHolder<*>>(DiffCallback), GridAdapter {
 
   private val viewPool = RecyclerView.RecycledViewPool()
 
@@ -31,7 +40,7 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
   }
 
   override val adapter = this
-  override fun getItemViewType(position: Int): Int = getItem(position).type.ordinal
+  override fun getItemViewType(position: Int): Int = runCatching { getItem(position)!! }.getOrNull()?.type?.ordinal ?: 0
   override fun getSpanSize(position: Int, width: Int, count: Int) =
     when (FeedData.Type.entries[getItemViewType(position)]) {
       FeedData.Type.Folder,
@@ -70,7 +79,7 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
     holder: FeedViewHolder<*>,
     position: Int
   ) {
-    val feed = runCatching { getItem(position) }.getOrNull() ?: return
+    val feed = getItem(position) ?: return
     when (holder) {
       is HorizontalListViewHolder -> if (feed is FeedData.HorizontalList) holder.bind(feed)
       is AdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
@@ -87,14 +96,45 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
     }
   }
 
+  /**
+   * Wraps this adapter with loading/empty/error state adapters.
+   * The returned wrapper maintains GridAdapter interface for proper grid layout support.
+   *
+   * Usage:
+   * ```
+   * val adapterWithStates = adapter.withLoadingStates {
+   *   // Retry logic when error occurs
+   *   viewModel.refresh()
+   * }
+   * recyclerView.adapter = adapterWithStates
+   * ```
+   *
+   * The wrapper automatically:
+   * - Shows LoadingAdapter when PagingData is loading
+   * - Shows EmptyAdapter when data is empty
+   * - Shows ErrorAdapter when there's an error
+   * - Shows FeedAdapter when data is available
+   *
+   * @param onRetry Callback when user clicks retry button in error state
+   * @return A FeedAdapterWithStates wrapper that implements GridAdapter
+   */
+  fun withLoadingStates(onRetry: () -> Unit = {}): FeedAdapterWithStates {
+    return FeedAdapterWithStates(
+      mainAdapter = this,
+      loadingAdapter = LoadingAdapter(),
+      emptyAdapter = EmptyAdapter(),
+      errorAdapter = ErrorAdapter(onRetry)
+    )
+  }
+
   companion object {
+
     fun Fragment.getFeedAdapter(
       viewModel: FeedViewModel
     ): FeedAdapter {
       val adapter = FeedAdapter(viewModel, this as FeedClickListener)
       observe(viewModel.feedData) {
-        //adapter.saveState()
-        adapter.submitList(it)
+        adapter.submitData(lifecycle, it)
       }
       return adapter
     }

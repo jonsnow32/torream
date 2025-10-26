@@ -1,5 +1,6 @@
 package cloud.app.csplayer.ui.feed
 
+import adapters.FeedAdapter.Companion.getFeedAdapter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,9 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentFeedBinding
-import cloud.app.csplayer.ui.adapter.GridAdapter
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
-import cloud.app.csplayer.ui.feed.FeedAdapter.Companion.getFeedAdapter
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
@@ -51,8 +50,23 @@ class FeedFragment : Fragment(), FeedClickListener {
     }
     configureGridLayout(
       binding.rvFeed,
-      GridAdapter.Concat(adapter, EmptyAdapter())
+      adapter.withLoadingStates() {
+        // Retry on error
+        viewModel.getAllFolders(requireContext())
+      }
     )
+
+    // Setup SwipeRefreshLayout
+    binding.swipeRefresh.setOnRefreshListener {
+      // Refresh data when user pulls down
+      viewModel.getAllFolders(requireContext())
+      adapter.refresh()
+    }
+
+    // Observe loading states to hide refresh indicator
+    observe(viewModel.feedData) {
+      binding.swipeRefresh.isRefreshing = false
+    }
 
     observe(viewModel.title) { title ->
       binding.root.contentDescription = title
@@ -77,6 +91,7 @@ class FeedFragment : Fragment(), FeedClickListener {
       true
     }
 
+    viewModel.getAllFolders(requireContext())
   }
 
   override fun onItemClick(item: FeedData) {
