@@ -25,7 +25,7 @@ import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolde
 import cloud.app.csplayer.utils.observe
 
 
-class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClickListener) :
+class FeedAdapter(private val clickListener: FeedClickListener) :
   PagingDataAdapter<FeedData, FeedViewHolder<*>>(DiffCallback), GridAdapter {
 
   private val viewPool = RecyclerView.RecycledViewPool()
@@ -75,6 +75,7 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun onBindViewHolder(
     holder: FeedViewHolder<*>,
     position: Int
@@ -83,13 +84,10 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
     when (holder) {
       is HorizontalListViewHolder -> if (feed is FeedData.HorizontalList) holder.bind(feed)
       is AdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
-
-      is VideoViewHolder,
-      is VideoSmallViewHolder -> if (feed is FeedData.VideoItem) holder.bind(feed)
-
-      is AudioViewHolder,
-      is AudioSmallViewHolder -> if (feed is FeedData.AudioItem) holder.bind(feed)
-
+      is VideoViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
+      is VideoSmallViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
+      is AudioViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
+      is AudioSmallViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is FolderViewHolder,
       is FolderSmallViewHolder -> if (feed is FeedData.FolderItem) holder.bind(feed)
       else -> {}
@@ -115,15 +113,21 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
    * - Shows ErrorAdapter when there's an error
    * - Shows FeedAdapter when data is available
    *
+   * @param errorMessage Custom error message (e.g., for permission error)
+   * @param buttonText Custom button text (e.g., "Grant Permission")
    * @param onRetry Callback when user clicks retry button in error state
    * @return A FeedAdapterWithStates wrapper that implements GridAdapter
    */
-  fun withLoadingStates(onRetry: () -> Unit = {}): FeedAdapterWithStates {
+  fun withLoadingStates(
+    errorMessage: String? = null,
+    buttonText: String? = null,
+    onRetry: () -> Unit = {}
+  ): FeedAdapterWithStates {
     return FeedAdapterWithStates(
       mainAdapter = this,
       loadingAdapter = LoadingAdapter(),
       emptyAdapter = EmptyAdapter(),
-      errorAdapter = ErrorAdapter(onRetry)
+      errorAdapter = ErrorAdapter(errorMessage, buttonText, onRetry)
     )
   }
 
@@ -132,7 +136,7 @@ class FeedAdapter(viewModel: FeedViewModel, private val clickListener: FeedClick
     fun Fragment.getFeedAdapter(
       viewModel: FeedViewModel
     ): FeedAdapter {
-      val adapter = FeedAdapter(viewModel, this as FeedClickListener)
+      val adapter = FeedAdapter(this as FeedClickListener)
       observe(viewModel.feedData) {
         adapter.submitData(lifecycle, it)
       }

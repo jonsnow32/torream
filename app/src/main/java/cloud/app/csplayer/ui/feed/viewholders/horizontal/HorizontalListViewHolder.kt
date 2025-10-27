@@ -9,7 +9,7 @@ import cloud.app.csplayer.databinding.ItemShelfListBinding
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
-import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfType
+import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfItem
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfViewHolder
 
 class HorizontalListViewHolder(
@@ -31,29 +31,29 @@ class HorizontalListViewHolder(
 
   }
 
-  class Adapter(val listener: FeedClickListener): ListAdapter<ShelfType, ShelfViewHolder<*>>(DiffCallback) {
-    object DiffCallback : DiffUtil.ItemCallback<ShelfType>() {
-      override fun areItemsTheSame(oldItem: ShelfType, newItem: ShelfType): Boolean {
+  class Adapter(val listener: FeedClickListener): ListAdapter<ShelfItem, ShelfViewHolder<*>>(DiffCallback) {
+    object DiffCallback : DiffUtil.ItemCallback<ShelfItem>() {
+      override fun areItemsTheSame(oldItem: ShelfItem, newItem: ShelfItem): Boolean {
         return oldItem.id == newItem.id
       }
 
-      override fun areContentsTheSame(oldItem: ShelfType, newItem: ShelfType): Boolean {
+      override fun areContentsTheSame(oldItem: ShelfItem, newItem: ShelfItem): Boolean {
         return oldItem == newItem
       }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShelfViewHolder<*> {
-      val type = ShelfType.Type.entries[viewType]
+      val type = ShelfItem.Type.entries[viewType]
       return when (type) {
-        ShelfType.Type.ThreeAudioItem -> ShelfViewHolder.ThreeAudioViewHolder(parent, listener)
-        ShelfType.Type.TwoVideoItem -> ShelfViewHolder.TwoVideoViewHolder(parent, listener)
+        ShelfItem.Type.ThreeAudioItem -> ShelfViewHolder.ThreeAudioViewHolder(parent, listener)
+        ShelfItem.Type.TwoVideoItem -> ShelfViewHolder.TwoVideoViewHolder(parent, listener)
       }
     }
 
     override fun onBindViewHolder(holder: ShelfViewHolder<*>, position: Int) {
       when(holder) {
-        is ShelfViewHolder.ThreeAudioViewHolder -> holder.bind(getItem(position) as ShelfType.ThreeItem)
-        is ShelfViewHolder.TwoVideoViewHolder -> holder.bind(getItem(position) as ShelfType.TwoItem)
+        is ShelfViewHolder.ThreeAudioViewHolder -> holder.bind(getItem(position) as ShelfItem.ThreeItem)
+        is ShelfViewHolder.TwoVideoViewHolder -> holder.bind(getItem(position) as ShelfItem.TwoItem)
       }
     }
   }

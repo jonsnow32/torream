@@ -45,6 +45,13 @@ class FeedAdapterWithStates(
     }
   }
 
+  /**
+   * Update error message dynamically based on exception type
+   */
+  fun updateErrorMessage(message: String?, buttonText: String? = null) {
+    errorAdapter.updateErrorMessage(message, buttonText)
+  }
+
   private fun updateAdapters() {
     // Remove all current adapters
     val currentAdapters = concatAdapter.adapters.toList()

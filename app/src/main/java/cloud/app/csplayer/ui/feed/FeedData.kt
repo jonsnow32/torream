@@ -1,11 +1,8 @@
 package cloud.app.csplayer.ui.feed
 
-import cloud.app.csplayer.databinding.ItemAudioBinding
-import cloud.app.csplayer.databinding.ItemVideoBinding
-import cloud.app.csplayer.model.Audio
-import cloud.app.csplayer.model.Folder
-import cloud.app.csplayer.model.MediaItem
-import cloud.app.csplayer.model.Video
+import cloud.app.csplayer.media.model.Folder
+import cloud.app.csplayer.media.model.Media
+import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfItem
 
 /**
  * Feed item sealed hierarchy used by the Feed screen.
@@ -40,55 +37,29 @@ sealed class FeedData {
   data class HorizontalList(
     override val id: String,
     override val title: String,
-    val items: List<MediaItem>
+    val items: List<ShelfItem>
   ) : FeedData() {
     override val type: Type = Type.HorizontalList
   }
 
-  data class VideoItem(
+  data class MediaItem(
     override val id: String,
     override val title: String,
-    val video: Video,
-    override val type: Type = Type.Video
+    override var type: Type,
+    val media: Media
   ) : FeedData() {
 
     init {
-      require(type == Type.Video || type == Type.VideoSmall) {
-        "VideoItem.type must be Video or VideoSmall, but was $type"
-      }
-    }
-
-    companion object {
-      fun ItemVideoBinding.bind(item: VideoItem) {
-        title.text = item.video.title
-        subtitle.text = item.video.subtitle
-        // Load cover image, etc.
+      require(
+        type == Type.Video ||
+          type == Type.VideoSmall ||
+          type == Type.Audio ||
+          type == Type.AudioSmall
+      ) {
+        "MediaItem.type must be Video, VideoSmall, Audio or AudioSmall, but was $type"
       }
     }
   }
-
-  data class AudioItem(
-    override val id: String,
-    override val title: String,
-    override val type: Type = Type.Audio,
-    val audio: Audio,
-  ) : FeedData() {
-
-    init {
-      require(type == Type.Audio || type == Type.AudioSmall) {
-        "AudioItem.type must be Audio or AudioSmall, but was $type"
-      }
-    }
-
-    companion object {
-      fun ItemAudioBinding.bind(item: AudioItem) {
-        title.text = item.audio.title
-        subtitle.text = item.audio.subtitle
-        // Load cover image, etc.
-      }
-    }
-  }
-
   data class FolderItem(
     override val id: String,
     override val title: String,

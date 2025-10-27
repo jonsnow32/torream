@@ -1,15 +1,20 @@
 package cloud.app.csplayer.ui.feed
 
 import adapters.FeedAdapter.Companion.getFeedAdapter
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentFeedBinding
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
@@ -24,21 +29,38 @@ import dagger.hilt.android.AndroidEntryPoint
 class FeedFragment : Fragment(), FeedClickListener {
   private var binding by autoCleared<FragmentFeedBinding>()
   private val viewModel: FeedViewModel by viewModels()
-  private val adapter by lazy { getFeedAdapter(viewModel) }
 
-  // Stack to track folder navigation for back button support
-  private val folderStack = mutableListOf<String?>()
+  // Lazy initialization to allow permission check callback
+  private val adapter by lazy {
+    getFeedAdapter(viewModel)
+  }
+
+  // Permission request launcher
+  private val permissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestMultiplePermissions()
+  ) { permissions ->
+    val allGranted = permissions.values.all { it }
+    if (allGranted) {
+      // Permissions granted, trigger MediaRepository refresh and reload data
+      showToast(getString(R.string.permissions_granted))
+
+      // Refresh MediaRepository to sync from MediaStore
+      viewModel.refreshMediaRepository()
+
+      // Refresh adapter to reload with new data
+      adapter.refresh()
+    } else {
+      // Permissions denied
+      showToast(getString(R.string.permissions_denied))
+    }
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    // Get root folder path from arguments if provided
-    val rootFolderPath = arguments?.getString(ARG_ROOT_FOLDER_PATH)
+    // Get root folder path from Navigation arguments or manual bundle
+    val rootFolderPath = arguments?.getString("root_folder_path")
+      ?: arguments?.getString(ARG_ROOT_FOLDER_PATH)
     viewModel.setRootFolder(rootFolderPath)
-
-    // Initialize stack with initial folder
-    if (folderStack.isEmpty()) {
-      folderStack.add(rootFolderPath)
-    }
   }
 
   override fun onCreateView(
@@ -52,9 +74,6 @@ class FeedFragment : Fragment(), FeedClickListener {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-
-    // Setup back button handler for folder navigation
-    setupBackPressHandler()
 
     // Observe title from ViewModel (will be root folder name or "Feed")
     observe(viewModel.title) { title ->
@@ -73,13 +92,47 @@ class FeedFragment : Fragment(), FeedClickListener {
       )
       insets
     }
-    configureGridLayout(
-      binding.rvFeed,
-      adapter.withLoadingStates() {
-        // Retry on error - refresh the PagingData
+
+    // Configure adapter with error handling
+    val adapterWithStates = adapter.withLoadingStates(
+      errorMessage = null,
+      buttonText = null
+    ) {
+      // Handle retry/permission request dynamically
+      if (!hasMediaPermissions()) {
+        requestMediaPermissions()
+      } else {
         adapter.refresh()
       }
-    )
+    }
+
+    // Listen to load states to detect and handle different error types
+    adapter.addLoadStateListener { loadStates ->
+      val errorState = loadStates.refresh as? androidx.paging.LoadState.Error
+      if (errorState != null) {
+        val exception = errorState.error
+
+        // Update error message based on exception type
+        when {
+          exception is SecurityException || !hasMediaPermissions() -> {
+            // Permission error
+            adapterWithStates.updateErrorMessage(
+              message = getString(R.string.permission_required_message),
+              buttonText = getString(R.string.grant_permission)
+            )
+          }
+          else -> {
+            // Generic error - use default messages
+            adapterWithStates.updateErrorMessage(
+              message = exception.message ?: getString(R.string.error_loading),
+              buttonText = getString(R.string.retry)
+            )
+          }
+        }
+      }
+    }
+
+    configureGridLayout(binding.rvFeed, adapterWithStates)
 
     // Setup SwipeRefreshLayout
     binding.swipeRefresh.setOnRefreshListener {
@@ -132,25 +185,35 @@ class FeedFragment : Fragment(), FeedClickListener {
     //open item based on its type
     when (item) {
       is FeedData.FolderItem -> {
-        // Navigate into folder by updating ViewModel and refreshing
-        // Push current folder to stack
-        folderStack.add(item.folder.path)
+        // Navigate into folder using Navigation Component
+        val bundle = Bundle().apply {
+          putString("root_folder_path", item.folder.path)
+        }
 
-        viewModel.setRootFolder(item.folder.path)
-        adapter.refresh()
-
-        // Scroll to top to show new content
-        binding.rvFeed.scrollToPosition(0)
+        // Use Navigation Component to navigate with automatic backstack management
+        // R.id will be generated after build, fallback to dynamic navigation
+        try {
+          findNavController().navigate(R.id.action_feedFragment_self, bundle)
+        } catch (e: Exception) {
+          // Fallback if action ID not generated yet
+          findNavController().navigate(R.id.feedFragment, bundle)
+        }
       }
 
-      is FeedData.VideoItem -> {
-        // TODO: Open video player
-        showToast("Playing: ${item.title}")
-      }
-
-      is FeedData.AudioItem -> {
-        // TODO: Open audio player
-        showToast("Playing audio: ${item.title}")
+      is FeedData.MediaItem -> {
+        // TODO: Open media player based on type
+        when (item.type) {
+          FeedData.Type.Video, FeedData.Type.VideoSmall -> {
+            showToast("Playing video: ${item.title}")
+          }
+          FeedData.Type.Audio, FeedData.Type.AudioSmall -> {
+            showToast("Playing audio: ${item.title}")
+          }
+          else -> {
+            // Shouldn't happen
+            showToast("Playing: ${item.title}")
+          }
+        }
       }
 
       is FeedData.AdItem -> {
@@ -165,32 +228,51 @@ class FeedFragment : Fragment(), FeedClickListener {
     }
   }
 
+
   /**
-   * Setup back button handler to navigate through folder stack
+   * Check if app has required media permissions
    */
-  private fun setupBackPressHandler() {
-    val callback = object : OnBackPressedCallback(true) {
-      override fun handleOnBackPressed() {
-        if (folderStack.size > 1) {
-          // Pop current folder from stack
-          folderStack.removeLastOrNull()
+  private fun hasMediaPermissions(): Boolean {
+    val context = requireContext()
 
-          // Navigate to previous folder
-          val previousFolder = folderStack.lastOrNull()
-          viewModel.setRootFolder(previousFolder)
-          adapter.refresh()
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      // Android 13+ (API 33+) - Need READ_MEDIA_VIDEO and READ_MEDIA_AUDIO
+      val hasVideoPermission = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.READ_MEDIA_VIDEO
+      ) == PackageManager.PERMISSION_GRANTED
 
-          // Scroll to top
-          binding.rvFeed.scrollToPosition(0)
-        } else {
-          // No more folders in stack, let system handle back press
-          isEnabled = false
-          requireActivity().onBackPressedDispatcher.onBackPressed()
-        }
-      }
+      val hasAudioPermission = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.READ_MEDIA_AUDIO
+      ) == PackageManager.PERMISSION_GRANTED
+
+      hasVideoPermission && hasAudioPermission
+    } else {
+      // Android 12 and below - Need READ_EXTERNAL_STORAGE
+      ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+      ) == PackageManager.PERMISSION_GRANTED
+    }
+  }
+
+  /**
+   * Request required media permissions
+   */
+  private fun requestMediaPermissions() {
+    val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      // Android 13+ (API 33+)
+      arrayOf(
+        Manifest.permission.READ_MEDIA_VIDEO,
+        Manifest.permission.READ_MEDIA_AUDIO
+      )
+    } else {
+      // Android 12 and below
+      arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
 
-    requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
+    permissionLauncher.launch(permissions)
   }
 
   companion object {

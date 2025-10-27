@@ -1,46 +1,46 @@
 package cloud.app.csplayer.datastore.app.helper
 
 import cloud.app.csplayer.R
-import cloud.app.csplayer.model.MediaItem
+import cloud.app.csplayer.media.model.Media
 import kotlinx.serialization.Serializable
 
 const val BOOKMARK_FOLDER = "bookmarks"
 
 @Serializable
 sealed class BookmarkItem {
-  abstract val item: MediaItem
+  abstract val item: Media
   abstract val lastUpdated: Long
 
   @Serializable
   data class Watching(
     val position: Long,
     val duration: Long? = null,
-    override val item: MediaItem,
+    override val item: Media,
     override val lastUpdated: Long = System.currentTimeMillis()
   ) : BookmarkItem()
 
   @Serializable
   data class Completed(
     val duration: Long? = null,
-    override val item: MediaItem,
+    override val item: Media,
     override val lastUpdated: Long = System.currentTimeMillis()
   ) : BookmarkItem()
 
   @Serializable
   data class OnHold(
-    override val item: MediaItem,
+    override val item: Media,
     override val lastUpdated: Long = System.currentTimeMillis()
   ) : BookmarkItem()
 
   @Serializable
   data class Dropped(
-    override val item: MediaItem,
+    override val item: Media,
     override val lastUpdated: Long = System.currentTimeMillis()
   ) : BookmarkItem()
 
   @Serializable
   data class PlanToWatch(
-    override val item: MediaItem,
+    override val item: Media,
     override val lastUpdated: Long = System.currentTimeMillis()
   ) : BookmarkItem()
 

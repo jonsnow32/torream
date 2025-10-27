@@ -1,22 +1,21 @@
 package cloud.app.csplayer.ui.feed
 
-import android.content.Context
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import cloud.app.csplayer.model.Folder
-import cloud.app.csplayer.ui.filesystem.FileTreePreferences
+import cloud.app.csplayer.media.repository.MediaRepository
+import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
 /**
- * PagingSource that loads folders from FileTreePreferences.
- * Shows folders that user has selected via SAF (Storage Access Framework) or All Files Access.
+ * PagingSource that loads media and folders from MediaRepository (Room database).
+ * Shows all media files indexed from MediaStore.
  *
- * @param context Android context
- * @param rootFolderPath Optional root folder path. If provided, only shows files from this folder.
- *                       If null, shows all folders from FileTreePreferences.
+ * @param repository MediaRepository for accessing media and folder data
+ * @param rootFolderPath Optional root folder path. If provided, only shows media from this folder.
+ *                       If null, shows all folders.
  */
 class FeedPagingSource(
-  private val context: Context,
+  private val repository: MediaRepository,
   private val rootFolderPath: String? = null
 ) : PagingSource<Int, FeedData>() {
 
@@ -27,13 +26,13 @@ class FeedPagingSource(
 
       Timber.d("Loading page $page with pageSize $pageSize, rootFolder: $rootFolderPath")
 
-      // Load folders or files based on rootFolderPath
+      // Load media or folders based on rootFolderPath
       val allData = if (rootFolderPath != null) {
-        // Load files from specific root folder
-        loadFilesFromRootFolder(rootFolderPath)
+        // Load media from specific folder
+        loadMediaFromFolder(rootFolderPath)
       } else {
-        // Load all folders from user selections in FileTreePreferences
-        loadFoldersFromPreferences()
+        // Load all folders
+        loadAllFolders()
       }
 
       val startIndex = page * pageSize
@@ -70,212 +69,97 @@ class FeedPagingSource(
   }
 
   /**
-   * Load folders from FileTreePreferences (user-selected folders)
+   * Load all folders from MediaRepository
+   * @throws Exception if no folders found or error loading data
    */
-  private fun loadFoldersFromPreferences(): List<FeedData.FolderItem> {
-    val folderItems = mutableListOf<FeedData.FolderItem>()
+  private suspend fun loadAllFolders(): List<FeedData.FolderItem> {
+    Timber.d("Loading all folders from MediaRepository...")
 
-    try {
-      Timber.d("Loading folders from FileTreePreferences...")
+    val folders = repository.observeFolders().first()
 
-      // Get user-selected folders from preferences
-      val selectedFolders = FileTreePreferences.loadSelectedFolders(context)
+    Timber.d("Found ${folders.size} folders")
 
-      Timber.d("Found ${selectedFolders.size} selected folders")
+    // Throw exception if no folders found - this will trigger error UI
+    if (folders.isEmpty()) {
+      throw NoFoldersFoundException("No media folders found. Please scan your device for media files.")
+    }
 
-      // Convert FileTreeNode to FeedData.FolderItem
-      selectedFolders.forEach { node ->
-        try {
-          // Count media files in this folder
-          val mediaCount = countMediaFiles(node)
+    // Convert Folder to FeedData.FolderItem
+    return folders.map { folder ->
+      FeedData.FolderItem(
+        id = folder.path,
+        title = folder.name,
+        folder = folder,
+        type = FeedData.Type.FolderSmall
+      )
+    }.also {
+      Timber.d("Successfully loaded ${it.size} folders")
+    }
+  }
 
-          val path = node.file.filePath ?: node.file.uri.toString()
+  /**
+   * Custom exception for when no folders are found
+   */
+  class NoFoldersFoundException(message: String) : Exception(message)
 
-          folderItems.add(
-            FeedData.FolderItem(
-              id = path,
-              title = node.name,
-              folder = Folder(
-                id = path,
-                title = node.name,
-                path = path,
-                subtitle = "$mediaCount items"
-              ),
-              type = FeedData.Type.FolderSmall
-            )
+  /**
+   * Load media files from a specific folder
+   */
+  private suspend fun loadMediaFromFolder(folderPath: String): List<FeedData> {
+    return try {
+      Timber.d("Loading media from folder: $folderPath")
+
+      val mediaList = repository.getMediaByFolder(folderPath)
+
+      Timber.d("Found ${mediaList.size} media files in folder")
+
+      // Convert Media to FeedData.MediaItem
+      val items = mutableListOf<FeedData>()
+
+      mediaList.forEach { media ->
+        val mediaType = determineMediaType(media.mimeType)
+
+        items.add(
+          FeedData.MediaItem(
+            id = media.uri,
+            title = media.name,
+            type = mediaType,
+            media = media
           )
-
-          Timber.d("Added folder: ${node.name} with $mediaCount items")
-        } catch (e: Exception) {
-          Timber.w(e, "Error processing folder: ${node.name}")
-        }
+        )
       }
 
-      Timber.d("Successfully loaded ${folderItems.size} folders")
+      // Also load subfolders in this folder
+      val subfolders = repository.observeFolders().first()
+        .filter { it.parentPath == folderPath }
+
+      subfolders.forEach { folder ->
+        items.add(
+          FeedData.FolderItem(
+            id = folder.path,
+            title = folder.name,
+            folder = folder,
+            type = FeedData.Type.FolderSmall
+          )
+        )
+      }
+
+      Timber.d("Successfully loaded ${items.size} items from folder")
+      items
     } catch (e: Exception) {
-      Timber.e(e, "Error loading folders from preferences")
-    }
-
-    return folderItems
-  }
-
-  /**
-   * Load video/audio files from a specific root folder
-   */
-  private fun loadFilesFromRootFolder(rootPath: String): List<FeedData> {
-    val items = mutableListOf<FeedData>()
-
-    try {
-      Timber.d("Loading files from root folder: $rootPath")
-
-      // Find the folder node from preferences
-      val selectedFolders = FileTreePreferences.loadSelectedFolders(context)
-      val rootNode = selectedFolders.find {
-        val nodePath = it.file.filePath ?: it.file.uri.toString()
-        nodePath == rootPath
-      }
-
-      if (rootNode == null) {
-        Timber.w("Root folder not found in preferences: $rootPath")
-        return emptyList()
-      }
-
-      // List all media files in this folder
-      val files = rootNode.file.listFiles() ?: emptyArray()
-
-      files.forEach { file ->
-        try {
-          if (file.isFile && isMediaFile(file.name ?: "")) {
-            val filePath = file.filePath ?: file.uri.toString()
-            val fileName = file.name ?: "Unknown"
-
-            // Create Video object
-            val video = cloud.app.csplayer.model.Video(
-              id = filePath,
-              title = fileName,
-              subtitle = formatFileSize(file.length()),
-              cover = "" // No cover for now
-            )
-
-            items.add(
-              FeedData.VideoItem(
-                id = filePath,
-                title = fileName,
-                video = video
-              )
-            )
-
-            Timber.d("Added file: ${file.name}")
-          } else if (file.isDirectory) {
-            // Add subdirectories as folders
-            val subMediaCount = countMediaFilesInDirectory(file)
-            if (subMediaCount > 0) {
-              val subPath = file.filePath ?: file.uri.toString()
-
-              items.add(
-                FeedData.FolderItem(
-                  id = subPath,
-                  title = file.name ?: "Unknown",
-                  folder = Folder(
-                    id = subPath,
-                    title = file.name ?: "Unknown",
-                    path = subPath,
-                    subtitle = "$subMediaCount items"
-                  ),
-                  type = FeedData.Type.FolderSmall
-                )
-              )
-            }
-          }
-        } catch (e: Exception) {
-          Timber.w(e, "Error processing file: ${file.name}")
-        }
-      }
-
-      Timber.d("Successfully loaded ${items.size} items from root folder")
-    } catch (e: Exception) {
-      Timber.e(e, "Error loading files from root folder")
-    }
-
-    return items
-  }
-
-  /**
-   * Count media files in a directory (non-recursive, immediate children only)
-   */
-  private fun countMediaFilesInDirectory(file: cloud.app.csplayer.utils.KUniFile): Int {
-    try {
-      val files = file.listFiles() ?: return 0
-      var count = 0
-
-      files.forEach { subFile ->
-        if (subFile.isFile && isMediaFile(subFile.name ?: "")) {
-          count++
-        }
-      }
-
-      return count
-    } catch (e: Exception) {
-      Timber.w(e, "Error counting files in directory: ${file.name}")
-      return 0
+      Timber.e(e, "Error loading media from folder")
+      emptyList()
     }
   }
 
   /**
-   * Count media files in a folder (recursively)
+   * Determine media type based on MIME type
    */
-  private fun countMediaFiles(node: cloud.app.csplayer.ui.filesystem.FileTreeNode): Int {
-    try {
-      val files = node.file.listFiles() ?: return 0
-      var count = 0
-
-      files.forEach { file ->
-        if (file.isFile && isMediaFile(file.name ?: "")) {
-          count++
-        } else if (file.isDirectory) {
-          // Recursively count files in subdirectories
-          try {
-            val subFiles = file.listFiles()
-            subFiles?.forEach { subFile ->
-              if (subFile.isFile && isMediaFile(subFile.name ?: "")) {
-                count++
-              }
-            }
-          } catch (e: Exception) {
-            Timber.w(e, "Error counting files in subdirectory: ${file.name}")
-          }
-        }
-      }
-
-      return count
-    } catch (e: Exception) {
-      Timber.w(e, "Error counting media files in folder: ${node.name}")
-      return 0
-    }
-  }
-
-  /**
-   * Check if file is a media file based on extension
-   */
-  private fun isMediaFile(fileName: String): Boolean {
-    val extension = fileName.substringAfterLast('.', "").lowercase()
-    return extension in setOf(
-      // Video formats
-      "mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp", "mpg", "mpeg",
-      // Audio formats
-      "mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "wma", "ape"
-    )
-  }
-
-  /**
-   * Format file size to human-readable string
-   */
-  private fun formatFileSize(bytes: Long): String {
+  private fun determineMediaType(mimeType: String): FeedData.Type {
     return when {
-      bytes < 1024 -> "$bytes B"
-      bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-      bytes < 1024 * 1024 * 1024 -> "${bytes / (1024 * 1024)} MB"
-      else -> "${bytes / (1024 * 1024 * 1024)} GB"
+      mimeType.startsWith("video/") -> FeedData.Type.VideoSmall
+      mimeType.startsWith("audio/") -> FeedData.Type.AudioSmall
+      else -> FeedData.Type.VideoSmall // Default to video
     }
   }
 }

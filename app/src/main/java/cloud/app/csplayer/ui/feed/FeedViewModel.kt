@@ -9,15 +9,19 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import cloud.app.csplayer.R
+import cloud.app.csplayer.media.repository.MediaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
-  @ApplicationContext private val context: Context
+  @param:ApplicationContext private val context: Context,
+  private val mediaRepository: MediaRepository
 ) : ViewModel() {
 
   // Title - shows app name by default, or folder name when browsing
@@ -26,21 +30,21 @@ class FeedViewModel @Inject constructor(
   // Root folder path - if set, only show files from this folder
   private var rootFolderPath: String? = null
 
-  // PagingData flow for the adapter - now loads real data from device storage
+  // PagingData flow for the adapter - now loads real data from MediaRepository
   val feedData: Flow<PagingData<FeedData>> = Pager(
     config = PagingConfig(
       pageSize = 20,
       enablePlaceholders = false,
       initialLoadSize = 20
     ),
-    pagingSourceFactory = { FeedPagingSource(context, rootFolderPath) }
+    pagingSourceFactory = { FeedPagingSource(mediaRepository, rootFolderPath) }
   ).flow.cachedIn(viewModelScope)
 
   val displayType = MutableStateFlow(DisplayType.GRID)
 
   /**
    * Set root folder path to filter feed
-   * @param path Root folder path. If null, loads all folders from preferences.
+   * @param path Root folder path. If null, loads all folders from MediaRepository.
    */
   fun setRootFolder(path: String?) {
     rootFolderPath = path
@@ -75,6 +79,21 @@ class FeedViewModel @Inject constructor(
 
       DisplayType.LIST -> {
         displayType.value = DisplayType.GRID
+      }
+    }
+  }
+
+  /**
+   * Refresh MediaRepository to sync from MediaStore
+   * Call this after permission is granted to trigger data sync
+   */
+  fun refreshMediaRepository() {
+    viewModelScope.launch {
+      try {
+        mediaRepository.refreshMedia()
+        Timber.d("MediaRepository refreshed successfully")
+      } catch (e: Exception) {
+        Timber.e(e, "Error refreshing media repository")
       }
     }
   }

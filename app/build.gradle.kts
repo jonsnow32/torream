@@ -138,6 +138,11 @@ dependencies {
   implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
   implementation("androidx.documentfile:documentfile:1.1.0")
 
+  // Room
+  implementation("androidx.room:room-runtime:2.8.3")
+  implementation("androidx.room:room-ktx:2.8.3")
+  ksp("androidx.room:room-compiler:2.8.3")
+
   val media3Version = "1.8.0"
   // Media 3 (ExoPlayer)
   implementation("androidx.media3:media3-ui:$media3Version")

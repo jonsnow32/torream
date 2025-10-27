@@ -7,10 +7,8 @@ import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.databinding.ItemShelfListsAudioThreeBinding
 import cloud.app.csplayer.databinding.ItemShelfListsVideoTwoBinding
 import cloud.app.csplayer.ui.feed.FeedClickListener
-import cloud.app.csplayer.ui.feed.FeedData.AudioItem.Companion.bind
-import cloud.app.csplayer.ui.feed.FeedData.VideoItem.Companion.bind
 
-sealed class ShelfViewHolder<T : ShelfType>(itemView: View) :
+sealed class ShelfViewHolder<T : ShelfItem>(itemView: View) :
   RecyclerView.ViewHolder(itemView) {
   abstract fun bind(item: T)
 
@@ -20,11 +18,11 @@ sealed class ShelfViewHolder<T : ShelfType>(itemView: View) :
     val binding: ItemShelfListsAudioThreeBinding = ItemShelfListsAudioThreeBinding.inflate(
       LayoutInflater.from(parent.context), parent, false
     )
-  ) : ShelfViewHolder<ShelfType.ThreeItem>(binding.root) {
-    override fun bind(item: ShelfType.ThreeItem) {
-      binding.item1.bind(item.items.first)
-      item.items.second?.let { binding.item2.bind(it) }
-      item.items.third?.let { binding.item3.bind(it) }
+  ) : ShelfViewHolder<ShelfItem.ThreeItem>(binding.root) {
+    override fun bind(item: ShelfItem.ThreeItem) {
+//      binding.item1.bind(item.items.first)
+//      item.items.second?.let { binding.item2.bind(it) }
+//      item.items.third?.let { binding.item3.bind(it) }
     }
   }
 
@@ -35,10 +33,10 @@ sealed class ShelfViewHolder<T : ShelfType>(itemView: View) :
       LayoutInflater.from(parent.context), parent, false
     )
   ) :
-    ShelfViewHolder<ShelfType.TwoItem>(binding.root) {
-    override fun bind(item: ShelfType.TwoItem) {
-      item.items.first.let { binding.item1.bind(it) }
-      item.items.second?.let { binding.item2.bind(it) }
+    ShelfViewHolder<ShelfItem.TwoItem>(binding.root) {
+    override fun bind(item: ShelfItem.TwoItem) {
+//      item.items.first.let { binding.item1.bind(it) }
+//      item.items.second?.let { binding.item2.bind(it) }
     }
   }
 }

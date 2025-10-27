@@ -12,8 +12,8 @@
     android:maxSdkVersion="29" /> <!-- Android 6-9, not needed on 10+ -->
 
 <!--  &lt;!&ndash; Android 13+ (API 33+) media permissions &ndash;&gt;-->
-<!--  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> &lt;!&ndash; Videos &ndash;&gt;-->
-<!--  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> &lt;!&ndash; Music/Audio &ndash;&gt;-->
+  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> <!-- Videos -->
+  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> <!-- Music/Audio -->
 <!--  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> &lt;!&ndash; Pictures &ndash;&gt;-->
 
 <!--  &lt;!&ndash; All Files Access for Android 11+ (API 30+) &ndash;&gt;-->

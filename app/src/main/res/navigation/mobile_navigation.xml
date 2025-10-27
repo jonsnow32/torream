@@ -226,5 +226,22 @@
   <fragment
     android:id="@+id/feedFragment"
     android:name="cloud.app.csplayer.ui.feed.FeedFragment"
-    android:label="FeedFragment" />
+    android:label="FeedFragment">
+
+    <!-- Self-navigation action for folder navigation -->
+    <action
+      android:id="@+id/action_feedFragment_self"
+      app:destination="@id/feedFragment"
+      app:enterAnim="@anim/enter_anim"
+      app:exitAnim="@anim/exit_anim"
+      app:popEnterAnim="@anim/enter_anim"
+      app:popExitAnim="@anim/exit_anim" />
+
+    <!-- Argument for root folder path -->
+    <argument
+      android:name="root_folder_path"
+      android:defaultValue="@null"
+      app:argType="string"
+      app:nullable="true" />
+  </fragment>
 </navigation>

@@ -842,4 +842,11 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="number_placeholder">10 items</string>
   <string name="retry">Retry</string>
   <string name="add_folders">Add more folders</string>
+  <string name="permission_required_message">Media access permission is required to load your videos and audio files</string>
+  <string name="grant_permission">Grant Permission</string>
+  <string name="permissions_granted">Permissions granted successfully</string>
+  <string name="permissions_denied">Permissions denied. Please grant permissions in app settings.</string>
+  <string name="items">%1$d items</string>
+  <string name="folder_items">%1$d folder(s), %2$d item(s)</string>
+  <string name="ms_bytes">%1$dms • %2$d bytes</string>
 </resources>
