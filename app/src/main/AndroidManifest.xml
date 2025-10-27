@@ -4,11 +4,22 @@
 
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- I dont remember, probs has to do with downloads -->
   <uses-permission android:name="android.permission.INTERNET" /> <!-- unless you only use cs3 as a player for downloaded stuff, you need this -->
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- Downloads -->
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- Downloads on low api devices -->
+
+  <!-- Storage permissions for different Android versions -->
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32" /> <!-- Android 6-12 -->
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="29" /> <!-- Android 6-9, not needed on 10+ -->
+
+<!--  &lt;!&ndash; Android 13+ (API 33+) media permissions &ndash;&gt;-->
+<!--  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> &lt;!&ndash; Videos &ndash;&gt;-->
+<!--  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> &lt;!&ndash; Music/Audio &ndash;&gt;-->
+<!--  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> &lt;!&ndash; Pictures &ndash;&gt;-->
+
+<!--  &lt;!&ndash; All Files Access for Android 11+ (API 30+) &ndash;&gt;-->
 <!--  <uses-permission-->
 <!--    android:name="android.permission.MANAGE_EXTERNAL_STORAGE"-->
-<!--    tools:ignore="ScopedStorage" /> &lt;!&ndash; Plugin API &ndash;&gt;-->
+<!--    tools:ignore="ScopedStorage" /> &lt;!&ndash; Full storage access &ndash;&gt;-->
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!-- some dependency needs this -->
   <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /> <!-- Used for player vertical slide -->
 <!--  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /> &lt;!&ndash; Used for app update &ndash;&gt;-->

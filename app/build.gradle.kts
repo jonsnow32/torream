@@ -5,6 +5,7 @@ plugins {
   id("org.jetbrains.kotlin.android")
   id("com.google.devtools.ksp")
   id("com.google.dagger.hilt.android")
+  id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 val abiCodes = mapOf(
@@ -26,7 +27,7 @@ android {
 
   defaultConfig {
     applicationId = "cloud.app.csplayer"
-    minSdk = 21
+    minSdk = 23
     targetSdk = 36
     versionCode = 117
     versionName = "1.1.7"
@@ -105,38 +106,39 @@ android {
 
   }
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
   }
   kotlinOptions {
-    jvmTarget = "1.8"
-    freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
+    jvmTarget = "21"
   }
 }
 
 dependencies {
 
   // Needed for EdgeToEdge helper
-  implementation("androidx.activity:activity:1.9.0")
-  implementation("androidx.activity:activity-ktx:1.9.0")
+  implementation("androidx.activity:activity:1.11.0")
+  implementation("androidx.activity:activity-ktx:1.11.0")
 
-  implementation("androidx.core:core-ktx:1.13.1")
-  implementation("androidx.appcompat:appcompat:1.7.0")
+  implementation("androidx.core:core-ktx:1.17.0")
+  implementation("androidx.appcompat:appcompat:1.7.1")
   implementation("androidx.preference:preference-ktx:1.2.1")
-  implementation("com.google.android.material:material:1.12.0")
-  implementation("androidx.navigation:navigation-ui-ktx:2.8.1")
-  implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
-  implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
-  implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.6")
-  implementation("androidx.navigation:navigation-fragment-ktx:2.8.1")
+  implementation("com.google.android.material:material:1.13.0")
+  implementation("androidx.navigation:navigation-ui-ktx:2.9.5")
+  implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.9.4")
+  implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4")
+  implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.9.4")
+  implementation("androidx.navigation:navigation-fragment-ktx:2.9.5")
   implementation("androidx.navigation:navigation-fragment-ktx:2.9.5")
   implementation("androidx.navigation:navigation-ui-ktx:2.9.5")
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
   // Paging 3
-  implementation("androidx.paging:paging-runtime-ktx:3.2.1")
+  implementation("androidx.paging:paging-runtime-ktx:3.3.6")
   implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+  implementation("androidx.documentfile:documentfile:1.1.0")
 
-  val media3Version = "1.4.1"
+  val media3Version = "1.8.0"
   // Media 3 (ExoPlayer)
   implementation("androidx.media3:media3-ui:$media3Version")
   implementation("androidx.media3:media3-cast:$media3Version")
@@ -152,30 +154,29 @@ dependencies {
 
   // UI Stuff
   implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
 
   // Downloading & Networking
-  implementation("com.github.Blatzar:NiceHttp:0.4.11")
+  implementation("com.github.Blatzar:NiceHttp:0.4.13")
 
   // Others
-  implementation("org.mozilla:rhino:1.7.15")
+  implementation("org.mozilla:rhino:1.8.0")
   implementation("com.github.albfernandez:juniversalchardet:2.5.0")
 
   //Dependence injection
-  implementation("com.google.dagger:hilt-android:2.48.1")
-  ksp("com.google.dagger:hilt-android-compiler:2.48.1")
+  implementation("com.google.dagger:hilt-android:2.57.2")
+  ksp("com.google.dagger:hilt-android-compiler:2.57.2")
 
   // Testing
   testImplementation("junit:junit:4.13.2")
-  androidTestImplementation("androidx.test.ext:junit:1.1.5")
-  androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+  androidTestImplementation("androidx.test.ext:junit:1.3.0")
+  androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
   //Ads
-  implementation("com.google.android.gms:play-services-ads:23.1.0")
-  implementation("com.ironsource.sdk:mediationsdk:8.10.0")
-  implementation("com.applovin:applovin-sdk:13.3.1")
-  implementation("com.unity3d.ads:unity-ads:4.16.1")
-  implementation("com.vungle:vungle-ads:7.5.1")
+  implementation("com.google.android.gms:play-services-ads:24.7.0")
+  implementation("com.ironsource.sdk:mediationsdk:9.0.0")
+  implementation("com.applovin:applovin-sdk:13.5.0")
+  implementation("com.unity3d.ads:unity-ads:4.16.3")
+  implementation("com.vungle:vungle-ads:7.6.0")
 
 
   //logging

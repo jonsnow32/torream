@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Google Mobile Ads SDK configuration file
+    This file is required to prevent conflicts between Firebase Analytics and AdMob
+    For more information, see: https://developers.google.com/admob/android/privacy
+-->
+<ad-services-config>
+    <!-- Enable Ad Services -->
+</ad-services-config>
+

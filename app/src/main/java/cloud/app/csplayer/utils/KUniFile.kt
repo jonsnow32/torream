@@ -381,24 +381,42 @@ abstract class KUniFile(val context: Context) {
 
       override fun listFiles(): Array<KUniFile>? {
         if (!isDirectory) return null
-        val dirPath = relativePath.trimEnd(File.separatorChar)
+
+        // Ensure dirPath has trailing slash for MediaStore query
+        val dirPath = if (relativePath.isEmpty()) {
+          "" // Root directory
+        } else {
+          relativePath.trimEnd(File.separatorChar) + File.separator
+        }
+
         val projection = arrayOf(
           MediaStore.Files.FileColumns._ID,
           MediaStore.Files.FileColumns.DISPLAY_NAME,
-          MediaStore.Files.FileColumns.RELATIVE_PATH
+          MediaStore.Files.FileColumns.RELATIVE_PATH,
+          MediaStore.Files.FileColumns.MIME_TYPE
         )
         val selection = "${MediaStore.Files.FileColumns.RELATIVE_PATH} = ?"
         val selectionArgs = arrayOf(dirPath)
         val files = mutableListOf<KUniFile>()
+
         resolver.query(collection, projection, selection, selectionArgs, null)?.use { cursor ->
+          android.util.Log.d("KUniFile", "MediaKUniFile.listFiles() - Found ${cursor.count} items in path: $dirPath")
           while (cursor.moveToNext()) {
             val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID))
             val displayName = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DISPLAY_NAME))
+            val relativePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.RELATIVE_PATH))
+            val mimeType = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE))
+
             val fileUri = Uri.withAppendedPath(collection, id.toString())
-            files.add(MediaKUniFile(context, collection, "$dirPath${File.separator}$displayName", external, mediaCollection)
+            val filePath = "$dirPath$displayName"
+
+            android.util.Log.d("KUniFile", "  - Found: $displayName (type: $mimeType)")
+
+            files.add(MediaKUniFile(context, collection, filePath, external, mediaCollection)
               .apply { cachedUri = fileUri })
           }
         }
+
         return files.toTypedArray()
       }
 

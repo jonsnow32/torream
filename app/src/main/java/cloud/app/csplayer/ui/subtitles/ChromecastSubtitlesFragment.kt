@@ -27,7 +27,8 @@ import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isTvOrEmulator
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import com.google.android.gms.cast.TextTrackStyle
 import com.google.android.gms.cast.TextTrackStyle.*
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
@@ -36,15 +37,16 @@ import cloud.app.csplayer.utils.Utils
 
 const val CHROME_SUBTITLE_KEY = "chome_subtitle_settings"
 
+@Serializable
 data class SaveChromeCaptionStyle(
-  @JsonProperty("fontFamily") var fontFamily: String? = null,
-  @JsonProperty("fontGenericFamily") var fontGenericFamily: Int? = null,
-  @JsonProperty("backgroundColor") var backgroundColor: Int = 0x00FFFFFF, // transparent
-  @JsonProperty("edgeColor") var edgeColor: Int = Color.BLACK, // BLACK
-  @JsonProperty("edgeType") var edgeType: Int = TextTrackStyle.EDGE_TYPE_OUTLINE,
-  @JsonProperty("foregroundColor") var foregroundColor: Int = Color.WHITE,
-  @JsonProperty("fontScale") var fontScale: Float = 1.05f,
-  @JsonProperty("windowColor") var windowColor: Int = Color.TRANSPARENT,
+  @SerialName("fontFamily") var fontFamily: String? = null,
+  @SerialName("fontGenericFamily") var fontGenericFamily: Int? = null,
+  @SerialName("backgroundColor") var backgroundColor: Int = 0x00FFFFFF, // transparent
+  @SerialName("edgeColor") var edgeColor: Int = Color.BLACK, // BLACK
+  @SerialName("edgeType") var edgeType: Int = TextTrackStyle.EDGE_TYPE_OUTLINE,
+  @SerialName("foregroundColor") var foregroundColor: Int = Color.WHITE,
+  @SerialName("fontScale") var fontScale: Float = 1.05f,
+  @SerialName("windowColor") var windowColor: Int = Color.TRANSPARENT,
 )
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)

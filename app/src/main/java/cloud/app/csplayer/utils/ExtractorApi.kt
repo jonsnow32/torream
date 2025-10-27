@@ -3,7 +3,6 @@ package cloud.app.csplayer.utils
 import android.net.Uri
 import cloud.app.csplayer.ui.subtitles.SubtitleFile
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
-import com.fasterxml.jackson.annotation.JsonIgnore
 
 import kotlinx.coroutines.delay
 import java.net.URL
@@ -219,7 +218,6 @@ open class ExtractorLink constructor(
    * Get video size in bytes with one head request. Only available for ExtractorLinkType.Video
    * @param timeoutSeconds timeout of the head request.
    */
-  @JsonIgnore
   fun getAllHeaders(): Map<String, String> {
     if (referer.isBlank()) {
       return headers

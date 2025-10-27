@@ -21,7 +21,8 @@ import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.parseJson
 import cloud.app.csplayer.utils.Utils.showToast
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okio.BufferedSink
@@ -41,38 +42,43 @@ class InAppUpdater {
     const val LOG_TAG = "InAppUpdater"
 
     // === IN APP UPDATER ===
+    @Serializable
     data class GithubAsset(
-      @JsonProperty("name") val name: String,
-      @JsonProperty("size") val size: Int, // Size bytes
-      @JsonProperty("browser_download_url") val browser_download_url: String, // download link
-      @JsonProperty("content_type") val content_type: String, // application/vnd.android.package-archive
+      @SerialName("name") val name: String,
+      @SerialName("size") val size: Int, // Size bytes
+      @SerialName("browser_download_url") val browser_download_url: String, // download link
+      @SerialName("content_type") val content_type: String, // application/vnd.android.package-archive
     )
 
+    @Serializable
     data class GithubRelease(
-      @JsonProperty("tag_name") val tag_name: String, // Version code
-      @JsonProperty("body") val body: String, // Desc
-      @JsonProperty("assets") val assets: List<GithubAsset>,
-      @JsonProperty("target_commitish") val target_commitish: String, // branch
-      @JsonProperty("prerelease") val prerelease: Boolean,
-      @JsonProperty("node_id") val node_id: String //Node Id
+      @SerialName("tag_name") val tag_name: String, // Version code
+      @SerialName("body") val body: String, // Desc
+      @SerialName("assets") val assets: List<GithubAsset>,
+      @SerialName("target_commitish") val target_commitish: String, // branch
+      @SerialName("prerelease") val prerelease: Boolean,
+      @SerialName("node_id") val node_id: String //Node Id
     )
 
+    @Serializable
     data class GithubObject(
-      @JsonProperty("sha") val sha: String, // sha 256 hash
-      @JsonProperty("type") val type: String, // object type
-      @JsonProperty("url") val url: String,
+      @SerialName("sha") val sha: String, // sha 256 hash
+      @SerialName("type") val type: String, // object type
+      @SerialName("url") val url: String,
     )
 
+    @Serializable
     data class GithubTag(
-      @JsonProperty("object") val github_object: GithubObject,
+      @SerialName("object") val github_object: GithubObject,
     )
 
+    @Serializable
     data class Update(
-      @JsonProperty("shouldUpdate") val shouldUpdate: Boolean,
-      @JsonProperty("updateURL") val updateURL: String?,
-      @JsonProperty("updateVersion") val updateVersion: String?,
-      @JsonProperty("changelog") val changelog: String?,
-      @JsonProperty("updateNodeId") val updateNodeId: String?
+      @SerialName("shouldUpdate") val shouldUpdate: Boolean,
+      @SerialName("updateURL") val updateURL: String?,
+      @SerialName("updateVersion") val updateVersion: String?,
+      @SerialName("changelog") val changelog: String?,
+      @SerialName("updateNodeId") val updateNodeId: String?
     )
 
     private suspend fun Activity.getAppUpdate(): Update {

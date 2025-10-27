@@ -18,9 +18,10 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.databinding.ToastBinding
-import cloud.app.csplayer.utils.DataStore.mapper
+import cloud.app.csplayer.datastore.Serializer
 import cloud.app.csplayer.utils.UIHelper.toPx
-import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.serializer
 import java.lang.ref.WeakReference
 import kotlin.math.sqrt
 
@@ -315,11 +316,12 @@ object Utils {
   /** Any object as json string */
   fun Any.toJson(): String {
     if (this is String) return this
-    return mapper.writeValueAsString(this)
+    @Suppress("UNCHECKED_CAST")
+    return Serializer.json.encodeToString(serializer(this::class.java) as kotlinx.serialization.KSerializer<Any>, this)
   }
 
   inline fun <reified T> parseJson(value: String): T {
-    return mapper.readValue(value)
+    return Serializer.json.decodeFromString<T>(value)
   }
 
   inline fun <reified T> tryParseJson(value: String?): T? {

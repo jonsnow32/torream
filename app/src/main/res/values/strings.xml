@@ -153,7 +153,21 @@
   <string name="update_started">Update Started</string>
   <string name="stream">Network stream</string>
   <string name="error_loading_links_toast">Error Loading Links</string>
+  <string name="error_loading">Error loading data</string>
   <string name="links_reloaded_toast">Links Reloaded</string>
+  <string name="select_folder">Select Folder</string>
+  <string name="add_folder">Add Folder</string>
+  <string name="no_folder_selected">No folder selected</string>
+  <string name="tap_add_folder_to_start">Tap "Add Folder" to select folders to scan</string>
+  <string name="no_folders_available">No folders available</string>
+  <string name="storage_permission_required">Storage permission is required to browse folders</string>
+  <string name="expand_collapse">Expand/Collapse</string>
+  <string name="all_files_access_title">All Files Access (Android 11+)</string>
+  <string name="all_files_access_description">Grant full storage access to browse all files and folders without restrictions</string>
+  <string name="request_all_files_access">Request All Files Access</string>
+  <string name="all_files_access_granted">✓ All Files Access Granted</string>
+  <string name="all_files_access_not_available">All Files Access is only available on Android 11+</string>
+  <string name="folder_icon">Folder icon</string>
   <string name="download_storage_text">Internal Storage</string>
   <string name="app_dubbed_text">Dub</string>
   <string name="app_subbed_text">Sub</string>
@@ -800,10 +814,10 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
 
   <string name="commit_hash" translatable="false">3681db5</string>
   <string name="pref_video_interpolation_sync_default" translatable="false">audio</string>
-  <string name="ui_track_title_lang" translatable="false" >%1$d. %2$s (%3$s)</string>
-  <string name="ui_track_text" translatable="false" >%1$d. %2$s</string>
-  <string name="ui_audio_track" translatable="false" >%1$d. %2$s %3$s</string>
-  <string name="ui_video_track_text" translatable="false" >%1d. %2$dx%3$d</string>
+  <string name="ui_track_title_lang" translatable="false">%1$d. %2$s (%3$s)</string>
+  <string name="ui_track_text" translatable="false">%1$d. %2$s</string>
+  <string name="ui_audio_track" translatable="false">%1$d. %2$s %3$s</string>
+  <string name="ui_video_track_text" translatable="false">%1d. %2$dx%3$d</string>
   <string name="format_fixed_number" translatable="false">%.0f</string>
   <string name="format_seconds" translatable="false">%.1f s</string>
   <string name="ui_track" translatable="false">#%d</string>
@@ -815,8 +829,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="codec">HW+</string>
   <string name="player_decoders">Decoders</string>
   <string name="more_options">More Options</string>
-    <string name="end_of_file">End of file</string>
-    <string name="open_local_video">Open local video</string>
+  <string name="end_of_file">End of file</string>
+  <string name="open_local_video">Open local video</string>
   <string name="ad_testing">Ad testing</string>
   <string name="ad_key">ad_key_pref</string>
 
@@ -825,7 +839,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="duration_placeholder">00:00:00</string>
   <string name="empty">Empty</string>
   <string name="show_mode">Show mode</string>
-    <string name="number_placeholder">10 items</string>
+  <string name="number_placeholder">10 items</string>
   <string name="retry">Retry</string>
-  <string name="error_loading">Loading error</string>
+  <string name="add_folders">Add more folders</string>
 </resources>

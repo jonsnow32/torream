@@ -10,7 +10,11 @@
   <item
     android:id="@+id/sort"
     android:icon="@drawable/outline_sort_24"
-    android:title="@string/show_mode"
+    android:title="@string/sort"
     app:showAsAction="ifRoom" />
-
+  <item
+    android:id="@+id/add_folders"
+    android:icon="@drawable/ic_baseline_add_24"
+    android:title="@string/add_folders"
+    app:showAsAction="ifRoom" />
 </menu>

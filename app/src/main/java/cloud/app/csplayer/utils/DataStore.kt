@@ -4,10 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.utils.Utils.logError
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
+import cloud.app.csplayer.datastore.Serializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -38,8 +37,7 @@ data class Editor(
 }
 
 object DataStore {
-    val mapper: JsonMapper = JsonMapper.builder().addModule(kotlinModule())
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).build()
+    val mapper: Json = Serializer.json
 
     private fun getPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
@@ -104,7 +102,9 @@ object DataStore {
     fun <T> Context.setKey(path: String, value: T) {
         try {
             val editor: SharedPreferences.Editor = getSharedPrefs().edit()
-            editor.putString(path, mapper.writeValueAsString(value))
+            @Suppress("UNCHECKED_CAST")
+            val json = mapper.encodeToString(kotlinx.serialization.serializer(value!!::class.java) as kotlinx.serialization.KSerializer<T>, value)
+            editor.putString(path, json)
             editor.apply()
         } catch (e: Exception) {
             logError(e)
@@ -125,11 +125,12 @@ object DataStore {
     }
 
     inline fun <reified T : Any> String.toKotlinObject(): T {
-        return mapper.readValue(this, T::class.java)
+        return mapper.decodeFromString<T>(this)
     }
 
     fun <T> String.toKotlinObject(valueType: Class<T>): T {
-        return mapper.readValue(this, valueType)
+        @Suppress("UNCHECKED_CAST")
+        return mapper.decodeFromString(kotlinx.serialization.serializer(valueType) as kotlinx.serialization.KSerializer<T>, this)
     }
 
     // GET KEY GIVEN PATH AND DEFAULT VALUE, NULL IF ERROR
@@ -201,9 +202,10 @@ object DataStore {
 
 
   const val VIDEO_POS_DUR = "video_pos_dur"
+  @kotlinx.serialization.Serializable
   data class PosDur(
-    @JsonProperty("position") val position: Long,
-    @JsonProperty("duration") val duration: Long
+    @kotlinx.serialization.SerialName("position") val position: Long,
+    @kotlinx.serialization.SerialName("duration") val duration: Long
   )
 
   fun PosDur.fixVisual(): PosDur {

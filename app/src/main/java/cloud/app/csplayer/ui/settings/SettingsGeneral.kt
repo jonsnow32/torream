@@ -25,7 +25,8 @@ import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SubtitleHelper
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.isLayout
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import androidx.core.content.edit
 import androidx.core.view.isGone
 import cloud.app.csplayer.BuildConfig
@@ -116,14 +117,15 @@ class SettingsGeneral : PreferenceFragmentCompat() {
     setToolBarScrollFlags()
   }
 
+  @Serializable
   data class CustomSite(
-    @JsonProperty("parentJavaClass") // javaClass.simpleName
+    @SerialName("parentJavaClass") // javaClass.simpleName
     val parentJavaClass: String,
-    @JsonProperty("name")
+    @SerialName("name")
     val name: String,
-    @JsonProperty("url")
+    @SerialName("url")
     val url: String,
-    @JsonProperty("lang")
+    @SerialName("lang")
     val lang: String,
   )
 

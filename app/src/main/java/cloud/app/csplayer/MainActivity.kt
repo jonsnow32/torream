@@ -48,9 +48,9 @@ import cloud.app.csplayer.utils.Utils.isMPVSupported
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import cloud.app.csplayer.datastore.Serializer
+import kotlinx.serialization.serializer
+
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.Session
 import com.google.android.gms.cast.framework.SessionManager
@@ -70,25 +70,25 @@ enum class FocusDirection {
 
 
 var app = Requests(responseParser = object : ResponseParser {
-  val mapper: ObjectMapper = jacksonObjectMapper().configure(
-    DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-    false
-  )
+  private val json = Serializer.json
 
   override fun <T : Any> parse(text: String, kClass: KClass<T>): T {
-    return mapper.readValue(text, kClass.java)
+    @Suppress("UNCHECKED_CAST")
+    return json.decodeFromString(serializer(kClass.java) as kotlinx.serialization.KSerializer<T>, text)
   }
 
   override fun <T : Any> parseSafe(text: String, kClass: KClass<T>): T? {
     return try {
-      mapper.readValue(text, kClass.java)
+      @Suppress("UNCHECKED_CAST")
+      json.decodeFromString(serializer(kClass.java) as kotlinx.serialization.KSerializer<T>, text)
     } catch (_: Exception) {
       null
     }
   }
 
   override fun writeValueAsString(obj: Any): String {
-    return mapper.writeValueAsString(obj)
+    @Suppress("UNCHECKED_CAST")
+    return json.encodeToString(serializer(obj::class.java), obj)
   }
 }).apply {
   defaultHeaders = mapOf("user-agent" to USER_AGENT)
