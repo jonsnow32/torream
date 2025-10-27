@@ -165,17 +165,6 @@ class FeedFragment : Fragment(), FeedClickListener {
         }
 
         is SyncState.Completed -> {
-          // Show completion message briefly
-          syncSnackbar?.dismiss()
-          syncSnackbar = Snackbar.make(
-            binding.root,
-            "Media synced successfully",
-            Snackbar.LENGTH_SHORT
-          ).apply {
-            show()
-          }
-
-          // Refresh adapter to show new data
           adapter.refresh()
         }
 
@@ -199,11 +188,11 @@ class FeedFragment : Fragment(), FeedClickListener {
 
     observe(viewModel.displayType) {
       when (it) {
-        FeedViewModel.DisplayType.LIST -> binding.toolbar.menu.findItem(R.id.displayType)
-          .setIcon(R.drawable.outline_grid_view_24)
-
         FeedViewModel.DisplayType.GRID -> binding.toolbar.menu.findItem(R.id.displayType)
-          .setIcon(R.drawable.outline_view_agenda_24)
+          .setIcon(R.drawable.outline_view_agenda_24)  // Tree/Grid view
+
+        FeedViewModel.DisplayType.LIST -> binding.toolbar.menu.findItem(R.id.displayType)
+          .setIcon(R.drawable.outline_grid_view_24)  // Folder only view
       }
     }
     binding.toolbar.setOnMenuItemClickListener {

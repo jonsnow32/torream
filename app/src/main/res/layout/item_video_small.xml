@@ -5,72 +5,82 @@
   style="@style/MediaItem"
   android:layout_width="?attr/itemCoverSize2x"
   android:layout_height="wrap_content"
-  android:gravity="center"
-  android:orientation="vertical">
+  android:orientation="vertical"
+  android:paddingBottom="8dp">
 
-  <androidx.constraintlayout.widget.ConstraintLayout
+  <!-- Thumbnail with border -->
+  <com.google.android.material.card.MaterialCardView
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp"
+    app:strokeColor="?attr/colorOutline"
+    app:strokeWidth="1dp">
 
-    <ImageView
-      android:id="@+id/imgCover"
+    <androidx.constraintlayout.widget.ConstraintLayout
       android:layout_width="match_parent"
-      android:layout_height="0dp"
-      android:importantForAccessibility="no"
-      android:scaleType="centerCrop"
-      android:src="?android:attr/colorBackground"
-      tools:src="@tools:sample/backgrounds/scenic"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintDimensionRatio="16:9"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent" />
+      android:layout_height="wrap_content">
 
-    <!-- Duration overlay (bottom-end) -->
-    <TextView
-      android:id="@+id/tvDuration"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginEnd="4dp"
-      android:layout_marginBottom="4dp"
-      android:background="@drawable/duration_background"
-      android:importantForAccessibility="no"
-      android:paddingStart="6dp"
-      android:paddingTop="2dp"
-      android:paddingEnd="6dp"
-      android:paddingBottom="2dp"
-      android:text="@string/duration_placeholder"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent" />
+      <ImageView
+        android:id="@+id/imgCover"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:src="?android:attr/colorBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@tools:sample/backgrounds/scenic" />
 
-  </androidx.constraintlayout.widget.ConstraintLayout>
+      <!-- Duration overlay -->
+      <TextView
+        android:id="@+id/tvDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:background="@drawable/duration_background"
+        android:importantForAccessibility="no"
+        android:paddingHorizontal="5dp"
+        android:paddingVertical="2dp"
+        android:text="@string/duration_placeholder"
+        android:textSize="11sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+  </com.google.android.material.card.MaterialCardView>
+
+  <!-- Content section -->
   <LinearLayout
     android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_gravity="center_horizontal"
-    android:layout_weight="1"
-    android:paddingHorizontal="4dp"
-    android:orientation="vertical">
+    android:layout_height="wrap_content"
+    android:layout_marginTop="6dp"
+    android:orientation="vertical"
+    android:paddingHorizontal="4dp">
 
     <TextView
       android:id="@+id/title"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_gravity="center"
       android:ellipsize="end"
-      android:maxLines="1"
+      android:maxLines="2"
       android:textSize="13sp"
-      tools:ignore="TextSizeCheck"
+      android:textStyle="bold"
       tools:text="@tools:sample/full_names" />
 
     <TextView
       android:id="@+id/fileSize"
-      android:layout_width="wrap_content"
+      android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:alpha="0.66"
+      android:layout_marginTop="2dp"
+      android:alpha="0.7"
       android:ellipsize="end"
-      android:maxLines="2"
+      android:maxLines="1"
+      android:textSize="11sp"
       tools:text="@tools:sample/first_names" />
 
   </LinearLayout>

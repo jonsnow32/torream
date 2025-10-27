@@ -46,6 +46,7 @@
     <item name="black">@color/black</item>
     <item name="itemCoverSize">55dp</item>
     <item name="itemCoverSize2x">110dp</item>
+    <item name="itemCoverSize3x">165dp</item>
 
     <item name="download_icon_color">?attr/white</item>
     <item name="download_fill_color">?attr/white</item>
@@ -917,11 +918,12 @@
        Alternative: @drawable/selectable_item_background_bordered_rounded (8dp corners, 2dp border, colorPrimary)
   -->
   <style name="MediaItem">
-    <item name="android:background">@drawable/selectable_item_background_bordered</item>
+    <item name="android:foreground">@drawable/selectable_item_background_bordered</item>
     <item name="android:baselineAligned">false</item>
     <item name="android:clickable">true</item>
     <item name="android:clipToPadding">false</item>
     <item name="android:focusable">true</item>
-    <item name="android:paddingBottom">8dp</item>
+    <item name="android:layout_marginTop">3dp</item>
+    <item name="android:layout_marginBottom">3dp</item>
   </style>
 </resources>

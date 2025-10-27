@@ -6,14 +6,11 @@
   android:layout_height="wrap_content"
   style="@style/MediaItem"
   android:gravity="center"
-  android:orientation="horizontal"
-  android:paddingHorizontal="20dp"
-  android:paddingTop="8dp">
+  android:orientation="horizontal">
 
   <androidx.constraintlayout.widget.ConstraintLayout
-    android:layout_width="?attr/itemCoverSize"
-    android:layout_height="wrap_content"
-    android:layout_marginEnd="8dp">
+    android:layout_width="?attr/itemCoverSize2x"
+    android:layout_height="wrap_content">
 
     <ImageView
       android:id="@+id/imgCover"
@@ -23,7 +20,7 @@
       android:scaleType="centerCrop"
       android:src="@drawable/ic_folder"
       app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintDimensionRatio="16:10"
+      app:layout_constraintDimensionRatio="4:3"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent" />

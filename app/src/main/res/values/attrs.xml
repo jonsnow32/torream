@@ -3,6 +3,7 @@
 
   <attr name="itemCoverSize" format="dimension" />
   <attr name="itemCoverSize2x" format="dimension" />
+  <attr name="itemCoverSize3x" format="dimension" />
 
   <declare-styleable name="FlowLayout_Layout">
     <attr name="itemSpacing" format="dimension" />

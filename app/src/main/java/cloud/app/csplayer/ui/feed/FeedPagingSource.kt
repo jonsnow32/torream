@@ -13,10 +13,12 @@ import timber.log.Timber
  * @param repository MediaRepository for accessing media and folder data
  * @param rootFolderPath Optional root folder path. If provided, only shows media from this folder.
  *                       If null, shows all folders.
+ * @param displayType Display type that determines how items are shown (GRID or LIST)
  */
 class FeedPagingSource(
   private val repository: MediaRepository,
-  private val rootFolderPath: String? = null
+  private val rootFolderPath: String? = null,
+  private val displayType: FeedViewModel.DisplayType = FeedViewModel.DisplayType.GRID
 ) : PagingSource<Int, FeedData>() {
 
   override suspend fun load(params: LoadParams<Int>): LoadResult<Int, FeedData> {
@@ -70,13 +72,19 @@ class FeedPagingSource(
       throw NoFoldersFoundException("No media folders found. Please scan your device for media files.")
     }
 
+    // Determine folder type based on displayType
+    val folderType = when (displayType) {
+      FeedViewModel.DisplayType.GRID -> FeedData.Type.FolderSmall
+      FeedViewModel.DisplayType.LIST -> FeedData.Type.Folder
+    }
+
     // Convert Folder to FeedData.FolderItem
     return folders.map { folder ->
       FeedData.FolderItem(
         id = folder.path,
         title = folder.name,
         folder = folder,
-        type = FeedData.Type.FolderSmall
+        type = folderType
       )
     }.also {
       Timber.d("Successfully loaded ${it.size} folders")
@@ -115,6 +123,12 @@ class FeedPagingSource(
         val subfolders = repository.observeFolders().first()
           .filter { it.parentPath == folderPath }
 
+        // Determine folder type based on displayType
+        val folderType = when (displayType) {
+          FeedViewModel.DisplayType.GRID -> FeedData.Type.FolderSmall
+          FeedViewModel.DisplayType.LIST -> FeedData.Type.Folder
+        }
+
         subfolders.forEach { folder ->
           items.add(
             0, // Add folders at the beginning
@@ -122,7 +136,7 @@ class FeedPagingSource(
               id = folder.path,
               title = folder.name,
               folder = folder,
-              type = FeedData.Type.FolderSmall
+              type = folderType
             )
           )
         }
@@ -225,13 +239,24 @@ class FeedPagingSource(
   }
 
   /**
-   * Determine media type based on MIME type
+   * Determine media type based on MIME type and displayType
    */
   private fun determineMediaType(mimeType: String): FeedData.Type {
-    return when {
-      mimeType.startsWith("video/") -> FeedData.Type.VideoSmall
-      mimeType.startsWith("audio/") -> FeedData.Type.AudioSmall
-      else -> FeedData.Type.VideoSmall // Default to video
+    return when (displayType) {
+      FeedViewModel.DisplayType.GRID -> {
+        when {
+          mimeType.startsWith("video/") -> FeedData.Type.VideoSmall
+          mimeType.startsWith("audio/") -> FeedData.Type.AudioSmall
+          else -> FeedData.Type.VideoSmall // Default to video
+        }
+      }
+      FeedViewModel.DisplayType.LIST -> {
+        when {
+          mimeType.startsWith("video/") -> FeedData.Type.Video
+          mimeType.startsWith("audio/") -> FeedData.Type.Audio
+          else -> FeedData.Type.Video // Default to video
+        }
+      }
     }
   }
 }

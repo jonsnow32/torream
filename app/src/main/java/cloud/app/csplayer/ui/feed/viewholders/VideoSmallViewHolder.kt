@@ -8,6 +8,7 @@ import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
 import cloud.app.csplayer.utils.formatDuration
 import cloud.app.csplayer.utils.formatFileSize
+import cloud.app.csplayer.utils.loadThumbnail
 
 class VideoSmallViewHolder(
   val parent: ViewGroup,
@@ -20,7 +21,10 @@ class VideoSmallViewHolder(
     binding.title.text = feed.title
     binding.fileSize.text = feed.media.size.formatFileSize()
     binding.tvDuration.text = feed.media.duration.formatDuration()
-    //binding.imgCover = feed.media.cover
+
+    // Load thumbnail asynchronously
+    binding.imgCover.loadThumbnail(feed.media.uri)
+
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)
     }

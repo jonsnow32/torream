@@ -1,6 +1,8 @@
 package cloud.app.csplayer.ui.feed
 
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,15 +12,19 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import cloud.app.csplayer.R
 import cloud.app.csplayer.media.repository.MediaRepository
+import cloud.app.csplayer.utils.PREFERENCES_NAME
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
 class FeedViewModel @Inject constructor(
   @param:ApplicationContext private val context: Context,
   private val mediaRepository: MediaRepository
@@ -30,17 +36,25 @@ class FeedViewModel @Inject constructor(
   // Root folder path - if set, only show files from this folder
   private var rootFolderPath: String? = null
 
-  // PagingData flow for the adapter - now loads real data from MediaRepository
-  val feedData: Flow<PagingData<FeedData>> = Pager(
-    config = PagingConfig(
-      pageSize = 20,
-      enablePlaceholders = false,
-      initialLoadSize = 20
-    ),
-    pagingSourceFactory = { FeedPagingSource(mediaRepository, rootFolderPath) }
-  ).flow.cachedIn(viewModelScope)
+  // SharedPreferences for storing display type
+  private val sharedPreferences: SharedPreferences =
+    context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
-  val displayType = MutableStateFlow(DisplayType.GRID)
+  // Display type state - loaded from preferences
+  val displayType = MutableStateFlow(loadDisplayType())
+
+  // PagingData flow for the adapter - now loads real data from MediaRepository
+  // Recreates when displayType changes to apply new item types
+  val feedData: Flow<PagingData<FeedData>> = displayType.flatMapLatest { currentDisplayType ->
+    Pager(
+      config = PagingConfig(
+        pageSize = 20,
+        enablePlaceholders = false,
+        initialLoadSize = 20
+      ),
+      pagingSourceFactory = { FeedPagingSource(mediaRepository, rootFolderPath, currentDisplayType) }
+    ).flow
+  }.cachedIn(viewModelScope)
 
   // Expose sync state from MediaRepository for UI feedback
   val syncState = mediaRepository.observeSyncState()
@@ -73,17 +87,13 @@ class FeedViewModel @Inject constructor(
     }
   }
 
-  // TODO: Refactor this to work with PagingData - may need to recreate Pager or use different approach
   fun changeDisplayType() {
-    when (displayType.value) {
-      DisplayType.GRID -> {
-        displayType.value = DisplayType.LIST
-      }
-
-      DisplayType.LIST -> {
-        displayType.value = DisplayType.GRID
-      }
+    val newDisplayType = when (displayType.value) {
+      DisplayType.GRID -> DisplayType.LIST
+      DisplayType.LIST -> DisplayType.GRID
     }
+    displayType.value = newDisplayType
+    saveDisplayType(newDisplayType)
   }
 
   /**
@@ -101,10 +111,31 @@ class FeedViewModel @Inject constructor(
     }
   }
 
+  /**
+   * Load display type from SharedPreferences
+   */
+  private fun loadDisplayType(): DisplayType {
+    val savedOrdinal = sharedPreferences.getInt(KEY_DISPLAY_TYPE, DisplayType.GRID.ordinal)
+    return DisplayType.entries.getOrNull(savedOrdinal) ?: DisplayType.GRID
+  }
+
+  /**
+   * Save display type to SharedPreferences
+   */
+  private fun saveDisplayType(displayType: DisplayType) {
+    sharedPreferences.edit {
+      putInt(KEY_DISPLAY_TYPE, displayType.ordinal)
+    }
+    Timber.d("Saved display type: $displayType")
+  }
 
   enum class DisplayType {
     GRID,
     LIST
+  }
+
+  companion object {
+    private const val KEY_DISPLAY_TYPE = "feed_display_type"
   }
 }
 

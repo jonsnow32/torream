@@ -8,6 +8,7 @@ import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
 import cloud.app.csplayer.utils.formatDuration
 import cloud.app.csplayer.utils.formatFileSize
+import cloud.app.csplayer.utils.loadThumbnail
 
 class VideoViewHolder(
   val parent: ViewGroup,
@@ -18,8 +19,12 @@ class VideoViewHolder(
 ) : FeedViewHolder<FeedData.MediaItem>(binding.root) {
   override fun bind(feed: FeedData.MediaItem) {
     binding.title.text = feed.title
-    binding.subtitle.text = "${feed.media.duration.formatDuration()} • ${feed.media.size.formatFileSize()}"
-    //binding.imgCover = feed.media.cover
+    binding.subtitle.text = feed.media.size.formatFileSize()
+    binding.txtPath.text = feed.media.path
+    binding.tvDuration.text = feed.media.duration.formatDuration()
+    // Load thumbnail asynchronously
+    binding.imgCover.loadThumbnail(feed.media.uri)
+
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)
     }

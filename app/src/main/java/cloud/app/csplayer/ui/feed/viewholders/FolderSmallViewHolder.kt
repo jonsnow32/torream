@@ -3,6 +3,7 @@ package cloud.app.csplayer.ui.feed.viewholders
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import cloud.app.csplayer.R
+import cloud.app.csplayer.databinding.ItemFolderBinding
 import cloud.app.csplayer.databinding.ItemFolderSmallBinding
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
