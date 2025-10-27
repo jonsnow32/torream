@@ -465,3 +465,43 @@ object Utils {
   const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
 
 }
+
+/**
+ * Format bytes to human-readable file size
+ * @return Formatted string like "1.5 MB", "320 KB", "2.3 GB"
+ */
+fun Long.formatFileSize(): String {
+  if (this < 0) return "0 B"
+
+  val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB")
+  var size = this.toDouble()
+  var unitIndex = 0
+
+  while (size >= 1024 && unitIndex < units.size - 1) {
+    size /= 1024.0
+    unitIndex++
+  }
+
+  return when {
+    unitIndex == 0 -> "${this} ${units[unitIndex]}"
+    size >= 100 -> String.format(java.util.Locale.US, "%.0f %s", size, units[unitIndex])
+    size >= 10 -> String.format(java.util.Locale.US, "%.1f %s", size, units[unitIndex])
+    else -> String.format(java.util.Locale.US, "%.2f %s", size, units[unitIndex])
+  }
+}
+
+/**
+ * Format milliseconds to duration string
+ * @return Formatted string like "1:23:45" or "5:30"
+ */
+fun Long.formatDuration(): String {
+  val totalSeconds = this / 1000
+  val hours = totalSeconds / 3600
+  val minutes = (totalSeconds % 3600) / 60
+  val seconds = totalSeconds % 60
+
+  return when {
+    hours > 0 -> String.format(java.util.Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
+    else -> String.format(java.util.Locale.US, "%d:%02d", minutes, seconds)
+  }
+}

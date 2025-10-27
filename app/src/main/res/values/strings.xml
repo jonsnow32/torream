@@ -847,6 +847,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="permissions_granted">Permissions granted successfully</string>
   <string name="permissions_denied">Permissions denied. Please grant permissions in app settings.</string>
   <string name="items">%1$d items</string>
-  <string name="folder_items">%1$d folder(s), %2$d item(s)</string>
+  <string name="folders">%1$d folders</string>
+  <string name="folder_items">%1$d folders • %2$d items</string>
   <string name="ms_bytes">%1$dms • %2$d bytes</string>
 </resources>

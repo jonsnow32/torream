@@ -42,6 +42,9 @@ class FeedViewModel @Inject constructor(
 
   val displayType = MutableStateFlow(DisplayType.GRID)
 
+  // Expose sync state from MediaRepository for UI feedback
+  val syncState = mediaRepository.observeSyncState()
+
   /**
    * Set root folder path to filter feed
    * @param path Root folder path. If null, loads all folders from MediaRepository.

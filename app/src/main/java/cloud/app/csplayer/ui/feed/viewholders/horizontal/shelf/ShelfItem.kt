@@ -11,14 +11,14 @@ sealed interface ShelfItem {
 
   val id: String
 
-  class ThreeItem(
+  data class ThreeItem(
     override val id: String,
     val items : Triple<FeedData.MediaItem, FeedData.MediaItem?, FeedData.MediaItem?>,
   ) : ShelfItem {
     val type = Type.ThreeAudioItem
   }
 
-  class TwoItem(
+  data class TwoItem(
     override val id: String,
     val items : Pair<FeedData.MediaItem, FeedData.MediaItem?>,
   ) : ShelfItem {

@@ -62,9 +62,16 @@ interface GridAdapter {
         }
       }
       recycler.layoutManager = layoutManager
+
+      // Disable ALL animations to prevent blink/flicker during pagination
+      recycler.itemAnimator = null  // Completely remove item animator
+
       recycler.apply {
         adapter = gridAdapter.adapter
 
+        // Additional optimization for smooth scrolling
+        setHasFixedSize(true)
+        setItemViewCacheSize(20)
 
         doOnLayout {
           val width = it.width - it.paddingLeft - it.paddingRight

@@ -12,5 +12,9 @@ interface MediaRepository {
   fun observeSyncState(): Flow<SyncState>
   suspend fun refreshMedia(path: String? = null): Boolean
   suspend fun getMediaByFolder(folderPath: String): List<Media>
+  suspend fun getMediaByFolderPaged(folderPath: String, limit: Int, offset: Int): List<Media>
+  suspend fun getFoldersPaged(limit: Int, offset: Int): List<Folder>
+  suspend fun countMediaInFolder(folderPath: String): Int
+  suspend fun countAllFolders(): Int
   suspend fun updateMediaMetadata(uri: String, metadata: MediaMetadata)
 }

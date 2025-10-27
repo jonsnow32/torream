@@ -14,21 +14,28 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentFeedBinding
+import cloud.app.csplayer.media.model.SyncState
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.filesystem.FileTreeDialog
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
 class FeedFragment : Fragment(), FeedClickListener {
   private var binding by autoCleared<FragmentFeedBinding>()
   private val viewModel: FeedViewModel by viewModels()
+
+  // Keep reference to current Snackbar for sync state
+  private var syncSnackbar: Snackbar? = null
 
   // Lazy initialization to allow permission check callback
   private val adapter by lazy {
@@ -41,7 +48,7 @@ class FeedFragment : Fragment(), FeedClickListener {
   ) { permissions ->
     val allGranted = permissions.values.all { it }
     if (allGranted) {
-      // Permissions granted, trigger MediaRepository refresh and reload data
+      // Permissions granted, trigger MediaRepository refresh and reload dat
       showToast(getString(R.string.permissions_granted))
 
       // Refresh MediaRepository to sync from MediaStore
@@ -143,6 +150,50 @@ class FeedFragment : Fragment(), FeedClickListener {
     // Observe loading states to hide refresh indicator
     observe(viewModel.feedData) {
       binding.swipeRefresh.isRefreshing = false
+    }
+
+    observe(viewModel.syncState) { state ->
+      when (state) {
+        is SyncState.Idle -> {
+          // Dismiss any existing snackbar
+          syncSnackbar?.dismiss()
+          syncSnackbar = null
+        }
+
+        is SyncState.Syncing -> {
+
+        }
+
+        is SyncState.Completed -> {
+          // Show completion message briefly
+          syncSnackbar?.dismiss()
+          syncSnackbar = Snackbar.make(
+            binding.root,
+            "Media synced successfully",
+            Snackbar.LENGTH_SHORT
+          ).apply {
+            show()
+          }
+
+          // Refresh adapter to show new data
+          adapter.refresh()
+        }
+
+        is SyncState.Error -> {
+          // Show error with retry action
+          syncSnackbar?.dismiss()
+          syncSnackbar = Snackbar.make(
+            binding.root,
+            "Sync error: ${state.message}",
+            Snackbar.LENGTH_LONG
+          ).apply {
+            setAction("Retry") {
+              viewModel.refreshMediaRepository()
+            }
+            show()
+          }
+        }
+      }
     }
 
 

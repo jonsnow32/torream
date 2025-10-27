@@ -31,11 +31,29 @@ class FeedAdapter(private val clickListener: FeedClickListener) :
   private val viewPool = RecyclerView.RecycledViewPool()
 
   object DiffCallback : DiffUtil.ItemCallback<FeedData>() {
-    override fun areContentsTheSame(oldItem: FeedData, newItem: FeedData) = oldItem == newItem
     override fun areItemsTheSame(oldItem: FeedData, newItem: FeedData): Boolean {
-      if (newItem.type != oldItem.type) return false
-      if (oldItem.id != newItem.id) return false
-      return true
+      // Items are the same if they have the same ID and type
+      return oldItem.id == newItem.id && oldItem.type == newItem.type
+    }
+
+    override fun areContentsTheSame(oldItem: FeedData, newItem: FeedData): Boolean {
+      // With true pagination from Room, items with same ID should have same content
+      // This prevents unnecessary rebinds during pagination
+      // If you need to detect actual content changes (e.g., after metadata update),
+      // implement proper comparison here
+      return when {
+        oldItem is FeedData.MediaItem && newItem is FeedData.MediaItem -> {
+          // Compare key fields that affect UI
+          oldItem.title == newItem.title &&
+            oldItem.media.duration == newItem.media.duration &&
+            oldItem.media.name == newItem.media.name
+        }
+        oldItem is FeedData.FolderItem && newItem is FeedData.FolderItem -> {
+          oldItem.title == newItem.title &&
+            oldItem.folder.mediaCount == newItem.folder.mediaCount
+        }
+        else -> true // For other types, assume same if IDs match
+      }
     }
   }
 

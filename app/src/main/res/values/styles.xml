@@ -44,8 +44,8 @@
     <item name="iconColor">@color/iconColor</item>
     <item name="white">@color/white</item>
     <item name="black">@color/black</item>
-    <item name="itemCoverSize">90dp</item>
-    <item name="itemCoverSize2x">180dp</item>
+    <item name="itemCoverSize">55dp</item>
+    <item name="itemCoverSize2x">110dp</item>
 
     <item name="download_icon_color">?attr/white</item>
     <item name="download_fill_color">?attr/white</item>

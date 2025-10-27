@@ -26,35 +26,22 @@ class FeedPagingSource(
 
       Timber.d("Loading page $page with pageSize $pageSize, rootFolder: $rootFolderPath")
 
-      // Load media or folders based on rootFolderPath
-      val allData = if (rootFolderPath != null) {
-        // Load media from specific folder
-        loadMediaFromFolder(rootFolderPath)
+      // Load data using true pagination from repository
+      val data = if (rootFolderPath != null) {
+        // Load media from specific folder with pagination
+        loadMediaFromFolderPaged(rootFolderPath, pageSize, page * pageSize)
       } else {
-        // Load all folders
-        loadAllFolders()
+        // Load all folders with pagination
+        loadAllFoldersPaged(pageSize, page * pageSize)
       }
 
-      val startIndex = page * pageSize
-      val endIndex = minOf(startIndex + pageSize, allData.size)
+      Timber.d("Loaded ${data.size} items for page $page")
 
-      Timber.d("Total items: ${allData.size}, startIndex: $startIndex, endIndex: $endIndex")
-
-      if (startIndex >= allData.size) {
-        // No more data
-        LoadResult.Page(
-          data = emptyList(),
-          prevKey = if (page > 0) page - 1 else null,
-          nextKey = null
-        )
-      } else {
-        val data = allData.subList(startIndex, endIndex)
-        LoadResult.Page(
-          data = data,
-          prevKey = if (page > 0) page - 1 else null,
-          nextKey = if (endIndex < allData.size) page + 1 else null
-        )
-      }
+      LoadResult.Page(
+        data = data,
+        prevKey = if (page > 0) page - 1 else null,
+        nextKey = if (data.size == pageSize) page + 1 else null
+      )
     } catch (e: Exception) {
       Timber.e(e, "Error loading feed data")
       LoadResult.Error(e)
@@ -69,9 +56,92 @@ class FeedPagingSource(
   }
 
   /**
+   * Load all folders from MediaRepository with pagination
+   */
+  private suspend fun loadAllFoldersPaged(limit: Int, offset: Int): List<FeedData.FolderItem> {
+    Timber.d("Loading folders with limit=$limit, offset=$offset")
+
+    val folders = repository.getFoldersPaged(limit, offset)
+
+    Timber.d("Found ${folders.size} folders")
+
+    // Throw exception if first page is empty - this will trigger error UI
+    if (offset == 0 && folders.isEmpty()) {
+      throw NoFoldersFoundException("No media folders found. Please scan your device for media files.")
+    }
+
+    // Convert Folder to FeedData.FolderItem
+    return folders.map { folder ->
+      FeedData.FolderItem(
+        id = folder.path,
+        title = folder.name,
+        folder = folder,
+        type = FeedData.Type.FolderSmall
+      )
+    }.also {
+      Timber.d("Successfully loaded ${it.size} folders")
+    }
+  }
+
+  /**
+   * Load media files from a specific folder with pagination
+   */
+  private suspend fun loadMediaFromFolderPaged(folderPath: String, limit: Int, offset: Int): List<FeedData> {
+    return try {
+      Timber.d("Loading media from folder: $folderPath with limit=$limit, offset=$offset")
+
+      val mediaList = repository.getMediaByFolderPaged(folderPath, limit, offset)
+
+      Timber.d("Found ${mediaList.size} media files in folder")
+
+      // Convert Media to FeedData.MediaItem
+      val items = mutableListOf<FeedData>()
+
+      mediaList.forEach { media ->
+        val mediaType = determineMediaType(media.mimeType)
+
+        items.add(
+          FeedData.MediaItem(
+            id = media.uri,
+            title = media.name,
+            type = mediaType,
+            media = media
+          )
+        )
+      }
+
+      // For first page, also load subfolders (but don't paginate them for now)
+      if (offset == 0) {
+        val subfolders = repository.observeFolders().first()
+          .filter { it.parentPath == folderPath }
+
+        subfolders.forEach { folder ->
+          items.add(
+            0, // Add folders at the beginning
+            FeedData.FolderItem(
+              id = folder.path,
+              title = folder.name,
+              folder = folder,
+              type = FeedData.Type.FolderSmall
+            )
+          )
+        }
+      }
+
+      Timber.d("Successfully loaded ${items.size} items from folder")
+      items
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading media from folder")
+      emptyList()
+    }
+  }
+
+  /**
    * Load all folders from MediaRepository
+   * @deprecated Use loadAllFoldersPaged instead
    * @throws Exception if no folders found or error loading data
    */
+  @Deprecated("Use loadAllFoldersPaged for better performance")
   private suspend fun loadAllFolders(): List<FeedData.FolderItem> {
     Timber.d("Loading all folders from MediaRepository...")
 
@@ -104,7 +174,9 @@ class FeedPagingSource(
 
   /**
    * Load media files from a specific folder
+   * @deprecated Use loadMediaFromFolderPaged for better performance
    */
+  @Deprecated("Use loadMediaFromFolderPaged for better performance")
   private suspend fun loadMediaFromFolder(folderPath: String): List<FeedData> {
     return try {
       Timber.d("Loading media from folder: $folderPath")

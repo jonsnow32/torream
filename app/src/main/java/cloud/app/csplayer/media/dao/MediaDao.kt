@@ -18,6 +18,9 @@ interface MediaDao {
   @Query("SELECT * FROM media WHERE parent_path = :folderPath")
   suspend fun getByFolder(folderPath: String): List<MediaEntity>
 
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath LIMIT :limit OFFSET :offset")
+  suspend fun getByFolderPaged(folderPath: String, limit: Int, offset: Int): List<MediaEntity>
+
   @Query("SELECT COUNT(*) FROM media WHERE parent_path = :folderPath")
   suspend fun countMediaInFolder(folderPath: String): Int
 

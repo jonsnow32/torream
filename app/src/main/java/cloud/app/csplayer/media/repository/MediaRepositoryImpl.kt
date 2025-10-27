@@ -63,11 +63,13 @@ class MediaRepositoryImpl @Inject constructor(
       .launchIn(scope)
   }
 
-  private suspend fun performSync() {
+  internal suspend fun performSync() {
+    timber.log.Timber.d("performSync: Starting sync...")
     _syncState.value = SyncState.Syncing(0f)
 
     try {
       val mediaItems = mediaStore.queryAllMedia()
+      timber.log.Timber.d("performSync: Found ${mediaItems.size} media items")
 
       // Parallel processing
       coroutineScope {
@@ -78,8 +80,10 @@ class MediaRepositoryImpl @Inject constructor(
         folderJob.join()
       }
 
+      timber.log.Timber.d("performSync: Sync completed successfully")
       _syncState.value = SyncState.Completed
     } catch (e: Exception) {
+      timber.log.Timber.e(e, "performSync: Sync failed")
       _syncState.value = SyncState.Error(e.message ?: "Unknown error")
     }
   }
@@ -160,7 +164,29 @@ class MediaRepositoryImpl @Inject constructor(
   }
 
   private suspend fun syncFolders(items: List<Media>) = withContext(Dispatchers.IO) {
-    val folders = buildFolderTree(items)
+    // Group media by their parent folder path
+    val groupedByFolder = items
+      .groupBy { File(it.path).parent ?: "/" }
+      .mapValues { entry ->
+        // Convert Media to MediaEntity for buildFolderTree
+        entry.value.map { media ->
+          MediaEntity(
+            uri = media.uri,
+            path = media.path,
+            name = media.name,
+            parentPath = File(media.path).parent ?: "/",
+            size = media.size,
+            duration = media.duration,
+            width = media.width,
+            height = media.height,
+            dateModified = media.dateModified,
+            mediaStoreId = media.id,
+            mimeType = media.mimeType
+          )
+        }
+      }
+
+    val folders = buildFolderTree(groupedByFolder)
 
     folderDao.transaction {
       folderDao.upsertAll(folders)
@@ -176,57 +202,130 @@ class MediaRepositoryImpl @Inject constructor(
     }
   }
 
-  private suspend fun buildFolderTree(items: List<Media>): List<FolderEntity> = withContext(Dispatchers.IO) {
-    val folders = mutableListOf<FolderEntity>()
-    val processedPaths = mutableSetOf<String>()
+  private fun buildFolderTree(
+    groupedByFolder: Map<String, List<MediaEntity>>
+  ): List<FolderEntity> {
+    val allFolders = mutableMapOf<String, FolderEntity>()
+    val mediaCountByFolder = groupedByFolder.mapValues { it.value.size }
 
-    // Build folder structure first
-    items.forEach { item ->
-      val file = File(item.path)
-      var current = file.parentFile
+    // Step 1: Create all folders
+    groupedByFolder.keys.forEach { path ->
+      var currentPath = path
 
-      while (current != null && current.path !in processedPaths) {
-        folders.add(
-          FolderEntity(
-            path = current.path,
-            name = current.name,
-            parentPath = current.parent ?: "/",
-            modified = current.lastModified(),
-            mediaCount = 0, // Will calculate below
-            childCount = 0  // Will calculate below
+      while (currentPath.isNotEmpty() && currentPath != "/") {
+        val currentFile = File(currentPath)
+        val parentPath = currentFile.parent ?: ""
+
+        // ✅ Validate and normalize folder name
+        val folderName = when {
+          // Root storage paths - use friendly names
+          currentPath == "/storage/emulated/0" -> "Internal Storage"
+          currentPath == "/storage/emulated" -> "Emulated"
+          // External SD card - check if it's a root storage path
+          currentPath.matches(Regex("/storage/[^/]+$")) && currentFile.name.isNotEmpty() -> {
+            // e.g., /storage/sdcard1 -> "SD Card 1"
+            currentFile.name
+          }
+          // Normal folder - use file name directly
+          currentFile.name.isNotEmpty() -> currentFile.name
+          // Fallback - should not happen
+          else -> "Unknown"
+        }
+
+        // Skip if name is still invalid
+        if (folderName.isBlank() || folderName == "0") {
+          currentPath = parentPath
+          continue
+        }
+
+        if (currentPath !in allFolders) {
+          allFolders[currentPath] = FolderEntity(
+            path = currentPath,
+            name = folderName,
+            parentPath = parentPath,
+            modified = currentFile.lastModified(),
+            mediaCount = 0,
+            childCount = 0,
+            isHidden = currentFile.isHidden
           )
-        )
-        processedPaths.add(current.path)
-        current = current.parentFile
+        }
+
+        currentPath = parentPath
       }
     }
 
-    // Calculate media count for each folder
-    val mediaCountByFolder = items
-      .groupBy { File(it.path).parent ?: "/" }
-      .mapValues { it.value.size }
-
-    // Calculate child folder count
-    val childCountByFolder = folders
-      .groupBy { it.parentPath }
-      .mapValues { it.value.size }
-
-    // Update folders with actual counts
-    return@withContext folders.map { folder ->
-      folder.copy(
-        mediaCount = mediaCountByFolder[folder.path] ?: 0,
-        childCount = childCountByFolder[folder.path] ?: 0
-      )
+    // Step 2: Update media counts
+    mediaCountByFolder.forEach { (folderPath, count) ->
+      allFolders[folderPath]?.let { folder ->
+        allFolders[folderPath] = folder.copy(
+          mediaCount = count
+        )
+      }
     }
+
+    // Step 3: Filter empty folders (iterative)
+    var updatedFolders = allFolders.values.toList()
+    var hasChanges = true
+
+    while (hasChanges) {
+      val childCountByFolder = updatedFolders
+        .groupBy { it.parentPath }
+        .mapValues { it.value.size }
+
+      val filtered = updatedFolders
+        .map { folder ->
+          folder.copy(
+            mediaCount = mediaCountByFolder[folder.path] ?: 0,
+            childCount = childCountByFolder[folder.path] ?: 0
+          )
+        }
+        .filter { folder ->
+          // Keep folders that have media OR children
+          folder.mediaCount > 0 || folder.childCount > 0
+        }
+
+      hasChanges = (filtered.size != updatedFolders.size)
+      updatedFolders = filtered
+    }
+
+    timber.log.Timber.d(
+      "buildFolderTree: Kept ${updatedFolders.size} folders out of ${allFolders.size} " +
+        "(filtered ${allFolders.size - updatedFolders.size} empty/invalid folders)"
+    )
+
+    return updatedFolders
   }
 
   override suspend fun refreshMedia(path: String?): Boolean {
-    return mediaStore.scanMedia(path)
+    // Directly perform sync to query MediaStore and update database
+    // No need to scan - MediaStore already has data, we just need permission to read it
+    performSync()
+    return true
   }
 
   override suspend fun getMediaByFolder(folderPath: String): List<Media> = withContext(Dispatchers.IO) {
     return@withContext mediaDao.getByFolder(folderPath).map { it.toDomain() }
   }
+
+  override suspend fun getMediaByFolderPaged(folderPath: String, limit: Int, offset: Int): List<Media> =
+    withContext(Dispatchers.IO) {
+      return@withContext mediaDao.getByFolderPaged(folderPath, limit, offset).map { it.toDomain() }
+    }
+
+  override suspend fun getFoldersPaged(limit: Int, offset: Int): List<Folder> =
+    withContext(Dispatchers.IO) {
+      return@withContext folderDao.getAllPaged(limit, offset).map { it.toDomain() }
+    }
+
+  override suspend fun countMediaInFolder(folderPath: String): Int =
+    withContext(Dispatchers.IO) {
+      return@withContext mediaDao.countMediaInFolder(folderPath)
+    }
+
+  override suspend fun countAllFolders(): Int =
+    withContext(Dispatchers.IO) {
+      return@withContext folderDao.countAllFolders()
+    }
 
   override suspend fun updateMediaMetadata(
     uri: String,
