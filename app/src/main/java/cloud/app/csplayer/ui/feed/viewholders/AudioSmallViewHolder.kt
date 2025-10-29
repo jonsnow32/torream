@@ -23,7 +23,6 @@ class AudioSmallViewHolder(
 
     // Load album art/thumbnail asynchronously
     binding.imgCover.loadThumbnail(feed.media.uri)
-
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)
     }

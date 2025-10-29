@@ -19,7 +19,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
       android:layout_width="match_parent"
-      android:layout_height="wrap_content">
+      android:layout_height="?attr/itemCoverSize2x">
 
       <ImageView
         android:id="@+id/imgCover"
@@ -29,7 +29,7 @@
         android:scaleType="centerCrop"
         android:src="?android:attr/colorBackground"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -51,7 +51,6 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
   </com.google.android.material.card.MaterialCardView>
 
   <!-- Content section -->
@@ -71,17 +70,5 @@
       android:textSize="13sp"
       android:textStyle="bold"
       tools:text="@tools:sample/full_names" />
-
-    <TextView
-      android:id="@+id/fileSize"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:layout_marginTop="2dp"
-      android:alpha="0.7"
-      android:ellipsize="end"
-      android:maxLines="1"
-      android:textSize="11sp"
-      tools:text="@tools:sample/first_names" />
-
   </LinearLayout>
 </LinearLayout>

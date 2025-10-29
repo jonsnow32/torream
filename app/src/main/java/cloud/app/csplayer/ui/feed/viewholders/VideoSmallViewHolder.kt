@@ -19,7 +19,6 @@ class VideoSmallViewHolder(
 ) : FeedViewHolder<FeedData.MediaItem>(binding.root) {
   override fun bind(feed: FeedData.MediaItem) {
     binding.title.text = feed.title
-    binding.fileSize.text = feed.media.size.formatFileSize()
     binding.tvDuration.text = feed.media.duration.formatDuration()
 
     // Load thumbnail asynchronously

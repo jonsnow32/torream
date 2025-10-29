@@ -138,6 +138,10 @@ dependencies {
   implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
   implementation("androidx.documentfile:documentfile:1.1.0")
 
+  // Coil - Image loading library (optimized for video thumbnails)
+  implementation("io.coil-kt:coil:2.7.0")
+  implementation("io.coil-kt:coil-video:2.7.0")
+
   // Room
   implementation("androidx.room:room-runtime:2.8.3")
   implementation("androidx.room:room-ktx:2.8.3")

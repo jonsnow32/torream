@@ -1386,7 +1386,7 @@ open class FullScreenPlayer : AbstractPlayerFragment() {
         doubleTapEnabled =
           settingsManager.getBoolean(
             ctx.getString(R.string.double_tap_enabled_key),
-            false
+            true
           )
 
         doubleTapPauseEnabled =

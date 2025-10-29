@@ -4,19 +4,23 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
+import cloud.app.csplayer.media.dao.MediaPlaybackDao
 import cloud.app.csplayer.media.entities.FolderEntity
 import cloud.app.csplayer.media.entities.MediaEntity
+import cloud.app.csplayer.media.entities.MediaPlaybackEntity
 
 @Database(
   entities = [
     MediaEntity::class,
-    FolderEntity::class
+    FolderEntity::class,
+    MediaPlaybackEntity::class
   ],
-  version = 1,
+  version = 2, // Incremented version for migration
   exportSchema = false
 )
 abstract class MediaDatabase : RoomDatabase() {
   abstract fun mediaDao(): MediaDao
   abstract fun folderDao(): FolderDao
+  abstract fun mediaPlaybackDao(): MediaPlaybackDao
 }
 

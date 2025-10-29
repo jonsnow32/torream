@@ -5,6 +5,7 @@ import androidx.room.Room
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
+import cloud.app.csplayer.media.dao.MediaPlaybackDao
 import cloud.app.csplayer.media.db.MediaDatabase
 import dagger.Module
 import dagger.Provides
@@ -41,6 +42,12 @@ object DatabaseModule {
   @Singleton
   fun provideFolderDao(database: MediaDatabase): FolderDao {
     return database.folderDao()
+  }
+
+  @Provides
+  @Singleton
+  fun provideMediaPlaybackDao(database: MediaDatabase): MediaPlaybackDao {
+    return database.mediaPlaybackDao()
   }
 }
 

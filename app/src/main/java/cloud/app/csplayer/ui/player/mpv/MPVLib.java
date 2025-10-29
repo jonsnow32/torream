@@ -32,6 +32,7 @@ public class MPVLib {
      public static native int setOptionString(@NonNull String name, @NonNull String value);
 
      public static native Bitmap grabThumbnail(int dimension);
+     public static native Bitmap extractVideoThumbnail(String uriString, int dimension);
 
      public static native Integer getPropertyInt(@NonNull String property);
      public static native void setPropertyInt(@NonNull String property, @NonNull Integer value);

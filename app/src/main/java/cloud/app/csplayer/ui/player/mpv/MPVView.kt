@@ -27,7 +27,7 @@ import timber.log.Timber
 import kotlin.reflect.KProperty
 
 @UnstableApi
-internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs) {
+class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs) {
 
   // Cache expensive operations
   private val displayMetrics by lazy { resources.displayMetrics }

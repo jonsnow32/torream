@@ -73,6 +73,6 @@ LOCAL_SRC_FILES := \
 	event.cpp \
 	thumbnail.cpp
 LOCAL_LDLIBS    := -llog -lGLESv3 -lEGL -latomic
-LOCAL_SHARED_LIBRARIES := swscale avcodec mpv
+LOCAL_SHARED_LIBRARIES := swscale avcodec avformat avutil mpv
 
 include $(BUILD_SHARED_LIBRARY)

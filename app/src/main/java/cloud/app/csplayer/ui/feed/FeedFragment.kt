@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -21,7 +22,10 @@ import cloud.app.csplayer.databinding.FragmentFeedBinding
 import cloud.app.csplayer.media.model.SyncState
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.filesystem.FileTreeDialog
+import cloud.app.csplayer.ui.player.EXTRA_TITLE
+import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URLS_NAME_HEADERS
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
+import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
 import com.google.android.material.snackbar.Snackbar
@@ -128,6 +132,7 @@ class FeedFragment : Fragment(), FeedClickListener {
               buttonText = getString(R.string.grant_permission)
             )
           }
+
           else -> {
             // Generic error - use default messages
             adapterWithStates.updateErrorMessage(
@@ -241,14 +246,37 @@ class FeedFragment : Fragment(), FeedClickListener {
       }
 
       is FeedData.MediaItem -> {
-        // TODO: Open media player based on type
+        // Open media player based on type
         when (item.type) {
           FeedData.Type.Video, FeedData.Type.VideoSmall -> {
-            showToast("Playing video: ${item.title}")
+            // Navigate to MPV player for video
+            activity?.navigate(
+              R.id.global_to_navigation_mpv_player,
+              bundleOf(
+                EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(
+                  item.media.uri,
+                  item.media.path,
+                  ""
+                ).toTypedArray(),
+                EXTRA_TITLE to item.title
+              )
+            )
           }
+
           FeedData.Type.Audio, FeedData.Type.AudioSmall -> {
-            showToast("Playing audio: ${item.title}")
+            // Navigate to MPV player for audio
+            activity?.navigate(
+              R.id.global_to_navigation_mpv_player,
+              bundleOf(
+                EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(
+                  item.media.uri,
+                  "user_url_1",
+                  ""
+                ).toTypedArray()
+              )
+            )
           }
+
           else -> {
             // Shouldn't happen
             showToast("Playing: ${item.title}")
