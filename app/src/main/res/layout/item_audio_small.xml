@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
-  android:layout_width="?attr/itemCoverSize"
+  android:layout_width="?attr/itemCoverSize2x"
   android:layout_height="wrap_content"
   style="@style/MediaItem"
   android:gravity="center"
@@ -61,24 +61,6 @@
       android:textSize="16sp"
       tools:ignore="TextSizeCheck"
       tools:text="@tools:sample/full_names" />
-
-    <TextView
-      android:id="@+id/txtPath"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:alpha="0.66"
-      android:ellipsize="end"
-      android:maxLines="2"
-      tools:text="@tools:sample/first_names" />
-
-    <TextView
-      android:id="@+id/subtitle"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:alpha="0.66"
-      android:ellipsize="end"
-      android:maxLines="2"
-      tools:text="@tools:sample/first_names" />
 
   </LinearLayout>
 </LinearLayout>

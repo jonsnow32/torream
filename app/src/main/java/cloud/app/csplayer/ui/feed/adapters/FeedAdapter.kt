@@ -69,7 +69,7 @@ class FeedAdapter(private val clickListener: FeedClickListener) :
       FeedData.Type.Audio -> count
 
       FeedData.Type.VideoSmall -> 2
-      FeedData.Type.AudioSmall -> 1
+      FeedData.Type.AudioSmall -> 2
       FeedData.Type.FolderSmall -> 2
       FeedData.Type.PlayListSmall -> TODO()
     }

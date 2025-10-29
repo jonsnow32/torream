@@ -82,9 +82,21 @@ class MediaRepositoryImpl @Inject constructor(
 
       timber.log.Timber.d("performSync: Sync completed successfully")
       _syncState.value = SyncState.Completed
+    } catch (e: SecurityException) {
+      timber.log.Timber.e(e, "performSync: Missing permission")
+      _syncState.value = SyncState.Error.MissingPermission(
+        e.message ?: "Storage permission is required to access media files"
+      )
+    } catch (e: java.io.IOException) {
+      timber.log.Timber.e(e, "performSync: Storage error")
+      _syncState.value = SyncState.Error.StorageError(
+        e.message ?: "Unable to access storage"
+      )
     } catch (e: Exception) {
       timber.log.Timber.e(e, "performSync: Sync failed")
-      _syncState.value = SyncState.Error(e.message ?: "Unknown error")
+      _syncState.value = SyncState.Error.Generic(
+        e.message ?: "Unknown error occurred"
+      )
     }
   }
 
@@ -116,35 +128,32 @@ class MediaRepositoryImpl @Inject constructor(
     // Prepare batch operations
     val toUpsert = items.map { item ->
       val existing = existingMedia[item.uri]
-      if (existing != null) {
-        // Preserve user metadata
-        existing.copy(
-          path = item.path,
-          name = item.name,
-          parentPath = File(item.path).parent ?: "/",
-          size = item.size,
-          duration = item.duration,
-          width = item.width,
-          height = item.height,
-          dateModified = item.dateModified,
-          mediaStoreId = item.id,
-          mimeType = item.mimeType
-        )
-      } else {
-        MediaEntity(
-          uri = item.uri,
-          path = item.path,
-          name = item.name,
-          parentPath = File(item.path).parent ?: "/",
-          size = item.size,
-          duration = item.duration,
-          width = item.width,
-          height = item.height,
-          dateModified = item.dateModified,
-          mediaStoreId = item.id,
-          mimeType = item.mimeType
-        )
-      }
+      existing?.// Preserve user metadata
+      copy(
+        path = item.path,
+        name = item.name,
+        parentPath = File(item.path).parent ?: "/",
+        size = item.size,
+        duration = item.duration,
+        width = item.width,
+        height = item.height,
+        dateModified = item.dateModified,
+        mediaStoreId = item.id,
+        mimeType = item.mimeType
+      )
+          ?: MediaEntity(
+            uri = item.uri,
+            path = item.path,
+            name = item.name,
+            parentPath = File(item.path).parent ?: "/",
+            size = item.size,
+            duration = item.duration,
+            width = item.width,
+            height = item.height,
+            dateModified = item.dateModified,
+            mediaStoreId = item.id,
+            mimeType = item.mimeType
+          )
     }
 
     val toDelete = existingMedia.keys.filterNot { it in currentUris }

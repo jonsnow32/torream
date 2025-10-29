@@ -2,6 +2,7 @@ package cloud.app.csplayer.ui.feed.viewholders
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.ItemAudioBinding
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
@@ -21,8 +22,9 @@ class AudioViewHolder(
     binding.title.text = feed.title
     binding.subtitle.text = feed.media.size.formatFileSize()
     binding.tvDuration.text = feed.media.duration.formatDuration()
+    binding.path.text = feed.media.path
     // Load album art/thumbnail asynchronously
-    binding.imgCover.loadThumbnail(feed.media.uri)
+    binding.imgCover.setImageResource(R.drawable.outline_music_note_24)
 
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)

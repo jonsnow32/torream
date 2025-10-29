@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.widget.ImageView
 import androidx.core.net.toUri
+import cloud.app.csplayer.ui.player.mpv.MPVLib
 import coil.request.ImageRequest
 import coil.request.Parameters
 import coil.size.Scale
@@ -33,6 +34,7 @@ import timber.log.Timber
  * @param placeholderRes Optional placeholder drawable while loading
  * @param errorRes Optional error drawable if loading fails
  */
+
 fun ImageView.loadThumbnail(
   uriString: String,
   placeholderRes: Int? = null,
@@ -47,6 +49,8 @@ fun ImageView.loadThumbnail(
   )
 }
 
+
+@OptIn(DelicateCoroutinesApi::class)
 private fun ImageView.loadThumbnailWithCoil(
   uriString: String,
   placeholderRes: Int?,
@@ -57,7 +61,10 @@ private fun ImageView.loadThumbnailWithCoil(
   if (currentIndex >= framePositions.size) {
     // All Coil attempts failed, fallback to MediaMetadataRetriever
     Timber.w("All Coil frame positions failed for $uriString, trying MediaMetadataRetriever")
-    loadThumbnailWithMediaMetadataRetriever(uriString, errorRes)
+    // Get ImageView size
+    val viewWidth = if (width > 0) width else 320
+    val viewHeight = if (height > 0) height else 180
+    loadThumbnailWithMediaMetadataRetriever(uriString, errorRes, viewWidth, viewHeight, framePositions)
     return
   }
 
@@ -69,31 +76,28 @@ private fun ImageView.loadThumbnailWithCoil(
     val request = ImageRequest.Builder(context)
       .data(uri)
       .crossfade(true)
-      // Coil automatically uses ImageView dimensions (no size() call needed)
+      .target(this) // Set target to ImageView để Coil tự động lấy kích thước
       .scale(Scale.FIT)
+      // Enable disk and memory caching
+      .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+      .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
       .parameters(Parameters.Builder().set("video_frame_micros", frameMillis * 1000).build())
       .apply {
         placeholderRes?.let { placeholder(it) }
         errorRes?.let { error(it) }
       }
-      .target(
-        onSuccess = { result ->
+      .listener(
+        onSuccess = { request, result ->
           // Check if bitmap is black/empty
-          val bitmap = (result as? android.graphics.drawable.BitmapDrawable)?.bitmap
+          val bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
           if (bitmap != null && isBitmapBlack(bitmap)) {
             Timber.w("Coil loaded black frame at ${frameMillis}ms for $uriString, trying next position")
             loadThumbnailWithCoil(uriString, placeholderRes, errorRes, framePositions, currentIndex + 1)
           } else {
-            setImageDrawable(result)
             Timber.d("Successfully loaded thumbnail using Coil at ${frameMillis}ms for $uriString")
           }
         },
-        onError = { error ->
-          setImageDrawable(error)
-        }
-      )
-      .listener(
-        onError = { _, result ->
+        onError = { request, result ->
           Timber.e(result.throwable, "Coil failed at ${frameMillis}ms for $uriString")
           // Try next frame position with Coil
           loadThumbnailWithCoil(
@@ -122,14 +126,37 @@ private fun ImageView.loadThumbnailWithCoil(
 
 private fun ImageView.loadThumbnailWithFFmpeg(
   uriString: String,
-  errorRes: Int?
+  errorRes: Int?,
+  viewWidth: Int,
+  viewHeight: Int,
+  framePositions: List<Long>,
+  currentIndex: Int = 0
 ) {
+  if (currentIndex >= framePositions.size) {
+    // All FFmpeg attempts failed, show error
+    Timber.e("All FFmpeg frame positions failed for $uriString, all fallbacks exhausted")
+    CoroutineScope(Dispatchers.Main).launch {
+      errorRes?.let { setImageResource(it) }
+    }
+    return
+  }
+
+  val frameMillis = framePositions[currentIndex]
+
   // Use FFmpeg-based thumbnail extraction as final fallback
   CoroutineScope(Dispatchers.IO).launch {
     try {
-      // Get ImageView size
-      val viewWidth = if (width > 0) width else 320
-      val viewHeight = if (height > 0) height else 180
+      // Check cache first (only for first attempt to avoid multiple cache checks)
+      if (currentIndex == 0) {
+        val cachedBitmap = ThumbnailCache.loadThumbnail(context, uriString, viewWidth, viewHeight)
+        if (cachedBitmap != null && !isBitmapBlack(cachedBitmap)) {
+          withContext(Dispatchers.Main) {
+            setImageBitmap(cachedBitmap)
+            Timber.d("Loaded thumbnail from disk cache for $uriString")
+          }
+          return@launch
+        }
+      }
 
       // Convert content URI to file path if needed
       val filePath = if (uriString.startsWith("content://")) {
@@ -153,26 +180,33 @@ private fun ImageView.loadThumbnailWithFFmpeg(
         return@launch
       }
 
-      val bitmap = cloud.app.csplayer.ui.player.mpv.MPVLib.extractVideoThumbnail(filePath, viewWidth)
+      // Convert milliseconds to seconds for FFmpeg
+      val atTimeSeconds = frameMillis / 1000.0
+      val bitmap = MPVLib.extractVideoThumbnail(filePath, viewWidth, viewHeight, atTimeSeconds)
 
       withContext(Dispatchers.Main) {
         if (bitmap != null && !isBitmapBlack(bitmap)) {
           setImageBitmap(bitmap)
-          Timber.d("Successfully loaded thumbnail using FFmpeg for $uriString")
+          Timber.d("Successfully loaded thumbnail using FFmpeg at ${frameMillis}ms (${atTimeSeconds}s) for $uriString (dimension: ${maxOf(viewWidth, viewHeight)} from ${viewWidth}x${viewHeight})")
+
+          // Save to cache for next time
+          launch(Dispatchers.IO) {
+            ThumbnailCache.saveThumbnail(context, uriString, bitmap, viewWidth, viewHeight)
+          }
         } else {
-          Timber.e("FFmpeg extraction failed or returned black bitmap for $uriString, all fallbacks exhausted")
-          errorRes?.let { setImageResource(it) }
+          Timber.w("FFmpeg returned null or black bitmap at ${frameMillis}ms for $uriString, trying next position")
+          loadThumbnailWithFFmpeg(uriString, errorRes, viewWidth, viewHeight, framePositions, currentIndex + 1)
         }
       }
     } catch (e: UnsatisfiedLinkError) {
-      Timber.e(e, "FFmpeg native method not available for $uriString, all fallbacks exhausted")
+      Timber.e(e, "FFmpeg native method not available for $uriString at ${frameMillis}ms, trying next position")
       withContext(Dispatchers.Main) {
-        errorRes?.let { setImageResource(it) }
+        loadThumbnailWithFFmpeg(uriString, errorRes, viewWidth, viewHeight, framePositions, currentIndex + 1)
       }
     } catch (e: Exception) {
-      Timber.e(e, "FFmpeg thumbnail extraction error for $uriString, all fallbacks exhausted")
+      Timber.e(e, "FFmpeg thumbnail extraction error for $uriString at ${frameMillis}ms, trying next position")
       withContext(Dispatchers.Main) {
-        errorRes?.let { setImageResource(it) }
+        loadThumbnailWithFFmpeg(uriString, errorRes, viewWidth, viewHeight, framePositions, currentIndex + 1)
       }
     }
   }
@@ -180,14 +214,35 @@ private fun ImageView.loadThumbnailWithFFmpeg(
 
 private fun ImageView.loadThumbnailWithMediaMetadataRetriever(
   uriString: String,
-  errorRes: Int?
+  errorRes: Int?,
+  viewWidth: Int,
+  viewHeight: Int,
+  framePositions: List<Long>,
+  currentIndex: Int = 0
 ) {
+  if (currentIndex >= framePositions.size) {
+    // All MediaMetadataRetriever attempts failed, fallback to FFmpeg
+    Timber.w("All MediaMetadataRetriever frame positions failed for $uriString, trying FFmpeg")
+    loadThumbnailWithFFmpeg(uriString, errorRes, viewWidth, viewHeight, framePositions)
+    return
+  }
+
+  val frameMillis = framePositions[currentIndex]
+
   // Use MediaMetadataRetriever as second fallback
   CoroutineScope(Dispatchers.IO).launch {
     try {
-      // Get ImageView size
-      val viewWidth = if (width > 0) width else 320
-      val viewHeight = if (height > 0) height else 180
+      // Check cache first (only for first attempt to avoid multiple cache checks)
+      if (currentIndex == 0) {
+        val cachedBitmap = ThumbnailCache.loadThumbnail(context, uriString, viewWidth, viewHeight)
+        if (cachedBitmap != null && !isBitmapBlack(cachedBitmap)) {
+          withContext(Dispatchers.Main) {
+            setImageBitmap(cachedBitmap)
+            Timber.d("Loaded thumbnail from disk cache for $uriString")
+          }
+          return@launch
+        }
+      }
 
       val uri = uriString.toUri()
       val retriever = MediaMetadataRetriever()
@@ -195,14 +250,14 @@ private fun ImageView.loadThumbnailWithMediaMetadataRetriever(
 
       val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         retriever.getScaledFrameAtTime(
-          1000000L,
+          frameMillis * 1000L, // Convert to microseconds
           MediaMetadataRetriever.OPTION_CLOSEST,
           viewWidth,
           viewHeight
         )
       } else {
         @Suppress("DEPRECATION")
-        retriever.frameAtTime
+        retriever.getFrameAtTime(frameMillis * 1000L) // Convert to microseconds
       }
 
       retriever.release()
@@ -210,16 +265,21 @@ private fun ImageView.loadThumbnailWithMediaMetadataRetriever(
       withContext(Dispatchers.Main) {
         if (bitmap != null && !isBitmapBlack(bitmap)) {
           setImageBitmap(bitmap)
-          Timber.d("Successfully loaded thumbnail using MediaMetadataRetriever for $uriString")
+          Timber.d("Successfully loaded thumbnail using MediaMetadataRetriever at ${frameMillis}ms for $uriString")
+
+          // Save to cache for next time
+          launch(Dispatchers.IO) {
+            ThumbnailCache.saveThumbnail(context, uriString, bitmap, viewWidth, viewHeight)
+          }
         } else {
-          Timber.w("MediaMetadataRetriever returned null or black bitmap for $uriString, trying FFmpeg")
-          loadThumbnailWithFFmpeg(uriString, errorRes)
+          Timber.w("MediaMetadataRetriever returned null or black bitmap at ${frameMillis}ms for $uriString, trying next position")
+          loadThumbnailWithMediaMetadataRetriever(uriString, errorRes, viewWidth, viewHeight, framePositions, currentIndex + 1)
         }
       }
     } catch (e: Exception) {
-      Timber.e(e, "MediaMetadataRetriever failed for $uriString, trying FFmpeg")
+      Timber.e(e, "MediaMetadataRetriever failed at ${frameMillis}ms for $uriString, trying next position")
       withContext(Dispatchers.Main) {
-        loadThumbnailWithFFmpeg(uriString, errorRes)
+        loadThumbnailWithMediaMetadataRetriever(uriString, errorRes, viewWidth, viewHeight, framePositions, currentIndex + 1)
       }
     }
   }
@@ -285,5 +345,21 @@ private fun isBitmapBlack(bitmap: Bitmap): Boolean {
     Timber.e(e, "Error checking if bitmap is black")
     false // If we can't check, assume it's not black
   }
+}
+
+/**
+ * Clear all thumbnail cache
+ * Useful for clearing cache when storage is low
+ */
+fun Context.clearThumbnailCache() {
+  ThumbnailCache.clearCache(this)
+}
+
+/**
+ * Get thumbnail cache statistics
+ * Useful for displaying cache info in settings
+ */
+fun Context.getThumbnailCacheStats(): ThumbnailCache.CacheStats {
+  return ThumbnailCache.getCacheStats(this)
 }
 

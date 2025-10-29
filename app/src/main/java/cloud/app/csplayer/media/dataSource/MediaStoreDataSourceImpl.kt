@@ -58,8 +58,15 @@ class MediaStoreDataSourceImpl @Inject constructor(
       }
     }
 
+    // Observe both video and audio changes
     context.contentResolver.registerContentObserver(
       MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+      true,
+      observer
+    )
+
+    context.contentResolver.registerContentObserver(
+      MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
       true,
       observer
     )
@@ -79,9 +86,10 @@ class MediaStoreDataSourceImpl @Inject constructor(
 
     val items = mutableListOf<Media>()
 
+    // Query VIDEO files
     context.contentResolver.query(
       MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-      PROJECTION,
+      VIDEO_PROJECTION,
       null,
       null,
       "${MediaStore.Video.Media.DISPLAY_NAME} ASC"
@@ -119,6 +127,46 @@ class MediaStoreDataSourceImpl @Inject constructor(
       }
     }
 
+    // Query AUDIO files
+    context.contentResolver.query(
+      MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+      AUDIO_PROJECTION,
+      null,
+      null,
+      "${MediaStore.Audio.Media.DISPLAY_NAME} ASC"
+    )?.use { cursor ->
+      val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+      val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+      val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+      val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+      val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
+      val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+
+      while (cursor.moveToNext()) {
+        val id = cursor.getLong(idColumn)
+        val uri = ContentUris.withAppendedId(
+          MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+          id
+        )
+
+        items.add(
+          Media(
+            id = id,
+            uri = uri.toString(),
+            path = cursor.getString(dataColumn),
+            name = File(cursor.getString(dataColumn)).name,
+            size = cursor.getLong(sizeColumn),
+            duration = cursor.getLong(durationColumn),
+            width = 0, // Audio files don't have width
+            height = 0, // Audio files don't have height
+            dateModified = cursor.getLong(dateModifiedColumn),
+            mimeType = cursor.getString(mimeTypeColumn)
+          )
+        )
+      }
+    }
+
+    timber.log.Timber.d("queryAllMedia: Found ${items.size} total media items (video + audio)")
     items
   }
 
@@ -142,7 +190,7 @@ class MediaStoreDataSourceImpl @Inject constructor(
   }
 
   companion object {
-    private val PROJECTION = arrayOf(
+    private val VIDEO_PROJECTION = arrayOf(
       MediaStore.Video.Media._ID,
       MediaStore.Video.Media.DATA,
       MediaStore.Video.Media.DURATION,
@@ -151,6 +199,15 @@ class MediaStoreDataSourceImpl @Inject constructor(
       MediaStore.Video.Media.SIZE,
       MediaStore.Video.Media.DATE_MODIFIED,
       MediaStore.Video.Media.MIME_TYPE
+    )
+
+    private val AUDIO_PROJECTION = arrayOf(
+      MediaStore.Audio.Media._ID,
+      MediaStore.Audio.Media.DATA,
+      MediaStore.Audio.Media.DURATION,
+      MediaStore.Audio.Media.SIZE,
+      MediaStore.Audio.Media.DATE_MODIFIED,
+      MediaStore.Audio.Media.MIME_TYPE
     )
   }
 }

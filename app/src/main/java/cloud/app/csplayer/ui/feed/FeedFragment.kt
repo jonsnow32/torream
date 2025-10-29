@@ -15,7 +15,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentFeedBinding
@@ -30,7 +29,6 @@ import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
@@ -46,7 +44,7 @@ class FeedFragment : Fragment(), FeedClickListener {
     getFeedAdapter(viewModel)
   }
 
-  // Permission request launcher
+  // Permission request launcher (multiple permissions)
   private val permissionLauncher = registerForActivityResult(
     ActivityResultContracts.RequestMultiplePermissions()
   ) { permissions ->
@@ -63,6 +61,33 @@ class FeedFragment : Fragment(), FeedClickListener {
     } else {
       // Permissions denied
       showToast(getString(R.string.permissions_denied))
+    }
+  }
+
+  // Multiple permission request launcher (for sync errors - need both video and audio)
+  private val requestPermissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestMultiplePermissions()
+  ) { permissions ->
+    val allGranted = permissions.values.all { it }
+    if (allGranted) {
+      // Permission granted, retry sync
+      showToast(getString(R.string.permissions_granted))
+      viewModel.refreshMediaRepository()
+      adapter.refresh()
+    } else {
+      // Permission denied
+      showToast(getString(R.string.permissions_denied))
+    }
+  }
+
+  private fun getRequiredPermissions(): Array<String> {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      arrayOf(
+        Manifest.permission.READ_MEDIA_VIDEO,
+        Manifest.permission.READ_MEDIA_AUDIO
+      )
+    } else {
+      arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
   }
 
@@ -90,6 +115,41 @@ class FeedFragment : Fragment(), FeedClickListener {
     observe(viewModel.title) { title ->
       binding.toolbar.title = title
       binding.root.contentDescription = title
+    }
+
+    // Show back button if we're in a subfolder (rootFolderPath != null)
+    val rootFolderPath = arguments?.getString("root_folder_path")
+      ?: arguments?.getString(ARG_ROOT_FOLDER_PATH)
+
+    if (rootFolderPath != null) {
+      // Show back button
+      binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_back_24)
+      binding.toolbar.setNavigationOnClickListener {
+        // Navigate back
+        findNavController().navigateUp()
+      }
+
+      // Set subtitle to show the full path
+      binding.toolbar.subtitle = rootFolderPath
+
+      // Make subtitle ellipsize in the middle to show "start...end" format
+      // This ensures both the beginning and the folder name (end of path) are visible
+      binding.toolbar.post {
+        // Find the subtitle TextView and set ellipsize
+        try {
+          val subtitleView = findSubtitleTextView(binding.toolbar)
+          subtitleView?.apply {
+            setSingleLine()
+            ellipsize = android.text.TextUtils.TruncateAt.MIDDLE
+          }
+        } catch (e: Exception) {
+          // Ignore if we can't find the subtitle view
+        }
+      }
+    } else {
+      // Clear navigation icon and subtitle when at root level
+      binding.toolbar.navigationIcon = null
+      binding.toolbar.subtitle = null
     }
 
     ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
@@ -174,17 +234,58 @@ class FeedFragment : Fragment(), FeedClickListener {
         }
 
         is SyncState.Error -> {
-          // Show error with retry action
+          // Show error with appropriate action based on error type
           syncSnackbar?.dismiss()
-          syncSnackbar = Snackbar.make(
-            binding.root,
-            "Sync error: ${state.message}",
-            Snackbar.LENGTH_LONG
-          ).apply {
-            setAction("Retry") {
-              viewModel.refreshMediaRepository()
+
+          when (state) {
+            is SyncState.Error.MissingPermission -> {
+              syncSnackbar = Snackbar.make(
+                binding.root,
+                state.message,
+                Snackbar.LENGTH_LONG
+              ).apply {
+                setAction("Grant Permission") {
+                  requestPermissionLauncher.launch(getRequiredPermissions())
+                }
+                show()
+              }
             }
-            show()
+            is SyncState.Error.StorageError -> {
+              syncSnackbar = Snackbar.make(
+                binding.root,
+                state.message,
+                Snackbar.LENGTH_LONG
+              ).apply {
+                setAction("Retry") {
+                  viewModel.refreshMediaRepository()
+                }
+                show()
+              }
+            }
+            is SyncState.Error.NetworkError -> {
+              syncSnackbar = Snackbar.make(
+                binding.root,
+                state.message,
+                Snackbar.LENGTH_LONG
+              ).apply {
+                setAction("Retry") {
+                  viewModel.refreshMediaRepository()
+                }
+                show()
+              }
+            }
+            else -> {
+              syncSnackbar = Snackbar.make(
+                binding.root,
+                state.message,
+                Snackbar.LENGTH_LONG
+              ).apply {
+                setAction("Retry") {
+                  viewModel.refreshMediaRepository()
+                }
+                show()
+              }
+            }
           }
         }
       }
@@ -341,6 +442,22 @@ class FeedFragment : Fragment(), FeedClickListener {
     }
 
     permissionLauncher.launch(permissions)
+  }
+
+  /**
+   * Find the subtitle TextView in Toolbar to apply custom styling
+   */
+  private fun findSubtitleTextView(toolbar: androidx.appcompat.widget.Toolbar): android.widget.TextView? {
+    for (i in 0 until toolbar.childCount) {
+      val child = toolbar.getChildAt(i)
+      if (child is android.widget.TextView) {
+        val text = child.text
+        if (text != null && text.toString() == toolbar.subtitle) {
+          return child
+        }
+      }
+    }
+    return null
   }
 
   companion object {

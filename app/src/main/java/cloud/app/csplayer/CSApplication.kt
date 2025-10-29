@@ -55,6 +55,9 @@ class CSApplication : Application(), ImageLoaderFactory {
       }
       .crossfade(true)
       .respectCacheHeaders(false)
+      // Enable disk cache for video thumbnails
+      .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+      .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
       .build()
   }
 }

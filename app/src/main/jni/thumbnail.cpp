@@ -18,7 +18,7 @@ extern "C" {
 
 extern "C" {
     jni_func(jobject, grabThumbnail, jint dimension);
-    jni_func(jobject, extractVideoThumbnail, jstring uriString, jint dimension);
+    jni_func(jobject, extractVideoThumbnail, jstring uriString, jint width, jint height, jdouble atTime);
 };
 
 jni_func(jobject, grabThumbnail, jint dimension) {
@@ -132,8 +132,8 @@ jni_func(jobject, grabThumbnail, jint dimension) {
     return bitmap;
 }
 
-jni_func(jobject, extractVideoThumbnail, jstring uriString, jint dimension) {
-    ALOGV("extracting video thumbnail\n");
+jni_func(jobject, extractVideoThumbnail, jstring uriString, jint width, jint height, jdouble atTime) {
+    ALOGV("extracting video thumbnail with dimensions: %dx%d at time: %.2fs\n", width, height, atTime);
 
     // Initialize JNI method cache
     init_methods_cache(env);
@@ -217,9 +217,15 @@ jni_func(jobject, extractVideoThumbnail, jstring uriString, jint dimension) {
         return NULL;
     }
 
-    // Calculate duration and seek to 10% into the video (more reliable than seeking to 1 second)
-    int64_t duration = format_ctx->duration;
-    int64_t seek_pos = duration > 0 ? duration / 10 : 10 * AV_TIME_BASE; // 10% or 10 seconds
+    // Calculate seek position based on atTime parameter
+    // atTime is in seconds
+    int64_t seek_pos = (int64_t)(atTime * AV_TIME_BASE);
+
+    // If atTime is 0 or negative, use default behavior (10% into video)
+    if (atTime <= 0.0) {
+        int64_t duration = format_ctx->duration;
+        seek_pos = duration > 0 ? duration / 10 : 10 * AV_TIME_BASE;
+    }
 
     // Seek to target position
     int64_t seek_target = av_rescale_q(seek_pos, AV_TIME_BASE_Q, format_ctx->streams[video_stream_index]->time_base);
@@ -295,7 +301,7 @@ jni_func(jobject, extractVideoThumbnail, jstring uriString, jint dimension) {
     // Convert to RGBA (correct format for Android)
     sws_ctx = sws_getContext(
         codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt,
-        dimension, dimension, AV_PIX_FMT_RGBA,
+        width, height, AV_PIX_FMT_RGBA,
         SWS_BICUBIC, NULL, NULL, NULL);
 
     if (!sws_ctx) {
@@ -308,7 +314,7 @@ jni_func(jobject, extractVideoThumbnail, jstring uriString, jint dimension) {
         return NULL;
     }
 
-    buffer = (uint8_t*) av_malloc(dimension * dimension * 4);
+    buffer = (uint8_t*) av_malloc(width * height * 4);
     if (!buffer) {
         ALOGE("Could not allocate buffer");
         sws_freeContext(sws_ctx);
@@ -320,18 +326,18 @@ jni_func(jobject, extractVideoThumbnail, jstring uriString, jint dimension) {
         return NULL;
     }
 
-    av_image_fill_arrays(rgb_frame->data, rgb_frame->linesize, buffer, AV_PIX_FMT_RGBA, dimension, dimension, 1);
+    av_image_fill_arrays(rgb_frame->data, rgb_frame->linesize, buffer, AV_PIX_FMT_RGBA, width, height, 1);
 
     sws_scale(sws_ctx, frame->data, frame->linesize, 0, codec_ctx->height, rgb_frame->data, rgb_frame->linesize);
 
     // Create Android Bitmap
     env->ReleaseStringUTFChars(uriString, uri);
 
-    jintArray arr = env->NewIntArray(dimension * dimension);
+    jintArray arr = env->NewIntArray(width * height);
     jint *scaled = env->GetIntArrayElements(arr, NULL);
 
     // Copy RGBA data to int array (Android ARGB_8888 format: 0xAARRGGBB)
-    for (int i = 0; i < dimension * dimension; i++) {
+    for (int i = 0; i < width * height; i++) {
         uint8_t r = buffer[i * 4 + 0];  // Red
         uint8_t g = buffer[i * 4 + 1];  // Green
         uint8_t b = buffer[i * 4 + 2];  // Blue
@@ -345,7 +351,7 @@ jni_func(jobject, extractVideoThumbnail, jstring uriString, jint dimension) {
     // Create Bitmap
     jobject bitmap_config = env->GetStaticObjectField(android_graphics_Bitmap_Config, android_graphics_Bitmap_Config_ARGB_8888);
     jobject bitmap = env->CallStaticObjectMethod(android_graphics_Bitmap, android_graphics_Bitmap_createBitmap,
-        arr, dimension, dimension, bitmap_config);
+        arr, width, height, bitmap_config);
 
     env->DeleteLocalRef(arr);
     env->DeleteLocalRef(bitmap_config);
