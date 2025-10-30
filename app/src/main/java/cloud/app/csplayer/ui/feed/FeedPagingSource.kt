@@ -2,6 +2,8 @@ package cloud.app.csplayer.ui.feed
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import cloud.app.csplayer.media.model.FolderViewMode
+import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
@@ -14,11 +16,15 @@ import timber.log.Timber
  * @param rootFolderPath Optional root folder path. If provided, only shows media from this folder.
  *                       If null, shows all folders.
  * @param displayType Display type that determines how items are shown (GRID or LIST)
+ * @param folderViewMode Folder view mode (HIERARCHICAL or TREE)
+ * @param mediaTypeFilter Media type filter (ALL, VIDEO, or AUDIO)
  */
 class FeedPagingSource(
   private val repository: MediaRepository,
   private val rootFolderPath: String? = null,
-  private val displayType: FeedViewModel.DisplayType = FeedViewModel.DisplayType.GRID
+  private val displayType: FeedViewModel.DisplayType = FeedViewModel.DisplayType.GRID,
+  private val folderViewMode: FolderViewMode = FolderViewMode.HIERARCHICAL,
+  private val mediaTypeFilter: MediaTypeFilter = MediaTypeFilter.ALL
 ) : PagingSource<Int, FeedData>() {
 
   override suspend fun load(params: LoadParams<Int>): LoadResult<Int, FeedData> {
@@ -93,18 +99,45 @@ class FeedPagingSource(
 
   /**
    * Load media files from a specific folder with pagination
+   * Also loads subfolders at the beginning of the list
    */
   private suspend fun loadMediaFromFolderPaged(folderPath: String, limit: Int, offset: Int): List<FeedData> {
     return try {
-      Timber.d("Loading media from folder: $folderPath with limit=$limit, offset=$offset")
+      Timber.d("Loading content from folder: $folderPath with limit=$limit, offset=$offset")
 
-      val mediaList = repository.getMediaByFolderPaged(folderPath, limit, offset)
-
-      Timber.d("Found ${mediaList.size} media files in folder")
-
-      // Convert Media to FeedData.MediaItem
       val items = mutableListOf<FeedData>()
 
+      // For first page, load subfolders first
+      if (offset == 0) {
+        val subfolders = repository.getSubfoldersPaged(folderPath, limit = 100, offset = 0)
+
+        // Determine folder type based on displayType
+        val folderType = when (displayType) {
+          FeedViewModel.DisplayType.GRID -> FeedData.Type.FolderSmall
+          FeedViewModel.DisplayType.LIST -> FeedData.Type.Folder
+        }
+
+        subfolders.forEach { folder ->
+          items.add(
+            FeedData.FolderItem(
+              id = folder.path,
+              title = folder.name,
+              folder = folder,
+              type = folderType
+            )
+          )
+        }
+
+        Timber.d("Loaded ${subfolders.size} subfolders")
+      }
+
+      // Load media files with adjusted pagination
+      val adjustedOffset = maxOf(0, offset - if (offset == 0) 0 else 0) // Simple for now
+      val mediaList = repository.getMediaByFolderPaged(folderPath, limit, adjustedOffset)
+
+      Timber.d("Loaded ${mediaList.size} media files")
+
+      // Convert Media to FeedData.MediaItem
       mediaList.forEach { media ->
         val mediaType = determineMediaType(media.mimeType)
 
@@ -118,34 +151,10 @@ class FeedPagingSource(
         )
       }
 
-      // For first page, also load subfolders (but don't paginate them for now)
-      if (offset == 0) {
-        val subfolders = repository.observeFolders().first()
-          .filter { it.parentPath == folderPath }
-
-        // Determine folder type based on displayType
-        val folderType = when (displayType) {
-          FeedViewModel.DisplayType.GRID -> FeedData.Type.FolderSmall
-          FeedViewModel.DisplayType.LIST -> FeedData.Type.Folder
-        }
-
-        subfolders.forEach { folder ->
-          items.add(
-            0, // Add folders at the beginning
-            FeedData.FolderItem(
-              id = folder.path,
-              title = folder.name,
-              folder = folder,
-              type = folderType
-            )
-          )
-        }
-      }
-
-      Timber.d("Successfully loaded ${items.size} items from folder")
+      Timber.d("Successfully loaded ${items.size} total items from folder")
       items
     } catch (e: Exception) {
-      Timber.e(e, "Error loading media from folder")
+      Timber.e(e, "Error loading content from folder")
       emptyList()
     }
   }

@@ -25,6 +25,26 @@
       android:layout="@layout/custom_preference"
       android:title="@string/app_language" />
 
+    <ListPreference
+      android:icon="@drawable/ic_folder"
+      android:key="@string/folder_view_mode_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/folder_view_mode"
+      android:summary="@string/folder_view_mode_summary"
+      android:entries="@array/folder_view_mode_entries"
+      android:entryValues="@array/folder_view_mode_values"
+      android:defaultValue="hierarchical" />
+
+    <ListPreference
+      android:icon="@drawable/ic_baseline_filter_list_24"
+      android:key="@string/media_type_filter_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/media_type_filter"
+      android:summary="@string/media_type_filter_summary"
+      android:entries="@array/media_type_filter_entries"
+      android:entryValues="@array/media_type_filter_values"
+      android:defaultValue="all" />
+
   </PreferenceCategory>
 
   <PreferenceCategory android:title="@string/title_downloads" app:isPreferenceVisible="false">

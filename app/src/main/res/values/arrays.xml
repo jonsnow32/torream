@@ -2,4 +2,28 @@
 <resources>
   <string-array name="player_values">Exo</string-array>
   <string-array name="player_entries">Exo</string-array>
+
+  <!-- Folder View Mode -->
+  <string-array name="folder_view_mode_entries">
+    <item>@string/folder_view_hierarchical</item>
+    <item>@string/folder_view_tree</item>
+  </string-array>
+
+  <string-array name="folder_view_mode_values">
+    <item>hierarchical</item>
+    <item>tree</item>
+  </string-array>
+
+  <!-- Media Type Filter -->
+  <string-array name="media_type_filter_entries">
+    <item>@string/media_type_all</item>
+    <item>@string/media_type_video_only</item>
+    <item>@string/media_type_audio_only</item>
+  </string-array>
+
+  <string-array name="media_type_filter_values">
+    <item>all</item>
+    <item>video</item>
+    <item>audio</item>
+  </string-array>
 </resources>

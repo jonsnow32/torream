@@ -11,6 +11,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import cloud.app.csplayer.R
+import cloud.app.csplayer.media.model.FolderViewMode
+import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.utils.PREFERENCES_NAME
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +20,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -43,16 +46,36 @@ class FeedViewModel @Inject constructor(
   // Display type state - loaded from preferences
   val displayType = MutableStateFlow(loadDisplayType())
 
+  // Folder view mode state - loaded from preferences
+  val folderViewMode = MutableStateFlow(loadFolderViewMode())
+
+  // Media type filter state - loaded from preferences
+  val mediaTypeFilter = MutableStateFlow(loadMediaTypeFilter())
+
   // PagingData flow for the adapter - now loads real data from MediaRepository
-  // Recreates when displayType changes to apply new item types
-  val feedData: Flow<PagingData<FeedData>> = displayType.flatMapLatest { currentDisplayType ->
+  // Recreates when displayType, folderViewMode, or mediaTypeFilter changes
+  val feedData: Flow<PagingData<FeedData>> = combine(
+    displayType,
+    folderViewMode,
+    mediaTypeFilter
+  ) { currentDisplayType, currentFolderViewMode, currentMediaTypeFilter ->
+    Triple(currentDisplayType, currentFolderViewMode, currentMediaTypeFilter)
+  }.flatMapLatest { (currentDisplayType, currentFolderViewMode, currentMediaTypeFilter) ->
     Pager(
       config = PagingConfig(
         pageSize = 20,
         enablePlaceholders = false,
         initialLoadSize = 20
       ),
-      pagingSourceFactory = { FeedPagingSource(mediaRepository, rootFolderPath, currentDisplayType) }
+      pagingSourceFactory = {
+        FeedPagingSource(
+          mediaRepository,
+          rootFolderPath,
+          currentDisplayType,
+          currentFolderViewMode,
+          currentMediaTypeFilter
+        )
+      }
     ).flow
   }.cachedIn(viewModelScope)
 
@@ -127,6 +150,22 @@ class FeedViewModel @Inject constructor(
       putInt(KEY_DISPLAY_TYPE, displayType.ordinal)
     }
     Timber.d("Saved display type: $displayType")
+  }
+
+  /**
+   * Load folder view mode from SharedPreferences
+   */
+  private fun loadFolderViewMode(): FolderViewMode {
+    val savedValue = sharedPreferences.getString(context.getString(R.string.folder_view_mode_key), "hierarchical")
+    return FolderViewMode.fromValue(savedValue)
+  }
+
+  /**
+   * Load media type filter from SharedPreferences
+   */
+  private fun loadMediaTypeFilter(): MediaTypeFilter {
+    val savedValue = sharedPreferences.getString(context.getString(R.string.media_type_filter_key), "all")
+    return MediaTypeFilter.fromValue(savedValue)
   }
 
   enum class DisplayType {

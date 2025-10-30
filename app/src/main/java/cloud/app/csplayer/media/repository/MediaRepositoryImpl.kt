@@ -323,7 +323,38 @@ class MediaRepositoryImpl @Inject constructor(
 
   override suspend fun getFoldersPaged(limit: Int, offset: Int): List<Folder> =
     withContext(Dispatchers.IO) {
-      return@withContext folderDao.getAllPaged(limit, offset).map { it.toDomain() }
+      // Get only root-level folders (folders with no parent or common root paths)
+      val allFolders = folderDao.getAll().map { it.toDomain() }
+      val rootFolders = allFolders.filter { folder ->
+        folder.parentPath.isEmpty() ||
+        folder.parentPath == "/" ||
+        folder.parentPath == "/storage" ||
+        folder.parentPath == "/storage/emulated" ||
+        folder.parentPath == "/storage/emulated/0"
+      }.sortedBy { it.name.lowercase() }
+
+      // Apply pagination
+      val start = offset.coerceAtMost(rootFolders.size)
+      val end = (offset + limit).coerceAtMost(rootFolders.size)
+
+      timber.log.Timber.d("getFoldersPaged: Found ${rootFolders.size} root folders, returning ${end - start}")
+      return@withContext rootFolders.subList(start, end)
+    }
+
+  override suspend fun getSubfoldersPaged(parentPath: String, limit: Int, offset: Int): List<Folder> =
+    withContext(Dispatchers.IO) {
+      // Get only direct children of the specified parent
+      val allFolders = folderDao.getAll().map { it.toDomain() }
+      val subfolders = allFolders
+        .filter { it.parentPath == parentPath }
+        .sortedBy { it.name.lowercase() }
+
+      // Apply pagination
+      val start = offset.coerceAtMost(subfolders.size)
+      val end = (offset + limit).coerceAtMost(subfolders.size)
+
+      timber.log.Timber.d("getSubfoldersPaged: Found ${subfolders.size} subfolders in $parentPath, returning ${end - start}")
+      return@withContext subfolders.subList(start, end)
     }
 
   override suspend fun countMediaInFolder(folderPath: String): Int =

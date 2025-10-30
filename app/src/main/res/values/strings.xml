@@ -72,6 +72,8 @@
   <string name="rotate_video_key" translatable="false">rotate_video_key</string>
   <string name="auto_rotate_video_key" translatable="false">auto_rotate_video_key</string>
   <string name="biometric_key" translatable="false">biometric_key</string>
+  <string name="folder_view_mode_key" translatable="false">folder_view_mode_key</string>
+  <string name="media_type_filter_key" translatable="false">media_type_filter_key</string>
   <!-- FORMAT MIGHT TRANSLATE, WILL CAUSE CRASH IF APPLIED WRONG -->
   <string name="extra_info_format" formatted="true" translatable="false">%d %s | %s</string>
   <string name="storage_size_format" formatted="true" translatable="false">%s • %s</string>
@@ -474,6 +476,15 @@
   <string name="test_extensions">Test all Extensions</string>
   <string name="test_extensions_summary">This Test is meant for developers only and does not verifies or denies working of any extension.</string>
   <string name="category_ui">Layout</string>
+  <string name="folder_view_mode">Folder view mode</string>
+  <string name="folder_view_mode_summary">Choose how to display folders and media</string>
+  <string name="folder_view_tree">Tree view (all levels)</string>
+  <string name="folder_view_hierarchical">Hierarchical (one level at a time)</string>
+  <string name="media_type_filter">Media type filter</string>
+  <string name="media_type_filter_summary">Filter by video, audio, or show all</string>
+  <string name="media_type_all">All (Video + Audio)</string>
+  <string name="media_type_video_only">Video only</string>
+  <string name="media_type_audio_only">Audio only</string>
   <string name="automatic">Auto</string>
   <string name="tv_layout">TV layout</string>
   <string name="phone_layout">Phone layout</string>
@@ -690,7 +701,6 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="apk_installer_legacy">Legacy</string>
   <string name="apk_installer_package_installer">PackageInstaller</string>
   <string name="delayed_update_notice">App will be updated upon exit</string>
-  <string name="sort_by">Sort by</string>
   <string name="sort">Sort</string>
   <string name="sort_rating_desc">Rating (High to Low)</string>
   <string name="sort_rating_asc">Rating (Low to High)</string>
@@ -850,4 +860,32 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="folders">%1$d folders</string>
   <string name="folder_items">%1$d folders • %2$d items</string>
   <string name="ms_bytes">%1$dms • %2$d bytes</string>
+
+  <!-- Bottom Sheet Filter -->
+  <string name="quick_settings">Quick Settings</string>
+  <string name="media_view_mode">View mode</string>
+  <string name="view_mode_tree">Tree</string>
+  <string name="view_mode_folders">Folders</string>
+  <string name="view_mode_carousel">Carousel</string>
+  <string name="sort_by">Sort by</string>
+  <string name="sort_title">Title</string>
+  <string name="sort_duration">Duration</string>
+  <string name="sort_date">Date</string>
+  <string name="sort_size">Size</string>
+  <string name="sort_location">Location</string>
+  <string name="sort_asc">A to Z</string>
+  <string name="sort_desc">Z to A</string>
+  <string name="display_fields">Display Fields</string>
+  <string name="field_duration">Duration</string>
+  <string name="field_extension">Extension</string>
+  <string name="field_path">Path</string>
+  <string name="field_progress">Played progress</string>
+  <string name="field_resolution">Resolution</string>
+  <string name="field_size">Size</string>
+  <string name="field_thumbnail">Thumbnail</string>
+  <string name="apply">Apply</string>
+  <string name="grid">Grid</string>
+  <string name="list">List</string>
+  <string name="media_group_mode">Group mode</string>
+  <string name="settings">Settings</string>
 </resources>
