@@ -321,6 +321,51 @@ class MediaRepositoryImpl @Inject constructor(
       return@withContext mediaDao.getByFolderPaged(folderPath, limit, offset).map { it.toDomain() }
     }
 
+  override suspend fun getMediaByFolderPagedFiltered(
+    folderPath: String,
+    limit: Int,
+    offset: Int,
+    mediaTypeFilter: cloud.app.csplayer.media.model.MediaTypeFilter
+  ): List<Media> = withContext(Dispatchers.IO) {
+    // If ALL, use the non-filtered method for better performance
+    if (mediaTypeFilter == cloud.app.csplayer.media.model.MediaTypeFilter.ALL) {
+      return@withContext getMediaByFolderPaged(folderPath, limit, offset)
+    }
+
+    // Determine MIME type pattern based on filter
+    val mimeTypePattern = when (mediaTypeFilter) {
+      cloud.app.csplayer.media.model.MediaTypeFilter.VIDEO -> "video/%"
+      cloud.app.csplayer.media.model.MediaTypeFilter.AUDIO -> "audio/%"
+      cloud.app.csplayer.media.model.MediaTypeFilter.ALL -> "%"
+    }
+
+    return@withContext mediaDao.getByFolderPagedFiltered(folderPath, mimeTypePattern, limit, offset).map { it.toDomain() }
+  }
+
+  override suspend fun getAllMediaPaged(limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
+    return@withContext mediaDao.getAllPaged(limit, offset).map { it.toDomain() }
+  }
+
+  override suspend fun getAllMediaPagedFiltered(
+    limit: Int,
+    offset: Int,
+    mediaTypeFilter: cloud.app.csplayer.media.model.MediaTypeFilter
+  ): List<Media> = withContext(Dispatchers.IO) {
+    // If ALL, use the non-filtered method for better performance
+    if (mediaTypeFilter == cloud.app.csplayer.media.model.MediaTypeFilter.ALL) {
+      return@withContext getAllMediaPaged(limit, offset)
+    }
+
+    // Determine MIME type pattern based on filter
+    val mimeTypePattern = when (mediaTypeFilter) {
+      cloud.app.csplayer.media.model.MediaTypeFilter.VIDEO -> "video/%"
+      cloud.app.csplayer.media.model.MediaTypeFilter.AUDIO -> "audio/%"
+      cloud.app.csplayer.media.model.MediaTypeFilter.ALL -> "%"
+    }
+
+    return@withContext mediaDao.getAllPagedFiltered(mimeTypePattern, limit, offset).map { it.toDomain() }
+  }
+
   override suspend fun getFoldersPaged(limit: Int, offset: Int): List<Folder> =
     withContext(Dispatchers.IO) {
       // Get only root-level folders (folders with no parent or common root paths)
@@ -365,6 +410,11 @@ class MediaRepositoryImpl @Inject constructor(
   override suspend fun countAllFolders(): Int =
     withContext(Dispatchers.IO) {
       return@withContext folderDao.countAllFolders()
+    }
+
+  override suspend fun countAllMedia(): Int =
+    withContext(Dispatchers.IO) {
+      return@withContext mediaDao.countAllMedia()
     }
 
   override suspend fun updateMediaMetadata(

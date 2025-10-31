@@ -873,8 +873,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="sort_date">Date</string>
   <string name="sort_size">Size</string>
   <string name="sort_location">Location</string>
-  <string name="sort_asc">A to Z</string>
-  <string name="sort_desc">Z to A</string>
+  <string name="sort_asc">AZ</string>
+  <string name="sort_desc">ZA</string>
   <string name="display_fields">Display Fields</string>
   <string name="field_duration">Duration</string>
   <string name="field_extension">Extension</string>
@@ -888,4 +888,5 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="list">List</string>
   <string name="media_group_mode">Group mode</string>
   <string name="settings">Settings</string>
+  <string name="media">Media</string>
 </resources>

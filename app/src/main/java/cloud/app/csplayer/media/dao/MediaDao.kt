@@ -15,14 +15,26 @@ interface MediaDao {
   @Query("SELECT * FROM media")
   suspend fun getAll(): List<MediaEntity>
 
+  @Query("SELECT * FROM media LIMIT :limit OFFSET :offset")
+  suspend fun getAllPaged(limit: Int, offset: Int): List<MediaEntity>
+
+  @Query("SELECT * FROM media WHERE mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
+  suspend fun getAllPagedFiltered(mimeTypePattern: String, limit: Int, offset: Int): List<MediaEntity>
+
   @Query("SELECT * FROM media WHERE parent_path = :folderPath")
   suspend fun getByFolder(folderPath: String): List<MediaEntity>
 
   @Query("SELECT * FROM media WHERE parent_path = :folderPath LIMIT :limit OFFSET :offset")
   suspend fun getByFolderPaged(folderPath: String, limit: Int, offset: Int): List<MediaEntity>
 
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
+  suspend fun getByFolderPagedFiltered(folderPath: String, mimeTypePattern: String, limit: Int, offset: Int): List<MediaEntity>
+
   @Query("SELECT COUNT(*) FROM media WHERE parent_path = :folderPath")
   suspend fun countMediaInFolder(folderPath: String): Int
+
+  @Query("SELECT COUNT(*) FROM media")
+  suspend fun countAllMedia(): Int
 
   @Upsert
   suspend fun upsertAll(media: List<MediaEntity>)

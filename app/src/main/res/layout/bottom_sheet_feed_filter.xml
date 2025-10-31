@@ -14,7 +14,6 @@
     <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="32dp"
       android:text="@string/quick_settings"
       android:textColor="?attr/colorOnSurface"
       android:textSize="20sp"
@@ -24,8 +23,8 @@
     <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="8dp"
       android:text="@string/media_group_mode"
+      android:gravity="center"
       android:textColor="?attr/colorOnSurface"
       android:textSize="14sp" />
 
@@ -34,79 +33,72 @@
       style="@style/Widget.MaterialComponents.TabLayout.PrimarySurface"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="32dp"
-
+      android:layout_gravity="center"
+      android:background="@color/transparent"
+      app:tabGravity="center"
+      app:tabIndicator="@null"
       app:tabIndicatorFullWidth="true"
-      app:tabMode="auto"
-      app:tabGravity="fill"
-      android:background="@color/transparent">
+      app:tabMode="auto">
 
       <com.google.android.material.tabs.TabItem
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/view_mode_tree" />
-
-      <com.google.android.material.tabs.TabItem
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:icon="@drawable/ic_folder"
         android:text="@string/view_mode_folders" />
 
       <com.google.android.material.tabs.TabItem
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/view_mode_carousel" />
+        android:icon="@drawable/media3_icon_album"
+        android:text="@string/media" />
     </com.google.android.material.tabs.TabLayout>
 
-
-    <!-- Media view mode -->
-    <TextView
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="8dp"
-      android:text="@string/media_view_mode"
-      android:textColor="?attr/colorOnSurface"
-      android:textSize="14sp" />
-
-    <com.google.android.material.tabs.TabLayout
+    <!-- Sort Order Buttons -->
+    <com.google.android.material.button.MaterialButtonToggleGroup
       android:id="@+id/viewMode"
-      style="@style/Widget.MaterialComponents.TabLayout.PrimarySurface"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="32dp"
-      android:background="@color/transparent"
-      app:tabGravity="start"
-      app:tabIndicatorFullWidth="true"
-      app:tabIndicator="@null">
+      android:layout_gravity="center"
+      android:orientation="horizontal"
+      app:selectionRequired="true"
+      app:singleSelection="true">
 
-      <com.google.android.material.tabs.TabItem
+      <com.google.android.material.button.MaterialButton
+        android:id="@+id/gridView"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:icon="@drawable/outline_grid_view_24"
-        android:text="@string/grid" />
+        android:layout_marginBottom="16dp"
+        android:text="@string/grid"
+        app:icon="@drawable/outline_grid_view_24"
+        app:iconGravity="start" />
 
-      <com.google.android.material.tabs.TabItem
+      <com.google.android.material.button.MaterialButton
+        android:id="@+id/listView"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:icon="@drawable/outline_view_agenda_24"
-        android:text="@string/list" />
-
-    </com.google.android.material.tabs.TabLayout>
+        android:text="@string/list"
+        app:icon="@drawable/outline_view_agenda_24"
+        app:iconGravity="start" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <!-- Sort Section -->
     <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="8dp"
+      android:gravity="center"
       android:text="@string/sort_by" />
 
     <com.google.android.material.tabs.TabLayout
       android:id="@+id/sortByTabLayout"
       style="@style/Widget.MaterialComponents.TabLayout.PrimarySurface"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="8dp"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_marginEnd="8dp"
       android:background="@color/transparent"
       app:tabGravity="start"
+      app:tabIndicator="@null"
       app:tabIndicatorFullWidth="false"
       app:tabMode="scrollable">
 
@@ -147,9 +139,10 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_gravity="center"
-      android:layout_marginBottom="32dp"
-      app:singleSelection="true"
-      app:selectionRequired="true">
+      android:layout_marginBottom="16dp"
+      android:orientation="horizontal"
+      app:selectionRequired="true"
+      app:singleSelection="true">
 
       <com.google.android.material.button.MaterialButton
         android:id="@+id/sortAscButton"
@@ -169,11 +162,11 @@
         app:icon="@drawable/ic_baseline_arrow_downward_24"
         app:iconGravity="start" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
+
     <!-- Fields to show -->
     <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="8dp"
       android:text="@string/display_fields"
       android:textColor="?attr/colorOnSurface"
       android:textSize="14sp" />
@@ -196,14 +189,6 @@
         android:checked="true"
         android:text="@string/field_duration" />
 
-      <com.google.android.material.chip.Chip
-        android:id="@+id/chipExtension"
-        style="@style/Widget.Material3.Chip.Filter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checkable="true"
-        android:checked="false"
-        android:text="@string/field_extension" />
 
       <com.google.android.material.chip.Chip
         android:id="@+id/chipPath"
@@ -223,14 +208,6 @@
         android:checked="true"
         android:text="@string/field_progress" />
 
-      <com.google.android.material.chip.Chip
-        android:id="@+id/chipResolution"
-        style="@style/Widget.Material3.Chip.Filter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checkable="true"
-        android:checked="false"
-        android:text="@string/field_resolution" />
 
       <com.google.android.material.chip.Chip
         android:id="@+id/chipSize"

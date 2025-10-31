@@ -2,7 +2,6 @@ package cloud.app.csplayer.ui.feed
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.core.content.edit
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +10,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import cloud.app.csplayer.R
-import cloud.app.csplayer.media.model.FolderViewMode
 import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.utils.PREFERENCES_NAME
@@ -22,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -39,15 +38,21 @@ class FeedViewModel @Inject constructor(
   // Root folder path - if set, only show files from this folder
   private var rootFolderPath: String? = null
 
-  // SharedPreferences for storing display type
+  // SharedPreferences for storing settings
   private val sharedPreferences: SharedPreferences =
     context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
-  // Display type state - loaded from preferences
-  val displayType = MutableStateFlow(loadDisplayType())
+  // Feed filter configuration state - single source of truth
+  val filterConfig = MutableStateFlow(FeedFilterConfig.load(context))
 
-  // Folder view mode state - loaded from preferences
-  val folderViewMode = MutableStateFlow(loadFolderViewMode())
+  // Derived properties for convenience
+  val viewMode: Flow<FeedFilterConfig.ViewMode> = filterConfig.map { config ->
+    config.viewMode
+  }
+
+  val groupMode: Flow<FeedFilterConfig.GroupMode> = filterConfig.map { config ->
+    config.groupMode
+  }
 
   // Media type filter state - loaded from preferences
   val mediaTypeFilter = MutableStateFlow(loadMediaTypeFilter())
@@ -55,12 +60,12 @@ class FeedViewModel @Inject constructor(
   // PagingData flow for the adapter - now loads real data from MediaRepository
   // Recreates when displayType, folderViewMode, or mediaTypeFilter changes
   val feedData: Flow<PagingData<FeedData>> = combine(
-    displayType,
-    folderViewMode,
+    viewMode,
+    groupMode,
     mediaTypeFilter
-  ) { currentDisplayType, currentFolderViewMode, currentMediaTypeFilter ->
-    Triple(currentDisplayType, currentFolderViewMode, currentMediaTypeFilter)
-  }.flatMapLatest { (currentDisplayType, currentFolderViewMode, currentMediaTypeFilter) ->
+  ) { viewMode, groupMode, mediaType ->
+    Triple(viewMode, groupMode, mediaType)
+  }.flatMapLatest { (viewMode, groupMode, mediaType) ->
     Pager(
       config = PagingConfig(
         pageSize = 20,
@@ -71,9 +76,9 @@ class FeedViewModel @Inject constructor(
         FeedPagingSource(
           mediaRepository,
           rootFolderPath,
-          currentDisplayType,
-          currentFolderViewMode,
-          currentMediaTypeFilter
+          viewMode,
+          groupMode,
+          mediaType
         )
       }
     ).flow
@@ -110,15 +115,6 @@ class FeedViewModel @Inject constructor(
     }
   }
 
-  fun changeDisplayType() {
-    val newDisplayType = when (displayType.value) {
-      DisplayType.GRID -> DisplayType.LIST
-      DisplayType.LIST -> DisplayType.GRID
-    }
-    displayType.value = newDisplayType
-    saveDisplayType(newDisplayType)
-  }
-
   /**
    * Refresh MediaRepository to sync from MediaStore
    * Call this after permission is granted to trigger data sync
@@ -135,46 +131,12 @@ class FeedViewModel @Inject constructor(
   }
 
   /**
-   * Load display type from SharedPreferences
-   */
-  private fun loadDisplayType(): DisplayType {
-    val savedOrdinal = sharedPreferences.getInt(KEY_DISPLAY_TYPE, DisplayType.GRID.ordinal)
-    return DisplayType.entries.getOrNull(savedOrdinal) ?: DisplayType.GRID
-  }
-
-  /**
-   * Save display type to SharedPreferences
-   */
-  private fun saveDisplayType(displayType: DisplayType) {
-    sharedPreferences.edit {
-      putInt(KEY_DISPLAY_TYPE, displayType.ordinal)
-    }
-    Timber.d("Saved display type: $displayType")
-  }
-
-  /**
-   * Load folder view mode from SharedPreferences
-   */
-  private fun loadFolderViewMode(): FolderViewMode {
-    val savedValue = sharedPreferences.getString(context.getString(R.string.folder_view_mode_key), "hierarchical")
-    return FolderViewMode.fromValue(savedValue)
-  }
-
-  /**
    * Load media type filter from SharedPreferences
    */
   private fun loadMediaTypeFilter(): MediaTypeFilter {
-    val savedValue = sharedPreferences.getString(context.getString(R.string.media_type_filter_key), "all")
+    val savedValue =
+      sharedPreferences.getString(context.getString(R.string.media_type_filter_key), "all")
     return MediaTypeFilter.fromValue(savedValue)
-  }
-
-  enum class DisplayType {
-    GRID,
-    LIST
-  }
-
-  companion object {
-    private const val KEY_DISPLAY_TYPE = "feed_display_type"
   }
 }
 

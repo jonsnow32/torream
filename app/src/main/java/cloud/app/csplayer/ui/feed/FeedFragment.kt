@@ -2,8 +2,6 @@ package cloud.app.csplayer.ui.feed
 
 import adapters.FeedAdapter.Companion.getFeedAdapter
 import android.Manifest
-import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -20,11 +18,8 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentFeedBinding
-import cloud.app.csplayer.media.model.FolderViewMode
-import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.model.SyncState
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
-import cloud.app.csplayer.ui.filesystem.FileTreeDialog
 import cloud.app.csplayer.ui.player.EXTRA_TITLE
 import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URLS_NAME_HEADERS
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
@@ -43,26 +38,6 @@ class FeedFragment : Fragment(), FeedClickListener {
   // Keep reference to current Snackbar for sync state
   private var syncSnackbar: Snackbar? = null
 
-  // SharedPreferences for observing settings changes
-  private val sharedPreferences by lazy {
-    requireContext().getSharedPreferences(cloud.app.csplayer.utils.PREFERENCES_NAME, Context.MODE_PRIVATE)
-  }
-
-  // SharedPreferences listener
-  private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-    when (key) {
-      getString(R.string.folder_view_mode_key) -> {
-        val newMode = FolderViewMode.fromValue(sharedPreferences.getString(key, "hierarchical"))
-        viewModel.folderViewMode.value = newMode
-        adapter.refresh()
-      }
-      getString(R.string.media_type_filter_key) -> {
-        val newFilter = MediaTypeFilter.fromValue(sharedPreferences.getString(key, "all"))
-        viewModel.mediaTypeFilter.value = newFilter
-        adapter.refresh()
-      }
-    }
-  }
 
   // Lazy initialization to allow permission check callback
   private val adapter by lazy {
@@ -317,7 +292,7 @@ class FeedFragment : Fragment(), FeedClickListener {
     }
 
 
-    observe(viewModel.displayType) {
+    observe(viewModel.viewMode) {
 
     }
     binding.toolbar.setOnMenuItemClickListener {
@@ -455,17 +430,6 @@ class FeedFragment : Fragment(), FeedClickListener {
     permissionLauncher.launch(permissions)
   }
 
-  override fun onResume() {
-    super.onResume()
-    // Register preferences listener
-    sharedPreferences.registerOnSharedPreferenceChangeListener(prefsListener)
-  }
-
-  override fun onPause() {
-    super.onPause()
-    // Unregister preferences listener
-    sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefsListener)
-  }
 
   /**
    * Find the subtitle TextView in Toolbar to apply custom styling
@@ -487,14 +451,16 @@ class FeedFragment : Fragment(), FeedClickListener {
    * Apply filter configuration from bottom sheet
    */
   private fun applyFilterConfig(config: FeedFilterConfig) {
-    // TODO: Apply view mode
-    // TODO: Apply sort by and order
-    // TODO: Apply display fields
+    // Update the filterConfig in ViewModel - this will automatically update displayType and folderViewMode
+    viewModel.filterConfig.value = config
 
-    // For now, just refresh the adapter
+    // Save the config to persist across app restarts
+    FeedFilterConfig.save(requireContext(), config)
+
+    // Refresh the adapter to apply changes
     adapter.refresh()
 
-    showToast("Filter applied: ${config.groupMode.name}, ${config.sortBy.name}")
+    showToast("Settings applied: ${config.groupMode.name} / ${config.viewMode.name}")
   }
 
   companion object {

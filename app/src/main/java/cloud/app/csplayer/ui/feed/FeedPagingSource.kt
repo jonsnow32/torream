@@ -2,7 +2,6 @@ package cloud.app.csplayer.ui.feed
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import cloud.app.csplayer.media.model.FolderViewMode
 import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
 import kotlinx.coroutines.flow.first
@@ -15,15 +14,15 @@ import timber.log.Timber
  * @param repository MediaRepository for accessing media and folder data
  * @param rootFolderPath Optional root folder path. If provided, only shows media from this folder.
  *                       If null, shows all folders.
- * @param displayType Display type that determines how items are shown (GRID or LIST)
- * @param folderViewMode Folder view mode (HIERARCHICAL or TREE)
+ * @param viewMode Display type that determines how items are shown (GRID or LIST)
+ * @param groupMode Folder view mode (CAROUSEL, FOLDERS or TREE)
  * @param mediaTypeFilter Media type filter (ALL, VIDEO, or AUDIO)
  */
 class FeedPagingSource(
   private val repository: MediaRepository,
   private val rootFolderPath: String? = null,
-  private val displayType: FeedViewModel.DisplayType = FeedViewModel.DisplayType.GRID,
-  private val folderViewMode: FolderViewMode = FolderViewMode.HIERARCHICAL,
+  private val viewMode: FeedFilterConfig.ViewMode = FeedFilterConfig.ViewMode.GRID,
+  private val groupMode: FeedFilterConfig.GroupMode = FeedFilterConfig.GroupMode.FOLDERS,
   private val mediaTypeFilter: MediaTypeFilter = MediaTypeFilter.ALL
 ) : PagingSource<Int, FeedData>() {
 
@@ -32,15 +31,17 @@ class FeedPagingSource(
       val page = params.key ?: 0
       val pageSize = params.loadSize
 
-      Timber.d("Loading page $page with pageSize $pageSize, rootFolder: $rootFolderPath")
+      Timber.d("Loading page $page with pageSize $pageSize, rootFolder: $rootFolderPath, groupMode: $groupMode")
 
-      // Load data using true pagination from repository
-      val data = if (rootFolderPath != null) {
-        // Load media from specific folder with pagination
-        loadMediaFromFolderPaged(rootFolderPath, pageSize, page * pageSize)
-      } else {
-        // Load all folders with pagination
-        loadAllFoldersPaged(pageSize, page * pageSize)
+      // Load data based on groupMode and rootFolderPath
+      val data =  when(groupMode) {
+        FeedFilterConfig.GroupMode.CAROUSEL -> loadAllMediaPaged(pageSize, page * pageSize)
+        else -> {
+          when(rootFolderPath) {
+            null -> loadAllFoldersPaged(pageSize, page * pageSize)
+            else -> loadMediaFromFolderPaged(rootFolderPath, pageSize, page * pageSize)
+          }
+        }
       }
 
       Timber.d("Loaded ${data.size} items for page $page")
@@ -67,7 +68,7 @@ class FeedPagingSource(
    * Load all folders from MediaRepository with pagination
    */
   private suspend fun loadAllFoldersPaged(limit: Int, offset: Int): List<FeedData.FolderItem> {
-    Timber.d("Loading folders with limit=$limit, offset=$offset")
+    Timber.d("Loading folders with limit=$limit, offset=$offset, groupMode=$groupMode, mediaTypeFilter=$mediaTypeFilter")
 
     val folders = repository.getFoldersPaged(limit, offset)
 
@@ -79,9 +80,9 @@ class FeedPagingSource(
     }
 
     // Determine folder type based on displayType
-    val folderType = when (displayType) {
-      FeedViewModel.DisplayType.GRID -> FeedData.Type.FolderSmall
-      FeedViewModel.DisplayType.LIST -> FeedData.Type.Folder
+    val folderType = when (viewMode) {
+      FeedFilterConfig.ViewMode.GRID -> FeedData.Type.FolderSmall
+      FeedFilterConfig.ViewMode.LIST -> FeedData.Type.Folder
     }
 
     // Convert Folder to FeedData.FolderItem
@@ -98,23 +99,65 @@ class FeedPagingSource(
   }
 
   /**
+   * Load all media files (for CAROUSEL mode) with pagination
+   * Does not show folders, only media files
+   */
+  private suspend fun loadAllMediaPaged(limit: Int, offset: Int): List<FeedData.MediaItem> {
+    return try {
+      Timber.d("Loading all media with limit=$limit, offset=$offset, mediaTypeFilter=$mediaTypeFilter")
+
+      // Load media files with filtering
+      val mediaList = if (mediaTypeFilter != MediaTypeFilter.ALL) {
+        repository.getAllMediaPagedFiltered(limit, offset, mediaTypeFilter)
+      } else {
+        repository.getAllMediaPaged(limit, offset)
+      }
+
+      Timber.d("Loaded ${mediaList.size} media files (filter: $mediaTypeFilter)")
+
+      // Throw exception if first page is empty
+      if (offset == 0 && mediaList.isEmpty()) {
+        throw NoFoldersFoundException("No media files found. Please scan your device for media files.")
+      }
+
+      // Convert Media to FeedData.MediaItem
+      mediaList.map { media ->
+        val mediaType = determineMediaType(media.mimeType)
+
+        FeedData.MediaItem(
+          id = media.uri,
+          title = media.name,
+          type = mediaType,
+          media = media
+        )
+      }.also {
+        Timber.d("Successfully loaded ${it.size} media items")
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading all media")
+      emptyList()
+    }
+  }
+
+  /**
    * Load media files from a specific folder with pagination
-   * Also loads subfolders at the beginning of the list
+   * Also loads subfolders at the beginning of the list (only in TREE mode)
    */
   private suspend fun loadMediaFromFolderPaged(folderPath: String, limit: Int, offset: Int): List<FeedData> {
     return try {
-      Timber.d("Loading content from folder: $folderPath with limit=$limit, offset=$offset")
+      Timber.d("Loading content from folder: $folderPath with limit=$limit, offset=$offset, groupMode=$groupMode")
 
       val items = mutableListOf<FeedData>()
 
-      // For first page, load subfolders first
-      if (offset == 0) {
+      // For first page, load subfolders first (only in TREE mode for hierarchical structure)
+      // FOLDERS and CAROUSEL modes don't show subfolders within media list
+      if (offset == 0 && groupMode == FeedFilterConfig.GroupMode.FOLDERS) {
         val subfolders = repository.getSubfoldersPaged(folderPath, limit = 100, offset = 0)
 
         // Determine folder type based on displayType
-        val folderType = when (displayType) {
-          FeedViewModel.DisplayType.GRID -> FeedData.Type.FolderSmall
-          FeedViewModel.DisplayType.LIST -> FeedData.Type.Folder
+        val folderType = when (viewMode) {
+          FeedFilterConfig.ViewMode.GRID -> FeedData.Type.FolderSmall
+          FeedFilterConfig.ViewMode.LIST -> FeedData.Type.Folder
         }
 
         subfolders.forEach { folder ->
@@ -133,9 +176,15 @@ class FeedPagingSource(
 
       // Load media files with adjusted pagination
       val adjustedOffset = maxOf(0, offset - if (offset == 0) 0 else 0) // Simple for now
-      val mediaList = repository.getMediaByFolderPaged(folderPath, limit, adjustedOffset)
+      val mediaList = if (mediaTypeFilter != MediaTypeFilter.ALL) {
+        // Use filtered query when a specific media type is selected
+        repository.getMediaByFolderPagedFiltered(folderPath, limit, adjustedOffset, mediaTypeFilter)
+      } else {
+        // Use standard query for ALL to avoid unnecessary filtering
+        repository.getMediaByFolderPaged(folderPath, limit, adjustedOffset)
+      }
 
-      Timber.d("Loaded ${mediaList.size} media files")
+      Timber.d("Loaded ${mediaList.size} media files (filter: $mediaTypeFilter)")
 
       // Convert Media to FeedData.MediaItem
       mediaList.forEach { media ->
@@ -155,6 +204,42 @@ class FeedPagingSource(
       items
     } catch (e: Exception) {
       Timber.e(e, "Error loading content from folder")
+      emptyList()
+    }
+  }
+
+  /**
+   * Load only media files from a specific folder (no subfolders)
+   * Used in CAROUSEL mode when viewing a specific folder
+   */
+  private suspend fun loadMediaOnlyFromFolderPaged(folderPath: String, limit: Int, offset: Int): List<FeedData.MediaItem> {
+    return try {
+      Timber.d("Loading media only from folder: $folderPath with limit=$limit, offset=$offset, mediaTypeFilter=$mediaTypeFilter")
+
+      // Load media files with filtering
+      val mediaList = if (mediaTypeFilter != MediaTypeFilter.ALL) {
+        repository.getMediaByFolderPagedFiltered(folderPath, limit, offset, mediaTypeFilter)
+      } else {
+        repository.getMediaByFolderPaged(folderPath, limit, offset)
+      }
+
+      Timber.d("Loaded ${mediaList.size} media files (filter: $mediaTypeFilter)")
+
+      // Convert Media to FeedData.MediaItem
+      mediaList.map { media ->
+        val mediaType = determineMediaType(media.mimeType)
+
+        FeedData.MediaItem(
+          id = media.uri,
+          title = media.name,
+          type = mediaType,
+          media = media
+        )
+      }.also {
+        Timber.d("Successfully loaded ${it.size} media items from folder")
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading media from folder")
       emptyList()
     }
   }
@@ -251,15 +336,15 @@ class FeedPagingSource(
    * Determine media type based on MIME type and displayType
    */
   private fun determineMediaType(mimeType: String): FeedData.Type {
-    return when (displayType) {
-      FeedViewModel.DisplayType.GRID -> {
+    return when (viewMode) {
+      FeedFilterConfig.ViewMode.GRID -> {
         when {
           mimeType.startsWith("video/") -> FeedData.Type.VideoSmall
           mimeType.startsWith("audio/") -> FeedData.Type.AudioSmall
           else -> FeedData.Type.VideoSmall // Default to video
         }
       }
-      FeedViewModel.DisplayType.LIST -> {
+      FeedFilterConfig.ViewMode.LIST -> {
         when {
           mimeType.startsWith("video/") -> FeedData.Type.Video
           mimeType.startsWith("audio/") -> FeedData.Type.Audio
