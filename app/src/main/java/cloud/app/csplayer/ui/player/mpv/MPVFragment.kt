@@ -1,6 +1,5 @@
 package cloud.app.csplayer.ui.player.mpv
 
-import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
@@ -26,7 +25,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.AbsListView
@@ -84,7 +82,6 @@ import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.ExtractorUri
-import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SubtitleData
 import cloud.app.csplayer.utils.SubtitleOrigin
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
@@ -92,7 +89,6 @@ import cloud.app.csplayer.utils.UIHelper.getNavigationBarHeight
 import cloud.app.csplayer.utils.UIHelper.getStatusBarHeight
 import cloud.app.csplayer.utils.UIHelper.popCurrentPage
 import cloud.app.csplayer.utils.UIHelper.showSystemUI
-import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
@@ -125,7 +121,7 @@ enum class TouchAction {
 }
 
 @OptIn(UnstableApi::class)
-class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
+class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private var isSameEpisode: Boolean = false;
 
@@ -2056,19 +2052,13 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
       }
     }
 
-    if (!activityIsForeground) return
-    eventUiHandler.post {
-      if (eventId == MPVLib.mpvEventId.MPV_EVENT_SEEK) {
-        playerBinding?.playerBuffering?.isVisible = true
-      }
-      if (eventId == MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART) {
-        playerBinding?.playerBuffering?.isVisible = false
+    if (eventId == MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART) {
+      playerBinding?.playerBuffering?.isVisible = false
 
-        // Auto-play when ready if shouldAutoPlay is true
-        if (shouldAutoPlay && playbackHasStarted) {
-          player?.paused = false
-          Timber.tag(TAG).v("Auto-playing video on playback restart")
-        }
+      // Auto-play when ready if shouldAutoPlay is true
+      if (shouldAutoPlay && playbackHasStarted) {
+        player?.paused = false
+        Timber.tag(TAG).v("Auto-playing video on playback restart")
       }
     }
   }
@@ -2295,22 +2285,39 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
     }
     requireActivity().setResult(code, result)
 
+    // Detect if launched from external intent (ACTION_VIEW or has data).
+    // If launched via intent we should finish the activity and rely on the activity result.
+    // If launched from inside the app (feed/app/navigation) we should close the fragment
+    // and deliver the playback callback via CommonActivitty.activityResultEvent.
+    val launchedFromIntent = try {
+      val actIntent = requireActivity().intent
+      (actIntent?.action == Intent.ACTION_VIEW) || (actIntent?.data != null)
+    } catch (e: Exception) {
+      false
+    }
+
     when (endFileReason) {
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_EOF -> {
         if (!isSameEpisode) {
           playNext()
         } else {
-          player?.timePos
-            ?.let {
-              CommonActivitty.activityResultEvent?.invoke(
-                PlayBackResult(
-                  RESULT_OK,
-                  it.toLong() * 1000L,
-                  "finish"
-                )
-              )
+          // End of file for a standalone item
+          player?.timePos?.let {
+            val playbackResult = PlayBackResult(
+              RESULT_OK,
+              it.toLong() * 1000L,
+              "finish"
+            )
+
+            if (launchedFromIntent) {
+              // External intent consumer expects activity to finish with result
+              activity?.finish()
+            } else {
+              // In-app consumer expects a callback and fragment close
+              CommonActivitty.activityResultEvent?.invoke(playbackResult)
+              activity?.popCurrentPage()
             }
-          activity?.finish()
+          }
         }
       }
 
@@ -2334,14 +2341,22 @@ class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
           // Reload the file with software decoding
           currentSelectedLink?.let { loadLink(it) }
         } else {
-          CommonActivitty.activityResultEvent?.invoke(
-            PlayBackResult(
-              code,
-              psc.positionSec,
-              errorMsg,
-              if (isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
-            )
+          val playbackResult = PlayBackResult(
+            code,
+            psc.positionSec,
+            errorMsg,
+            if (isSameEpisode) null else allLinks.indexOf(currentSelectedLink) + 1
           )
+
+          if (launchedFromIntent) {
+            // Finish activity; result was already set above
+            activity?.finish()
+          } else {
+            // Invoke in-app callback and close fragment
+            CommonActivitty.activityResultEvent?.invoke(playbackResult)
+            activity?.popCurrentPage()
+          }
+
           showToast(errorMsg)
           Log.e(TAG, "mpv playback error: $errorMsg")
         }

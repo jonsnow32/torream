@@ -74,7 +74,10 @@ var app = Requests(responseParser = object : ResponseParser {
 
   override fun <T : Any> parse(text: String, kClass: KClass<T>): T {
     @Suppress("UNCHECKED_CAST")
-    return json.decodeFromString(serializer(kClass.java) as kotlinx.serialization.KSerializer<T>, text)
+    return json.decodeFromString(
+      serializer(kClass.java) as kotlinx.serialization.KSerializer<T>,
+      text
+    )
   }
 
   override fun <T : Any> parseSafe(text: String, kClass: KClass<T>): T? {
@@ -227,24 +230,27 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
   private var isSameEpisode = true
   override fun finish() {
-    if (isSameEpisode) {
-      result.first().apply {
-        val resultIntent = Intent().apply {
-          putExtra("position", position)
-          putExtra("end_by", reason)
+    if (result.isNotEmpty()) {
+      if (isSameEpisode) {
+        result.first().apply {
+          val resultIntent = Intent().apply {
+            putExtra("position", position)
+            putExtra("end_by", reason)
+          }
+          setResult(code, resultIntent)
         }
-        setResult(code, resultIntent)
+      } else {
+        val positions = result.map { "${it.episode}:${it.position}" }
+        val resultIntent = Intent().apply {
+          putExtra("playlist", true)
+          putExtra("positions", positions.joinToString(separator = ","))
+          putExtra("end_by", result.last().reason)
+        }
+        setResult(result.last().code, resultIntent)
       }
-    } else {
-      val positions = result.map { "${it.episode}:${it.position}" }
-      val resultIntent = Intent().apply {
-        putExtra("playlist", true)
-        putExtra("positions", positions.joinToString(separator = ","))
-        putExtra("end_by", result.last().reason)
-      }
-      setResult(result.last().code, resultIntent)
     }
     super.finish()
+
   }
 
   private fun NavDestination.matchDestination(@IdRes destId: Int): Boolean =
