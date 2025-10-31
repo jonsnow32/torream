@@ -121,7 +121,7 @@ enum class TouchAction {
 }
 
 @OptIn(UnstableApi::class)
-class MPVFragment : Fragment(), MPVLib.EventObserver {
+class MvpPlayerFragment : Fragment(), MPVLib.EventObserver {
 
   private var isSameEpisode: Boolean = false;
 

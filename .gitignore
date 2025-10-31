@@ -21,3 +21,9 @@ local.properties
 /docs/node_modules
 /docs/.vitepress/cache
 /docs/.vitepress/dist
+/.kotlin
+/_ai_gen_docs
+/app/api29
+/app/default
+/app/release
+./.idea
