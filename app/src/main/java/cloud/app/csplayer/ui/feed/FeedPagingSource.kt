@@ -34,10 +34,10 @@ class FeedPagingSource(
       Timber.d("Loading page $page with pageSize $pageSize, rootFolder: $rootFolderPath, groupMode: $groupMode")
 
       // Load data based on groupMode and rootFolderPath
-      val data =  when(groupMode) {
+      val data = when (groupMode) {
         FeedFilterConfig.GroupMode.CAROUSEL -> loadAllMediaPaged(pageSize, page * pageSize)
         else -> {
-          when(rootFolderPath) {
+          when (rootFolderPath) {
             null -> loadAllFoldersPaged(pageSize, page * pageSize)
             else -> loadMediaFromFolderPaged(rootFolderPath, pageSize, page * pageSize)
           }
@@ -51,6 +51,9 @@ class FeedPagingSource(
         prevKey = if (page > 0) page - 1 else null,
         nextKey = if (data.size == pageSize) page + 1 else null
       )
+    } catch (e: kotlinx.coroutines.CancellationException) {
+      Timber.d("Load cancelled for page ${params.key}")
+      throw e // Re-throw to let Paging handle it properly
     } catch (e: Exception) {
       Timber.e(e, "Error loading feed data")
       LoadResult.Error(e)
@@ -143,7 +146,11 @@ class FeedPagingSource(
    * Load media files from a specific folder with pagination
    * Also loads subfolders at the beginning of the list (only in TREE mode)
    */
-  private suspend fun loadMediaFromFolderPaged(folderPath: String, limit: Int, offset: Int): List<FeedData> {
+  private suspend fun loadMediaFromFolderPaged(
+    folderPath: String,
+    limit: Int,
+    offset: Int
+  ): List<FeedData> {
     return try {
       Timber.d("Loading content from folder: $folderPath with limit=$limit, offset=$offset, groupMode=$groupMode")
 
@@ -212,7 +219,11 @@ class FeedPagingSource(
    * Load only media files from a specific folder (no subfolders)
    * Used in CAROUSEL mode when viewing a specific folder
    */
-  private suspend fun loadMediaOnlyFromFolderPaged(folderPath: String, limit: Int, offset: Int): List<FeedData.MediaItem> {
+  private suspend fun loadMediaOnlyFromFolderPaged(
+    folderPath: String,
+    limit: Int,
+    offset: Int
+  ): List<FeedData.MediaItem> {
     return try {
       Timber.d("Loading media only from folder: $folderPath with limit=$limit, offset=$offset, mediaTypeFilter=$mediaTypeFilter")
 
@@ -344,6 +355,7 @@ class FeedPagingSource(
           else -> FeedData.Type.VideoSmall // Default to video
         }
       }
+
       FeedFilterConfig.ViewMode.LIST -> {
         when {
           mimeType.startsWith("video/") -> FeedData.Type.Video

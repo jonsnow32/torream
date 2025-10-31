@@ -136,6 +136,7 @@ class FeedAdapter(private val clickListener: FeedClickListener) :
    * @param onRetry Callback when user clicks retry button in error state
    * @return A FeedAdapterWithStates wrapper that implements GridAdapter
    */
+
   fun withLoadingStates(
     errorMessage: String? = null,
     buttonText: String? = null,

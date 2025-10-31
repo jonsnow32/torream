@@ -228,6 +228,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     super.onStop()
   }
 
+  override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+    super.onConfigurationChanged(newConfig)
+    // Fragments will automatically receive onConfigurationChanged callback
+    // so they can recalculate their layouts (e.g., grid span counts)
+  }
+
   private var isSameEpisode = true
   override fun finish() {
     if (result.isNotEmpty()) {

@@ -1,5 +1,6 @@
 package cloud.app.csplayer.ui.feed
 
+import adapters.FeedAdapter
 import adapters.FeedAdapter.Companion.getFeedAdapter
 import android.Manifest
 import android.content.pm.PackageManager
@@ -21,6 +22,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentFeedBinding
 import cloud.app.csplayer.media.model.SyncState
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
+import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.player.EXTRA_TITLE
 import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URLS_NAME_HEADERS
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
@@ -42,10 +44,7 @@ class FeedFragment : Fragment(), FeedClickListener {
   private var syncSnackbar: Snackbar? = null
 
 
-  // Lazy initialization to allow permission check callback
-  private val adapter by lazy {
-    getFeedAdapter(viewModel)
-  }
+  private lateinit var adapter: FeedAdapter
 
   // Permission request launcher (multiple permissions)
   private val permissionLauncher = registerForActivityResult(
@@ -114,6 +113,7 @@ class FeedFragment : Fragment(), FeedClickListener {
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
+    adapter = getFeedAdapter(viewModel)
     // Observe title from ViewModel (will be root folder name or "Feed")
     observe(viewModel.title) { title ->
       binding.toolbar.title = title
@@ -180,6 +180,7 @@ class FeedFragment : Fragment(), FeedClickListener {
       }
     }
 
+
     // Listen to load states to detect and handle different error types
     adapter.addLoadStateListener { loadStates ->
       val errorState = loadStates.refresh as? androidx.paging.LoadState.Error
@@ -208,6 +209,18 @@ class FeedFragment : Fragment(), FeedClickListener {
     }
 
     configureGridLayout(binding.rvFeed, adapterWithStates)
+
+    // Restore scroll position after configuration changes
+    savedInstanceState?.let { bundle ->
+      val scrollPosition = bundle.getInt(STATE_SCROLL_POSITION, 0)
+      if (scrollPosition > 0) {
+        // Post to ensure layout is complete before scrolling
+        binding.rvFeed.post {
+          binding.rvFeed.scrollToPosition(scrollPosition)
+          Timber.d("Restored scroll position: $scrollPosition")
+        }
+      }
+    }
 
     // Setup SwipeRefreshLayout
     binding.swipeRefresh.setOnRefreshListener {
@@ -253,6 +266,7 @@ class FeedFragment : Fragment(), FeedClickListener {
                 show()
               }
             }
+
             is SyncState.Error.StorageError -> {
               syncSnackbar = Snackbar.make(
                 binding.root,
@@ -265,6 +279,7 @@ class FeedFragment : Fragment(), FeedClickListener {
                 show()
               }
             }
+
             is SyncState.Error.NetworkError -> {
               syncSnackbar = Snackbar.make(
                 binding.root,
@@ -277,6 +292,7 @@ class FeedFragment : Fragment(), FeedClickListener {
                 show()
               }
             }
+
             else -> {
               syncSnackbar = Snackbar.make(
                 binding.root,
@@ -444,7 +460,6 @@ class FeedFragment : Fragment(), FeedClickListener {
   }
 
 
-
   /**
    * Check if app has required media permissions
    */
@@ -524,8 +539,50 @@ class FeedFragment : Fragment(), FeedClickListener {
     showToast("Settings applied: ${config.groupMode.name} / ${config.viewMode.name}")
   }
 
+  override fun onSaveInstanceState(outState: Bundle) {
+    super.onSaveInstanceState(outState)
+
+    // Save scroll position
+    val layoutManager =
+      binding.rvFeed.layoutManager as? androidx.recyclerview.widget.GridLayoutManager
+    layoutManager?.let {
+      val scrollPosition = it.findFirstVisibleItemPosition()
+      outState.putInt(STATE_SCROLL_POSITION, scrollPosition)
+      Timber.d("Saved scroll position: $scrollPosition")
+    }
+
+    // Save current root folder path
+    val rootFolderPath = arguments?.getString("root_folder_path")
+      ?: arguments?.getString(ARG_ROOT_FOLDER_PATH)
+    rootFolderPath?.let {
+      outState.putString(STATE_ROOT_FOLDER_PATH, it)
+    }
+
+    Timber.d("FeedFragment state saved")
+  }
+
+  /**
+   * Handle configuration changes (like orientation) to recalculate grid layout
+   * This is called from MainActivity.onConfigurationChanged()
+   */
+  override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+    super.onConfigurationChanged(newConfig)
+    Timber.d("FeedFragment configuration changed: orientation=${newConfig.orientation}")
+
+    recalculateGridLayout(
+      binding.rvFeed,
+      adapter
+    )
+    Timber.d("Grid layout recalculated for new orientation")
+
+  }
+
   companion object {
     private const val ARG_ROOT_FOLDER_PATH = "root_folder_path"
+
+    // State saving keys for configuration changes
+    private const val STATE_SCROLL_POSITION = "state_scroll_position"
+    private const val STATE_ROOT_FOLDER_PATH = "state_root_folder_path"
 
     /**
      * Create new instance of FeedFragment

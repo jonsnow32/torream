@@ -93,6 +93,47 @@ interface GridAdapter {
 //      }
     }
 
+    /**
+     * Recalculate grid layout when configuration changes (e.g., orientation)
+     * Call this from fragment's onConfigurationChanged()
+     */
+    fun recalculateGridLayout(
+      recycler: RecyclerView,
+      gridAdapter: GridAdapter,
+      even: Boolean = false,
+      itemSpacingDp: Int = 8
+    ) {
+      val context = recycler.context
+      val itemWidth = context.resolveStyledDimension(R.attr.itemCoverSize)
+      val itemSpacing = itemSpacingDp.toPx
+
+      fun calculateSpanCount(totalWidth: Int): Int {
+        val effectiveItemWidth = itemWidth + itemSpacing
+        val calc = floor(totalWidth.toFloat() / effectiveItemWidth).toInt()
+        return if (calc > 1) calc - if (even) calc % 2 else 0 else 1
+      }
+
+      val layoutManager = recycler.layoutManager as? GridLayoutManager ?: return
+
+      // Force recalculation using actual display metrics
+      val displayWidth = context.resources.displayMetrics.widthPixels
+      val width = displayWidth - recycler.paddingLeft - recycler.paddingRight
+
+      if (width > 0) {
+        val newSpanCount = calculateSpanCount(width)
+        if (layoutManager.spanCount != newSpanCount) {
+          layoutManager.spanCount = newSpanCount
+          layoutManager.spanSizeLookup.invalidateSpanIndexCache()
+
+          // Request layout to apply changes immediately
+          recycler.post {
+            recycler.requestLayout()
+            recycler.adapter?.notifyDataSetChanged()
+          }
+        }
+      }
+    }
+
     class GridSpacingDecoration(
       private val spacing: Int,         // spacing in px
       private val includeEdge: Boolean // whether include spacing at edges
