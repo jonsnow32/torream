@@ -5,14 +5,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.media3.common.MimeTypes
+import cloud.app.csplayer.model.SubtitleData
+import cloud.app.csplayer.model.SubtitleOrigin
+import cloud.app.csplayer.ui.subtitles.SubtitleFile
 import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.ExtractorUri
 import cloud.app.csplayer.utils.INFER_TYPE
-import cloud.app.csplayer.utils.PlayerSubtitleHelper.Companion.toSubtitleMimeType
 import cloud.app.csplayer.utils.Qualities
-import cloud.app.csplayer.utils.SubtitleData
 import cloud.app.csplayer.utils.SubtitleHelper
-import cloud.app.csplayer.utils.SubtitleOrigin
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -133,6 +134,28 @@ class CSPlayerViewModel @Inject constructor(private val arguments: SavedStateHan
     // make the subs to english if previously unselected
     if (allSubs != currentSubs) {
       _currentSubs.postValue(allSubs)
+    }
+  }
+
+  companion object {
+    fun String.toSubtitleMimeType(): String {
+      return when {
+        endsWith("vtt", true) -> MimeTypes.TEXT_VTT
+        endsWith("srt", true) -> MimeTypes.APPLICATION_SUBRIP
+        endsWith("xml", true) || endsWith("ttml", true) -> MimeTypes.APPLICATION_TTML
+        else -> MimeTypes.APPLICATION_SUBRIP
+      }
+    }
+
+    fun getSubtitleData(subtitleFile: SubtitleFile): SubtitleData {
+      return SubtitleData(
+        name = subtitleFile.lang,
+        url = subtitleFile.url,
+        origin = SubtitleOrigin.URL,
+        mimeType = subtitleFile.url.toSubtitleMimeType(),
+        headers = emptyMap(),
+        languageCode = subtitleFile.lang
+      )
     }
   }
 }

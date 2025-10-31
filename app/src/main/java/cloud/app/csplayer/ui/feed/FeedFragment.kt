@@ -15,6 +15,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentFeedBinding
@@ -28,6 +29,8 @@ import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import timber.log.Timber
 
 
 @AndroidEntryPoint
@@ -333,42 +336,8 @@ class FeedFragment : Fragment(), FeedClickListener {
       }
 
       is FeedData.MediaItem -> {
-        // Open media player based on type
-        when (item.type) {
-          FeedData.Type.Video, FeedData.Type.VideoSmall -> {
-            // Navigate to MPV player for video
-            activity?.navigate(
-              R.id.global_to_navigation_mpv_player,
-              bundleOf(
-                EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(
-                  item.media.uri,
-                  item.media.path,
-                  ""
-                ).toTypedArray(),
-                EXTRA_TITLE to item.title
-              )
-            )
-          }
-
-          FeedData.Type.Audio, FeedData.Type.AudioSmall -> {
-            // Navigate to MPV player for audio
-            activity?.navigate(
-              R.id.global_to_navigation_mpv_player,
-              bundleOf(
-                EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(
-                  item.media.uri,
-                  "user_url_1",
-                  ""
-                ).toTypedArray()
-              )
-            )
-          }
-
-          else -> {
-            // Shouldn't happen
-            showToast("Playing: ${item.title}")
-          }
-        }
+        // Build playlist with all media files in current folder/context
+        buildAndPlayPlaylist(item)
       }
 
       is FeedData.AdItem -> {
@@ -382,6 +351,98 @@ class FeedFragment : Fragment(), FeedClickListener {
       }
     }
   }
+
+  /**
+   * Build playlist from current feed data and play starting from clicked item
+   */
+  private fun buildAndPlayPlaylist(clickedItem: FeedData.MediaItem) {
+    // Launch coroutine to collect current feed data
+    viewLifecycleOwner.lifecycleScope.launch {
+      try {
+        // Get current snapshot of feed data from adapter
+        val snapshot = adapter.snapshot()
+
+        // Extract all media items (filter out folders, ads, and horizontal lists)
+        val allMediaItems = snapshot.items.filterIsInstance<FeedData.MediaItem>()
+
+        if (allMediaItems.isEmpty()) {
+          // Fallback to single file if no media items found
+          playMediaItem(clickedItem)
+          return@launch
+        }
+
+        // Find the index of clicked item
+        val clickedIndex = allMediaItems.indexOfFirst {
+          it.media.uri == clickedItem.media.uri
+        }.coerceAtLeast(0)
+
+        // Build URLs and titles lists for playlist
+        val urls = allMediaItems.map { it.media.uri }
+        val titles = allMediaItems.map { it.title }
+
+        // Navigate to MPV player with playlist
+        activity?.navigate(
+          R.id.global_to_navigation_mpv_player,
+          bundleOf(
+            "playlist_urls" to ArrayList(urls),
+            "playlist_titles" to ArrayList(titles),
+            "playlist_start_index" to clickedIndex,
+            "started_from_intent" to false,
+            EXTRA_TITLE to clickedItem.title
+          )
+        )
+
+        showToast("Playing ${clickedIndex + 1} of ${allMediaItems.size}")
+
+      } catch (e: Exception) {
+        // Fallback to single file on error
+        Timber.e(e, "Error building playlist, falling back to single file")
+        playMediaItem(clickedItem)
+      }
+    }
+  }
+
+  /**
+   * Play single media item (fallback)
+   */
+  private fun playMediaItem(item: FeedData.MediaItem) {
+    when (item.type) {
+      FeedData.Type.Video, FeedData.Type.VideoSmall -> {
+        // Navigate to MPV player for video
+        activity?.navigate(
+          R.id.global_to_navigation_mpv_player,
+          bundleOf(
+            EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(
+              item.media.uri,
+              item.media.path,
+              ""
+            ).toTypedArray(),
+            EXTRA_TITLE to item.title
+          )
+        )
+      }
+
+      FeedData.Type.Audio, FeedData.Type.AudioSmall -> {
+        // Navigate to MPV player for audio
+        activity?.navigate(
+          R.id.global_to_navigation_mpv_player,
+          bundleOf(
+            EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(
+              item.media.uri,
+              "user_url_1",
+              ""
+            ).toTypedArray()
+          )
+        )
+      }
+
+      else -> {
+        // Shouldn't happen
+        showToast("Playing: ${item.title}")
+      }
+    }
+  }
+
 
 
   /**

@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.View.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import cloud.app.csplayer.model.SubtitleData
 import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.subtitles.ChromecastSubtitlesFragment.Companion.getCurrentSavedStyle
 import cloud.app.csplayer.utils.CastHelper.awaitLinks
@@ -16,7 +17,6 @@ import cloud.app.csplayer.utils.Coroutines.ioSafe
 import cloud.app.csplayer.utils.DataStore.toKotlinObject
 import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.Qualities
-import cloud.app.csplayer.utils.SubtitleData
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.sortSubs

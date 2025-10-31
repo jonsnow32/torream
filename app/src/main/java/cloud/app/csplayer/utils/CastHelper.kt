@@ -3,6 +3,7 @@ package cloud.app.csplayer.utils
 import android.net.Uri
 import androidx.media3.common.MimeTypes
 import cloud.app.csplayer.MetadataHolder
+import cloud.app.csplayer.model.SubtitleData
 import cloud.app.csplayer.utils.Coroutines.main
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.toJson

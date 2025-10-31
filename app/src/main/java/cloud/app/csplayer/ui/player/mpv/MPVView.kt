@@ -24,6 +24,7 @@ import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.model.SaveCaptionStyle
 import timber.log.Timber
+import java.io.File
 import kotlin.reflect.KProperty
 
 @UnstableApi
@@ -31,10 +32,11 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
 
   // Cache expensive operations
   private val displayMetrics by lazy { resources.displayMetrics }
-  private val subtitleFontsDir by lazy {
-    java.io.File(context.filesDir, "fonts").also {
-      if (!it.exists()) it.mkdirs()
-    }
+
+  // Lazy property that just returns the path without disk I/O
+  // Directory will be created asynchronously in postInitOptions()
+  private val subtitleFontsDir: File by lazy {
+    File(context.filesDir, "fonts")
   }
 
   @SuppressLint("LogNotTimber")
@@ -146,9 +148,8 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     MPVLib.setOptionString("demuxer-max-bytes", cacheBytes)
     MPVLib.setOptionString("demuxer-max-back-bytes", cacheBytes)
 
-    // Screenshot directory setup
+    // Screenshot directory setup - just pass the path, let MPV create it when needed
     val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-    screenshotDir.mkdirs()
     MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
     MPVLib.setOptionString("vd-lavc-film-grain", "cpu")
 
@@ -278,6 +279,33 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
   override fun postInitOptions() {
     // we need to call write-watch-later manually
     MPVLib.setOptionString("save-position-on-quit", "no")
+
+    // Ensure directories exist asynchronously to avoid StrictMode violations
+    post {
+      ensureDirectoriesExist()
+    }
+  }
+
+  /**
+   * Ensure required directories exist (called off main thread via post)
+   */
+  private fun ensureDirectoriesExist() {
+    try {
+      // Create subtitle fonts directory if it doesn't exist
+      if (!subtitleFontsDir.exists()) {
+        subtitleFontsDir.mkdirs()
+        Timber.tag(TAG).v("Created subtitle fonts directory: ${subtitleFontsDir.path}")
+      }
+
+      // Create screenshot directory if it doesn't exist
+      val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+      if (!screenshotDir.exists()) {
+        screenshotDir.mkdirs()
+        Timber.tag(TAG).v("Created screenshot directory: ${screenshotDir.path}")
+      }
+    } catch (e: Exception) {
+      Timber.tag(TAG).w(e, "Failed to create player directories")
+    }
   }
 
   fun onPointerEvent(event: MotionEvent): Boolean {
@@ -559,20 +587,6 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
   var sid: Int by TrackDelegate("sid")
   var secondarySid: Int by TrackDelegate("secondary-sid")
   var aid: Int by TrackDelegate("aid")
-
-  // Commands
-
-  fun cyclePause() = MPVLib.command(arrayOf("cycle", "pause"))
-  fun cycleAudio() = MPVLib.command(arrayOf("cycle", "audio"))
-  fun cycleSub() = MPVLib.command(arrayOf("cycle", "sub"))
-  fun cycleHwdec() = MPVLib.command(arrayOf("cycle-values", "hwdec", "auto", "no"))
-
-  fun cycleSpeed() {
-    val speeds = doubleArrayOf(0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)
-    val currentSpeed = playbackSpeed ?: 1.0
-    val index = speeds.indexOfFirst { it > currentSpeed }
-    playbackSpeed = speeds[if (index == -1) 0 else index]
-  }
 
   fun getRepeat(): Int {
     val loopPlaylist = MPVLib.getPropertyString("loop-playlist") ?: "no"

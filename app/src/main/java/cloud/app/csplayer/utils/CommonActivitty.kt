@@ -22,13 +22,13 @@ import cloud.app.csplayer.FocusDirection
 import cloud.app.csplayer.R
 import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.player.PlayerEventType
-import cloud.app.csplayer.ui.player.exo.TAG
 import cloud.app.csplayer.utils.AppUtils.isRtl
 import cloud.app.csplayer.utils.UIHelper.hasPIPPermission
 import cloud.app.csplayer.utils.Utils.activity
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
 import com.google.android.material.chip.ChipGroup
+import timber.log.Timber
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
@@ -77,7 +77,7 @@ object CommonActivitty {
       val requestPermissionLauncher = componentActivity.registerForActivityResult(
         ActivityResultContracts.RequestPermission()
       ) { isGranted: Boolean ->
-        Log.d(TAG, "Notification permission: $isGranted")
+        Timber.d("Notification permission: $isGranted")
       }
       requestPermissionLauncher.launch(
         Manifest.permission.POST_NOTIFICATIONS

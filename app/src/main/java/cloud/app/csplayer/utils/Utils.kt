@@ -19,8 +19,8 @@ import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.databinding.ToastBinding
 import cloud.app.csplayer.datastore.Serializer
+import cloud.app.csplayer.model.SubtitleData
 import cloud.app.csplayer.utils.UIHelper.toPx
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.serializer
 import java.lang.ref.WeakReference
 import kotlin.math.sqrt

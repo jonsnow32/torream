@@ -5,9 +5,9 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
+import cloud.app.csplayer.model.SubtitleData
 import cloud.app.csplayer.utils.ExtractorLink
 import cloud.app.csplayer.utils.ExtractorUri
-import cloud.app.csplayer.utils.SubtitleData
 import timber.log.Timber
 
 /**
