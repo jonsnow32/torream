@@ -78,7 +78,269 @@ class MediaStoreDataSourceImpl @Inject constructor(
     }
   }.flowOn(Dispatchers.IO)
 
-  override suspend fun queryAllMedia(): List<Media> = withContext(Dispatchers.IO) {
+  override suspend fun queryMedia(query: String?, limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
+    // Check permissions before querying
+    if (!hasMediaPermissions()) {
+      throw SecurityException("Media access permission is required to load videos and audio files")
+    }
+
+    timber.log.Timber.d("queryMedia: Searching with query='$query', limit=$limit, offset=$offset")
+
+    val allItems = mutableListOf<Media>()
+
+    // Build selection clause for search query
+    val selection = if (!query.isNullOrBlank()) {
+      "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ?"
+    } else {
+      null
+    }
+    val selectionArgs = if (!query.isNullOrBlank()) {
+      arrayOf("%$query%")
+    } else {
+      null
+    }
+
+    // Use Bundle-based query for API 30+ for proper LIMIT/OFFSET support
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      // Android 11+ (API 30+) - Use Bundle for pagination
+      val queryArgs = android.os.Bundle().apply {
+        putInt(android.content.ContentResolver.QUERY_ARG_LIMIT, limit)
+        putInt(android.content.ContentResolver.QUERY_ARG_OFFSET, offset)
+        putStringArray(
+          android.content.ContentResolver.QUERY_ARG_SORT_COLUMNS,
+          arrayOf(MediaStore.Video.Media.DISPLAY_NAME)
+        )
+        putInt(
+          android.content.ContentResolver.QUERY_ARG_SORT_DIRECTION,
+          android.content.ContentResolver.QUERY_SORT_DIRECTION_ASCENDING
+        )
+
+        // Add selection if we have a search query
+        if (!query.isNullOrBlank()) {
+          putString(
+            android.content.ContentResolver.QUERY_ARG_SQL_SELECTION,
+            "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ?"
+          )
+          putStringArray(
+            android.content.ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+            arrayOf("%$query%")
+          )
+        }
+      }
+
+      // Query VIDEO files
+      context.contentResolver.query(
+        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+        VIDEO_PROJECTION,
+        queryArgs,
+        null
+      )?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+        val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+        val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+        val widthColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.WIDTH)
+        val heightColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.HEIGHT)
+        val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_MODIFIED)
+        val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
+
+        while (cursor.moveToNext()) {
+          val id = cursor.getLong(idColumn)
+          val uri = ContentUris.withAppendedId(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            id
+          )
+
+          allItems.add(
+            Media(
+              id = id,
+              uri = uri.toString(),
+              path = cursor.getString(dataColumn),
+              name = File(cursor.getString(dataColumn)).name,
+              size = cursor.getLong(sizeColumn),
+              duration = cursor.getLong(durationColumn),
+              width = cursor.getInt(widthColumn),
+              height = cursor.getInt(heightColumn),
+              dateModified = cursor.getLong(dateModifiedColumn),
+              mimeType = cursor.getString(mimeTypeColumn)
+            )
+          )
+        }
+      }
+
+      // Query AUDIO files
+      val audioQueryArgs = android.os.Bundle().apply {
+        putInt(android.content.ContentResolver.QUERY_ARG_LIMIT, limit)
+        putInt(android.content.ContentResolver.QUERY_ARG_OFFSET, offset)
+        putStringArray(
+          android.content.ContentResolver.QUERY_ARG_SORT_COLUMNS,
+          arrayOf(MediaStore.Audio.Media.DISPLAY_NAME)
+        )
+        putInt(
+          android.content.ContentResolver.QUERY_ARG_SORT_DIRECTION,
+          android.content.ContentResolver.QUERY_SORT_DIRECTION_ASCENDING
+        )
+
+        if (!query.isNullOrBlank()) {
+          putString(
+            android.content.ContentResolver.QUERY_ARG_SQL_SELECTION,
+            "${MediaStore.Audio.Media.DISPLAY_NAME} LIKE ?"
+          )
+          putStringArray(
+            android.content.ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+            arrayOf("%$query%")
+          )
+        }
+      }
+
+      context.contentResolver.query(
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        AUDIO_PROJECTION,
+        audioQueryArgs,
+        null
+      )?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+        val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+        val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+        val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
+        val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+
+        while (cursor.moveToNext()) {
+          val id = cursor.getLong(idColumn)
+          val uri = ContentUris.withAppendedId(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            id
+          )
+
+          allItems.add(
+            Media(
+              id = id,
+              uri = uri.toString(),
+              path = cursor.getString(dataColumn),
+              name = File(cursor.getString(dataColumn)).name,
+              size = cursor.getLong(sizeColumn),
+              duration = cursor.getLong(durationColumn),
+              width = 0,
+              height = 0,
+              dateModified = cursor.getLong(dateModifiedColumn),
+              mimeType = cursor.getString(mimeTypeColumn)
+            )
+          )
+        }
+      }
+    } else {
+      // Fallback for older Android versions - query all and paginate manually
+      timber.log.Timber.d("queryMedia: Using manual pagination for Android < API 30")
+
+      val sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} ASC"
+
+      // Query VIDEO files
+      context.contentResolver.query(
+        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+        VIDEO_PROJECTION,
+        selection,
+        selectionArgs,
+        sortOrder
+      )?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+        val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+        val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+        val widthColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.WIDTH)
+        val heightColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.HEIGHT)
+        val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_MODIFIED)
+        val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
+
+        while (cursor.moveToNext()) {
+          val id = cursor.getLong(idColumn)
+          val uri = ContentUris.withAppendedId(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            id
+          )
+
+          allItems.add(
+            Media(
+              id = id,
+              uri = uri.toString(),
+              path = cursor.getString(dataColumn),
+              name = File(cursor.getString(dataColumn)).name,
+              size = cursor.getLong(sizeColumn),
+              duration = cursor.getLong(durationColumn),
+              width = cursor.getInt(widthColumn),
+              height = cursor.getInt(heightColumn),
+              dateModified = cursor.getLong(dateModifiedColumn),
+              mimeType = cursor.getString(mimeTypeColumn)
+            )
+          )
+        }
+      }
+
+      // Query AUDIO files
+      val audioSelection = if (!query.isNullOrBlank()) {
+        "${MediaStore.Audio.Media.DISPLAY_NAME} LIKE ?"
+      } else {
+        null
+      }
+
+      val audioSortOrder = "${MediaStore.Audio.Media.DISPLAY_NAME} ASC"
+
+      context.contentResolver.query(
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        AUDIO_PROJECTION,
+        audioSelection,
+        selectionArgs,
+        audioSortOrder
+      )?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+        val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+        val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+        val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
+        val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+
+        while (cursor.moveToNext()) {
+          val id = cursor.getLong(idColumn)
+          val uri = ContentUris.withAppendedId(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            id
+          )
+
+          allItems.add(
+            Media(
+              id = id,
+              uri = uri.toString(),
+              path = cursor.getString(dataColumn),
+              name = File(cursor.getString(dataColumn)).name,
+              size = cursor.getLong(sizeColumn),
+              duration = cursor.getLong(durationColumn),
+              width = 0,
+              height = 0,
+              dateModified = cursor.getLong(dateModifiedColumn),
+              mimeType = cursor.getString(mimeTypeColumn)
+            )
+          )
+        }
+      }
+
+      // Apply manual pagination for older Android versions
+      val start = offset.coerceAtMost(allItems.size)
+      val end = (offset + limit).coerceAtMost(allItems.size)
+      val paginatedItems = if (start < end) {
+        allItems.subList(start, end)
+      } else {
+        emptyList()
+      }
+
+      timber.log.Timber.d("queryMedia: Returning ${paginatedItems.size} items from ${allItems.size} total (manual pagination)")
+      return@withContext paginatedItems
+    }
+
+    timber.log.Timber.d("queryMedia: Returning ${allItems.size} items from MediaStore (Bundle-based pagination)")
+    allItems
+  }
+
+  override suspend fun queryAllMedia(query: String?): List<Media> = withContext(Dispatchers.IO) {
     // Check permissions before querying
     if (!hasMediaPermissions()) {
       throw SecurityException("Media access permission is required to load videos and audio files")
@@ -86,12 +348,26 @@ class MediaStoreDataSourceImpl @Inject constructor(
 
     val items = mutableListOf<Media>()
 
+    // Build selection clause for search query
+    val selection = if (!query.isNullOrBlank()) {
+      "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ?"
+    } else {
+      null
+    }
+    val selectionArgs = if (!query.isNullOrBlank()) {
+      arrayOf("%$query%")
+    } else {
+      null
+    }
+
+    timber.log.Timber.d("queryAllMedia: Searching with query='$query'")
+
     // Query VIDEO files
     context.contentResolver.query(
       MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
       VIDEO_PROJECTION,
-      null,
-      null,
+      selection,
+      selectionArgs,
       "${MediaStore.Video.Media.DISPLAY_NAME} ASC"
     )?.use { cursor ->
       val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
@@ -128,11 +404,17 @@ class MediaStoreDataSourceImpl @Inject constructor(
     }
 
     // Query AUDIO files
+    val audioSelection = if (!query.isNullOrBlank()) {
+      "${MediaStore.Audio.Media.DISPLAY_NAME} LIKE ?"
+    } else {
+      null
+    }
+
     context.contentResolver.query(
       MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
       AUDIO_PROJECTION,
-      null,
-      null,
+      audioSelection,
+      selectionArgs,
       "${MediaStore.Audio.Media.DISPLAY_NAME} ASC"
     )?.use { cursor ->
       val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)

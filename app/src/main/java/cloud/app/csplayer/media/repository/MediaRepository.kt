@@ -23,4 +23,6 @@ interface MediaRepository {
   suspend fun countAllFolders(): Int
   suspend fun countAllMedia(): Int
   suspend fun updateMediaMetadata(uri: String, metadata: MediaMetadata)
+
+  suspend fun search(query: String, limit: Int, offset: Int) :  List<Media>
 }

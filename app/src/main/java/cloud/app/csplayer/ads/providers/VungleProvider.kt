@@ -2,6 +2,7 @@ package cloud.app.csplayer.ads.providers
 
 import android.app.Activity
 import android.content.Context
+import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import com.vungle.ads.BannerAdListener
@@ -357,7 +358,10 @@ class VungleProvider : AdProvider {
                 // Populate ad content
                 lbAdTitle.text = nativeAd.getAdTitle()
                 lbAdBody.text = nativeAd.getAdBodyText()
-                lbAdRating.text = "Rating: ${nativeAd.getAdStarRating()}"
+                if(nativeAd.getAdStarRating() != null)
+                  lbAdRating.text = "Rating: ${nativeAd.getAdStarRating()}"
+                else
+                  lbAdRating.visibility = View.GONE
                 lbAdSponsor.text = nativeAd.getAdSponsoredText()
                 btnAdCta.text = nativeAd.getAdCallToActionText()
                 btnAdCta.isVisible = nativeAd.hasCallToAction()

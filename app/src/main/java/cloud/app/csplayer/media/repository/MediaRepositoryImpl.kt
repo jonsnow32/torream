@@ -443,6 +443,25 @@ class MediaRepositoryImpl @Inject constructor(
     mediaDao.upsertAll(listOf(updated))
   }
 
+  override suspend fun search(query: String, limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
+    // Query MediaStore directly with pagination for real-time media search
+    // This bypasses the database and queries MediaStore on-demand
+    timber.log.Timber.d("search: Querying MediaStore directly with query='$query', limit=$limit, offset=$offset")
+
+    try {
+      // Use the new queryMedia method with pagination support
+      val result = mediaStore.queryMedia(query, limit, offset)
+      timber.log.Timber.d("search: Returning ${result.size} items from MediaStore")
+
+      return@withContext result
+    } catch (e: SecurityException) {
+      timber.log.Timber.e(e, "search: Permission denied accessing MediaStore")
+      throw e
+    } catch (e: Exception) {
+      timber.log.Timber.e(e, "search: Error querying MediaStore")
+      emptyList()
+    }
+  }
   // Mapping helpers
   private fun MediaEntity.toDomain(): Media {
     return Media(

@@ -1,103 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content">
+
+  <LinearLayout
+    style="@style/MediaItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="6dp">
+    android:layout_marginVertical="8dp"
+    android:gravity="center_vertical"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:orientation="horizontal">
+    <FrameLayout
+      android:layout_width="?attr/itemCoverSize3x"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="4dp">
 
-    <LinearLayout
+      <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp">
 
-        <!-- Header with icon and title -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+        <androidx.constraintlayout.widget.ConstraintLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content">
 
-            <ImageView
-                android:id="@+id/img_ad_icon"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:scaleType="centerCrop"
-                android:contentDescription="Ad Icon" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="16dp">
-
-                <TextView
-                    android:id="@+id/lb_ad_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-
-                    android:maxLines="2"
-                    android:ellipsize="end" />
-
-                <TextView
-                    android:id="@+id/lb_ad_sponsor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sponsored"
-                    android:textSize="10sp"
-
-                    android:layout_marginTop="4dp"
-                    android:alpha="0.7" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- Video/Media Container -->
-        <com.vungle.ads.internal.ui.view.MediaView
+          <com.vungle.ads.internal.ui.view.MediaView
             android:id="@+id/pnl_video_ad"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="12dp"
-            android:background="@android:color/black" />
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="4:3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Body Text -->
-        <TextView
-            android:id="@+id/lb_ad_body"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-
-            android:maxLines="3"
-            android:ellipsize="end"
-            android:layout_marginTop="12dp"
-            android:lineSpacingMultiplier="1.2" />
-
-        <!-- Rating -->
-        <TextView
-            android:id="@+id/lb_ad_rating"
+          <TextView
+            android:id="@+id/ad_attribution"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
+            android:fontFamily="sans-serif-medium"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:text="@string/ad"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            android:layout_marginTop="8dp" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+      </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
 
-        <!-- Call to Action Button -->
-        <Button
-            android:id="@+id/btn_ad_cta"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Install"
-            android:textSize="14sp"
-            android:layout_marginTop="16dp"
-            style="@style/Widget.AppCompat.Button.Colored" />
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:orientation="vertical">
 
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+          android:id="@+id/img_ad_icon"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
+          android:layout_marginEnd="6dp"
+          android:contentDescription="@string/ad_icon"
+          android:scaleType="centerCrop" />
+
+        <TextView
+          android:id="@+id/lb_ad_title"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:ellipsize="end"
+          android:maxLines="2"
+          android:textSize="16sp"
+          android:textStyle="bold" />
+      </LinearLayout>
+
+      <TextView
+        android:id="@+id/lb_ad_sponsor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:alpha="0.7"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Sponsored"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/lb_ad_rating"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:alpha="0.7"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/lb_ad_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:alpha="0.7"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:textSize="13sp" />
+
+      <Button
+        android:id="@+id/btn_ad_cta"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_gravity="start"
+        android:minWidth="0dp"
+        android:minHeight="36dp"
+        android:textSize="14sp" />
     </LinearLayout>
+  </LinearLayout>
+</FrameLayout>
 
-</androidx.cardview.widget.CardView>
 
