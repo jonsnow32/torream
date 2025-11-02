@@ -17,13 +17,15 @@ import timber.log.Timber
  * @param viewMode Display type that determines how items are shown (GRID or LIST)
  * @param groupMode Folder view mode (CAROUSEL, FOLDERS or TREE)
  * @param mediaTypeFilter Media type filter (ALL, VIDEO, or AUDIO)
+ * @param searchQuery Optional search query to filter items by name
  */
 class FeedPagingSource(
   private val repository: MediaRepository,
   private val rootFolderPath: String? = null,
   private val viewMode: FeedFilterConfig.ViewMode = FeedFilterConfig.ViewMode.GRID,
   private val groupMode: FeedFilterConfig.GroupMode = FeedFilterConfig.GroupMode.FOLDERS,
-  private val mediaTypeFilter: MediaTypeFilter = MediaTypeFilter.ALL
+  private val mediaTypeFilter: MediaTypeFilter = MediaTypeFilter.ALL,
+  private val searchQuery: String? = null
 ) : PagingSource<Int, FeedData>() {
 
   override suspend fun load(params: LoadParams<Int>): LoadResult<Int, FeedData> {
@@ -33,7 +35,7 @@ class FeedPagingSource(
       Timber.d("Loading page $page with pageSize $pageSize, rootFolder: $rootFolderPath, groupMode: $groupMode")
 
       // Load data based on groupMode and rootFolderPath
-      val data = when (groupMode) {
+      val data = if(searchQuery.isNullOrEmpty())when (groupMode) {
         FeedFilterConfig.GroupMode.CAROUSEL -> loadAllMediaPaged(pageSize, page * pageSize)
         else -> {
           when (rootFolderPath) {
@@ -41,21 +43,9 @@ class FeedPagingSource(
             else -> loadMediaFromFolderPaged(rootFolderPath, pageSize, page * pageSize)
           }
         }
+      } else {
+        search(pageSize, page * pageSize, searchQuery)
       }
-
-//      // Insert AdItem at the beginning of page 0
-//      val finalData = if (page == 0) {
-//        val adItem = FeedData.AdItem(
-//          id = "ad_page_0",
-//          title = "Advertisement",
-//          type = FeedData.Type.NativeAd//if (Random.nextBoolean()) FeedData.Type.BannerAd else FeedData.Type.NativeAd
-//        )
-//        listOf(adItem) + data
-//      } else {
-//        data
-//      }
-//
-//      Timber.d("Loaded ${finalData.size} items for page $page (with ${if (page == 0) "ad" else "no ad"})")
 
       LoadResult.Page(
         data = data,
@@ -68,6 +58,51 @@ class FeedPagingSource(
     } catch (e: Exception) {
       Timber.e(e, "Error loading feed data")
       LoadResult.Error(e)
+    }
+  }
+
+  private suspend fun search(
+    limit: Int,
+    offset: Int,
+    searchQuery: String
+  ): List<FeedData> {
+    return try {
+      Timber.d("Searching MediaStore with query='$searchQuery', limit=$limit, offset=$offset")
+
+      // Search directly from MediaStore using the repository
+      val mediaList = repository.search(searchQuery, limit, offset)
+
+      Timber.d("Found ${mediaList.size} media items from MediaStore search")
+
+      // Throw exception if first page is empty
+      if (offset == 0 && mediaList.isEmpty()) {
+        throw NoFoldersFoundException("No media files found matching '$searchQuery'")
+      }
+
+      // Convert Media to FeedData.MediaItem
+      val items = mediaList.map { media ->
+        val mediaType = determineMediaType(media.mimeType)
+
+        FeedData.MediaItem(
+          id = media.uri,
+          title = media.name,
+          type = mediaType,
+          media = media
+        ) as FeedData
+      }.toMutableList().also {
+        Timber.d("Successfully loaded ${it.size} media items from search")
+      }
+
+      // Add ad item
+      items.add(FeedData.AdItem(
+        id = "ad_search_$offset",
+        title = "Advertisement"
+      ))
+
+      items
+    } catch (e: Exception) {
+      Timber.e(e, "Error searching MediaStore")
+      emptyList()
     }
   }
 

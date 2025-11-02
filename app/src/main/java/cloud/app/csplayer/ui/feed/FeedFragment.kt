@@ -307,6 +307,44 @@ class FeedFragment : Fragment(), FeedClickListener {
     observe(viewModel.viewMode) {
 
     }
+
+    // Setup SearchView
+    val searchItem = binding.toolbar.menu.findItem(R.id.search)
+    val searchView = searchItem?.actionView as? androidx.appcompat.widget.SearchView
+
+    if (searchView != null) {
+      Timber.d("SearchView found and configured")
+      searchView.apply {
+        queryHint = getString(R.string.search_hint)
+        maxWidth = Integer.MAX_VALUE // Make SearchView expand fully
+
+        setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+          override fun onQueryTextSubmit(query: String?): Boolean {
+            Timber.d("onQueryTextSubmit called with query: $query")
+            // Update search query in ViewModel
+            viewModel.searchQuery.value = query?.trim()?.takeIf { it.isNotEmpty() }
+            return true
+          }
+
+          override fun onQueryTextChange(newText: String?): Boolean {
+            Timber.d("onQueryTextChange called with text: $newText")
+            // Update search query in ViewModel as user types
+            viewModel.searchQuery.value = newText?.trim()?.takeIf { it.isNotEmpty() }
+            return true
+          }
+        })
+
+        // Clear search query when SearchView is closed
+        setOnCloseListener {
+          Timber.d("SearchView closed")
+          viewModel.searchQuery.value = null
+          false
+        }
+      }
+    } else {
+      Timber.e("SearchView not found in menu!")
+    }
+
     binding.toolbar.setOnMenuItemClickListener {
       when (it.itemId) {
         R.id.quickSettings -> {
@@ -317,7 +355,6 @@ class FeedFragment : Fragment(), FeedClickListener {
         }
 
         R.id.settings -> {
-          // Show filter bottom sheet
           findNavController().navigate(R.id.navigation_settings)
         }
       }

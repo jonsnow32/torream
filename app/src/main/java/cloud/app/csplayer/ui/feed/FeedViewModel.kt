@@ -26,6 +26,16 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * Data class to hold feed data parameters for paging source
+ */
+private data class FeedDataParams(
+  val viewMode: FeedFilterConfig.ViewMode,
+  val groupMode: FeedFilterConfig.GroupMode,
+  val mediaType: MediaTypeFilter,
+  val searchQuery: String?
+)
+
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
 class FeedViewModel @Inject constructor(
@@ -58,15 +68,18 @@ class FeedViewModel @Inject constructor(
   // Media type filter state - loaded from preferences
   val mediaTypeFilter = MutableStateFlow(loadMediaTypeFilter())
 
-  // PagingData flow for the adapter - now loads real data from MediaRepository
-  // Recreates when displayType, folderViewMode, or mediaTypeFilter changes
-  val feedData: Flow<PagingData<FeedData>> = combine(
-    filterConfig,     // Combine toàn bộ config thay vì map riêng lẻ
-    mediaTypeFilter
-  ) { config, mediaType ->
-    Triple(config.viewMode, config.groupMode, mediaType)
+  // Search query state
+  val searchQuery = MutableStateFlow<String?>(null)
 
-  }.distinctUntilChanged().flatMapLatest { (viewMode, groupMode, mediaType) ->
+  // PagingData flow for the adapter - now loads real data from MediaRepository
+  // Recreates when displayType, folderViewMode, mediaTypeFilter, or searchQuery changes
+  val feedData: Flow<PagingData<FeedData>> = combine(
+    filterConfig,
+    mediaTypeFilter,
+    searchQuery
+  ) { config, mediaType, query ->
+    FeedDataParams(config.viewMode, config.groupMode, mediaType, query)
+  }.distinctUntilChanged().flatMapLatest { params ->
     Pager(
       config = PagingConfig(
         pageSize = 20,
@@ -77,9 +90,10 @@ class FeedViewModel @Inject constructor(
         FeedPagingSource(
           mediaRepository,
           rootFolderPath,
-          viewMode,
-          groupMode,
-          mediaType
+          params.viewMode,
+          params.groupMode,
+          params.mediaType,
+          params.searchQuery
         )
       }
     ).flow
