@@ -18,7 +18,8 @@ sealed class FeedData {
     FolderSmall,
     PlayList,
     PlayListSmall,
-    Ad,
+    BannerAd,
+    NativeAd,
     HorizontalList
   }
 
@@ -29,9 +30,16 @@ sealed class FeedData {
   data class AdItem(
     override val id: String,
     override val title: String = "",
-    val isNativeAdPlaceholder: Boolean = false
+    override var type: Type,
   ) : FeedData() {
-    override val type: Type = Type.Ad
+    init {
+      require(
+        type == Type.BannerAd ||
+          type == Type.NativeAd
+      ) {
+        "MediaItem.type must be Video, VideoSmall, Audio or AudioSmall, but was $type"
+      }
+    }
   }
 
   data class HorizontalList(
@@ -60,6 +68,7 @@ sealed class FeedData {
       }
     }
   }
+
   data class FolderItem(
     override val id: String,
     override val title: String,

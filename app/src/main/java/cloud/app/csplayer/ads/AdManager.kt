@@ -31,6 +31,10 @@ class AdManager @Inject constructor(
     private var actionCount = 0
     private var lastAdShownTime = 0L
 
+    // Initialization state
+    @Volatile
+    private var isInitialized = false
+
     @OptIn(DelicateCoroutinesApi::class)
     fun initialize(context: Context) {
         GlobalScope.launch {
@@ -47,6 +51,7 @@ class AdManager @Inject constructor(
                     AdLoadStrategy.AdPriority.HIGH
                 )
 
+                isInitialized = true
                 Timber.i("AdManager with optimized waterfall initialized successfully")
             } catch (e: Exception) {
                 Timber.e(e, "Failed to initialize AdManager waterfall")
@@ -55,9 +60,19 @@ class AdManager @Inject constructor(
     }
 
     /**
+     * Check if AdManager is initialized and ready to serve ads
+     */
+    fun isReady(): Boolean = isInitialized
+
+    /**
      * Create banner ad using waterfall system (optimized)
      */
     suspend fun createBannerAd(context: Context, container: ViewGroup): Boolean {
+        if (!isInitialized) {
+            Timber.w("AdManager not initialized yet, cannot create banner ad")
+            return false
+        }
+
         return try {
             // Preload banner ad if needed
             val success = waterfallManager.showBannerAd(
@@ -81,6 +96,41 @@ class AdManager @Inject constructor(
             success
         } catch (e: Exception) {
             Timber.e(e, "Error creating optimized banner ad")
+            false
+        }
+    }
+
+    /**
+     * Create native ad using waterfall system
+     */
+    suspend fun createNativeAd(context: Context, container: ViewGroup): Boolean {
+        if (!isInitialized) {
+            Timber.w("AdManager not initialized yet, cannot create native ad")
+            return false
+        }
+
+        return try {
+            val success = waterfallManager.showNativeAd(
+                context = context,
+                container = container,
+                onAdLoaded = {
+                    Timber.d("Native ad loaded successfully")
+                },
+                onAllProvidersFailed = { error ->
+                    Timber.w("All waterfall providers failed for native ad: $error")
+                    // Trigger reload for next time
+                    GlobalScope.launch {
+                        delay(30000L) // Retry after 30s
+                        loadStrategy.loadAdsForContext(
+                            context,
+                            AdLoadStrategy.LoadTrigger.USER_IDLE
+                        )
+                    }
+                }
+            )
+            success
+        } catch (e: Exception) {
+            Timber.e(e, "Error creating native ad")
             false
         }
     }

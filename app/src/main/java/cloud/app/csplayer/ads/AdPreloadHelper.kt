@@ -18,7 +18,6 @@ class AdPreloadHelper @Inject constructor(
     private val adPreloadManager: AdPreloadManager,
     private val adWaterfallManager: AdWaterfallManager
 ) {
-
     /**
      * Preload ads before showing them (recommended to call 30 seconds before showing ad)
      */

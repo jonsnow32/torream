@@ -19,6 +19,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.R
+import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.databinding.FragmentFeedBinding
 import cloud.app.csplayer.media.model.SyncState
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
@@ -33,12 +34,16 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
 class FeedFragment : Fragment(), FeedClickListener {
   private var binding by autoCleared<FragmentFeedBinding>()
   private val viewModel: FeedViewModel by viewModels()
+
+  @Inject
+  lateinit var adManager: AdManager
 
   // Keep reference to current Snackbar for sync state
   private var syncSnackbar: Snackbar? = null
@@ -113,7 +118,7 @@ class FeedFragment : Fragment(), FeedClickListener {
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
-    adapter = getFeedAdapter(viewModel)
+    adapter = getFeedAdapter(viewModel, adManager)
     // Observe title from ViewModel (will be root folder name or "Feed")
     observe(viewModel.title) { title ->
       binding.toolbar.title = title

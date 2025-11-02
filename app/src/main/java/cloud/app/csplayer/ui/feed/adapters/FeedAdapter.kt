@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.ui.adapter.GridAdapter
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
@@ -14,19 +15,22 @@ import cloud.app.csplayer.ui.feed.adapters.EmptyAdapter
 import cloud.app.csplayer.ui.feed.adapters.ErrorAdapter
 import cloud.app.csplayer.ui.feed.adapters.FeedAdapterWithStates
 import cloud.app.csplayer.ui.feed.adapters.LoadingAdapter
-import cloud.app.csplayer.ui.feed.viewholders.AdViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.BannerAdViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.NativeAdViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolder
 import cloud.app.csplayer.utils.observe
 
 
-class FeedAdapter(private val clickListener: FeedClickListener) :
-  PagingDataAdapter<FeedData, FeedViewHolder<*>>(DiffCallback), GridAdapter {
+class FeedAdapter(
+  private val clickListener: FeedClickListener,
+  private val adManager: AdManager? = null
+) : PagingDataAdapter<FeedData, FeedViewHolder<*>>(DiffCallback), GridAdapter {
 
   private val viewPool = RecyclerView.RecycledViewPool()
 
@@ -63,9 +67,10 @@ class FeedAdapter(private val clickListener: FeedClickListener) :
     when (FeedData.Type.entries[getItemViewType(position)]) {
       FeedData.Type.Folder,
       FeedData.Type.PlayList,
-      FeedData.Type.Ad,
+      FeedData.Type.BannerAd,
       FeedData.Type.HorizontalList,
       FeedData.Type.Video,
+      FeedData.Type.NativeAd,
       FeedData.Type.Audio -> count
 
       FeedData.Type.VideoSmall -> 2
@@ -81,7 +86,8 @@ class FeedAdapter(private val clickListener: FeedClickListener) :
     val type = FeedData.Type.entries[viewType]
     return when (type) {
       FeedData.Type.HorizontalList -> HorizontalListViewHolder(parent, clickListener, viewPool)
-      FeedData.Type.Ad -> AdViewHolder(parent)
+      FeedData.Type.BannerAd -> BannerAdViewHolder(parent, adManager = adManager)
+      FeedData.Type.NativeAd -> NativeAdViewHolder(parent, adManager = adManager)
       FeedData.Type.Video -> VideoViewHolder(parent, clickListener)
       FeedData.Type.Audio -> AudioViewHolder(parent, clickListener)
       FeedData.Type.Folder -> FolderViewHolder(parent, clickListener)
@@ -101,7 +107,8 @@ class FeedAdapter(private val clickListener: FeedClickListener) :
     val feed = getItem(position) ?: return
     when (holder) {
       is HorizontalListViewHolder -> if (feed is FeedData.HorizontalList) holder.bind(feed)
-      is AdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
+      is BannerAdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
+      is NativeAdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
       is VideoViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is VideoSmallViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is AudioViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
@@ -109,6 +116,15 @@ class FeedAdapter(private val clickListener: FeedClickListener) :
       is FolderViewHolder,
       is FolderSmallViewHolder -> if (feed is FeedData.FolderItem) holder.bind(feed)
       else -> {}
+    }
+  }
+
+  override fun onViewRecycled(holder: FeedViewHolder<*>) {
+    super.onViewRecycled(holder)
+    // Clean up ad resources when ViewHolder is recycled
+    when (holder) {
+      is BannerAdViewHolder -> holder.onRecycled()
+      is NativeAdViewHolder -> holder.onRecycled()
     }
   }
 
@@ -153,9 +169,10 @@ class FeedAdapter(private val clickListener: FeedClickListener) :
   companion object {
 
     fun Fragment.getFeedAdapter(
-      viewModel: FeedViewModel
+      viewModel: FeedViewModel,
+      adManager: AdManager? = null
     ): FeedAdapter {
-      val adapter = FeedAdapter(this as FeedClickListener)
+      val adapter = FeedAdapter(this as FeedClickListener, adManager)
       observe(viewModel.feedData) {
         adapter.submitData(lifecycle, it)
       }

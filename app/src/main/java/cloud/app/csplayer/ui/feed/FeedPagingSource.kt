@@ -6,6 +6,7 @@ import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
+import kotlin.random.Random
 
 /**
  * PagingSource that loads media and folders from MediaRepository (Room database).
@@ -44,10 +45,22 @@ class FeedPagingSource(
         }
       }
 
-      Timber.d("Loaded ${data.size} items for page $page")
+      // Insert AdItem at the beginning of page 0
+      val finalData = if (page == 0) {
+        val adItem = FeedData.AdItem(
+          id = "ad_page_0",
+          title = "Advertisement",
+          type = FeedData.Type.NativeAd//if (Random.nextBoolean()) FeedData.Type.BannerAd else FeedData.Type.NativeAd
+        )
+        listOf(adItem) + data
+      } else {
+        data
+      }
+
+      Timber.d("Loaded ${finalData.size} items for page $page (with ${if (page == 1) "ad" else "no ad"})")
 
       LoadResult.Page(
-        data = data,
+        data = finalData,
         prevKey = if (page > 0) page - 1 else null,
         nextKey = if (data.size == pageSize) page + 1 else null
       )

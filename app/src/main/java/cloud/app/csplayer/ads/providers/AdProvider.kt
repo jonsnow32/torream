@@ -10,11 +10,11 @@ import android.view.ViewGroup
 interface AdProvider {
 
     enum class AdType {
-        BANNER, INTERSTITIAL, REWARDED
+        BANNER, INTERSTITIAL, REWARDED, NATIVE
     }
 
     enum class ProviderType {
-        ADMOB, FACEBOOK, UNITY, IRONSOURCE, APPLOVIN, VUNGLE
+        ADMOB, FACEBOOK, UNITY, IRONSOURCE, APPLOVIN, VUNGLE, HOUSE_AD
     }
 
     val providerType: ProviderType
@@ -62,6 +62,16 @@ interface AdProvider {
         activity: Activity,
         onRewardEarned: (Int) -> Unit = {},
         onAdClosed: () -> Unit = {},
+        onAdFailed: (String) -> Unit = {}
+    ): Boolean
+
+    /**
+     * Hiển thị native ad
+     */
+    suspend fun showNativeAd(
+        context: Context,
+        container: ViewGroup,
+        onAdLoaded: () -> Unit = {},
         onAdFailed: (String) -> Unit = {}
     ): Boolean
 

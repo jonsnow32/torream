@@ -52,6 +52,7 @@ class UnityAdProvider : AdProvider {
             AdProvider.AdType.BANNER -> true // Banner is always ready if initialized
             AdProvider.AdType.INTERSTITIAL -> UnityAds.isInitialized && UnityAds.debugMode
             AdProvider.AdType.REWARDED -> UnityAds.isInitialized && UnityAds.debugMode
+            AdProvider.AdType.NATIVE -> false // Unity doesn't support native
         }
     }
 
@@ -68,6 +69,7 @@ class UnityAdProvider : AdProvider {
                 true
             }
             AdProvider.AdType.BANNER -> true
+            AdProvider.AdType.NATIVE -> false // Not supported
         }
     }
 
@@ -200,6 +202,17 @@ class UnityAdProvider : AdProvider {
             onAdFailed(e.message ?: "Unknown error")
             continuation.resume(false)
         }
+    }
+
+    override suspend fun showNativeAd(
+        context: Context,
+        container: ViewGroup,
+        onAdLoaded: () -> Unit,
+        onAdFailed: (String) -> Unit
+    ): Boolean {
+        // Unity Ads doesn't support native ads format, return false
+        onAdFailed("Unity Ads does not support native ads")
+        return false
     }
 
     override fun cleanup() {

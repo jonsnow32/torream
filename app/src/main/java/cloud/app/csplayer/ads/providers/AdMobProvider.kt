@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.nativead.NativeAdView
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class AdMobProvider : AdProvider {
         const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
         const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
         const val REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
+        const val NATIVE_AD_UNIT_ID = "ca-app-pub-3940256099942544/2247696110"
     }
 
     private var interstitialAd: InterstitialAd? = null
@@ -48,6 +50,7 @@ class AdMobProvider : AdProvider {
             AdProvider.AdType.BANNER -> isInitialized
             AdProvider.AdType.INTERSTITIAL -> interstitialAd != null
             AdProvider.AdType.REWARDED -> rewardedAd != null
+            AdProvider.AdType.NATIVE -> isInitialized // Native ads loaded on demand
         }
     }
 
@@ -58,6 +61,7 @@ class AdMobProvider : AdProvider {
             AdProvider.AdType.INTERSTITIAL -> withContext(Dispatchers.Main) { preloadInterstitial(context) }
             AdProvider.AdType.REWARDED -> withContext(Dispatchers.Main) { preloadRewarded(context) }
             AdProvider.AdType.BANNER -> true // Banner is loaded on demand
+            AdProvider.AdType.NATIVE -> true // Native ads loaded on demand
         }
     }
 
@@ -230,6 +234,119 @@ class AdMobProvider : AdProvider {
             false
         }
     }
+
+    override suspend fun showNativeAd(
+        context: Context,
+        container: ViewGroup,
+        onAdLoaded: () -> Unit,
+        onAdFailed: (String) -> Unit
+    ): Boolean = withContext(Dispatchers.Main) {
+        try {
+            // Clear previous ad
+            container.removeAllViews()
+
+            // Load AdMob native ad
+            val adLoader = AdLoader.Builder(context, NATIVE_AD_UNIT_ID) // Test native ad unit
+                .forNativeAd { nativeAd ->
+                    try {
+                        // Inflate custom native ad layout
+                        val layoutInflater = android.view.LayoutInflater.from(context)
+                        val binding = cloud.app.csplayer.databinding.LayoutAdmobNativeAdBinding.inflate(
+                            layoutInflater,
+                            container,
+                            false
+                        )
+
+                        // Populate native ad view
+                        populateNativeAdView(nativeAd, binding)
+
+                        // Add to container
+                        container.addView(binding.root)
+
+                        Timber.d("AdMob native ad loaded and populated successfully")
+                        onAdLoaded()
+                    } catch (e: Exception) {
+                        Timber.e(e, "Error inflating AdMob native ad layout")
+                        onAdFailed(e.message ?: "Layout error")
+                    }
+                }
+                .withAdListener(object : AdListener() {
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        Timber.w("AdMob native ad failed: ${error.message}")
+                        onAdFailed(error.message)
+                    }
+                })
+                .build()
+
+            adLoader.loadAd(AdRequest.Builder().build())
+            true // Request initiated successfully
+        } catch (e: Exception) {
+            Timber.e(e, "AdMob native ad error")
+            onAdFailed(e.message ?: "Unknown error")
+            false
+        }
+    }
+
+    private fun populateNativeAdView(
+        nativeAd: com.google.android.gms.ads.nativead.NativeAd,
+        binding: cloud.app.csplayer.databinding.LayoutAdmobNativeAdBinding
+    ) {
+        val nativeAdView = binding.root
+
+        with(binding) {
+            // Set the headline view (Title - Required)
+            adHeadline.text = nativeAd.headline
+            nativeAdView.headlineView = adHeadline
+
+            // Set the app icon (Policy requirement)
+            nativeAd.icon?.let {
+                adAppIcon.setImageDrawable(it.drawable)
+                adAppIcon.visibility = android.view.View.VISIBLE
+                nativeAdView.iconView = adAppIcon
+            } ?: run {
+                adAppIcon.visibility = android.view.View.GONE
+            }
+
+            // Set the advertiser (Subtitle line 1)
+            nativeAd.advertiser?.let {
+                adAdvertiser.text = it
+                adAdvertiser.visibility = android.view.View.VISIBLE
+                nativeAdView.advertiserView = adAdvertiser
+            } ?: run {
+                adAdvertiser.visibility = android.view.View.GONE
+            }
+
+            // Set the body view (Subtitle line 2)
+            nativeAd.body?.let {
+                adBody.text = it
+                adBody.visibility = android.view.View.VISIBLE
+                nativeAdView.bodyView = adBody
+            } ?: run {
+                adBody.visibility = android.view.View.GONE
+            }
+
+            // Set the call to action view (Button)
+            nativeAd.callToAction?.let {
+                adCallToAction.text = it
+                adCallToAction.visibility = android.view.View.VISIBLE
+                nativeAdView.callToActionView = adCallToAction
+            } ?: run {
+                adCallToAction.visibility = android.view.View.GONE
+            }
+
+            // Set the media view (Thumbnail)
+            nativeAdView.mediaView = adMedia
+
+            // Set AdChoices view (Required by AdMob policy)
+           // nativeAdView.adChoicesView = adChoices
+        }
+
+        // Register the native ad with the native ad view
+        nativeAdView.setNativeAd(nativeAd)
+
+        Timber.d("AdMob native ad view populated (video item style, policy compliant)")
+    }
+
 
     override fun cleanup() {
         interstitialAd = null

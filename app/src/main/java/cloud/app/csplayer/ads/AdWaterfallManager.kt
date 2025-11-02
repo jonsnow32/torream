@@ -51,10 +51,11 @@ class AdWaterfallManager @Inject constructor() {
 
     providers.addAll(
       listOf(
-        //AdMobProvider(),           // Priority 1 -
-        //FacebookAdProvider(),     // Priority 2 - Facebook Audience Network
-        //UnityAdProvider(),        // Priority 3 - Unity Ads
-        VungleProvider(),
+        AdMobProvider(),           // Priority 1 -
+//        FacebookAdProvider(),     // Priority 2 - Facebook Audience Network
+        UnityAdProvider(),        // Priority 3 - Unity Ads
+        VungleProvider(),          // Priority 2 - Vungle
+        HouseAdProvider(),         // Priority 99 - House ads (fallback)
       )
     )
 
@@ -279,16 +280,26 @@ class AdWaterfallManager @Inject constructor() {
           Timber.d("Trying banner with ${provider.providerType}")
 
           val startTime = System.currentTimeMillis()
+          val callbackInvoked = AtomicBoolean(false) // Guard against double callbacks
+
           val success = provider.showBannerAd(
             context = context,
             container = container,
             onAdLoaded = {
-              updateStats(provider.providerType, true, System.currentTimeMillis() - startTime)
-              onAdLoaded()
+              if (callbackInvoked.compareAndSet(false, true)) {
+                updateStats(provider.providerType, true, System.currentTimeMillis() - startTime)
+                onAdLoaded()
+              } else {
+                Timber.w("${provider.providerType} onAdLoaded called after callback already invoked")
+              }
             },
             onAdFailed = { error ->
-              updateStats(provider.providerType, false, System.currentTimeMillis() - startTime)
-              Timber.w("${provider.providerType} banner failed: $error")
+              if (callbackInvoked.compareAndSet(false, true)) {
+                updateStats(provider.providerType, false, System.currentTimeMillis() - startTime)
+                Timber.w("${provider.providerType} banner failed: $error")
+              } else {
+                Timber.w("${provider.providerType} onAdFailed called after success: $error")
+              }
             }
           )
 
@@ -303,6 +314,65 @@ class AdWaterfallManager @Inject constructor() {
     }
 
     val errorMsg = "All providers failed to show banner ad"
+    Timber.w(errorMsg)
+    onAllProvidersFailed(errorMsg)
+    return false
+  }
+
+
+  suspend fun showNativeAd(
+    context: Context,
+    container: ViewGroup,
+    onAdLoaded: () -> Unit = {},
+    onAllProvidersFailed: (String) -> Unit = {}
+  ): Boolean {
+    if (!isInitialized) {
+      onAllProvidersFailed("Waterfall not initialized")
+      return false
+    }
+
+    val sortedProviders = providers.sortedBy { it.priority }
+
+    for (provider in sortedProviders) {
+      try {
+        if (provider.isAdReady(AdProvider.AdType.NATIVE)) {
+          Timber.d("Trying native ad with ${provider.providerType}")
+
+          val startTime = System.currentTimeMillis()
+          val callbackInvoked = AtomicBoolean(false) // Guard against double callbacks
+
+          val success = provider.showNativeAd(
+            context = context,
+            container = container,
+            onAdLoaded = {
+              if (callbackInvoked.compareAndSet(false, true)) {
+                updateStats(provider.providerType, true, System.currentTimeMillis() - startTime)
+                onAdLoaded()
+              } else {
+                Timber.w("${provider.providerType} onAdLoaded called after callback already invoked")
+              }
+            },
+            onAdFailed = { error ->
+              if (callbackInvoked.compareAndSet(false, true)) {
+                updateStats(provider.providerType, false, System.currentTimeMillis() - startTime)
+                Timber.w("${provider.providerType} native ad failed: $error")
+              } else {
+                Timber.w("${provider.providerType} onAdFailed called after success: $error")
+              }
+            }
+          )
+
+          if (success) {
+            Timber.i("Native ad shown successfully with ${provider.providerType}")
+            return true
+          }
+        }
+      } catch (e: Exception) {
+        Timber.e(e, "Error showing native ad with ${provider.providerType}")
+      }
+    }
+
+    val errorMsg = "All providers failed to show native ad"
     Timber.w(errorMsg)
     onAllProvidersFailed(errorMsg)
     return false
