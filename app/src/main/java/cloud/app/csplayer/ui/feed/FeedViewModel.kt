@@ -19,6 +19,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -60,12 +61,12 @@ class FeedViewModel @Inject constructor(
   // PagingData flow for the adapter - now loads real data from MediaRepository
   // Recreates when displayType, folderViewMode, or mediaTypeFilter changes
   val feedData: Flow<PagingData<FeedData>> = combine(
-    viewMode,
-    groupMode,
+    filterConfig,     // Combine toàn bộ config thay vì map riêng lẻ
     mediaTypeFilter
-  ) { viewMode, groupMode, mediaType ->
-    Triple(viewMode, groupMode, mediaType)
-  }.flatMapLatest { (viewMode, groupMode, mediaType) ->
+  ) { config, mediaType ->
+    Triple(config.viewMode, config.groupMode, mediaType)
+
+  }.distinctUntilChanged().flatMapLatest { (viewMode, groupMode, mediaType) ->
     Pager(
       config = PagingConfig(
         pageSize = 20,
@@ -83,6 +84,7 @@ class FeedViewModel @Inject constructor(
       }
     ).flow
   }.cachedIn(viewModelScope)
+
 
   // Expose sync state from MediaRepository for UI feedback
   val syncState = mediaRepository.observeSyncState()

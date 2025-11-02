@@ -15,12 +15,11 @@ import cloud.app.csplayer.ui.feed.adapters.EmptyAdapter
 import cloud.app.csplayer.ui.feed.adapters.ErrorAdapter
 import cloud.app.csplayer.ui.feed.adapters.FeedAdapterWithStates
 import cloud.app.csplayer.ui.feed.adapters.LoadingAdapter
-import cloud.app.csplayer.ui.feed.viewholders.BannerAdViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderViewHolder
-import cloud.app.csplayer.ui.feed.viewholders.NativeAdViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.AdViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolder
@@ -67,10 +66,9 @@ class FeedAdapter(
     when (FeedData.Type.entries[getItemViewType(position)]) {
       FeedData.Type.Folder,
       FeedData.Type.PlayList,
-      FeedData.Type.BannerAd,
       FeedData.Type.HorizontalList,
       FeedData.Type.Video,
-      FeedData.Type.NativeAd,
+      FeedData.Type.Ad,
       FeedData.Type.Audio -> count
 
       FeedData.Type.VideoSmall -> 2
@@ -86,8 +84,7 @@ class FeedAdapter(
     val type = FeedData.Type.entries[viewType]
     return when (type) {
       FeedData.Type.HorizontalList -> HorizontalListViewHolder(parent, clickListener, viewPool)
-      FeedData.Type.BannerAd -> BannerAdViewHolder(parent, adManager = adManager)
-      FeedData.Type.NativeAd -> NativeAdViewHolder(parent, adManager = adManager)
+      FeedData.Type.Ad -> AdViewHolder(parent, adManager = adManager)
       FeedData.Type.Video -> VideoViewHolder(parent, clickListener)
       FeedData.Type.Audio -> AudioViewHolder(parent, clickListener)
       FeedData.Type.Folder -> FolderViewHolder(parent, clickListener)
@@ -107,8 +104,7 @@ class FeedAdapter(
     val feed = getItem(position) ?: return
     when (holder) {
       is HorizontalListViewHolder -> if (feed is FeedData.HorizontalList) holder.bind(feed)
-      is BannerAdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
-      is NativeAdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
+      is AdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
       is VideoViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is VideoSmallViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is AudioViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
@@ -123,8 +119,7 @@ class FeedAdapter(
     super.onViewRecycled(holder)
     // Clean up ad resources when ViewHolder is recycled
     when (holder) {
-      is BannerAdViewHolder -> holder.onRecycled()
-      is NativeAdViewHolder -> holder.onRecycled()
+      is AdViewHolder -> holder.onRecycled()
     }
   }
 
@@ -173,8 +168,8 @@ class FeedAdapter(
       adManager: AdManager? = null
     ): FeedAdapter {
       val adapter = FeedAdapter(this as FeedClickListener, adManager)
-      observe(viewModel.feedData) {
-        adapter.submitData(lifecycle, it)
+      viewLifecycleOwner.observe(viewModel.feedData) {
+        adapter.submitData(it)
       }
       return adapter
     }

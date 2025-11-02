@@ -7,13 +7,13 @@
   android:orientation="vertical"
   android:layout_width="match_parent"
   android:layout_height="match_parent">
-  
+
   <include layout="@layout/standard_toolbar" />
 
   <View
     android:id="@+id/appBarOutline"
     style="@style/AppBarOutline"
-    app:layout_anchor="@id/settings_toolbar"
+    app:layout_anchor="@id/toolbar"
     app:layout_anchorGravity="bottom" />
 
 

@@ -41,6 +41,7 @@
       android:paddingTop="2dp"
       android:paddingEnd="6dp"
       android:paddingBottom="2dp"
+      android:textColor="@color/white"
       android:text="@string/duration_placeholder"
       app:layout_constraintBottom_toBottomOf="parent"
       app:layout_constraintEnd_toEndOf="parent" />

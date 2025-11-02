@@ -215,18 +215,6 @@ class FeedFragment : Fragment(), FeedClickListener {
 
     configureGridLayout(binding.rvFeed, adapterWithStates)
 
-    // Restore scroll position after configuration changes
-    savedInstanceState?.let { bundle ->
-      val scrollPosition = bundle.getInt(STATE_SCROLL_POSITION, 0)
-      if (scrollPosition > 0) {
-        // Post to ensure layout is complete before scrolling
-        binding.rvFeed.post {
-          binding.rvFeed.scrollToPosition(scrollPosition)
-          Timber.d("Restored scroll position: $scrollPosition")
-        }
-      }
-    }
-
     // Setup SwipeRefreshLayout
     binding.swipeRefresh.setOnRefreshListener {
       // Refresh data when user pulls down
@@ -251,7 +239,7 @@ class FeedFragment : Fragment(), FeedClickListener {
         }
 
         is SyncState.Completed -> {
-          adapter.refresh()
+          //adapter.refresh()
         }
 
         is SyncState.Error -> {
@@ -544,28 +532,6 @@ class FeedFragment : Fragment(), FeedClickListener {
     showToast("Settings applied: ${config.groupMode.name} / ${config.viewMode.name}")
   }
 
-  override fun onSaveInstanceState(outState: Bundle) {
-    super.onSaveInstanceState(outState)
-
-    // Save scroll position
-    val layoutManager =
-      binding.rvFeed.layoutManager as? androidx.recyclerview.widget.GridLayoutManager
-    layoutManager?.let {
-      val scrollPosition = it.findFirstVisibleItemPosition()
-      outState.putInt(STATE_SCROLL_POSITION, scrollPosition)
-      Timber.d("Saved scroll position: $scrollPosition")
-    }
-
-    // Save current root folder path
-    val rootFolderPath = arguments?.getString("root_folder_path")
-      ?: arguments?.getString(ARG_ROOT_FOLDER_PATH)
-    rootFolderPath?.let {
-      outState.putString(STATE_ROOT_FOLDER_PATH, it)
-    }
-
-    Timber.d("FeedFragment state saved")
-  }
-
   /**
    * Handle configuration changes (like orientation) to recalculate grid layout
    * This is called from MainActivity.onConfigurationChanged()
@@ -584,10 +550,6 @@ class FeedFragment : Fragment(), FeedClickListener {
 
   companion object {
     private const val ARG_ROOT_FOLDER_PATH = "root_folder_path"
-
-    // State saving keys for configuration changes
-    private const val STATE_SCROLL_POSITION = "state_scroll_position"
-    private const val STATE_ROOT_FOLDER_PATH = "state_root_folder_path"
 
     /**
      * Create new instance of FeedFragment

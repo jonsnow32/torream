@@ -27,7 +27,7 @@
         android:layout_height="0dp"
         android:importantForAccessibility="no"
         android:scaleType="centerCrop"
-        android:src="?android:attr/colorBackground"
+        android:src="?iconGrayBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="16:9"
         app:layout_constraintEnd_toEndOf="parent"
@@ -46,6 +46,7 @@
         android:paddingHorizontal="6dp"
         android:paddingVertical="2dp"
         android:text="@string/duration_placeholder"
+        android:textColor="@color/white"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

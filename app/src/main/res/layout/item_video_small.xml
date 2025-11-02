@@ -43,6 +43,7 @@
         android:importantForAccessibility="no"
         android:paddingHorizontal="5dp"
         android:paddingVertical="2dp"
+        android:textColor="@color/white"
         android:text="@string/duration_placeholder"
         android:textSize="11sp"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -6,28 +6,6 @@
   app:startDestination="@id/feedFragment">
 
   <action
-    android:id="@+id/global_to_navigation_player"
-    app:destination="@id/playerFragment"
-    app:enterAnim="@anim/enter_anim"
-    app:exitAnim="@anim/exit_anim"
-
-    app:popEnterAnim="@anim/enter_anim"
-    app:popExitAnim="@anim/exit_anim">
-    <argument
-      android:name="data"
-      android:defaultValue="@null"
-      app:argType="string" />
-    <argument
-      android:name="uriData"
-      android:defaultValue="@null"
-      app:argType="string" />
-    <argument
-      android:name="resumePosition"
-      android:defaultValue="0L"
-      app:argType="long" />
-  </action>
-
-  <action
     android:id="@+id/global_to_navigation_mpv_player"
     app:destination="@id/mvpFragmentPlayer"
     app:enterAnim="@anim/enter_anim"
@@ -175,10 +153,6 @@
     app:popExitAnim="@anim/exit_anim"
     tools:layout="@layout/chromecast_subtitle_settings" />
 
-  <fragment
-    android:id="@+id/playerFragment"
-    android:name="cloud.app.csplayer.ui.player.exo.CSPlayerFragment"
-    android:label="PlayerFragment" />
 
   <fragment
     android:id="@+id/mvpFragmentPlayer"

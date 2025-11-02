@@ -214,15 +214,10 @@ class SettingsFragment : Fragment() {
             text = copy;
         }
 
-        var id = R.id.global_to_navigation_player;
-        if(isMPVSupported()) {
-          id = R.id.global_to_navigation_mpv_player;
-        }
-
         activity?.showNginxTextInputDialog("Your Link", text, 16, {
         }, {
           activity?.navigate(
-            id,
+            R.id.global_to_navigation_mpv_player,
             bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
           )
         });

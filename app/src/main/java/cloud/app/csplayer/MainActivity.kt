@@ -274,20 +274,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true, true).build()
 
       isSameEpisode = extras.getBoolean(EXTRA_IS_SAME_EPISODE, true)
-
-//      val useMpv = extras.getBoolean(EXTRA_USE_MPV, false)
-//      var id = R.id.global_to_navigation_player;
-//      if (useMpv) {
-//        id = R.id.global_to_navigation_mpv_player;
-//      }
-
-      var id = R.id.global_to_navigation_player
-      if (isMPVSupported()) {
-        id = R.id.global_to_navigation_mpv_player
-      }
-
       navigate(
-        id,
+        R.id.global_to_navigation_mpv_player,
         extras,
         navOptions
       )

@@ -6,7 +6,6 @@ import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
-import kotlin.random.Random
 
 /**
  * PagingSource that loads media and folders from MediaRepository (Room database).
@@ -31,7 +30,6 @@ class FeedPagingSource(
     return try {
       val page = params.key ?: 0
       val pageSize = params.loadSize
-
       Timber.d("Loading page $page with pageSize $pageSize, rootFolder: $rootFolderPath, groupMode: $groupMode")
 
       // Load data based on groupMode and rootFolderPath
@@ -45,22 +43,22 @@ class FeedPagingSource(
         }
       }
 
-      // Insert AdItem at the beginning of page 0
-      val finalData = if (page == 0) {
-        val adItem = FeedData.AdItem(
-          id = "ad_page_0",
-          title = "Advertisement",
-          type = FeedData.Type.NativeAd//if (Random.nextBoolean()) FeedData.Type.BannerAd else FeedData.Type.NativeAd
-        )
-        listOf(adItem) + data
-      } else {
-        data
-      }
-
-      Timber.d("Loaded ${finalData.size} items for page $page (with ${if (page == 1) "ad" else "no ad"})")
+//      // Insert AdItem at the beginning of page 0
+//      val finalData = if (page == 0) {
+//        val adItem = FeedData.AdItem(
+//          id = "ad_page_0",
+//          title = "Advertisement",
+//          type = FeedData.Type.NativeAd//if (Random.nextBoolean()) FeedData.Type.BannerAd else FeedData.Type.NativeAd
+//        )
+//        listOf(adItem) + data
+//      } else {
+//        data
+//      }
+//
+//      Timber.d("Loaded ${finalData.size} items for page $page (with ${if (page == 0) "ad" else "no ad"})")
 
       LoadResult.Page(
-        data = finalData,
+        data = data,
         prevKey = if (page > 0) page - 1 else null,
         nextKey = if (data.size == pageSize) page + 1 else null
       )
@@ -83,7 +81,7 @@ class FeedPagingSource(
   /**
    * Load all folders from MediaRepository with pagination
    */
-  private suspend fun loadAllFoldersPaged(limit: Int, offset: Int): List<FeedData.FolderItem> {
+  private suspend fun loadAllFoldersPaged(limit: Int, offset: Int): List<FeedData> {
     Timber.d("Loading folders with limit=$limit, offset=$offset, groupMode=$groupMode, mediaTypeFilter=$mediaTypeFilter")
 
     val folders = repository.getFoldersPaged(limit, offset)
@@ -102,23 +100,30 @@ class FeedPagingSource(
     }
 
     // Convert Folder to FeedData.FolderItem
-    return folders.map { folder ->
+    val items = folders.map { folder ->
       FeedData.FolderItem(
         id = folder.path,
         title = folder.name,
         folder = folder,
         type = folderType
-      )
-    }.also {
+      ) as FeedData
+    }.toMutableList().also {
       Timber.d("Successfully loaded ${it.size} folders")
     }
+
+
+    items.add(FeedData.AdItem(
+      id = "ad_${rootFolderPath}_$offset",
+      title = "Advertisement",
+    ))
+    return items
   }
 
   /**
    * Load all media files (for CAROUSEL mode) with pagination
    * Does not show folders, only media files
    */
-  private suspend fun loadAllMediaPaged(limit: Int, offset: Int): List<FeedData.MediaItem> {
+  private suspend fun loadAllMediaPaged(limit: Int, offset: Int): List<FeedData> {
     return try {
       Timber.d("Loading all media with limit=$limit, offset=$offset, mediaTypeFilter=$mediaTypeFilter")
 
@@ -137,7 +142,7 @@ class FeedPagingSource(
       }
 
       // Convert Media to FeedData.MediaItem
-      mediaList.map { media ->
+      val items = mediaList.map { media ->
         val mediaType = determineMediaType(media.mimeType)
 
         FeedData.MediaItem(
@@ -145,10 +150,16 @@ class FeedPagingSource(
           title = media.name,
           type = mediaType,
           media = media
-        )
-      }.also {
+        ) as FeedData
+      }.toMutableList().also {
         Timber.d("Successfully loaded ${it.size} media items")
       }
+
+      items.add(FeedData.AdItem(
+        id = "ad_${rootFolderPath}_$offset",
+        title = "Advertisement"
+      ))
+      items
     } catch (e: Exception) {
       Timber.e(e, "Error loading all media")
       emptyList()
@@ -206,6 +217,10 @@ class FeedPagingSource(
 
       Timber.d("Loaded ${mediaList.size} media files (filter: $mediaTypeFilter)")
 
+      items.add(FeedData.AdItem(
+        id = "ad_${folderPath}_$offset",
+        title = "Advertisement"
+      ))
       // Convert Media to FeedData.MediaItem
       mediaList.forEach { media ->
         val mediaType = determineMediaType(media.mimeType)

@@ -18,7 +18,7 @@ import kotlin.coroutines.resume
 class AdMobProvider : AdProvider {
 
     override val providerType = AdProvider.ProviderType.ADMOB
-    override val priority = 1 // Highest priority
+    override val priority = 99 // Highest priority
 
     companion object {
         // Test Ad Unit IDs - replace with real IDs in production

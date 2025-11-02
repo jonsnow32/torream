@@ -1,29 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="match_parent">
+  android:layout_height="match_parent"
+  android:fitsSystemWindows="true">
 
   <com.google.android.material.appbar.AppBarLayout
-    android:id="@+id/appBarLayout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar">
 
-    <com.google.android.material.appbar.MaterialToolbar
+    <androidx.appcompat.widget.Toolbar
       android:id="@+id/toolbar"
       android:layout_width="match_parent"
-      android:layout_height="?actionBarSize"
-      app:layout_scrollFlags="scroll|enterAlways"
-      app:menu="@menu/feed_menu" />
+      android:layout_height="?attr/actionBarSize"
+      app:title="@string/app_name"
+      app:menu="@menu/feed_menu"
+      app:titleTextColor="@android:color/white"
+      app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
   </com.google.android.material.appbar.AppBarLayout>
 
-  <View
-    android:id="@+id/appBarOutline"
-    style="@style/AppBarOutline"
-    app:layout_anchor="@id/appBarLayout"
-    app:layout_anchorGravity="bottom" />
-
+  <!-- Main Content -->
   <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
@@ -35,12 +34,11 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:clipToPadding="false"
-      android:contentDescription="@string/browser"
+      android:nestedScrollingEnabled="true"
       android:paddingHorizontal="8dp"
       android:paddingVertical="8dp"
-      tools:listitem="@layout/item_video" />
-
+      tools:listitem="@layout/item_video"
+      android:scrollbars="vertical" />
   </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

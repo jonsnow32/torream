@@ -17,7 +17,7 @@ import timber.log.Timber
  * ViewHolder for displaying native ads in the feed
  * Uses AdManager waterfall system to show native ads
  */
-class NativeAdViewHolder(
+class AdViewHolder(
   parent: ViewGroup,
   val binding: ItemNativeAdHolderBinding = ItemNativeAdHolderBinding.inflate(
     LayoutInflater.from(parent.context), parent, false
@@ -42,29 +42,50 @@ class NativeAdViewHolder(
     isAdLoaded = false
 
     // Check if this is a native ad placeholder
-    if (feed.type != FeedData.Type.NativeAd) {
+    if (feed.type != FeedData.Type.Ad) {
       Timber.d("AdItem ${feed.id} is not a native ad placeholder")
       return
     }
 
-    // Load native ad using AdManager with retry logic
+    // Load ad using AdManager with retry logic - randomly choose between native and banner
+    // If first choice fails, fallback to the other type
     loadJob = CoroutineScope(Dispatchers.Main).launch {
       try {
-        Timber.d("Loading native ad for AdItem ${feed.id}")
+        // Randomly choose between native ad and banner ad
+        val useNativeAdFirst = (0..1).random() == 0
 
-        val success = loadNativeAdWithRetry(feed.id)
+        Timber.d("Attempting to load ${if (useNativeAdFirst) "native" else "banner"} ad first for AdItem ${feed.id}")
+
+        // Try first ad type
+        var success = if (useNativeAdFirst) {
+          loadNativeAdWithRetry(feed.id)
+        } else {
+          loadBannerAdWithRetry(feed.id)
+        }
+
+        // If first attempt failed, try fallback
+        if (!success) {
+          val fallbackType = if (useNativeAdFirst) "banner" else "native"
+          Timber.d("First ad type failed, falling back to $fallbackType ad for AdItem ${feed.id}")
+
+          success = if (useNativeAdFirst) {
+            loadBannerAdWithRetry(feed.id)
+          } else {
+            loadNativeAdWithRetry(feed.id)
+          }
+        }
 
         if (success) {
           isAdLoaded = true
-          Timber.d("Native ad loaded successfully for AdItem ${feed.id}")
+          Timber.d("Ad loaded successfully for AdItem ${feed.id}")
         } else {
-          Timber.w("Failed to load native ad for AdItem ${feed.id}")
+          Timber.w("Failed to load both ad types for AdItem ${feed.id}")
           // Hide the ad container if loading failed
-          binding.root.layoutParams.height = 0
+          binding.root.layoutParams.height = 1
         }
       } catch (e: Exception) {
-        Timber.e(e, "Error loading native ad for AdItem ${feed.id}")
-        binding.root.layoutParams.height = 0
+        Timber.e(e, "Error loading ad for AdItem ${feed.id}")
+        binding.root.layoutParams.height = 1
       }
     }
   }
@@ -92,6 +113,31 @@ class NativeAdViewHolder(
     }
 
     return adManager.createNativeAd(
+      context = binding.root.context,
+      container = binding.root
+    )
+  }
+
+  private suspend fun loadBannerAdWithRetry(feedId: String, attempt: Int = 1): Boolean {
+    // Check if AdManager is null
+    if (adManager == null) {
+      Timber.w("AdManager is null, cannot load banner ad")
+      return false
+    }
+
+    // Check if AdManager is initialized
+    if (!adManager.isReady()) {
+      if (attempt <= MAX_RETRY_ATTEMPTS) {
+        Timber.d("AdManager not ready, retry attempt $attempt/${MAX_RETRY_ATTEMPTS}")
+        delay(RETRY_DELAY_MS * attempt) // Exponential backoff
+        return loadBannerAdWithRetry(feedId, attempt + 1)
+      } else {
+        Timber.w("AdManager not ready after ${MAX_RETRY_ATTEMPTS} attempts")
+        return false
+      }
+    }
+
+    return adManager.createBannerAd(
       context = binding.root.context,
       container = binding.root
     )
