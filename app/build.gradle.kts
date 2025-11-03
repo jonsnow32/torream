@@ -163,6 +163,7 @@ dependencies {
 
   // UI Stuff
   implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
+  implementation("me.zhanghai.android.fastscroll:library:1.3.0")
 
   // Downloading & Networking
   implementation("com.github.Blatzar:NiceHttp:0.4.13")

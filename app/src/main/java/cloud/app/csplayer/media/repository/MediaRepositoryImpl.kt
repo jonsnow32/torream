@@ -9,6 +9,7 @@ import cloud.app.csplayer.media.entities.FolderEntity
 import cloud.app.csplayer.media.entities.MediaEntity
 import cloud.app.csplayer.media.model.Folder
 import cloud.app.csplayer.media.model.Media
+import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.model.SyncState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -325,18 +326,18 @@ class MediaRepositoryImpl @Inject constructor(
     folderPath: String,
     limit: Int,
     offset: Int,
-    mediaTypeFilter: cloud.app.csplayer.media.model.MediaTypeFilter
+    mediaTypeFilter: MediaTypeFilter
   ): List<Media> = withContext(Dispatchers.IO) {
     // If ALL, use the non-filtered method for better performance
-    if (mediaTypeFilter == cloud.app.csplayer.media.model.MediaTypeFilter.ALL) {
+    if (mediaTypeFilter == MediaTypeFilter.ALL) {
       return@withContext getMediaByFolderPaged(folderPath, limit, offset)
     }
 
     // Determine MIME type pattern based on filter
     val mimeTypePattern = when (mediaTypeFilter) {
-      cloud.app.csplayer.media.model.MediaTypeFilter.VIDEO -> "video/%"
-      cloud.app.csplayer.media.model.MediaTypeFilter.AUDIO -> "audio/%"
-      cloud.app.csplayer.media.model.MediaTypeFilter.ALL -> "%"
+      MediaTypeFilter.VIDEO -> "video/%"
+      MediaTypeFilter.AUDIO -> "audio/%"
+      MediaTypeFilter.ALL -> "%"
     }
 
     return@withContext mediaDao.getByFolderPagedFiltered(folderPath, mimeTypePattern, limit, offset).map { it.toDomain() }
@@ -349,18 +350,18 @@ class MediaRepositoryImpl @Inject constructor(
   override suspend fun getAllMediaPagedFiltered(
     limit: Int,
     offset: Int,
-    mediaTypeFilter: cloud.app.csplayer.media.model.MediaTypeFilter
+    mediaTypeFilter: MediaTypeFilter
   ): List<Media> = withContext(Dispatchers.IO) {
     // If ALL, use the non-filtered method for better performance
-    if (mediaTypeFilter == cloud.app.csplayer.media.model.MediaTypeFilter.ALL) {
+    if (mediaTypeFilter == MediaTypeFilter.ALL) {
       return@withContext getAllMediaPaged(limit, offset)
     }
 
     // Determine MIME type pattern based on filter
     val mimeTypePattern = when (mediaTypeFilter) {
-      cloud.app.csplayer.media.model.MediaTypeFilter.VIDEO -> "video/%"
-      cloud.app.csplayer.media.model.MediaTypeFilter.AUDIO -> "audio/%"
-      cloud.app.csplayer.media.model.MediaTypeFilter.ALL -> "%"
+      MediaTypeFilter.VIDEO -> "video/%"
+      MediaTypeFilter.AUDIO -> "audio/%"
+      MediaTypeFilter.ALL -> "%"
     }
 
     return@withContext mediaDao.getAllPagedFiltered(mimeTypePattern, limit, offset).map { it.toDomain() }

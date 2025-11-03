@@ -892,4 +892,6 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
     <string name="app_ad_icon">App ad icon</string>
   <string name="ad_icon">Ad Icon</string>
   <string name="ad">Ad</string>
+    <string name="home">Home</string>
+  <string name="streaming">Streaming</string>
 </resources>

@@ -355,10 +355,6 @@ class FeedFragment : Fragment(), FeedClickListener {
             applyFilterConfig(config)
           }.show(parentFragmentManager, FeedFilterBottomSheet.TAG)
         }
-
-        R.id.settings -> {
-          findNavController().navigate(R.id.navigation_settings)
-        }
       }
       true
     }

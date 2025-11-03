@@ -172,6 +172,37 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
     val navController = navHostFragment.navController
 
+    binding.navView.setOnItemSelectedListener { menuItem ->
+      val currentDestination = navController.currentDestination?.id
+      val targetDestination = when (menuItem.itemId) {
+        R.id.homeFragment -> R.id.feedFragment
+        R.id.networkStreamFragment -> R.id.navigation_settings
+        R.id.libraryFragment -> {
+          // TODO: Navigate to library fragment when implemented
+          return@setOnItemSelectedListener false
+        }
+        else -> return@setOnItemSelectedListener false
+      }
+
+      // Only navigate if we're not already at the destination
+      if (currentDestination != targetDestination) {
+        val navOptions = NavOptions.Builder()
+          .setPopUpTo(R.id.feedFragment, false)
+          .setLaunchSingleTop(true)
+          .build()
+
+        try {
+          navController.navigate(targetDestination, null, navOptions)
+          true
+        } catch (e: Exception) {
+          logError(e)
+          false
+        }
+      } else {
+        true
+      }
+    }
+
     navController.addOnDestinationChangedListener { _: NavController, navDestination: NavDestination, bundle: Bundle? ->
       if (isTvOrEmulator()) {
         if (navDestination.matchDestination(R.id.navigation_settings)) {

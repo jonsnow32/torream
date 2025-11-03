@@ -924,4 +924,23 @@
     <item name="android:layout_marginTop">3dp</item>
     <item name="android:layout_marginBottom">3dp</item>
   </style>
+
+  <style name="BottomNavbarActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+    <item name="android:width">56dp</item>
+    <item name="android:height">24dp</item>
+    <item name="android:color">?attr/colorPrimaryInverse</item>
+  </style>
+
+  <style name="NavView" parent="Widget.Material3.BottomNavigationView">
+    <item name="android:background">?attr/colorSurfaceContainer</item>
+    <item name="itemActiveIndicatorStyle">@style/BottomNavbarActiveIndicator</item>
+    <item name="labelVisibilityMode">labeled</item>
+    <item name="itemPaddingBottom">12dp</item>
+    <item name="itemPaddingTop">12dp</item>
+    <item name="itemMinHeight">64dp</item>
+    <item name="android:paddingTop">0dp</item>
+    <item name="android:paddingBottom">0dp</item>
+    <item name="itemIconTint">@color/item_select_color</item>
+    <item name="itemTextColor">@color/item_select_color</item>
+  </style>
 </resources>
