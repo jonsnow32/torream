@@ -27,6 +27,7 @@ import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.player.EXTRA_TITLE
 import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URLS_NAME_HEADERS
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
+import cloud.app.csplayer.utils.FastScrollerHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
@@ -118,6 +119,7 @@ class FeedFragment : Fragment(), FeedClickListener {
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
+    FastScrollerHelper.applyTo(binding.rvFeed)
     adapter = getFeedAdapter(viewModel, adManager)
     // Observe title from ViewModel (will be root folder name or "Feed")
     observe(viewModel.title) { title ->
@@ -186,32 +188,32 @@ class FeedFragment : Fragment(), FeedClickListener {
     }
 
 
-    // Listen to load states to detect and handle different error types
-    adapter.addLoadStateListener { loadStates ->
-      val errorState = loadStates.refresh as? androidx.paging.LoadState.Error
-      if (errorState != null) {
-        val exception = errorState.error
-
-        // Update error message based on exception type
-        when {
-          exception is SecurityException || !hasMediaPermissions() -> {
-            // Permission error
-            adapterWithStates.updateErrorMessage(
-              message = getString(R.string.permission_required_message),
-              buttonText = getString(R.string.grant_permission)
-            )
-          }
-
-          else -> {
-            // Generic error - use default messages
-            adapterWithStates.updateErrorMessage(
-              message = exception.message ?: getString(R.string.error_loading),
-              buttonText = getString(R.string.retry)
-            )
-          }
-        }
-      }
-    }
+//    // Listen to load states to detect and handle different error types
+//    adapter.addLoadStateListener { loadStates ->
+//      val errorState = loadStates.refresh as? androidx.paging.LoadState.Error
+//      if (errorState != null) {
+//        val exception = errorState.error
+//
+//        // Update error message based on exception type
+//        when {
+//          exception is SecurityException || !hasMediaPermissions() -> {
+//            // Permission error
+//            adapterWithStates.updateErrorMessage(
+//              message = getString(R.string.permission_required_message),
+//              buttonText = getString(R.string.grant_permission)
+//            )
+//          }
+//
+//          else -> {
+//            // Generic error - use default messages
+//            adapterWithStates.updateErrorMessage(
+//              message = exception.message ?: getString(R.string.error_loading),
+//              buttonText = getString(R.string.retry)
+//            )
+//          }
+//        }
+//      }
+//    }
 
     configureGridLayout(binding.rvFeed, adapterWithStates)
 

@@ -80,7 +80,7 @@ class FeedPagingSource(
       }
 
       // Convert Media to FeedData.MediaItem
-      val items = mediaList.map { media ->
+      mediaList.map { media ->
         val mediaType = determineMediaType(media.mimeType)
 
         FeedData.MediaItem(
@@ -89,17 +89,10 @@ class FeedPagingSource(
           type = mediaType,
           media = media
         ) as FeedData
-      }.toMutableList().also {
+      }.also {
         Timber.d("Successfully loaded ${it.size} media items from search")
       }
 
-      // Add ad item
-      items.add(FeedData.AdItem(
-        id = "ad_search_$offset",
-        title = "Advertisement"
-      ))
-
-      items
     } catch (e: Exception) {
       Timber.e(e, "Error searching MediaStore")
       emptyList()
@@ -135,23 +128,17 @@ class FeedPagingSource(
     }
 
     // Convert Folder to FeedData.FolderItem
-    val items = folders.map { folder ->
+    return folders.map { folder ->
       FeedData.FolderItem(
         id = folder.path,
         title = folder.name,
         folder = folder,
         type = folderType
       ) as FeedData
-    }.toMutableList().also {
+    }.also {
       Timber.d("Successfully loaded ${it.size} folders")
     }
 
-
-    items.add(FeedData.AdItem(
-      id = "ad_${rootFolderPath}_$offset",
-      title = "Advertisement",
-    ))
-    return items
   }
 
   /**
@@ -177,7 +164,7 @@ class FeedPagingSource(
       }
 
       // Convert Media to FeedData.MediaItem
-      val items = mediaList.map { media ->
+      return mediaList.map { media ->
         val mediaType = determineMediaType(media.mimeType)
 
         FeedData.MediaItem(
@@ -186,15 +173,9 @@ class FeedPagingSource(
           type = mediaType,
           media = media
         ) as FeedData
-      }.toMutableList().also {
+      }.also {
         Timber.d("Successfully loaded ${it.size} media items")
       }
-
-      items.add(FeedData.AdItem(
-        id = "ad_${rootFolderPath}_$offset",
-        title = "Advertisement"
-      ))
-      items
     } catch (e: Exception) {
       Timber.e(e, "Error loading all media")
       emptyList()
@@ -252,10 +233,6 @@ class FeedPagingSource(
 
       Timber.d("Loaded ${mediaList.size} media files (filter: $mediaTypeFilter)")
 
-      items.add(FeedData.AdItem(
-        id = "ad_${folderPath}_$offset",
-        title = "Advertisement"
-      ))
       // Convert Media to FeedData.MediaItem
       mediaList.forEach { media ->
         val mediaType = determineMediaType(media.mimeType)

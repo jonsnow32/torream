@@ -31,17 +31,28 @@ class FeedAdapterWithStates(
   private var isLoading = false
   private var isError = false
   private var isEmpty = false
+  private var currentState: AdapterState = AdapterState.MAIN
+
+  private enum class AdapterState {
+    LOADING, ERROR, EMPTY, MAIN
+  }
 
   init {
     // Listen to load state changes from the PagingDataAdapter
     mainAdapter.addLoadStateListener { loadStates ->
       val refresh = loadStates.refresh
 
-      isLoading = refresh is LoadState.Loading
-      isError = refresh is LoadState.Error
-      isEmpty = refresh is LoadState.NotLoading && mainAdapter.itemCount == 0
+      val newIsLoading = refresh is LoadState.Loading
+      val newIsError = refresh is LoadState.Error
+      val newIsEmpty = refresh is LoadState.NotLoading && mainAdapter.itemCount == 0
 
-      updateAdapters()
+      // Only update if state actually changed
+      if (newIsLoading != isLoading || newIsError != isError || newIsEmpty != isEmpty) {
+        isLoading = newIsLoading
+        isError = newIsError
+        isEmpty = newIsEmpty
+        updateAdapters()
+      }
     }
   }
 
@@ -53,16 +64,29 @@ class FeedAdapterWithStates(
   }
 
   private fun updateAdapters() {
-    // Remove all current adapters
-    val currentAdapters = concatAdapter.adapters.toList()
-    currentAdapters.forEach { concatAdapter.removeAdapter(it) }
+    // Determine the new state
+    val newState = when {
+      isLoading -> AdapterState.LOADING
+      isError -> AdapterState.ERROR
+      isEmpty -> AdapterState.EMPTY
+      else -> AdapterState.MAIN
+    }
 
-    // Add appropriate adapter based on state
-    when {
-      isLoading -> concatAdapter.addAdapter(loadingAdapter)
-      isError -> concatAdapter.addAdapter(errorAdapter)
-      isEmpty -> concatAdapter.addAdapter(emptyAdapter)
-      else -> concatAdapter.addAdapter(mainAdapter)
+    // Only swap adapters if state actually changed
+    if (newState != currentState) {
+      currentState = newState
+
+      // Remove all current adapters
+      val currentAdapters = concatAdapter.adapters.toList()
+      currentAdapters.forEach { concatAdapter.removeAdapter(it) }
+
+      // Add appropriate adapter based on state
+      when (newState) {
+        AdapterState.LOADING -> concatAdapter.addAdapter(loadingAdapter)
+        AdapterState.ERROR -> concatAdapter.addAdapter(errorAdapter)
+        AdapterState.EMPTY -> concatAdapter.addAdapter(emptyAdapter)
+        AdapterState.MAIN -> concatAdapter.addAdapter(mainAdapter)
+      }
     }
   }
 
