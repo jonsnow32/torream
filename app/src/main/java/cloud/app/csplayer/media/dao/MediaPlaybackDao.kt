@@ -68,18 +68,6 @@ interface MediaPlaybackDao {
   suspend fun updateSubtitleConfig(mediaUri: String, subtitleConfig: String?)
 
   /**
-   * Update volume
-   */
-  @Query("UPDATE media_playback SET volume = :volume WHERE media_uri = :mediaUri")
-  suspend fun updateVolume(mediaUri: String, volume: Float)
-
-  /**
-   * Update brightness
-   */
-  @Query("UPDATE media_playback SET brightness = :brightness WHERE media_uri = :mediaUri")
-  suspend fun updateBrightness(mediaUri: String, brightness: Float)
-
-  /**
    * Mark media as finished
    */
   @Query("UPDATE media_playback SET is_finished = :isFinished, last_played_at = :timestamp WHERE media_uri = :mediaUri")

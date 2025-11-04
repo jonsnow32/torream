@@ -316,6 +316,7 @@
   <string name="delete">Delete</string>
   <string name="cancel">Cancel</string>
   <string name="pause">Pause</string>
+  <string name="pause_resume">Pause/Resume</string>
   <string name="start">Start</string>
   <string name="test_failed">Failed</string>
   <string name="test_passed">Passed</string>

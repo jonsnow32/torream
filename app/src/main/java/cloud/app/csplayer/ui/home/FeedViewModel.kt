@@ -1,7 +1,8 @@
-package cloud.app.csplayer.ui.feed
+package cloud.app.csplayer.ui.home
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,8 @@ import androidx.paging.cachedIn
 import cloud.app.csplayer.R
 import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
+import cloud.app.csplayer.ui.feed.FeedData
+import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import cloud.app.csplayer.utils.PREFERENCES_NAME
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -54,7 +57,7 @@ class FeedViewModel @Inject constructor(
     context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
   // Feed filter configuration state - single source of truth
-  val filterConfig = MutableStateFlow(FeedFilterConfig.load(context))
+  val filterConfig = MutableStateFlow(FeedFilterConfig.Companion.load(context))
 
   // Derived properties for convenience
   val viewMode: Flow<FeedFilterConfig.ViewMode> = filterConfig.map { config ->
@@ -116,7 +119,7 @@ class FeedViewModel @Inject constructor(
         path.startsWith("content://") -> {
           // Extract from URI encoded path
           // e.g., content://.../tree/primary%3AMovies → Movies
-          val decoded = android.net.Uri.decode(path)
+          val decoded = Uri.decode(path)
           decoded.substringAfterLast(':').substringAfterLast('/')
         }
         // Regular file path

@@ -2,6 +2,7 @@ package cloud.app.csplayer.ui.feed
 
 import cloud.app.csplayer.media.model.Folder
 import cloud.app.csplayer.media.model.Media
+import cloud.app.csplayer.media.model.TorrentState
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfItem
 
 /**
@@ -19,7 +20,10 @@ sealed class FeedData {
     PlayList,
     PlayListSmall,
     Ad,
-    HorizontalList
+    HorizontalList,
+
+    HTTPDownload,
+    TorrentDownload,
   }
 
   abstract val id: String
@@ -72,5 +76,24 @@ sealed class FeedData {
         "FolderItem.type must be Folder or FolderSmall, but was $type"
       }
     }
+  }
+
+  data class HttpDownloadItem(
+    override val id: String,
+    override val title: String,
+    val downloadId: Long,
+    val fileName: String,
+    val progress: Int, // 0-100
+    val isPaused: Boolean,
+  ) : FeedData() {
+    override var type: Type = Type.HTTPDownload
+  }
+
+  data class TorrentDownloadItem(
+    override val id: String,
+    override val title: String,
+    val torrentState: TorrentState
+  ) : FeedData() {
+    override var type: Type = Type.TorrentDownload
   }
 }

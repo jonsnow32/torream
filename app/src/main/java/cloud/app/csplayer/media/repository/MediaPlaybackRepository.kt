@@ -82,20 +82,6 @@ class MediaPlaybackRepository @Inject constructor(
   }
 
   /**
-   * Update volume
-   */
-  suspend fun updateVolume(mediaUri: String, volume: Float) {
-    playbackDao.updateVolume(mediaUri, volume)
-  }
-
-  /**
-   * Update brightness
-   */
-  suspend fun updateBrightness(mediaUri: String, brightness: Float) {
-    playbackDao.updateBrightness(mediaUri, brightness)
-  }
-
-  /**
    * Mark media as finished
    */
   suspend fun markAsFinished(mediaUri: String, isFinished: Boolean = true) {
@@ -163,8 +149,6 @@ class MediaPlaybackRepository @Inject constructor(
       textTrackIndex = textTrackIndex,
       zoomType = zoomType,
       subtitleConfig = subtitleConfig,
-      volume = volume,
-      brightness = brightness,
       lastPlayedAt = System.currentTimeMillis(),
       isFinished = isFinished
     )

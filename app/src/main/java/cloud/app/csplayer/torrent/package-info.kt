@@ -113,7 +113,7 @@ package cloud.app.csplayer.torrent
  *
  * @see TorrentManager
  * @see TorrentService
- * @see TorrentViewModel
+ * @see cloud.app.csplayer.ui.library.download.TorrentViewModel
  * @see TorrentFragment
  */
 

@@ -199,7 +199,7 @@
     android:label="AdTestFragment" />
   <fragment
     android:id="@+id/feedFragment"
-    android:name="cloud.app.csplayer.ui.feed.FeedFragment"
+    android:name="cloud.app.csplayer.ui.home.FeedFragment"
     android:label="FeedFragment">
 
     <!-- Self-navigation action for folder navigation -->

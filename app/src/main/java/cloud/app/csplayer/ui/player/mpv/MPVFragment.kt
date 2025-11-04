@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
@@ -17,6 +18,7 @@ import android.provider.Settings
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.Editable
+import android.util.DisplayMetrics
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -235,7 +237,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private var playerRotateEnabled = false
   private var autoPlayerRotateEnabled = false
   private var activityIsForeground = true
-
   private var sWidth = screenWidth
   private var sHeight = screenHeight
 

@@ -1,15 +1,20 @@
-package cloud.app.csplayer.ui.feed
+package cloud.app.csplayer.ui.home
 
 import adapters.FeedAdapter
 import adapters.FeedAdapter.Companion.getFeedAdapter
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.SearchView
+import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
@@ -24,6 +29,10 @@ import cloud.app.csplayer.databinding.FragmentFeedBinding
 import cloud.app.csplayer.media.model.SyncState
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
+import cloud.app.csplayer.ui.feed.FeedClickListener
+import cloud.app.csplayer.ui.feed.FeedData
+import cloud.app.csplayer.ui.feed.FeedFilterBottomSheet
+import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import cloud.app.csplayer.ui.player.EXTRA_TITLE
 import cloud.app.csplayer.ui.player.ARG_PLAYLIST_URLS
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
@@ -150,7 +159,7 @@ class FeedFragment : Fragment(), FeedClickListener {
           val subtitleView = findSubtitleTextView(binding.toolbar)
           subtitleView?.apply {
             setSingleLine()
-            ellipsize = android.text.TextUtils.TruncateAt.MIDDLE
+            ellipsize = TextUtils.TruncateAt.MIDDLE
           }
         } catch (e: Exception) {
           // Ignore if we can't find the subtitle view
@@ -312,7 +321,7 @@ class FeedFragment : Fragment(), FeedClickListener {
 
     // Setup SearchView
     val searchItem = binding.toolbar.menu.findItem(R.id.search)
-    val searchView = searchItem?.actionView as? androidx.appcompat.widget.SearchView
+    val searchView = searchItem?.actionView as? SearchView
 
     if (searchView != null) {
       Timber.d("SearchView found and configured")
@@ -320,7 +329,7 @@ class FeedFragment : Fragment(), FeedClickListener {
         queryHint = getString(R.string.search_hint)
         maxWidth = Integer.MAX_VALUE // Make SearchView expand fully
 
-        setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+        setOnQueryTextListener(object : SearchView.OnQueryTextListener {
           override fun onQueryTextSubmit(query: String?): Boolean {
             Timber.d("onQueryTextSubmit called with query: $query")
             // Update search query in ViewModel
@@ -350,10 +359,10 @@ class FeedFragment : Fragment(), FeedClickListener {
     binding.toolbar.setOnMenuItemClickListener {
       when (it.itemId) {
         R.id.quickSettings -> {
-          FeedFilterBottomSheet.newInstance { config ->
+          FeedFilterBottomSheet.Companion.newInstance { config ->
             // Apply filter config
             applyFilterConfig(config)
-          }.show(parentFragmentManager, FeedFilterBottomSheet.TAG)
+          }.show(parentFragmentManager, FeedFilterBottomSheet.Companion.TAG)
         }
       }
       true
@@ -393,6 +402,9 @@ class FeedFragment : Fragment(), FeedClickListener {
         // Horizontal lists don't have individual click action
         // Items inside the list have their own click handlers
       }
+
+      is FeedData.HttpDownloadItem -> TODO()
+      is FeedData.TorrentDownloadItem -> TODO()
     }
   }
 
@@ -538,10 +550,10 @@ class FeedFragment : Fragment(), FeedClickListener {
   /**
    * Find the subtitle TextView in Toolbar to apply custom styling
    */
-  private fun findSubtitleTextView(toolbar: androidx.appcompat.widget.Toolbar): android.widget.TextView? {
+  private fun findSubtitleTextView(toolbar: Toolbar): TextView? {
     for (i in 0 until toolbar.childCount) {
       val child = toolbar.getChildAt(i)
-      if (child is android.widget.TextView) {
+      if (child is TextView) {
         val text = child.text
         if (text != null && text.toString() == toolbar.subtitle) {
           return child
@@ -559,7 +571,7 @@ class FeedFragment : Fragment(), FeedClickListener {
     viewModel.filterConfig.value = config
 
     // Save the config to persist across app restarts
-    FeedFilterConfig.save(requireContext(), config)
+    FeedFilterConfig.Companion.save(requireContext(), config)
 
     // Refresh the adapter to apply changes
     adapter.refresh()
@@ -571,7 +583,7 @@ class FeedFragment : Fragment(), FeedClickListener {
    * Handle configuration changes (like orientation) to recalculate grid layout
    * This is called from MainActivity.onConfigurationChanged()
    */
-  override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+  override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
     Timber.d("FeedFragment configuration changed: orientation=${newConfig.orientation}")
 

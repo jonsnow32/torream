@@ -1,4 +1,4 @@
-package cloud.app.csplayer.torrent
+package cloud.app.csplayer.ui.library.download
 
 import android.content.ComponentName
 import android.content.Context
@@ -8,6 +8,9 @@ import android.os.IBinder
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cloud.app.csplayer.media.model.TorrentState
+import cloud.app.csplayer.torrent.TorrentFile
+import cloud.app.csplayer.torrent.TorrentService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,7 +73,7 @@ class TorrentViewModel @Inject constructor(
 
     private fun observeTorrentStates() {
         viewModelScope.launch {
-            torrentService?.getTorrentManager()?.torrentStates?.collect { states ->
+            torrentService?.torrentManager?.torrentStates?.collect { states ->
                 _torrents.value = states
             }
         }
@@ -83,9 +86,9 @@ class TorrentViewModel @Inject constructor(
         _uiState.value = TorrentUiState.Loading
 
         // Start service if not running
-        TorrentService.start(context)
+        TorrentService.Companion.start(context)
 
-        torrentService?.getTorrentManager()?.addMagnet(magnetUri) { result ->
+        torrentService?.torrentManager?.addMagnet(magnetUri) { result ->
             result.fold(
                 onSuccess = { infoHash ->
                     _uiState.value = TorrentUiState.Success("Torrent added successfully")
@@ -106,9 +109,9 @@ class TorrentViewModel @Inject constructor(
         _uiState.value = TorrentUiState.Loading
 
         // Start service if not running
-        TorrentService.start(context)
+        TorrentService.Companion.start(context)
 
-        torrentService?.getTorrentManager()?.addTorrentFile(filePath) { result ->
+        torrentService?.torrentManager?.addTorrentFile(filePath) { result ->
             result.fold(
                 onSuccess = { infoHash ->
                     _uiState.value = TorrentUiState.Success("Torrent added successfully")
@@ -126,28 +129,28 @@ class TorrentViewModel @Inject constructor(
      * Pause a torrent download
      */
     fun pauseTorrent(infoHash: String) {
-        torrentService?.getTorrentManager()?.pauseTorrent(infoHash)
+        torrentService?.torrentManager?.pauseTorrent(infoHash)
     }
 
     /**
      * Resume a torrent download
      */
     fun resumeTorrent(infoHash: String) {
-        torrentService?.getTorrentManager()?.resumeTorrent(infoHash)
+        torrentService?.torrentManager?.resumeTorrent(infoHash)
     }
 
     /**
      * Remove a torrent
      */
     fun removeTorrent(infoHash: String, deleteFiles: Boolean = false) {
-        torrentService?.getTorrentManager()?.removeTorrent(infoHash, deleteFiles)
+        torrentService?.torrentManager?.removeTorrent(infoHash, deleteFiles)
     }
 
     /**
      * Get the files of a torrent
      */
     fun getTorrentFiles(infoHash: String): List<TorrentFile> {
-        return torrentService?.getTorrentManager()?.getTorrentFiles(infoHash) ?: emptyList()
+        return torrentService?.torrentManager?.getTorrentFiles(infoHash) ?: emptyList()
     }
 
     /**

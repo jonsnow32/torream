@@ -10,7 +10,7 @@ import cloud.app.csplayer.ui.adapter.GridAdapter
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
-import cloud.app.csplayer.ui.feed.FeedViewModel
+import cloud.app.csplayer.ui.home.FeedViewModel
 import cloud.app.csplayer.ui.feed.adapters.EmptyAdapter
 import cloud.app.csplayer.ui.feed.adapters.ErrorAdapter
 import cloud.app.csplayer.ui.feed.adapters.FeedAdapterWithStates
@@ -20,6 +20,8 @@ import cloud.app.csplayer.ui.feed.viewholders.AudioViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AdViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.HttpDownloadViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.TorrentDownloadViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolder
@@ -69,6 +71,8 @@ class FeedAdapter(
       FeedData.Type.HorizontalList,
       FeedData.Type.Video,
       FeedData.Type.Ad,
+      FeedData.Type.HTTPDownload,
+      FeedData.Type.TorrentDownload,
       FeedData.Type.Audio -> count
 
       FeedData.Type.VideoSmall -> 2
@@ -93,6 +97,8 @@ class FeedAdapter(
       FeedData.Type.AudioSmall -> AudioSmallViewHolder(parent, clickListener)
       FeedData.Type.FolderSmall -> FolderSmallViewHolder(parent, clickListener)
       FeedData.Type.PlayListSmall -> TODO()
+      FeedData.Type.HTTPDownload -> HttpDownloadViewHolder(parent, clickListener)
+      FeedData.Type.TorrentDownload -> TorrentDownloadViewHolder(parent, clickListener)
     }
   }
 
@@ -111,6 +117,8 @@ class FeedAdapter(
       is AudioSmallViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is FolderViewHolder,
       is FolderSmallViewHolder -> if (feed is FeedData.FolderItem) holder.bind(feed)
+      is HttpDownloadViewHolder -> if (feed is FeedData.HttpDownloadItem) holder.bind(feed)
+      is TorrentDownloadViewHolder -> if (feed is FeedData.TorrentDownloadItem) holder.bind(feed)
       else -> {}
     }
   }

@@ -12,17 +12,25 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import cloud.app.csplayer.MainActivity
+import cloud.app.csplayer.media.model.TorrentDownloadStatus
+import cloud.app.csplayer.media.model.TorrentState
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * Foreground service for torrent downloads
  */
+@AndroidEntryPoint
 class TorrentService : Service() {
 
     private val binder = TorrentBinder()
-    private lateinit var torrentManager: TorrentManager
+
+    @Inject
+    lateinit var torrentManager: TorrentManager
+
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var notificationManager: NotificationManager? = null
@@ -35,7 +43,6 @@ class TorrentService : Service() {
         super.onCreate()
         Timber.d("TorrentService: onCreate")
 
-        torrentManager = TorrentManager(applicationContext)
         torrentManager.startPeriodicUpdates()
 
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -127,7 +134,6 @@ class TorrentService : Service() {
         }
     }
 
-    fun getTorrentManager(): TorrentManager = torrentManager
 
     override fun onDestroy() {
         super.onDestroy()

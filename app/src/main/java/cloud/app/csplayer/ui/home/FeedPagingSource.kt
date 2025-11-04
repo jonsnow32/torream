@@ -1,9 +1,12 @@
-package cloud.app.csplayer.ui.feed
+package cloud.app.csplayer.ui.home
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import cloud.app.csplayer.media.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
+import cloud.app.csplayer.ui.feed.FeedData
+import cloud.app.csplayer.ui.feed.FeedFilterConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
@@ -52,7 +55,7 @@ class FeedPagingSource(
         prevKey = if (page > 0) page - 1 else null,
         nextKey = if (data.size == pageSize) page + 1 else null
       )
-    } catch (e: kotlinx.coroutines.CancellationException) {
+    } catch (e: CancellationException) {
       Timber.d("Load cancelled for page ${params.key}")
       throw e // Re-throw to let Paging handle it properly
     } catch (e: Exception) {
