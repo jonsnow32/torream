@@ -1,5 +1,6 @@
 package cloud.app.csplayer.ui.player.mpv
 
+import android.app.Activity
 import android.content.Context
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -14,6 +15,7 @@ import android.view.LayoutInflater
 import android.widget.AbsListView
 import android.widget.ArrayAdapter
 import androidx.core.widget.doOnTextChanged
+import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 
 /**
@@ -21,7 +23,7 @@ import cloud.app.csplayer.utils.UIHelper.dismissSafe
  */
 @Suppress("unused")
 class PlayerDialogManager(
-    private val context: Context
+    private val context: Activity
 ) {
     private var currentDialog: AlertDialog? = null
 
@@ -30,18 +32,10 @@ class PlayerDialogManager(
         val speedsNumbers = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
         val speedIndex = speedsNumbers.indexOf(currentSpeed)
 
-        val builder = AlertDialog.Builder(context, R.style.AlertDialogCustom)
-        val items = speedsText.toTypedArray()
-        builder.setSingleChoiceItems(items, speedIndex) { dialog, which ->
-            onSpeedSelected(speedsNumbers[which])
-            dialog.dismiss()
-        }
-        builder.setTitle(context.getString(R.string.player_speed))
-        builder.setOnDismissListener { dismissCurrentDialog() }
-
-        val dialog = builder.create()
-        currentDialog = dialog
-        dialog.show()
+      context.showDialog(speedsText, speedIndex, context.getString(R.string.player_speed), false,
+        {},
+        { index -> onSpeedSelected(speedsNumbers[index]) }
+      )
     }
 
     fun showSourcesDialog(
@@ -210,18 +204,10 @@ class PlayerDialogManager(
 
         val currentIndex = codecs.indexOf(currentCodec).coerceAtLeast(0)
 
-        val builder = AlertDialog.Builder(context, R.style.AlertDialogCustom)
-        val items = codecsDisplay.toTypedArray()
-        builder.setSingleChoiceItems(items, currentIndex) { dialog, which ->
-            onCodecSelected(codecs[which])
-            dialog.dismiss()
-        }
-        builder.setTitle("Video Decoder")
-        builder.setOnDismissListener { dismissCurrentDialog() }
-
-        val dialog = builder.create()
-        currentDialog = dialog
-        dialog.show()
+      context.showDialog(codecsDisplay,currentIndex, context.getString(R.string.codec), false,
+        {},
+        { index -> onCodecSelected(codecs[index]) }
+      )
     }
 
     fun dismissCurrentDialog() {

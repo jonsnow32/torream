@@ -25,7 +25,7 @@ import androidx.preference.PreferenceFragmentCompat
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
-import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URLS_NAME_HEADERS
+import cloud.app.csplayer.ui.player.ARG_PLAYLIST_URLS
 
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.SingleSelectionHelper.showNginxTextInputDialog
@@ -218,7 +218,7 @@ class SettingsFragment : Fragment() {
         }, {
           activity?.navigate(
             R.id.global_to_navigation_mpv_player,
-            bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
+            bundleOf(ARG_PLAYLIST_URLS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
           )
         });
       }
@@ -286,7 +286,7 @@ class SettingsFragment : Fragment() {
     var id = R.id.global_to_navigation_mpv_player;
     activity?.navigate(
       id,
-      bundleOf(EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(selectedVideoUri.toString(),"user_url_1", "").toTypedArray())
+      bundleOf(ARG_PLAYLIST_URLS to arrayListOf<String>(selectedVideoUri.toString(),"user_url_1", "").toTypedArray())
     )
 
   }

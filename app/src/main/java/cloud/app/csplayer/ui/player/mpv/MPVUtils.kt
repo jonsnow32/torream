@@ -369,6 +369,33 @@ object MPVUtils {
             }
         }
 
+        /**
+         * Restore position from saved state (e.g., after configuration change)
+         * @param positionMs position in milliseconds
+         */
+        fun restorePosition(positionMs: Long) {
+            if (positionMs >= 0) {
+                position = positionMs
+            }
+        }
+
+        /**
+         * Restore duration from saved state (e.g., after configuration change)
+         * @param durationMs duration in milliseconds
+         */
+        fun restoreDuration(durationMs: Long) {
+            if (durationMs > 0) {
+                duration = durationMs
+            }
+        }
+
+        /**
+         * Restore pause state from saved state (e.g., after configuration change)
+         */
+        fun restorePause(isPaused: Boolean) {
+            pause = isPaused
+        }
+
         fun write(session: MediaSessionCompat, includeThumb: Boolean = true) {
             with (session) {
                 setMetadata(buildMediaMetadata(includeThumb))

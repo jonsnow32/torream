@@ -25,7 +25,7 @@ import cloud.app.csplayer.media.model.SyncState
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.player.EXTRA_TITLE
-import cloud.app.csplayer.ui.player.EXTRA_VIDEO_URLS_NAME_HEADERS
+import cloud.app.csplayer.ui.player.ARG_PLAYLIST_URLS
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.FastScrollerHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
@@ -456,7 +456,7 @@ class FeedFragment : Fragment(), FeedClickListener {
         activity?.navigate(
           R.id.global_to_navigation_mpv_player,
           bundleOf(
-            EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(
+            ARG_PLAYLIST_URLS to arrayListOf<String>(
               item.media.uri,
               item.media.path,
               ""
@@ -471,7 +471,7 @@ class FeedFragment : Fragment(), FeedClickListener {
         activity?.navigate(
           R.id.global_to_navigation_mpv_player,
           bundleOf(
-            EXTRA_VIDEO_URLS_NAME_HEADERS to arrayListOf<String>(
+            ARG_PLAYLIST_URLS to arrayListOf<String>(
               item.media.uri,
               "user_url_1",
               ""

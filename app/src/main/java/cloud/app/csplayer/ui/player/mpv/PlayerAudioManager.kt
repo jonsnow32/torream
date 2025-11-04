@@ -16,7 +16,10 @@ import timber.log.Timber
 class PlayerAudioManager(
     private val context: Context,
     private val onAudioFocusLost: () -> Unit,
-    private val onAudioFocusGained: () -> Unit
+    private val onAudioFocusGained: () -> Unit,
+    private val onDuckAudio: (Float) -> Unit = {},
+    private val onRestoreAudio: (Float) -> Unit = {},
+    private val getIgnoreAudioFocus: () -> Boolean = { false }
 ) {
     private var audioManager: AudioManager? = null
     private var audioFocusRequest: AudioFocusRequestCompat? = null
@@ -31,16 +34,26 @@ class PlayerAudioManager(
 
     private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { type ->
         Timber.tag(TAG).v("Audio focus changed: $type")
+        if (getIgnoreAudioFocus()) {
+            return@OnAudioFocusChangeListener
+        }
         when (type) {
             AudioManager.AUDIOFOCUS_LOSS,
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                audioFocusRestore = { onAudioFocusGained() }
+                // loss can occur in addition to ducking, so remember the old callback
+                val oldRestore = audioFocusRestore
+                audioFocusRestore = {
+                    oldRestore()
+                    onAudioFocusGained()
+                }
                 onAudioFocusLost()
             }
 
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                // Lower volume but continue playing
-                audioFocusRestore = { onAudioFocusGained() }
+                onDuckAudio(AUDIO_FOCUS_DUCKING)
+                audioFocusRestore = {
+                    onRestoreAudio(1f / AUDIO_FOCUS_DUCKING)
+                }
             }
 
             AudioManager.AUDIOFOCUS_GAIN -> {
@@ -119,6 +132,18 @@ class PlayerAudioManager(
 
     fun setVolume(volume: Int) {
         audioManager?.setStreamVolume(STREAM_TYPE, volume, 0)
+    }
+
+    fun adjustVolume(direction: Int) {
+        audioManager?.adjustStreamVolume(STREAM_TYPE, direction, 0)
+    }
+
+    fun setRepeatMode(repeatMode: Int) {
+        mediaSession?.setRepeatMode(repeatMode)
+    }
+
+    fun setShuffleMode(shuffleMode: Int) {
+        mediaSession?.setShuffleMode(shuffleMode)
     }
 
     fun release() {

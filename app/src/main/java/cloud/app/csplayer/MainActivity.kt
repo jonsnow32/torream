@@ -204,6 +204,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
 
     navController.addOnDestinationChangedListener { _: NavController, navDestination: NavDestination, bundle: Bundle? ->
+      // Hide bottom navigation when in MPV player
+      if (navDestination.matchDestination(R.id.mvpFragmentPlayer)) {
+        binding.navView.visibility = android.view.View.GONE
+      } else {
+        binding.navView.visibility = android.view.View.VISIBLE
+      }
+
       if (isTvOrEmulator()) {
         if (navDestination.matchDestination(R.id.navigation_settings)) {
           attachBackPressedCallback()
