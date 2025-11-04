@@ -228,7 +228,6 @@
   <string name="torrent_no_plot">No Description Found</string>
   <string name="show_log_cat">Show Logcat 🐈</string>
   <string name="test_log">Log</string>
-  <string name="picture_in_picture">Picture-in-picture</string>
   <string name="picture_in_picture_des">Continues playback in a miniature player on top of other apps</string>
   <string name="player_size_settings">Player resize button</string>
   <string name="player_size_settings_des">Remove the black borders</string>
@@ -802,7 +801,12 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="error_unsupported_video">Media includes video tracks, but none are playable by this device</string>
   <string name="error_unsupported_audio">Media includes audio tracks, but none are playable by this device</string>
   <string name="media_route_menu_title">Cast</string>
-  <string name="reset_btn">Reset</string>
+  <string name="quality">Quality</string>
+  <string name="speed">Speed</string>
+  <string name="subtitle">Subtitle</string>
+  <string name="audio">Audio</string>
+  <string name="lock_screen">Lock</string>
+  <string name="picture_in_picture">PiP</string>
 
 
   <string name="version_update_at" translatable="false">2024-06-07T05:23:38Z</string>
@@ -894,4 +898,6 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="ad">Ad</string>
     <string name="home">Home</string>
   <string name="streaming">Streaming</string>
+  <string name="reset_btn">Reset</string>
+  <string name="background_audio">Background audio</string>
 </resources>

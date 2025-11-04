@@ -40,7 +40,8 @@ object CommonActivitty {
   var playerEventListener: ((PlayerEventType) -> Unit)? = null
   var keyEventListener: ((Pair<KeyEvent?, Boolean>) -> Boolean)? = null
   var activityResultEvent: ((PlayBackResult) -> Unit)? = null
-  val displayMetrics: DisplayMetrics = Resources.getSystem().displayMetrics
+  val displayMetrics: DisplayMetrics
+    get() = activity?.resources?.displayMetrics ?: Resources.getSystem().displayMetrics
 
   // screenWidth and screenHeight does always
   // refer to the screen while in landscape mode
@@ -122,6 +123,7 @@ object CommonActivitty {
       act?.enterPIPMode()
     }
   }
+
   fun hideKeyboard(view: View?) {
     if (view == null) return
 
@@ -129,6 +131,7 @@ object CommonActivitty {
       view.context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager?
     inputMethodManager?.hideSoftInputFromWindow(view.windowToken, 0)
   }
+
   fun Activity.hideKeyboard() {
     window?.decorView?.clearFocus()
     this.findViewById<View>(android.R.id.content)?.rootView?.let {
@@ -155,17 +158,19 @@ object CommonActivitty {
 
   fun Context.updateLocale() {
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
-    val localeCode = settingsManager.getString(getString(R.string.locale_key), Locale.getDefault().language)
+    val localeCode =
+      settingsManager.getString(getString(R.string.locale_key), Locale.getDefault().language)
     setLocale(this, localeCode)
   }
 
-  private fun View.hasContent() : Boolean {
-    return isShown && when(this) {
+  private fun View.hasContent(): Boolean {
+    return isShown && when (this) {
       //is RecyclerView -> this.childCount > 0
       is ViewGroup -> this.childCount > 0
       else -> true
     }
   }
+
   private fun localLook(from: View, id: Int): View? {
     if (id == View.NO_ID) return null
     var currentLook: View = from
@@ -216,6 +221,7 @@ object CommonActivitty {
       is ChipGroup -> {
         next.children.firstOrNull { it.isFocusable && it.isShown }
       }
+
       else -> null
     })?.let {
       return it
@@ -224,6 +230,7 @@ object CommonActivitty {
     // nothing wrong with the view found, return it
     return next
   }
+
   fun getNextFocus(
     root: Any?,
     view: View?,

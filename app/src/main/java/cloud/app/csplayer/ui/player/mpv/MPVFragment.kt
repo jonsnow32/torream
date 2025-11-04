@@ -58,8 +58,6 @@ import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
-import cloud.app.csplayer.utils.CommonActivitty.screenHeight
-import cloud.app.csplayer.utils.CommonActivitty.screenWidth
 import cloud.app.csplayer.utils.DataStore
 import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
@@ -91,6 +89,8 @@ import androidx.core.net.toUri
 import cloud.app.csplayer.model.SubtitleData
 import cloud.app.csplayer.model.SubtitleOrigin
 import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
+import cloud.app.csplayer.utils.CommonActivitty.screenHeight
+import cloud.app.csplayer.utils.CommonActivitty.screenWidth
 import cloud.app.csplayer.utils.formatDuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -235,6 +235,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private var playerRotateEnabled = false
   private var autoPlayerRotateEnabled = false
   private var activityIsForeground = true
+
+  private var sWidth = screenWidth
+  private var sHeight = screenHeight
 
   private var subtitleDelay
     set(value) = try {
@@ -1039,7 +1042,11 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
                 RESULT_OK,
                 it.toLong() * 1000L,
                 "cancel",
-                if (isSameEpisode) null else currentSelectedLink?.let { link -> allLinks.indexOf(link) + 1 }
+                if (isSameEpisode) null else currentSelectedLink?.let { link ->
+                  allLinks.indexOf(
+                    link
+                  ) + 1
+                }
               )
             )
           }
@@ -1166,12 +1173,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
                 currentDoubleTapIndex++
                 if (doubleTapPauseEnabled) { // you can pause if your tap is in the middle of the screen
                   when {
-                    currentTouch.x < screenWidth / 2 - (DOUBLE_TAB_PAUSE_PERCENTAGE * screenWidth) -> {
+                    currentTouch.x < sWidth / 2 - (DOUBLE_TAB_PAUSE_PERCENTAGE * sWidth) -> {
                       if (doubleTapEnabled)
                         doubleTapRewind()
                     }
 
-                    currentTouch.x > screenWidth / 2 + (DOUBLE_TAB_PAUSE_PERCENTAGE * screenWidth) -> {
+                    currentTouch.x > sWidth / 2 + (DOUBLE_TAB_PAUSE_PERCENTAGE * sWidth) -> {
                       if (doubleTapEnabled)
                         doubleTapForawd()
                     }
@@ -1181,7 +1188,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
                     }
                   }
                 } else if (doubleTapEnabled) {
-                  if (currentTouch.x < screenWidth / 2) {
+                  if (currentTouch.x < sWidth / 2) {
                     doubleTapRewind()
                   } else {
                     doubleTapForawd()
@@ -1223,9 +1230,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
               val diffFromStart = startTouch - currentTouch
 
               if (swipeVerticalEnabled) {
-                if (abs(diffFromStart.y * 100 / screenHeight) > MINIMUM_VERTICAL_SWIPE) {
+                if (abs(diffFromStart.y * 100 / sHeight) > MINIMUM_VERTICAL_SWIPE) {
                   // left = Brightness, right = Volume, but the UI is reversed to show the UI better
-                  currentTouchAction = if (startTouch.x < screenWidth / 2) {
+                  currentTouchAction = if (startTouch.x < sWidth / 2) {
                     // hide the UI if you hold brightness to show screen better, better UX
                     if (isShowing) {
                       isShowing = false
@@ -1238,7 +1245,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
                 }
               }
               if (swipeHorizontalEnabled) {
-                if (abs(diffFromStart.x * 100 / screenHeight) > MINIMUM_HORIZONTAL_SWIPE) {
+                if (abs(diffFromStart.x * 100 / sHeight) > MINIMUM_HORIZONTAL_SWIPE) {
                   currentTouchAction =
                     TouchAction.Time
                 }
@@ -1250,7 +1257,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
             if (lastTouch != null) {
               val diffFromLast = lastTouch - currentTouch
               val verticalAddition =
-                diffFromLast.y * VERTICAL_MULTIPLIER / screenHeight.toFloat()
+                diffFromLast.y * VERTICAL_MULTIPLIER / sHeight.toFloat()
 
               // update UI
               playerTimeText.isVisible = false
@@ -1409,7 +1416,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     touchEnd: Utils.Vector2?
   ): Long? {
     if (touchStart == null || touchEnd == null || startTime == null) return null
-    val diffX = (touchEnd.x - touchStart.x) * HORIZONTAL_MULTIPLIER / screenWidth.toFloat()
+    val diffX = (touchEnd.x - touchStart.x) * HORIZONTAL_MULTIPLIER / sWidth.toFloat()
     val duration = psc.durationSec.toLong() ?: return null
     return max(
       min(
@@ -1474,8 +1481,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private fun isValidTouch(rawX: Float, rawY: Float): Boolean {
     val statusHeight = statusBarHeight ?: 0
     // val navHeight = navigationBarHeight ?: 0
-    // nav height is removed because screenWidth already takes into account that
-    return rawY > statusHeight && rawX < screenWidth //- navHeight
+    // nav height is removed because sWidth already takes into account that
+    return rawY > statusHeight && rawX < sWidth //- navHeight
   }
 
   private fun handleKeyEvent(event: KeyEvent, hasNavigated: Boolean): Boolean {
@@ -1559,7 +1566,11 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
                       RESULT_OK,
                       it.toLong() * 1000L,
                       "cancel",
-                      if (isSameEpisode) null else currentSelectedLink?.let { link -> allLinks.indexOf(link) + 1 }
+                      if (isSameEpisode) null else currentSelectedLink?.let { link ->
+                        allLinks.indexOf(
+                          link
+                        ) + 1
+                      }
                     )
                   )
                 }
@@ -2263,6 +2274,35 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     super.onResume()
   }
 
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+
+    if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+      sWidth = screenWidth
+      sHeight = screenHeight
+    } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+      sWidth = screenHeight
+      sHeight = screenWidth
+    }
+
+    // Reset touch state when orientation changes to ensure gesture handling
+    // uses updated sWidth/sHeight values
+    isCurrentTouchValid = false
+    currentTouchStart = null
+    currentTouchLast = null
+    currentTouchAction = null
+    currentTouchStartPlayerTime = null
+    currentTouchStartTime = null
+
+    // Hide gesture UI overlays
+    playerBinding?.apply {
+      playerTimeText.isVisible = false
+      playerProgressbarLeftHolder.isVisible = false
+      playerProgressbarRightHolder.isVisible = false
+    }
+
+    Timber.d("Configuration changed - touch state reset, orientation: ${newConfig.orientation}")
+  }
 
   override fun onDestroyView() {
     exitFullscreen()
@@ -2316,7 +2356,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     // Update skip episode button based on playlist or episode state
     val shouldHideSkipButton = when {
       isPlaylistMode -> !(playlistState?.hasNext() ?: false)
-      !isSameEpisode -> currentSelectedLink?.let { allLinks.indexOf(it) >= allLinks.size - 1 } ?: true
+      !isSameEpisode -> currentSelectedLink?.let { allLinks.indexOf(it) >= allLinks.size - 1 }
+        ?: true
+
       else -> true
     }
     uiController.setSkipEpisodeVisible(!shouldHideSkipButton)
