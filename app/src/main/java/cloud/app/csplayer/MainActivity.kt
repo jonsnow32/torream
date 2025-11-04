@@ -177,10 +177,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       val targetDestination = when (menuItem.itemId) {
         R.id.homeFragment -> R.id.feedFragment
         R.id.networkStreamFragment -> R.id.navigation_settings
-        R.id.libraryFragment -> {
-          // TODO: Navigate to library fragment when implemented
-          return@setOnItemSelectedListener false
-        }
+        R.id.libraryFragment -> R.id.navigation_libraryFragment
         else -> return@setOnItemSelectedListener false
       }
 

@@ -168,6 +168,13 @@ dependencies {
   // Downloading & Networking
   implementation("com.github.Blatzar:NiceHttp:0.4.13")
 
+  // Torrent Support
+  implementation("org.libtorrent4j:libtorrent4j:2.1.0-38")
+  implementation("org.libtorrent4j:libtorrent4j-android-arm:2.1.0-38")
+  implementation("org.libtorrent4j:libtorrent4j-android-arm64:2.1.0-38")
+  implementation("org.libtorrent4j:libtorrent4j-android-x86:2.1.0-38")
+  implementation("org.libtorrent4j:libtorrent4j-android-x86_64:2.1.0-38")
+
   // Others
   implementation("org.mozilla:rhino:1.8.0")
   implementation("com.github.albfernandez:juniversalchardet:2.5.0")
