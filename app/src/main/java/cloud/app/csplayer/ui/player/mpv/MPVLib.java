@@ -14,6 +14,16 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class MPVLib {
 
+     private static boolean initialized = false;
+
+     public static boolean isInitialized() {
+          return initialized;
+     }
+
+     public static void setInitialized(boolean value) {
+          initialized = value;
+     }
+
      static {
         String[] libs = { "mpv", "player" };
         for (String lib: libs) {

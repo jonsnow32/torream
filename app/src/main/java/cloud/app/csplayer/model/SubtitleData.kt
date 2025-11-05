@@ -1,11 +1,16 @@
 package cloud.app.csplayer.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+
 enum class SubtitleStatus {
   IS_ACTIVE,
   REQUIRES_RELOAD,
   NOT_FOUND,
 }
 
+@Serializable
 enum class SubtitleOrigin {
   URL,
   DOWNLOADED_FILE,
@@ -18,6 +23,8 @@ enum class SubtitleOrigin {
  * @param headers if empty it will use the base onlineDataSource headers else only the specified headers
  * @param languageCode Not guaranteed to follow any standard. Could be something like "English 4" or "en".
  * */
+@Parcelize
+@Serializable
 data class SubtitleData(
   val name: String,
   val url: String,
@@ -25,7 +32,7 @@ data class SubtitleData(
   val mimeType: String,
   val headers: Map<String, String>,
   val languageCode: String?
-) {
+) : Parcelable {
   /** Internal ID for exoplayer, unique for each link*/
   fun getId(): String {
     return if (origin == SubtitleOrigin.EMBEDDED_IN_VIDEO) url

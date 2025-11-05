@@ -13,7 +13,6 @@ import timber.log.Timber
 /**
  * Manages media loading and playback state for the MPV player
  */
-@UnstableApi
 class PlayerMediaManager(
     private val context: Context,
     private val onCommandQueued: (Array<String>) -> Unit

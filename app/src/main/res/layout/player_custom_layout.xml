@@ -161,6 +161,7 @@
             android:textColor="@color/white"
             android:textSize="18sp"
             android:textStyle="bold"
+            android:maxLines="1"
             android:visibility="visible"
             tools:text="Hello world" />
 
@@ -486,6 +487,8 @@
             app:buttonTint="@color/white"
             android:layout_gravity="center"
             android:checked="false"
+            android:visibility="invisible"
+            tools:visibility="visible"
             tools:ignore="DuplicateSpeakableTextCheck" />
 
         </FrameLayout>

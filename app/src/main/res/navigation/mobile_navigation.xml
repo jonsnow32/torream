@@ -156,7 +156,7 @@
 
   <fragment
     android:id="@+id/mvpFragmentPlayer"
-    android:name="cloud.app.csplayer.ui.player.mpv.MPVFragment"
+    android:name="cloud.app.csplayer.ui.player.MPVFragment"
     android:label="MPVFragment" >
     <action
       android:id="@+id/action_firstFragment_to_secondFragment"

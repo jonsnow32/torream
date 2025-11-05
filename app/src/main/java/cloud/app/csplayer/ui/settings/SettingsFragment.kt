@@ -14,7 +14,6 @@ import android.widget.ImageView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
-import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
@@ -25,15 +24,15 @@ import androidx.preference.PreferenceFragmentCompat
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
-import cloud.app.csplayer.ui.player.ARG_PLAYLIST_URLS
-
+import cloud.app.csplayer.model.PlaybackData
+import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.utils.LayoutMode
+import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.SingleSelectionHelper.showNginxTextInputDialog
 import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.toPx
-import cloud.app.csplayer.utils.Utils.isMPVSupported
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import cloud.app.csplayer.utils.isLayout
@@ -205,21 +204,39 @@ class SettingsFragment : Fragment() {
 
       urlBtn.setOnClickListener {
         var text =
-          if(BuildConfig.DEBUG) "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" else "";
+          if (BuildConfig.DEBUG) "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" else "";
 
         (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
           0
         )?.text?.toString()?.let { copy ->
-          if(copy.isNotEmpty() && copy.contains("http"))
+          if (copy.isNotEmpty() && copy.contains("http"))
             text = copy;
         }
 
         activity?.showNginxTextInputDialog("Your Link", text, 16, {
-        }, {
-          activity?.navigate(
-            R.id.global_to_navigation_mpv_player,
-            bundleOf(ARG_PLAYLIST_URLS to arrayListOf<String>(it,"user_url_1", "").toTypedArray())
+        }, { url ->
+          // Create PlaybackData for URL playback
+          val playbackData = PlaybackData(
+            title = "Network Stream",
+            position = 0L,
+            videoLinks = listOf(
+              VideoLink(
+                url = url,
+                name = "Network Stream",
+                headers = emptyMap(),
+                position = 0L
+              )
+            ),
+            subtitles = emptyList(),
+            videoStartIndex = 0,
+            subtitleStartIndex = 0,
+            isSameEpisode = true,
+            useMpv = true,
+            hasAd = false
           )
+
+          val bundle = PlaybackDataHelper.createBundle(playbackData)
+          activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
         });
       }
 
@@ -242,7 +259,6 @@ class SettingsFragment : Fragment() {
       clipboardHelper(txt(R.string.extension_version), "v$appVersion $commitInfo $buildTimestamp")
       true
     }
-
 
 
   }
@@ -278,16 +294,27 @@ class SettingsFragment : Fragment() {
     if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
     val selectedVideoUri = result?.data?.data ?: return@registerForActivityResult
 
-//    var id = R.id.global_to_navigation_player;
-//    if(isMPVSupported()) {
-//      id = R.id.global_to_navigation_mpv_player;
-//    }
-
-    var id = R.id.global_to_navigation_mpv_player;
-    activity?.navigate(
-      id,
-      bundleOf(ARG_PLAYLIST_URLS to arrayListOf<String>(selectedVideoUri.toString(),"user_url_1", "").toTypedArray())
+    // Create PlaybackData for local video file
+    val playbackData = PlaybackData(
+      title = "Local Video",
+      position = 0L,
+      videoLinks = listOf(
+        VideoLink(
+          url = selectedVideoUri.toString(),
+          name = "Local Video",
+          headers = emptyMap(),
+          position = 0L
+        )
+      ),
+      subtitles = emptyList(),
+      videoStartIndex = 0,
+      subtitleStartIndex = 0,
+      isSameEpisode = true,
+      useMpv = true,
+      hasAd = false
     )
 
+    val bundle = PlaybackDataHelper.createBundle(playbackData)
+    activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
   }
 }

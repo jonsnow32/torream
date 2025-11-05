@@ -1,12 +1,10 @@
-package cloud.app.csplayer.ui.player.mpv
+package cloud.app.csplayer.ui.player
 
 import android.annotation.SuppressLint
-import android.app.Dialog
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
@@ -14,57 +12,54 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
-import android.provider.Settings
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import android.text.Editable
-import android.util.DisplayMetrics
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import android.widget.AbsListView
-import android.widget.ArrayAdapter
 import android.widget.FrameLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
 import androidx.appcompat.app.AppCompatActivity.RESULT_OK
+import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.isVisible
-import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
-import cloud.app.csplayer.databinding.PlayerSelectSourceAndSubsBinding
-import cloud.app.csplayer.databinding.PlayerSelectTracksBinding
-import cloud.app.csplayer.databinding.PlayerSelectVideoTracksBinding
-import cloud.app.csplayer.databinding.SubtitleOffsetBinding
-import cloud.app.csplayer.ui.player.PlayerViewModel
-import cloud.app.csplayer.ui.player.PlayBackResult
-import cloud.app.csplayer.ui.player.PlayerEventType
+import cloud.app.csplayer.model.SaveCaptionStyle
+import cloud.app.csplayer.model.SubtitleData
+import cloud.app.csplayer.model.SubtitleOrigin
+import cloud.app.csplayer.model.VideoLink
+import cloud.app.csplayer.ui.player.mpv.DOUBLE_TAB_MINIMUM_TIME_BETWEEN
+import cloud.app.csplayer.ui.player.mpv.MPVLib
+import cloud.app.csplayer.ui.player.mpv.MPVUtils
+import cloud.app.csplayer.ui.player.mpv.MPVView
+import cloud.app.csplayer.ui.player.mpv.PlayerAudioManager
+import cloud.app.csplayer.ui.player.mpv.PlayerDialogManager
+import cloud.app.csplayer.ui.player.mpv.PlayerGestureHandler
+import cloud.app.csplayer.ui.player.mpv.PlayerMediaManager
+import cloud.app.csplayer.ui.player.mpv.PlayerUIController
 import cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
+import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
+import cloud.app.csplayer.utils.CommonActivitty.screenHeight
+import cloud.app.csplayer.utils.CommonActivitty.screenWidth
 import cloud.app.csplayer.utils.DataStore
-import cloud.app.csplayer.model.SaveCaptionStyle
-import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
 import cloud.app.csplayer.utils.DataStore.getKey
-import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.UIHelper.getNavigationBarHeight
 import cloud.app.csplayer.utils.UIHelper.getStatusBarHeight
@@ -74,53 +69,14 @@ import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import cloud.app.csplayer.utils.Utils.showToast
-import cloud.app.csplayer.utils.Utils.sortSubs
 import cloud.app.csplayer.utils.Utils.toSubtitleMimeType
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.observe
-import cloud.app.csplayer.utils.setText
-import cloud.app.csplayer.utils.txt
 import com.github.rubensousa.previewseekbar.PreviewBar
-import java.io.File
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.round
-import androidx.core.net.toUri
-import cloud.app.csplayer.model.SubtitleData
-import cloud.app.csplayer.model.SubtitleOrigin
-import cloud.app.csplayer.ui.player.SUBTITLE_DELAY_BUNDLE_KEY
-import cloud.app.csplayer.utils.CommonActivitty.screenHeight
-import cloud.app.csplayer.utils.CommonActivitty.screenWidth
-import cloud.app.csplayer.utils.formatDuration
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
-
-
-const val MINIMUM_SEEK_TIME = 7L         // when swipe seeking
-const val MINIMUM_VERTICAL_SWIPE = 2.0f     // in percentage
-const val MINIMUM_HORIZONTAL_SWIPE = 2.0f   // in percentage
-const val VERTICAL_MULTIPLIER = 2.0f
-const val HORIZONTAL_MULTIPLIER = 2.0f
-const val DOUBLE_TAB_MAXIMUM_HOLD_TIME = 200L
-const val DOUBLE_TAB_MINIMUM_TIME_BETWEEN = 200L    // this also affects the UI show response time
-const val DOUBLE_TAB_PAUSE_PERCENTAGE = 0.15        // in both directions
-
-
-// when the player should switch skip op to next episode
-const val SKIP_OP_VIDEO_PERCENTAGE = 50
-
-// when the player should preload the next episode for faster loading
-const val PRELOAD_NEXT_EPISODE_PERCENTAGE = 80
-
-// when the player should mark the episode as watched and resume watching the next
-const val NEXT_WATCH_EPISODE_PERCENTAGE = 90
-
-// when the player should sync the progress of "watched", TODO MAKE SETTING
-const val UPDATE_SYNC_PROGRESS_PERCENTAGE = 80
+import java.io.File
+import kotlin.math.max
 
 
 enum class PlayerResize(@StringRes val nameRes: Int) {
@@ -135,17 +91,11 @@ enum class DecodeMode {
   swDec
 }
 
-enum class TouchAction {
-  Brightness,
-  Volume,
-  Time,
-}
 
 /**
  * Playlist state management for MPV player
  * Manages playlist playback including repeat modes and navigation
  */
-@OptIn(UnstableApi::class)
 data class PlaylistState(
   val items: List<MPVView.PlaylistItem>,
   val currentIndex: Int = 0,
@@ -191,7 +141,6 @@ data class PlaylistState(
   fun hasPrevious(): Boolean = getPreviousIndex() != null
 }
 
-@OptIn(UnstableApi::class)
 class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private var isSameEpisode: Boolean = false;
@@ -260,29 +209,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private var statusBarHeight: Int? = null
   private var navigationBarHeight: Int? = null
 
-  private val brightnessIcons = intArrayOf(
-    R.drawable.sun_1,
-    R.drawable.sun_2,
-    R.drawable.sun_3,
-    R.drawable.sun_4,
-    R.drawable.sun_5,
-    R.drawable.sun_6,
-    //R.drawable.sun_7,
-    // R.drawable.ic_baseline_brightness_1_24,
-    // R.drawable.ic_baseline_brightness_2_24,
-    // R.drawable.ic_baseline_brightness_3_24,
-    // R.drawable.ic_baseline_brightness_4_24,
-    // R.drawable.ic_baseline_brightness_5_24,
-    // R.drawable.ic_baseline_brightness_6_24,
-    // R.drawable.ic_baseline_brightness_7_24,
-  )
-
-  private val volumeIcons = intArrayOf(
-    R.drawable.ic_baseline_volume_mute_24,
-    R.drawable.ic_baseline_volume_down_24,
-    R.drawable.ic_baseline_volume_up_24,
-  )
-
   private val psc = MPVUtils.PlaybackStateCache()
   private var ignoreAudioFocus = false
 
@@ -327,17 +253,52 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private fun initializeManagers() {
     playerBinding?.let { binding ->
-      // Initialize gesture handler
+      // Initialize gesture handler with all required callbacks
       gestureHandler = PlayerGestureHandler(
         context = requireContext(),
-        onBrightnessChange = { brightness, text ->
-          updateBrightnessOverlay(brightness, text)
+        sWidth = sWidth,
+        sHeight = sHeight,
+        onBrightnessUpdate = { brightness, showUI ->
+          if (showUI) {
+            updateBrightnessOverlay(brightness)
+          } else {
+            hideBrightnessOverlay()
+          }
         },
-        onVolumeChange = { volume, text ->
-          updateVolumeOverlay(volume, text)
+        onVolumeUpdate = { volumeRatio, showUI ->
+          if (showUI) {
+            updateVolumeOverlay(volumeRatio)
+          } else {
+            hideVolumeOverlay()
+          }
         },
-        onSeek = { position, text ->
-          updateSeekOverlay(position, text)
+        onSeekUpdate = { position, text, showUI ->
+          if (showUI) {
+            updateSeekOverlay(position, text)
+          } else {
+            hideSeekOverlay()
+          }
+        },
+        onSeekCommit = { seekTo ->
+          player?.timePos = seekTo.toDouble()
+        },
+        onDoubleTapRewind = {
+          doubleTapRewind()
+        },
+        onDoubleTapForward = {
+          doubleTapForawd()
+        },
+        onSingleTap = {
+          toggleShowDelayed()
+        },
+        onTogglePlayPause = {
+          togglePlayPause()
+        },
+        isLocked = { isLocked },
+        isShowing = { isShowing },
+        hideUIForBrightness = {
+          isShowing = false
+          animateLayoutChanges()
         }
       )
 
@@ -378,132 +339,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   /**
-   * Initialize playlist from fragment arguments if provided
-   * Optimized: Load first file immediately, resolve others in background
-   */
-  private fun initializePlaylistFromArguments() {
-    arguments?.let { args ->
-      val urls = args.getStringArrayList(ARG_PLAYLIST_URLS)
-      val titles = args.getStringArrayList(ARG_PLAYLIST_TITLES)
-      val startIndex = args.getInt(ARG_PLAYLIST_START_INDEX, 0)
-
-      if (!urls.isNullOrEmpty()) {
-        // Create playlist items with original URIs
-        val items = urls.mapIndexed { index, url ->
-          MPVView.PlaylistItem(
-            index = index,
-            filename = url,
-            title = titles?.getOrNull(index)?.takeIf { it.isNotEmpty() }
-          )
-        }
-
-        if (items.size > 1) {
-          isPlaylistMode = true
-          playlistState = PlaylistState(
-            items = items,
-            currentIndex = startIndex.coerceIn(0, items.size - 1)
-          )
-
-          // Resolve ONLY the first file URI to play immediately
-          val firstUrl = try {
-            resolveUri(Uri.parse(urls[0])) ?: urls[0]
-          } catch (e: Exception) {
-            Timber.tag(TAG).w(e, "Failed to resolve first URI: ${urls[0]}")
-            urls[0]
-          }
-
-          // Set title for first file
-          val firstTitle = titles?.getOrNull(0)?.takeIf { it.isNotEmpty() }
-          if (firstTitle != null) {
-            pushOption("force-media-title", firstTitle)
-          }
-
-          // Load first file immediately (this triggers MPV_EVENT_START_FILE)
-          player?.playFile(firstUrl, null)
-
-          // Resolve remaining URIs in background and add to playlist
-          // This prevents main thread blocking while still ensuring URIs are resolved properly
-          lifecycleScope.launch(Dispatchers.IO) {
-            val remainingUrls = urls.drop(1)
-            val resolvedUrls = remainingUrls.mapIndexed { index, url ->
-              try {
-                val resolved = resolveUri(Uri.parse(url)) ?: url
-                val actualIndex = index + 1
-                val title = titles?.getOrNull(actualIndex)?.takeIf { it.isNotEmpty() }
-                Pair(resolved, title)
-              } catch (e: Exception) {
-                Timber.tag(TAG).w(e, "Failed to resolve URI: $url")
-                Pair(url, titles?.getOrNull(index + 1))
-              }
-            }
-
-            // Add resolved files to MPV playlist on main thread
-            withContext(Dispatchers.Main) {
-              if (MPVState.isInitialized()) {
-                resolvedUrls.forEach { (url, title) ->
-                  if (title != null) {
-                    MPVLib.command(arrayOf("set", "file-local-options/force-media-title", title))
-                  }
-                  MPVLib.command(arrayOf("loadfile", url, "append"))
-                }
-
-                // Set starting position if not the first item
-                if (startIndex > 0) {
-                  MPVLib.command(arrayOf("playlist-play-index", startIndex.toString()))
-                }
-
-                Timber.tag(TAG).d("Added ${resolvedUrls.size} files to playlist")
-              } else {
-                // MPV not ready yet, add to onloadCommands
-                resolvedUrls.forEach { (url, title) ->
-                  if (title != null) {
-                    onloadCommands.add(
-                      arrayOf(
-                        "set",
-                        "file-local-options/force-media-title",
-                        title
-                      )
-                    )
-                  }
-                  onloadCommands.add(arrayOf("loadfile", url, "append"))
-                }
-
-                if (startIndex > 0) {
-                  onloadCommands.add(arrayOf("playlist-play-index", startIndex.toString()))
-                }
-              }
-            }
-          }
-
-          // Enable auto-play
-          shouldAutoPlay = true
-
-          Timber.tag(TAG)
-            .d("Initialized playlist with ${items.size} items (background URI resolution), starting at index $startIndex")
-
-          // Update UI immediately
-          updatePlaylistUI()
-        } else if (items.size == 1) {
-          // Single file - resolve and load normally
-          val url = try {
-            resolveUri(Uri.parse(urls[0])) ?: urls[0]
-          } catch (e: Exception) {
-            Timber.tag(TAG).w(e, "Failed to resolve URI: ${urls[0]}")
-            urls[0]
-          }
-
-          val title = titles?.getOrNull(0)?.takeIf { it.isNotEmpty() }
-          if (title != null) {
-            pushOption("force-media-title", title)
-          }
-          player?.playFile(url, null)
-          shouldAutoPlay = true
-        }
-      }
-    }
-  }
-
-  /**
    * Load playlist from MPV after video is loaded
    * Called when MPV has loaded files and playlist info is available
    */
@@ -512,7 +347,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       try {
         val items = mpv.loadPlaylist()
         if (items.size > 1) {
-          val currentPos = MPVApi.getPropertyInt("playlist-pos") ?: 0
+          val currentPos = MPVLib.getPropertyInt("playlist-pos") ?: 0
           isPlaylistMode = true
           playlistState = PlaylistState(
             items = items,
@@ -658,24 +493,14 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     Timber.tag(TAG).d("Playlist finished")
     playlistState = null
     isPlaylistMode = false
-
-    // Determine if launched from intent
-    val launchedFromIntent = arguments?.getBoolean(ARG_STARTED_FROM_INTENT)
-      ?: (requireActivity().intent.action == Intent.ACTION_VIEW
-        || requireActivity().intent.data != null)
-
-    if (launchedFromIntent) {
-      activity?.finish()
-    } else {
-      CommonActivitty.activityResultEvent?.invoke(
-        PlayBackResult(
-          RESULT_OK,
-          player?.timePos?.toLong()?.times(1000L) ?: 0L,
-          "playlist_end"
-        )
+    CommonActivitty.activityResultEvent?.invoke(
+      PlayBackResult(
+        RESULT_OK,
+        player?.timePos?.toLong()?.times(1000L) ?: 0L,
+        "playlist_end"
       )
-      activity?.popCurrentPage()
-    }
+    )
+    activity?.popCurrentPage()
   }
 
   @SuppressLint("ClickableViewAccessibility")
@@ -687,9 +512,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     // Initialize manager components
     initializeManagers()
 
-    // Initialize playlist if provided via arguments
-    initializePlaylistFromArguments()
-
     observe(viewModel.allLinks) {
       allLinks = it
       //currentSelectedLink = allLinks.first()
@@ -698,7 +520,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       isSameEpisode = it;
     }
     observe(viewModel.currentLinkIndex) {
-      // Skip loading if in playlist mode (playlist already loaded in initializePlaylistFromArguments)
       if (!isPlaylistMode) {
         normalSafeApiCall {
           loadLink(allLinks.getOrNull(it))
@@ -934,6 +755,14 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
             ctx.getString(R.string.double_tap_pause_enabled_key),
             false
           )
+
+        // Update gesture handler with loaded settings
+        gestureHandler.updateSettings(
+          horizontalEnabled = swipeHorizontalEnabled,
+          verticalEnabled = swipeVerticalEnabled,
+          doubleTapEnabled = doubleTapEnabled,
+          doubleTapPauseEnabled = doubleTapPauseEnabled
+        )
       }
 
       playerBinding?.apply {
@@ -1074,7 +903,14 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       // it is !not! a bug that you cant touch the right side, it does not register inputs on navbar or status bar
       playerHolder.setOnTouchListener { callView, event ->
-        return@setOnTouchListener handleMotionEvent(callView, event)
+        uiController.setIntroPlayVisible(false)
+        return@setOnTouchListener gestureHandler.handleMotionEvent(
+          callView,
+          event,
+          player?.timePos?.toLong(),
+          psc.durationSec.toLong(),
+          ::isValidTouch
+        )
       }
 
       playerMediaRouteButton.apply {
@@ -1088,285 +924,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
             )
           }
         }
-//        activity?.let { act ->
-//          if (act.isCastApiAvailable()) {
-//            try {
-//              CastButtonFactory.setUpMediaRouteButton(act, this)
-//              val castContext = CastContext.getSharedInstance(act.applicationContext)
-//              isGone = castContext.castState == CastState.NO_DEVICES_AVAILABLE
-//              // this shit leaks for some reason
-//              //castContext.addCastStateListener { state ->
-//              //    media_route_button?.isGone = state == CastState.NO_DEVICES_AVAILABLE
-//              //}
-//            } catch (e: Exception) {
-//              logError(e)
-//            }
-//          }
-//        }
       }
     }
-  }
-
-  @SuppressLint("SetTextI18n")
-  private fun handleMotionEvent(view: View?, event: MotionEvent?): Boolean {
-    if (event == null || view == null) return false
-    val currentTouch = Utils.Vector2(event.x, event.y)
-    val startTouch = currentTouchStart
-
-    playerBinding?.apply {
-      uiController.setIntroPlayVisible(false)
-
-      when (event.action) {
-        MotionEvent.ACTION_DOWN -> {
-          // validates if the touch is inside of the player area
-          isCurrentTouchValid = isValidTouch(currentTouch.x, currentTouch.y)
-          /*if (isCurrentTouchValid && player_episode_list?.isVisible == true) {
-              player_episode_list?.isVisible = false
-          } else*/ if (isCurrentTouchValid) {
-            currentTouchStartTime = System.currentTimeMillis()
-            currentTouchStart = currentTouch
-            currentTouchLast = currentTouch
-            currentTouchStartPlayerTime = player?.timePos?.toLong()
-
-            getBrightness()?.let {
-              currentRequestedBrightness = it
-            }
-            playerAudioManager.getVolume()?.let { currentVolume ->
-              playerAudioManager.getMaxVolume()?.let { maxVolume ->
-                currentRequestedVolume = currentVolume.toFloat() / maxVolume.toFloat()
-              }
-            }
-          }
-        }
-
-        MotionEvent.ACTION_UP -> {
-          if (isCurrentTouchValid && !isLocked) {
-            // seek time
-            if (swipeHorizontalEnabled && currentTouchAction == TouchAction.Time) {
-              val startTime = currentTouchStartPlayerTime
-              if (startTime != null) {
-                calculateNewTime(
-                  startTime,
-                  startTouch,
-                  currentTouch
-                )?.let { seekTo ->
-                  if (abs(seekTo - startTime) > MINIMUM_SEEK_TIME) {
-                    player?.timePos = (seekTo.toDouble())
-                  }
-                }
-              }
-            }
-          }
-          //  see if click is eligible for seek 10s
-          val holdTime = currentTouchStartTime?.minus(System.currentTimeMillis())
-          if (isCurrentTouchValid // is valid
-            && currentTouchAction == null // no other action like swiping is taking place
-            && currentLastTouchAction == null // last action was none, this prevents mis input random seek
-            && holdTime != null
-            && holdTime < DOUBLE_TAB_MAXIMUM_HOLD_TIME // it is a click not a long hold
-          ) {
-            if (!isLocked
-              && (System.currentTimeMillis() - currentLastTouchEndTime) < DOUBLE_TAB_MINIMUM_TIME_BETWEEN // the time since the last action is short
-            ) {
-              currentClickCount++
-
-              if (currentClickCount >= 1) { // have double clicked
-                currentDoubleTapIndex++
-                if (doubleTapPauseEnabled) { // you can pause if your tap is in the middle of the screen
-                  when {
-                    currentTouch.x < sWidth / 2 - (DOUBLE_TAB_PAUSE_PERCENTAGE * sWidth) -> {
-                      if (doubleTapEnabled)
-                        doubleTapRewind()
-                    }
-
-                    currentTouch.x > sWidth / 2 + (DOUBLE_TAB_PAUSE_PERCENTAGE * sWidth) -> {
-                      if (doubleTapEnabled)
-                        doubleTapForawd()
-                    }
-
-                    else -> {
-                      togglePlayPause()
-                    }
-                  }
-                } else if (doubleTapEnabled) {
-                  if (currentTouch.x < sWidth / 2) {
-                    doubleTapRewind()
-                  } else {
-                    doubleTapForawd()
-                  }
-                }
-              }
-            } else {
-              // is a valid click but not fast enough for seek
-              currentClickCount = 0
-//              autoHide()
-              toggleShowDelayed()
-            }
-          } else {
-            currentClickCount = 0
-          }
-
-          // reset variables
-          isCurrentTouchValid = false
-          currentTouchStart = null
-          currentLastTouchAction = currentTouchAction
-          currentTouchAction = null
-          currentTouchStartPlayerTime = null
-          currentTouchLast = null
-          currentTouchStartTime = null
-
-          // resets UI
-          playerTimeText.isVisible = false
-          playerProgressbarLeftHolder.isVisible = false
-          playerProgressbarRightHolder.isVisible = false
-
-          currentLastTouchEndTime = System.currentTimeMillis()
-        }
-
-        MotionEvent.ACTION_MOVE -> {
-          // if current touch is valid
-          if (startTouch != null && isCurrentTouchValid && !isLocked) {
-            // action is unassigned and can therefore be assigned
-            if (currentTouchAction == null) {
-              val diffFromStart = startTouch - currentTouch
-
-              if (swipeVerticalEnabled) {
-                if (abs(diffFromStart.y * 100 / sHeight) > MINIMUM_VERTICAL_SWIPE) {
-                  // left = Brightness, right = Volume, but the UI is reversed to show the UI better
-                  currentTouchAction = if (startTouch.x < sWidth / 2) {
-                    // hide the UI if you hold brightness to show screen better, better UX
-                    if (isShowing) {
-                      isShowing = false
-                      animateLayoutChanges()
-                    }
-                    TouchAction.Brightness
-                  } else {
-                    TouchAction.Volume
-                  }
-                }
-              }
-              if (swipeHorizontalEnabled) {
-                if (abs(diffFromStart.x * 100 / sHeight) > MINIMUM_HORIZONTAL_SWIPE) {
-                  currentTouchAction =
-                    TouchAction.Time
-                }
-              }
-            }
-
-            // display action
-            val lastTouch = currentTouchLast
-            if (lastTouch != null) {
-              val diffFromLast = lastTouch - currentTouch
-              val verticalAddition =
-                diffFromLast.y * VERTICAL_MULTIPLIER / sHeight.toFloat()
-
-              // update UI
-              playerTimeText.isVisible = false
-              playerProgressbarLeftHolder.isVisible = false
-              playerProgressbarRightHolder.isVisible = false
-
-              when (currentTouchAction) {
-                TouchAction.Time -> {
-                  // this simply updates UI as the seek logic happens on release
-                  // startTime is rounded to make the UI sync in a nice way
-                  val startTime =
-                    currentTouchStartPlayerTime
-                  if (startTime != null) {
-                    calculateNewTime(
-                      startTime,
-                      startTouch,
-                      currentTouch
-                    )?.let { newMs ->
-                      val skipMs = newMs - startTime
-                      playerTimeText.apply {
-                        text =
-                          "${newMs.formatDuration()} [${
-                            (if (abs(skipMs) < 0) "" else (if (skipMs > 0) "+" else "-"))
-                          }${(abs(skipMs)).formatDuration()}]"
-                        isVisible = true
-                      }
-                    }
-                  }
-                }
-
-                TouchAction.Brightness -> {
-                  playerProgressbarRightHolder.isVisible = true
-                  val lastRequested = currentRequestedBrightness
-                  currentRequestedBrightness =
-                    min(
-                      1.0f,
-                      max(currentRequestedBrightness + verticalAddition, 0.0f)
-                    )
-
-                  // this is to not spam request it, just in case it fucks over someone
-                  if (lastRequested != currentRequestedBrightness)
-                    setBrightness(currentRequestedBrightness)
-
-                  // max is set high to make it smooth
-                  playerProgressbarRight.max = 100_000
-                  playerProgressbarRight.progress =
-                    max(2_000, (currentRequestedBrightness * 100_000f).toInt())
-
-                  playerProgressbarRightIcon.setImageResource(
-                    brightnessIcons[min( // clamp the value just in case
-                      brightnessIcons.size - 1,
-                      max(
-                        0,
-                        round(currentRequestedBrightness * (brightnessIcons.size - 1)).toInt()
-                      )
-                    )]
-                  )
-                }
-
-                TouchAction.Volume -> {
-                  playerAudioManager.getMaxVolume()?.let { maxVolume ->
-                    playerAudioManager.getVolume()?.let { currentVolume ->
-                      playerProgressbarLeftHolder.isVisible = true
-
-                      // clamps volume and adds swipe
-                      currentRequestedVolume =
-                        min(
-                          1.0f,
-                          max(currentRequestedVolume + verticalAddition, 0.0f)
-                        )
-
-                      // max is set high to make it smooth
-                      playerProgressbarLeft.max = 100_000
-                      playerProgressbarLeft.progress =
-                        max(2_000, (currentRequestedVolume * 100_000f).toInt())
-
-                      playerProgressbarLeftIcon.setImageResource(
-                        volumeIcons[min( // clamp the value just in case
-                          volumeIcons.size - 1,
-                          max(
-                            0,
-                            round(currentRequestedVolume * (volumeIcons.size - 1)).toInt()
-                          )
-                        )]
-                      )
-
-                      // this is used instead of set volume because old devices does not support it
-                      val desiredVolume =
-                        round(currentRequestedVolume * maxVolume).toInt()
-                      if (desiredVolume != currentVolume) {
-                        val newVolumeAdjusted =
-                          if (desiredVolume < currentVolume) AudioManager.ADJUST_LOWER else AudioManager.ADJUST_RAISE
-
-                        playerAudioManager.adjustVolume(newVolumeAdjusted)
-                      }
-                    }
-                  }
-                }
-
-                else -> Unit
-              }
-            }
-          }
-        }
-      }
-    }
-    currentTouchLast = currentTouch
-    return true
   }
 
   private var currentDoubleTapIndex = 0
@@ -1411,73 +970,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun calculateNewTime(
-    startTime: Long?,
-    touchStart: Utils.Vector2?,
-    touchEnd: Utils.Vector2?
-  ): Long? {
-    if (touchStart == null || touchEnd == null || startTime == null) return null
-    val diffX = (touchEnd.x - touchStart.x) * HORIZONTAL_MULTIPLIER / sWidth.toFloat()
-    val duration = psc.durationSec.toLong() ?: return null
-    return max(
-      min(
-        startTime + ((duration * (diffX * diffX)) * (if (diffX < 0) -1 else 1)).toLong(),
-        duration
-      ), 0
-    )
-  }
-
-  private fun getBrightness(): Float? {
-    return if (useTrueSystemBrightness) {
-      try {
-        Settings.System.getInt(
-          context?.contentResolver,
-          Settings.System.SCREEN_BRIGHTNESS
-        ) / 255f
-      } catch (e: Exception) {
-        // because true system brightness requires
-        // permission, this is a lazy way to check
-        // as it will throw an error if we do not have it
-        useTrueSystemBrightness = false
-        return getBrightness()
-      }
-    } else {
-      try {
-        activity?.window?.attributes?.screenBrightness
-      } catch (e: Exception) {
-        logError(e)
-        null
-      }
-    }
-  }
-
-  private fun setBrightness(brightness: Float) {
-    if (useTrueSystemBrightness) {
-      try {
-        Settings.System.putInt(
-          context?.contentResolver,
-          Settings.System.SCREEN_BRIGHTNESS_MODE,
-          Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
-        )
-
-        Settings.System.putInt(
-          context?.contentResolver,
-          Settings.System.SCREEN_BRIGHTNESS, (brightness * 255).toInt()
-        )
-      } catch (e: Exception) {
-        useTrueSystemBrightness = false
-        setBrightness(brightness)
-      }
-    } else {
-      try {
-        val lp = activity?.window?.attributes
-        lp?.screenBrightness = brightness
-        activity?.window?.attributes = lp
-      } catch (e: Exception) {
-        logError(e)
-      }
-    }
-  }
 
   private fun isValidTouch(rawX: Float, rawY: Float): Boolean {
     val statusHeight = statusBarHeight ?: 0
@@ -1610,236 +1102,89 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
-  var selectVideoDialog: Dialog? = null
   private fun showVideoTracks() {
     try {
-      //println("CURRENT SELECTED :$currentSelectedSubtitles of $currentSubs")
-      context?.let { ctx ->
-        val tracks = player?.tracks ?: return
+      val tracks = player?.tracks ?: return
+      player?.paused = true
 
-        player?.paused = true
-
-        val currentVideoTracks = tracks["video"]
-        var videoIndex = max((currentVideoTracks?.indexOfFirst { it.selected } ?: 0), 0)
-
-
-        val binding: PlayerSelectVideoTracksBinding =
-          PlayerSelectVideoTracksBinding.inflate(LayoutInflater.from(ctx), null, false)
-        val trackDialog = Dialog(ctx, R.style.AlertDialogCustom)
-        trackDialog.setContentView(binding.root)
-        trackDialog.show()
-        selectVideoDialog = trackDialog
-
-        fun dismiss() {
+      dialogManager.showVideoTracksDialog(
+        tracks = tracks,
+        onTrackSelected = { videoIndex ->
+          player?.vid = videoIndex
+        },
+        onDismiss = {
           player?.paused = false
           activity?.hideSystemUI()
         }
-
-        currentVideoTracks?.let {
-          val videosList = binding.videoTracksList
-          binding.videoTracksHolder.isVisible = currentVideoTracks.isNotEmpty()
-          val videosArrayAdapter =
-            ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
-          videosArrayAdapter.addAll(currentVideoTracks.mapIndexed { index, format ->
-            format.name
-          })
-
-          videosList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-          videosList.adapter = videosArrayAdapter
-
-          // Sometimes the data is not the same because some data gets resolved at different stages i think
-          videosList.setSelection(videoIndex)
-          videosList.setItemChecked(videoIndex, true)
-
-          videosList.setOnItemClickListener { _, _, which, _ ->
-            videoIndex = which
-            videosList.setItemChecked(which, true)
-          }
-        }
-
-
-        trackDialog.setOnDismissListener {
-          dismiss()
-        }
-
-        binding.cancelBtt.setOnClickListener {
-          trackDialog.dismissSafe(activity)
-        }
-        binding.applyBtt.setOnClickListener {
-          player?.vid = videoIndex
-          trackDialog.dismissSafe(activity)
-        }
-      }
+      )
     } catch (e: Exception) {
       logError(e)
     }
   }
 
+  // UI overlay update methods for gesture handler
+  private fun updateBrightnessOverlay(brightness: Float) {
+    playerBinding?.apply {
+      playerProgressbarRightHolder.isVisible = true
+      playerProgressbarRight.max = 100_000
+      playerProgressbarRight.progress = max(2_000, (brightness * 100_000f).toInt())
+      playerProgressbarRightIcon.setImageResource(gestureHandler.getBrightnessIcon(brightness))
+    }
+  }
 
-  var selectTrackDialog: Dialog? = null
+  private fun hideBrightnessOverlay() {
+    playerBinding?.playerProgressbarRightHolder?.isVisible = false
+  }
+
+  private fun updateVolumeOverlay(volumeRatio: Float) {
+    playerBinding?.apply {
+      playerProgressbarLeftHolder.isVisible = true
+      playerProgressbarLeft.max = 100_000
+      playerProgressbarLeft.progress = max(2_000, (volumeRatio * 100_000f).toInt())
+      playerProgressbarLeftIcon.setImageResource(gestureHandler.getVolumeIcon(volumeRatio))
+    }
+  }
+
+  private fun hideVolumeOverlay() {
+    playerBinding?.playerProgressbarLeftHolder?.isVisible = false
+  }
+
+  private fun updateSeekOverlay(position: Long, text: String) {
+    playerBinding?.apply {
+      playerTimeText.text = text
+      playerTimeText.isVisible = true
+    }
+  }
+
+  private fun hideSeekOverlay() {
+    playerBinding?.playerTimeText?.isVisible = false
+  }
+
+
   private fun showTracksDialogue() {
     try {
-      //println("CURRENT SELECTED :$currentSelectedSubtitles of $currentSubs")
-      context?.let { ctx ->
-        val tracks = player?.tracks ?: return
+      val tracks = player?.tracks ?: return
+      player?.paused = true
 
-        player?.paused = true
-
-        val currentAudioTracks = tracks["audio"]
-        var audioIndexStart =
-          max((currentAudioTracks?.indexOfFirst { it.selected } ?: 0), 0)
-
-        val currentSubtitleTracks = tracks["sub"]
-        var subtitleIndex =
-          max((currentSubtitleTracks?.indexOfFirst { it.selected } ?: 0), 0)
-
-        val binding: PlayerSelectTracksBinding =
-          PlayerSelectTracksBinding.inflate(LayoutInflater.from(ctx), null, false)
-        val trackDialog = Dialog(ctx, R.style.AlertDialogCustom)
-        trackDialog.setContentView(binding.root)
-        trackDialog.show()
-        selectTrackDialog = trackDialog
-
-        fun dismiss() {
+      dialogManager.showTracksDialog(
+        tracks = tracks,
+        onTracksSelected = { audioIndex, subtitleIndex ->
+          player?.aid = audioIndex
+          player?.sid = subtitleIndex
+          // Reload tracks to update the selected state
+          player?.loadTracks()
+        },
+        onLoadSubtitlesFromFile = {
+          openSubPicker()
+        },
+        onLoadSubtitlesOnline = {
+          showToast("Not implemented yet", Toast.LENGTH_SHORT)
+        },
+        onDismiss = {
           player?.paused = false
           activity?.hideSystemUI()
         }
-
-        trackDialog.setOnDismissListener {
-          dismiss()
-        }
-
-        currentAudioTracks?.let {
-          val audioList = binding.autoTracksList
-          binding.audioTracksHolder.isVisible = currentAudioTracks.isEmpty() == false
-
-          val audioArrayAdapter =
-            ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
-//                audioArrayAdapter.add(ctx.getString(R.string.no_subtitles))
-          audioArrayAdapter.addAll(currentAudioTracks.mapIndexed { index, format ->
-            format.name//fromTwoLettersToLanguage(format.name)
-
-          })
-
-          audioList.adapter = audioArrayAdapter
-          audioList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-
-          audioList.setSelection(audioIndexStart)
-          audioList.setItemChecked(audioIndexStart, true)
-
-          audioList.setOnItemClickListener { _, _, which, _ ->
-            audioIndexStart = which
-            audioList.setItemChecked(which, true)
-          }
-        }
-
-
-        currentSubtitleTracks?.let {
-          val subtitleList = binding.sortSubtitles
-          val loadFromFileFooter: TextView =
-            layoutInflater.inflate(
-              R.layout.sort_bottom_footer_add_choice,
-              null
-            ) as TextView
-
-          loadFromFileFooter.text = ctx.getString(R.string.player_load_subtitles)
-          loadFromFileFooter.setOnClickListener {
-            openSubPicker()
-          }
-          subtitleList.addFooterView(loadFromFileFooter)
-
-
-          val loadFromNetworkFooter: TextView =
-            layoutInflater.inflate(
-              R.layout.sort_bottom_footer_add_choice,
-              null
-            ) as TextView
-
-          loadFromNetworkFooter.text = ctx.getString(R.string.player_load_subtitles_online)
-          loadFromNetworkFooter.setOnClickListener {
-            showToast("Not implemented yet", Toast.LENGTH_SHORT)
-          }
-          subtitleList.addFooterView(loadFromNetworkFooter)
-
-          val subsArrayAdapter =
-            ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
-          subsArrayAdapter.addAll(currentSubtitleTracks.map { it.name })
-
-          subtitleList.adapter = subsArrayAdapter
-          subtitleList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-
-          subtitleList.setSelection(subtitleIndex)
-          subtitleList.setItemChecked(subtitleIndex, true)
-
-          subtitleList.setOnItemClickListener { _, _, which, _ ->
-            if (which > currentSubtitleTracks.size - 1) {
-              // Since android TV is funky the setOnItemClickListener will be triggered
-              // instead of setOnClickListener when selecting. To override this we programmatically
-              // click the view when selecting an item outside the list.
-
-              // Cheeky way of getting the view at that position to click it
-              // to avoid keeping track of the various footers.
-              // getChildAt() gives null :(
-              val child = subtitleList.adapter.getView(which, null, subtitleList)
-              child?.performClick()
-            } else {
-              subtitleIndex = which
-              subtitleList.setItemChecked(which, true)
-            }
-          }
-        }
-
-        binding.subtitlesEncodingFormat.apply {
-          val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
-
-          val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
-          val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
-
-          val value = settingsManager.getString(
-            ctx.getString(R.string.subtitles_encoding_key), null
-          )
-          val index = prefValues.indexOf(value)
-          text = prefNames[if (index == -1) 0 else index]
-        }
-//        binding.subtitlesClickSettings.setOnClickListener {
-//          val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
-//
-//          val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
-//          val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
-//
-//          val currentPrefMedia = settingsManager.getString(
-//            ctx.getString(R.string.subtitles_encoding_key), null
-//          )
-//          val index = prefValues.indexOf(currentPrefMedia)
-//          activity?.showDialog(prefNames.toList(),
-//            if (index == -1) 0 else index,
-//            ctx.getString(R.string.subtitles_encoding),
-//            true,
-//            {}) {
-//            settingsManager.edit().putString(
-//              ctx.getString(R.string.subtitles_encoding_key), prefValues[it]
-//            ).apply()
-//
-//            //updateForcedEncoding(ctx)
-//            dismiss()
-//            //player.seekTime(-1) // to update subtitles, a dirty trick
-//          }
-//        }
-
-        binding.cancelBtt.setOnClickListener {
-          trackDialog.dismissSafe(activity)
-        }
-
-        binding.applyBtt.setOnClickListener {
-          player?.aid = audioIndexStart
-          player?.sid = subtitleIndex
-
-          // Reload tracks to update the selected state
-          player?.loadTracks()
-
-          trackDialog.dismissSafe(activity)
-        }
-      }
+      )
     } catch (e: Exception) {
       logError(e)
     }
@@ -1847,88 +1192,21 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
 
   private fun showSubtitleOffsetDialog() {
-    val ctx = context ?: return
-
-    val binding = SubtitleOffsetBinding.inflate(LayoutInflater.from(ctx), null, false)
-
-    val builder =
-      AlertDialog.Builder(ctx, R.style.AlertDialogCustom)
-        .setView(binding.root)
-    val dialog = builder.create()
-    dialog.show()
-
-    val beforeOffset = subtitleDelay
-
-    /*val applyButton = dialog.findViewById<TextView>(R.id.apply_btt)!!
-    val cancelButton = dialog.findViewById<TextView>(R.id.cancel_btt)!!
-    val input = dialog.findViewById<EditText>(R.id.subtitle_offset_input)!!
-    val sub = dialog.findViewById<ImageView>(R.id.subtitle_offset_subtract)!!
-    val subMore = dialog.findViewById<ImageView>(R.id.subtitle_offset_subtract_more)!!
-    val add = dialog.findViewById<ImageView>(R.id.subtitle_offset_add)!!
-    val addMore = dialog.findViewById<ImageView>(R.id.subtitle_offset_add_more)!!
-    val subTitle = dialog.findViewById<TextView>(R.id.subtitle_offset_sub_title)!!*/
-    binding.apply {
-      subtitleOffsetInput.doOnTextChanged { text, _, _, _ ->
-        text?.toString()?.toLongOrNull()?.let { time ->
-          subtitleDelay = time
-          val str = when {
-            time > 0L -> {
-              txt(R.string.subtitle_offset_extra_hint_later_format, time)
-            }
-
-            time < 0L -> {
-              txt(R.string.subtitle_offset_extra_hint_before_format, -time)
-            }
-
-            else -> {
-              txt(R.string.subtitle_offset_extra_hint_none_format)
-            }
-          }
-          subtitleOffsetSubTitle.setText(str)
-        }
-      }
-      subtitleOffsetInput.text =
-        Editable.Factory.getInstance()?.newEditable(beforeOffset.toString())
-
-      val buttonChange = 100L
-      val buttonChangeMore = 1000L
-
-      fun changeBy(by: Long) {
-        val current = (subtitleOffsetInput.text?.toString()?.toLongOrNull() ?: 0) + by
-        subtitleOffsetInput.text =
-          Editable.Factory.getInstance()?.newEditable(current.toString())
-      }
-
-      subtitleOffsetAdd.setOnClickListener {
-        changeBy(buttonChange)
-      }
-      subtitleOffsetAddMore.setOnClickListener {
-        changeBy(buttonChangeMore)
-      }
-      subtitleOffsetSubtract.setOnClickListener {
-        changeBy(-buttonChange)
-      }
-      subtitleOffsetSubtractMore.setOnClickListener {
-        changeBy(-buttonChangeMore)
-      }
-
-      dialog.setOnDismissListener {
+    dialogManager.showSubtitleOffsetDialog(
+      currentOffset = subtitleDelay,
+      onOffsetChanged = { time ->
+        subtitleDelay = time
+      },
+      onReset = {
+        subtitleDelay = 0
+      },
+      onCancel = { beforeOffset ->
+        subtitleDelay = beforeOffset
+      },
+      onDismiss = {
         activity?.hideSystemUI()
       }
-      applyBtt.setOnClickListener {
-        dialog.dismissSafe(activity)
-        //player.seekTime(1L)
-      }
-      resetBtt.setOnClickListener {
-        subtitleDelay = 0
-        dialog.dismissSafe(activity)
-        //player.seekTime(1L)
-      }
-      cancelBtt.setOnClickListener {
-        subtitleDelay = beforeOffset
-        dialog.dismissSafe(activity)
-      }
-    }
+    )
   }
 
   private fun showSpeedDialog() {
@@ -2149,12 +1427,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   fun nextResize() {
-    resizeMode = (resizeMode + 1) % PlayerResize.values().size
+    resizeMode = (resizeMode + 1) % PlayerResize.entries.size
     resize(resizeMode, true)
   }
 
   fun resize(resize: Int, showToast: Boolean) {
-    resize(PlayerResize.values()[resize], showToast)
+    resize(PlayerResize.entries[resize], showToast)
   }
 
   fun getScreenAspectRatioString(): String {
@@ -2173,7 +1451,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     return "${width / gcd}:${height / gcd}"
   }
 
-  @SuppressLint("UnsafeOptInUsageError")
   fun resize(resize: PlayerResize, showToast: Boolean) {
     DataStore.resizeMode = resize.ordinal
     when (resize) {
@@ -2218,30 +1495,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
-  private var isCurrentTouchValid = false
-  private var currentTouchStart: Utils.Vector2? = null
-  private var currentTouchLast: Utils.Vector2? = null
-  private var currentTouchAction: TouchAction? = null
-  private var currentLastTouchAction: TouchAction? = null
-  private var currentTouchStartPlayerTime: Long? =
-    null // the time in the player when you first click
-  private var currentTouchStartTime: Long? = null // the system time when you first click
-  private var currentLastTouchEndTime: Long = 0 // the system time when you released your finger
-  private var currentClickCount: Int =
-    0 // amount of times you have double clicked, will reset when other action is taken
-
-  // requested volume and brightness is used to make swiping smoother
-  // to make it not jump between values,
-  // this value is within the range [0,1]
-  private var currentRequestedVolume: Float = 0.0f
-  private var currentRequestedBrightness: Float = 1.0f
-
   private var currentTapIndex = 0
   protected fun autoHide() {
     currentTapIndex++
     val index = currentTapIndex
     playerBinding?.playerHolder?.postDelayed({
-      if (!isCurrentTouchValid && isShowing && activityIsForeground && index == currentTapIndex) {
+      if (isShowing && activityIsForeground && index == currentTapIndex) {
         toggleControls()
       }
     }, 2000)
@@ -2286,23 +1545,14 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       sHeight = screenWidth
     }
 
-    // Reset touch state when orientation changes to ensure gesture handling
-    // uses updated sWidth/sHeight values
-    isCurrentTouchValid = false
-    currentTouchStart = null
-    currentTouchLast = null
-    currentTouchAction = null
-    currentTouchStartPlayerTime = null
-    currentTouchStartTime = null
-
-    // Hide gesture UI overlays
+    // Hide gesture UI overlays on configuration change
     playerBinding?.apply {
       playerTimeText.isVisible = false
       playerProgressbarLeftHolder.isVisible = false
       playerProgressbarRightHolder.isVisible = false
     }
 
-    Timber.d("Configuration changed - touch state reset, orientation: ${newConfig.orientation}")
+    Timber.d("Configuration changed - orientation: ${newConfig.orientation}")
   }
 
   override fun onDestroyView() {
@@ -2584,7 +1834,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
             val subTracks = player?.tracks?.get("sub")
             if (subTracks != null && subTracks.size > 1) { // > 1 because index 0 is "no subs"
               // Check if no subtitle is currently selected
-              val currentSid = MPVApi.getPropertyInt("sid") ?: -1
+              val currentSid = MPVLib.getPropertyInt("sid") ?: -1
               if (currentSid <= 0) {
                 // Auto-select first real subtitle track (index 1, since 0 is "off")
                 val firstSubTrack = subTracks.getOrNull(1)
@@ -2633,24 +1883,19 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         playerBinding?.exoProgress?.setDuration(psc.durationSec.toLong())
       }
 
-      "video-params/aspect", "video-params/rotate" -> {
-        updateOrientation()
+      "video-params/aspect" -> {
         //updatePiPParams()
+      }
+
+      "video-params/rotate" -> {
+        updateOrientation(value)
       }
     }
   }
 
-  private fun updateOrientation() {
+  private fun updateOrientation(rotate: Double) {
 
-    if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT))
-      return
-    val ratio = player?.getVideoAspect()?.toFloat() ?: 0f
-    if (ratio == 0f || ratio in (1f / ASPECT_RATIO_MIN)..ASPECT_RATIO_MIN) {
-      // video is square, let Android do what it wants
-      activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-      return
-    }
-    activity?.requestedOrientation = if (ratio > 1f)
+    activity?.requestedOrientation = if (rotate < 90f)
       ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
     else
       ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
@@ -2658,10 +1903,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   private fun toggleRotate() {
-    toggleOrientationWithSensor()
-  }
-
-  private fun toggleOrientationWithSensor() {
     val currentOrientation = resources.configuration.orientation
     var orientation = 0
     when (currentOrientation) {
@@ -2988,67 +2229,22 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private fun playlistNext() = MPVLib.command(arrayOf("playlist-next"))
 
 
-  var selectSourceDialog: Dialog? = null
   fun showSourcesDialog() {
     try {
+      player?.paused = true
 
-      //println("CURRENT SELECTED :$currentSelectedSubtitles of $currentSubs")
-      context?.let { ctx ->
-        player?.paused = true
-        val currentSubtitles = sortSubs(currentSubs)
-
-        val sourceDialog = Dialog(ctx, R.style.AlertDialogCustom)
-        val binding =
-          PlayerSelectSourceAndSubsBinding.inflate(LayoutInflater.from(ctx), null, false)
-        sourceDialog.setContentView(binding.root)
-
-        selectSourceDialog = sourceDialog
-
-        sourceDialog.show()
-        val providerList = binding.sortProviders
-        var shouldDismiss = true
-
-        fun dismiss() {
+      dialogManager.showSourcesDialog(
+        allLinks = allLinks,
+        currentSelectedLink = currentSelectedLink,
+        currentSubs = currentSubs,
+        onSourceSelected = { link, subtitleData ->
+          loadLink(link, subtitleData)
+        },
+        onDismiss = {
           player?.paused = false
           activity?.hideSystemUI()
         }
-
-        var startSource = 0
-        var sortedUrls = allLinks
-        var sourceIndex = currentSelectedLink?.let { allLinks.indexOf(it) } ?: 0
-        val sourcesArrayAdapter =
-          ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
-
-        sourcesArrayAdapter.addAll(sortedUrls.mapIndexed { index, link ->
-          "${index + 1}. " + link.name
-        })
-
-        providerList.choiceMode = AbsListView.CHOICE_MODE_SINGLE
-        providerList.adapter = sourcesArrayAdapter
-        providerList.setSelection(sourceIndex)
-        providerList.setItemChecked(sourceIndex, true)
-
-        providerList.setOnItemClickListener { _, _, which, _ ->
-          sourceIndex = which
-          providerList.setItemChecked(which, true)
-        }
-
-        sourceDialog.setOnDismissListener {
-          if (shouldDismiss) dismiss()
-          selectSourceDialog = null
-        }
-
-        binding.cancelBtt.setOnClickListener {
-          sourceDialog.dismissSafe(activity)
-        }
-
-        binding.applyBtt.setOnClickListener {
-          sortedUrls.getOrNull(sourceIndex)?.let {
-            loadLink(it, currentSelectedSubtitles)
-          }
-          sourceDialog.dismissSafe(activity)
-        }
-      }
+      )
     } catch (e: Exception) {
       logError(e)
     }
@@ -3164,7 +2360,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     viewModel.addSubtitles(subtitleData.toSet())
 
-    selectTrackDialog?.dismissSafe(activity)
+    dialogManager.selectTrackDialog?.dismissSafe(activity)
 
     showToast(
       String.format(ctx.getString(R.string.player_loaded_subtitles), selectedSubtitle.name),
@@ -3173,31 +2369,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   // Helper methods for gesture handler callbacks
-  private fun updateBrightnessOverlay(brightness: Float, text: String) {
-    uiController.updateBrightnessOverlay(brightness, brightnessIcons)
-  }
-
-  private fun updateVolumeOverlay(volume: Int, text: String) {
-    val maxVol = playerAudioManager.getMaxVolume() ?: 100
-    uiController.updateVolumeOverlay(volume, maxVol, volumeIcons)
-  }
-
-  private fun updateSeekOverlay(position: Long, text: String) {
-    uiController.updateSeekOverlay(text)
-  }
-
-  private fun hideGestureOverlays() {
-    uiController.hideGestureOverlays()
-  }
 
   companion object {
     private const val TAG = "mpv"
-
-    // Playlist arguments
-    private const val ARG_STARTED_FROM_INTENT = "started_from_intent"
-    private const val ARG_PLAYLIST_URLS = "playlist_urls"
-    private const val ARG_PLAYLIST_TITLES = "playlist_titles"
-    private const val ARG_PLAYLIST_START_INDEX = "playlist_start_index"
 
     // State saving keys for configuration changes
     private const val STATE_POSITION = "state_position"
@@ -3236,23 +2410,5 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     // precision used by seekbar (1/s)
     private const val SEEK_BAR_PRECISION = 2
 
-    /**
-     * Create fragment instance with playlist support
-     */
-    fun newInstanceWithPlaylist(
-      urls: List<String>,
-      titles: List<String?> = emptyList(),
-      startIndex: Int = 0,
-      fromIntent: Boolean = false
-    ): MPVFragment {
-      return MPVFragment().apply {
-        arguments = Bundle().apply {
-          putStringArrayList(ARG_PLAYLIST_URLS, ArrayList(urls))
-          putStringArrayList(ARG_PLAYLIST_TITLES, ArrayList(titles.map { it ?: "" }))
-          putInt(ARG_PLAYLIST_START_INDEX, startIndex)
-          putBoolean(ARG_STARTED_FROM_INTENT, fromIntent)
-        }
-      }
-    }
   }
 }

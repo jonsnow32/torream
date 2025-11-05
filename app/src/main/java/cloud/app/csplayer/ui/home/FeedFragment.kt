@@ -27,16 +27,17 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.databinding.FragmentFeedBinding
 import cloud.app.csplayer.media.model.SyncState
+import cloud.app.csplayer.model.PlaybackData
+import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterBottomSheet
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
-import cloud.app.csplayer.ui.player.EXTRA_TITLE
-import cloud.app.csplayer.ui.player.ARG_PLAYLIST_URLS
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.FastScrollerHelper
+import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
@@ -432,21 +433,33 @@ class FeedFragment : Fragment(), FeedClickListener {
           it.media.uri == clickedItem.media.uri
         }.coerceAtLeast(0)
 
-        // Build URLs and titles lists for playlist
-        val urls = allMediaItems.map { it.media.uri }
-        val titles = allMediaItems.map { it.title }
-
-        // Navigate to MPV player with playlist
-        activity?.navigate(
-          R.id.global_to_navigation_mpv_player,
-          bundleOf(
-            "playlist_urls" to ArrayList(urls),
-            "playlist_titles" to ArrayList(titles),
-            "playlist_start_index" to clickedIndex,
-            "started_from_intent" to false,
-            EXTRA_TITLE to clickedItem.title
+        // Convert media items to VideoLink objects
+        val videoLinks = allMediaItems.map { mediaItem ->
+          VideoLink(
+            url = mediaItem.media.uri,
+            name = mediaItem.title,
+            headers = emptyMap(),
+            position = 0L, // Will be loaded from database if exists,
+            ratio = mediaItem.media.width / mediaItem.media.height.toFloat()
           )
+        }
+
+        // Create PlaybackData object
+        val playbackData = PlaybackData(
+          title = clickedItem.title,
+          position = 0L,
+          videoLinks = videoLinks,
+          subtitles = emptyList(), // Local files typically don't have embedded subtitle data here
+          videoStartIndex = clickedIndex,
+          subtitleStartIndex = 0,
+          isSameEpisode = false, // Playlist mode
+          useMpv = true, // Use MPV for local files
+          hasAd = false
         )
+
+        // Navigate to MPV player with PlaybackData
+        val bundle = PlaybackDataHelper.createBundle(playbackData)
+        activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
 
         showToast("Playing ${clickedIndex + 1} of ${allMediaItems.size}")
 
@@ -462,41 +475,29 @@ class FeedFragment : Fragment(), FeedClickListener {
    * Play single media item (fallback)
    */
   private fun playMediaItem(item: FeedData.MediaItem) {
-    when (item.type) {
-      FeedData.Type.Video, FeedData.Type.VideoSmall -> {
-        // Navigate to MPV player for video
-        activity?.navigate(
-          R.id.global_to_navigation_mpv_player,
-          bundleOf(
-            ARG_PLAYLIST_URLS to arrayListOf<String>(
-              item.media.uri,
-              item.media.path,
-              ""
-            ).toTypedArray(),
-            EXTRA_TITLE to item.title
-          )
+    // Create PlaybackData for single file
+    val playbackData = PlaybackData(
+      title = item.title,
+      position = 0L,
+      videoLinks = listOf(
+        VideoLink(
+          url = item.media.uri,
+          name = item.title,
+          headers = emptyMap(),
+          position = 0L
         )
-      }
+      ),
+      subtitles = emptyList(),
+      videoStartIndex = 0,
+      subtitleStartIndex = 0,
+      isSameEpisode = true,
+      useMpv = true, // Use MPV for local files
+      hasAd = false
+    )
 
-      FeedData.Type.Audio, FeedData.Type.AudioSmall -> {
-        // Navigate to MPV player for audio
-        activity?.navigate(
-          R.id.global_to_navigation_mpv_player,
-          bundleOf(
-            ARG_PLAYLIST_URLS to arrayListOf<String>(
-              item.media.uri,
-              "user_url_1",
-              ""
-            ).toTypedArray()
-          )
-        )
-      }
-
-      else -> {
-        // Shouldn't happen
-        showToast("Playing: ${item.title}")
-      }
-    }
+    // Navigate to MPV player with PlaybackData
+    val bundle = PlaybackDataHelper.createBundle(playbackData)
+    activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
   }
 
 

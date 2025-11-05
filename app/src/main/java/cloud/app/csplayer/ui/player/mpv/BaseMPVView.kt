@@ -80,7 +80,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     // native APIs while we're tearing down
     mpvInitRunnable?.let { mpvInitHandler.removeCallbacks(it) }
     mpvInitRunnable = null
-    MPVState.setInitialized(false)
+    MPVLib.setInitialized(false)
 
     MPVLib.destroy()
   }
@@ -115,7 +115,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     this.filePath = filePath.replace("https:///", "https://").replace("http:///", "http://")
     this.headers = headers
     // Only attempt to call native MPV APIs if MPV is already initialized
-    if (MPVState.isInitialized() && this.filePath != null) {
+    if (MPVLib.isInitialized() && this.filePath != null) {
       var headerList = ""
       for ((key, value) in getHeader(headers)) {
         if (key.lowercase() == "referer") {
@@ -140,7 +140,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
   fun playPlayList(playList: List<String>, headers: Map<String, String>?) {
     this.headers = headers
     // Only attempt to call native MPV APIs if MPV is already initialized
-    if (MPVState.isInitialized() && this.playList != null) {
+    if (MPVLib.isInitialized() && this.playList != null) {
       var headerList = ""
       for ((key, value) in getHeader(headers)) {
         if (key.lowercase() == "referer") {
@@ -203,7 +203,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
       } catch (_: Throwable) {
         // ignore
       }
-      MPVState.setInitialized(true)
+      MPVLib.setInitialized(true)
 
       // NOTE: Subtitle styling is already applied in initOptions() before MPVLib.init()
       // Runtime subtitle style changes via MPVSubtitleFragment.applyToMPV() do NOT work reliably
@@ -240,7 +240,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     mpvDetachRunnable = null
 
     // Mark not initialized BEFORE any native calls to prevent race conditions
-    MPVState.setInitialized(false)
+    MPVLib.setInitialized(false)
 
     // Detach surface immediately and synchronously
     // The original async approach caused crashes because the handler would execute

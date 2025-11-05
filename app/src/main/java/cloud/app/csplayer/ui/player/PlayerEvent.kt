@@ -1,7 +1,5 @@
 package cloud.app.csplayer.ui.player
 
-class PlayerEvent {
-}
 
 enum class PlayerEventType(val value: Int) {
   //Stop(-1),
@@ -24,6 +22,4 @@ enum class PlayerEventType(val value: Int) {
   SkipOp(15),
 }
 
-const val ACTION_MEDIA_CONTROL = "media_control"
-const val EXTRA_CONTROL_TYPE = "control_type"
 const val SUBTITLE_DELAY_BUNDLE_KEY = "subtitle_delay"

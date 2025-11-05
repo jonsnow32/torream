@@ -24,7 +24,6 @@ import androidx.preference.PreferenceManager
 import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
-import cloud.app.csplayer.ui.player.EXTRA_IS_SAME_EPISODE
 import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.player.PlayerEventType
 import cloud.app.csplayer.ui.player.mpv.MPVUtils
@@ -49,6 +48,7 @@ import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.datastore.Serializer
+import cloud.app.csplayer.model.PlaybackData
 import kotlinx.serialization.serializer
 
 import com.google.android.gms.cast.framework.CastContext
@@ -303,17 +303,29 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   }
 
   fun handleAppIntent(intent: Intent?) {
-    val extras = intent?.extras ?: return
-    if (intent.action == Intent.ACTION_VIEW) {
-      val navBuilder = NavOptions.Builder()
-      val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true, true).build()
+    if (intent == null || intent.action != Intent.ACTION_VIEW) return
 
-      isSameEpisode = extras.getBoolean(EXTRA_IS_SAME_EPISODE, true)
-      navigate(
-        R.id.global_to_navigation_mpv_player,
-        extras,
-        navOptions
-      )
+    val navBuilder = NavOptions.Builder()
+    val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true, true).build()
+
+    // Try to get PlaybackData from URI (inter-app communication via FileProvider)
+    val jsonUri = intent.data
+    if (jsonUri != null && jsonUri.scheme == "content") {
+      try {
+        // Pass URI string to PlayerViewModel (let it read lazily)
+        // This avoids reading the file twice and Bundle size limit
+        val bundle = Bundle().apply {
+          putString(cloud.app.csplayer.model.PlaybackData.KEY_PLAYBACK_JSON_URI, jsonUri.toString())
+        }
+        navigate(
+          R.id.global_to_navigation_mpv_player,
+          bundle,
+          navOptions
+        )
+        return
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
     }
   }
 

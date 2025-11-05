@@ -27,7 +27,6 @@ import timber.log.Timber
 import java.io.File
 import kotlin.reflect.KProperty
 
-@UnstableApi
 class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs) {
 
   // Cache expensive operations
@@ -122,20 +121,6 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     MPVLib.setOptionString("gpu-context", "android")
     MPVLib.setOptionString("opengl-es", "yes")
     MPVLib.setOptionString("hwdec", hwdec)
-
-//    // Additional emulator-specific settings to prevent goldfish decoder
-//    val isTvOrEmulator = context.isTvOrEmulator()
-//    if (isTvOrEmulator) {
-//      // Completely disable hardware decoding and force software fallback
-//      MPVLib.setOptionString("hwdec-codecs", "")
-//      MPVLib.setOptionString("vd-lavc-software-fallback", "yes")
-//      MPVLib.setOptionString("ad-lavc-downmix", "yes")
-//      MPVLib.setOptionString("vd", "lavc")
-//      MPVLib.setOptionString("android-surface-size", "0x0")
-//      Timber.tag(TAG).v("Emulator detected: Forcing software decoding to prevent goldfish decoder issues")
-//    } else {
-//      MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
-//    }
 
     MPVLib.setOptionString("ao", "audiotrack,opensles")
     MPVLib.setOptionString("tls-verify", "yes")
@@ -413,13 +398,13 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
 
 
   fun loadTracks() {
-    if (!MPVState.isInitialized()) {
+    if (!MPVLib.isInitialized()) {
       Timber.tag(TAG).w("loadTracks() called before MPV initialization - skipping")
       return
     }
 
     Timber.tag(TAG).d("loadTracks() called - checking track-list/count")
-    val count = MPVApi.getPropertyInt("track-list/count")
+    val count = MPVLib.getPropertyInt("track-list/count")
 
     if (count == null) {
       Timber.tag(TAG).w("loadTracks() - track-list/count returned null (MPV not ready)")
@@ -441,26 +426,26 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
 
     // Note that because events are async, properties might disappear at any moment
     for (i in 0 until count) {
-      val type = MPVApi.getPropertyString("track-list/$i/type") ?: continue
+      val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
       if (!tracks.containsKey(type)) {
         Timber.tag(TAG).w("Got unknown track type: $type")
         continue
       }
-      val mpvId = MPVApi.getPropertyInt("track-list/$i/id") ?: continue
+      val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
 
-      val title = MPVApi.getPropertyString("track-list/$i/title")
-      val selected = MPVApi.getPropertyBoolean("track-list/$i/selected") ?: false
+      val title = MPVLib.getPropertyString("track-list/$i/title")
+      val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
 
       val trackName = when {
         !title.isNullOrEmpty() -> context.getString(R.string.ui_track_text, mpvId, title)
         type.contains("video") -> {
-          val demux_w = MPVApi.getPropertyInt("track-list/$i/demux-w")
-          val demux_h = MPVApi.getPropertyInt("track-list/$i/demux-h")
+          val demux_w = MPVLib.getPropertyInt("track-list/$i/demux-w")
+          val demux_h = MPVLib.getPropertyInt("track-list/$i/demux-h")
           context.getString(R.string.ui_video_track_text, mpvId, demux_w, demux_h)
         }
         type == "audio" -> {
-          val audioChannel = MPVApi.getPropertyString("track-list/$i/audio-channels")
-          val lang = MPVApi.getPropertyString("track-list/$i/lang")
+          val audioChannel = MPVLib.getPropertyString("track-list/$i/audio-channels")
+          val lang = MPVLib.getPropertyString("track-list/$i/lang")
           if (!lang.isNullOrEmpty()) {
             context.getString(R.string.ui_audio_track, mpvId, audioChannel, lang)
           } else {
@@ -468,7 +453,7 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
           }
         }
         type == "sub" -> {
-          val lang = MPVApi.getPropertyString("track-list/$i/lang")
+          val lang = MPVLib.getPropertyString("track-list/$i/lang")
           if (!lang.isNullOrEmpty()) {
             context.getString(R.string.ui_track_text, mpvId, lang)
           } else {
@@ -492,10 +477,10 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
 
   fun loadPlaylist(): MutableList<PlaylistItem> {
     val playlist = mutableListOf<PlaylistItem>()
-    val count = MPVApi.getPropertyInt("playlist-count") ?: return playlist
+    val count = MPVLib.getPropertyInt("playlist-count") ?: return playlist
     for (i in 0 until count) {
-      val filename = MPVApi.getPropertyString("playlist/$i/filename") ?: continue
-      val title = MPVApi.getPropertyString("playlist/$i/title")
+      val filename = MPVLib.getPropertyString("playlist/$i/filename") ?: continue
+      val title = MPVLib.getPropertyString("playlist/$i/title")
       playlist.add(PlaylistItem(index = i, filename = filename, title = title))
     }
     return playlist
@@ -505,10 +490,10 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
 
   fun loadChapters(): MutableList<Chapter> {
     val chapters = mutableListOf<Chapter>()
-    val count = MPVApi.getPropertyInt("chapter-list/count") ?: return chapters
+    val count = MPVLib.getPropertyInt("chapter-list/count") ?: return chapters
     for (i in 0 until count) {
-      val title = MPVApi.getPropertyString("chapter-list/$i/title")
-      val time = MPVApi.getPropertyDouble("chapter-list/$i/time") ?: continue
+      val title = MPVLib.getPropertyString("chapter-list/$i/title")
+      val time = MPVLib.getPropertyDouble("chapter-list/$i/time") ?: continue
       chapters.add(
         Chapter(
           index = i,
@@ -527,7 +512,7 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     set(paused) = MPVLib.setPropertyBoolean("pause", paused!!)
 
   var timePos: Double?
-    get() = MPVApi.getPropertyDouble("time-pos/full")
+    get() = MPVLib.getPropertyDouble("time-pos/full")
     set(progress) {
       if (progress != null && progress >= 0.0) {
         MPVLib.setPropertyDouble("time-pos", progress)
@@ -536,10 +521,10 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
 
   /** name of currently active hardware decoder or "no" */
   val hwdecActive: String
-    get() = MPVApi.getPropertyString("hwdec-current") ?: "no"
+    get() = MPVLib.getPropertyString("hwdec-current") ?: "no"
 
   var playbackSpeed: Double?
-    get() = MPVApi.getPropertyDouble("speed")
+    get() = MPVLib.getPropertyDouble("speed")
     set(speed) = MPVLib.setPropertyDouble("speed", speed!!)
 
   var subDelay: Double?
@@ -558,20 +543,20 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
    * Returns the video aspect ratio. Rotation is taken into account.
    */
   fun getVideoAspect(): Double? {
-    val aspect = MPVApi.getPropertyDouble("video-params/aspect") ?: return null
+    val aspect = MPVLib.getPropertyDouble("video-params/aspect") ?: return null
     if (aspect < 0.001) return 0.0
 
-    val rot = MPVApi.getPropertyInt("video-params/rotate") ?: 0
+    val rot = MPVLib.getPropertyInt("video-params/rotate") ?: 0
     return if (rot % 180 == 90) 1.0 / aspect else aspect
   }
 
   class TrackDelegate(private val name: String) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): Int {
       // Try integer getter first
-      val intVal = MPVApi.getPropertyInt(name)
+      val intVal = MPVLib.getPropertyInt(name)
       if (intVal != null) return intVal
       // Fallback: try string getter and parse integer if present
-      val s = try { MPVApi.getPropertyString(name) } catch (_: Exception) { null }
+      val s = try { MPVLib.getPropertyString(name) } catch (_: Exception) { null }
       return s?.toIntOrNull() ?: -1
     }
 
@@ -625,18 +610,18 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
 
   // Helper function to change subtitle font size at runtime
   fun setSubtitleFontSize(size: String) {
-    if (!MPVState.isInitialized()) return
+    if (!MPVLib.isInitialized()) return
 
     size.toDoubleOrNull()?.takeIf { it > 0 }?.let { fontSize ->
       runCatching {
-        MPVApi.command(arrayOf("set", "sub-font-size", fontSize.toString()))
+        MPVLib.command(arrayOf("set", "sub-font-size", fontSize.toString()))
       }
     }
   }
 
   // Helper function to change subtitle font size from SP to pixels
   fun setSubtitleFontSizeFromSp(sp: Float) {
-    if (!MPVState.isInitialized()) return
+    if (!MPVLib.isInitialized()) return
 
     runCatching {
       val px = android.util.TypedValue.applyDimension(
@@ -644,7 +629,7 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
         sp,
         displayMetrics
       ).toInt()
-      MPVApi.command(arrayOf("set", "sub-font-size", px.toString()))
+      MPVLib.command(arrayOf("set", "sub-font-size", px.toString()))
     }
   }
 

@@ -28,8 +28,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSubtitleSettingsBinding
 import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
-import cloud.app.csplayer.ui.player.mpv.MPVApi
-import cloud.app.csplayer.ui.player.mpv.MPVState
+import cloud.app.csplayer.ui.player.mpv.MPVLib
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.DataStore.setKey
 import cloud.app.csplayer.utils.Event
@@ -123,7 +122,7 @@ class MPVSubtitleFragment : Fragment() {
     // Return true if MPV native instance appears to be initialized and usable.
     private fun isMPVInitialized(): Boolean {
       // Use MPVState instead of probing native MPV to avoid calling into native code before init.
-      return MPVState.isInitialized()
+      return MPVLib.isInitialized()
     }
 
     // Try applying to mpv; if mpv isn't initialized yet, retry a few times with a delay.
@@ -159,11 +158,11 @@ class MPVSubtitleFragment : Fragment() {
       Log.d("MPVSubtitle", "Applying subtitle style - fg: $fg, bg: $bg, window: $window, edge: $edge, fontSize: ${style.fixedTextSize}")
 
       // Get current subtitle track ID and current position
-      val curSid = MPVApi.getPropertyInt("sid") ?: -1
-      val curTime = MPVApi.getPropertyDouble("time-pos") ?: 0.0
+      val curSid = MPVLib.getPropertyInt("sid") ?: -1
+      val curTime = MPVLib.getPropertyDouble("time-pos") ?: 0.0
       // Check subtitle format/codec
-      val subCodec = MPVApi.getPropertyString("track-list/$curSid/codec")
-      val subTitle = MPVApi.getPropertyString("track-list/$curSid/title")
+      val subCodec = MPVLib.getPropertyString("track-list/$curSid/codec")
+      val subTitle = MPVLib.getPropertyString("track-list/$curSid/title")
       Log.d("MPVSubtitle", "Current subtitle track ID: $curSid, time: $curTime")
       Log.d("MPVSubtitle", "Subtitle codec: $subCodec, title: $subTitle")
 
@@ -175,7 +174,7 @@ class MPVSubtitleFragment : Fragment() {
 
       try {
         // First, completely disable subtitles
-        MPVApi.command(arrayOf("set", "sid", "no"))
+        MPVLib.command(arrayOf("set", "sid", "no"))
         Log.d("MPVSubtitle", "Disabled subtitles")
       } catch (e: Exception) {
         Log.e("MPVSubtitle", "Failed to disable subtitles", e)
@@ -186,7 +185,7 @@ class MPVSubtitleFragment : Fragment() {
 
       // Ensure subtitles are visible
       try {
-        MPVApi.command(arrayOf("set", "sub-visibility", "yes"))
+        MPVLib.command(arrayOf("set", "sub-visibility", "yes"))
         Log.d("MPVSubtitle", "Enabled subtitle visibility")
       } catch (e: Exception) {
         Log.e("MPVSubtitle", "Failed to enable subtitle visibility", e)
@@ -194,7 +193,7 @@ class MPVSubtitleFragment : Fragment() {
 
       // Set override mode - "yes" works better for runtime than "strip"
       try {
-        MPVApi.command(arrayOf("set", "sub-ass-override", "yes"))
+        MPVLib.command(arrayOf("set", "sub-ass-override", "yes"))
         Log.d("MPVSubtitle", "Set sub-ass-override to yes")
       } catch (e: Exception) {
         Log.e("MPVSubtitle", "Failed to set sub-ass-override", e)
@@ -205,7 +204,7 @@ class MPVSubtitleFragment : Fragment() {
         val px = getPixels(sp)
         Log.d("MPVSubtitle", "Setting sub-font-size to $px pixels")
         try {
-          MPVApi.command(arrayOf("set", "sub-font-size", px.toString()))
+          MPVLib.command(arrayOf("set", "sub-font-size", px.toString()))
         } catch (e: Exception) {
           Log.e("MPVSubtitle", "Failed to set sub-font-size", e)
         }
@@ -213,14 +212,14 @@ class MPVSubtitleFragment : Fragment() {
 
       // Apply colors
       try {
-        MPVApi.command(arrayOf("set", "sub-color", fg))
+        MPVLib.command(arrayOf("set", "sub-color", fg))
         Log.d("MPVSubtitle", "Set sub-color to $fg")
       } catch (e: Exception) {
         Log.e("MPVSubtitle", "Failed to set sub-color", e)
       }
 
       try {
-        MPVApi.command(arrayOf("set", "sub-border-color", edge))
+        MPVLib.command(arrayOf("set", "sub-border-color", edge))
       } catch (e: Exception) {
         Log.e("MPVSubtitle", "Failed to set sub-border-color", e)
       }
@@ -228,16 +227,16 @@ class MPVSubtitleFragment : Fragment() {
       // Border/shadow based on edge type
       when (style.edgeType) {
         CaptionStyleCompat.EDGE_TYPE_NONE -> {
-          MPVApi.command(arrayOf("set", "sub-border-size", "0"))
-          MPVApi.command(arrayOf("set", "sub-shadow-offset", "0"))
+          MPVLib.command(arrayOf("set", "sub-border-size", "0"))
+          MPVLib.command(arrayOf("set", "sub-shadow-offset", "0"))
         }
         CaptionStyleCompat.EDGE_TYPE_OUTLINE -> {
-          MPVApi.command(arrayOf("set", "sub-border-size", "2.5"))
-          MPVApi.command(arrayOf("set", "sub-shadow-offset", "0"))
+          MPVLib.command(arrayOf("set", "sub-border-size", "2.5"))
+          MPVLib.command(arrayOf("set", "sub-shadow-offset", "0"))
         }
         else -> {
-          MPVApi.command(arrayOf("set", "sub-border-size", "0"))
-          MPVApi.command(arrayOf("set", "sub-shadow-offset", "1.5"))
+          MPVLib.command(arrayOf("set", "sub-border-size", "0"))
+          MPVLib.command(arrayOf("set", "sub-shadow-offset", "1.5"))
         }
       }
 
@@ -246,21 +245,21 @@ class MPVSubtitleFragment : Fragment() {
       if (copied != null) {
         val fontFile = File(copied)
         try {
-          MPVApi.command(arrayOf("set", "sub-font", fontFile.nameWithoutExtension))
+          MPVLib.command(arrayOf("set", "sub-font", fontFile.nameWithoutExtension))
         } catch (_: Exception) {
         }
       }
 
       // Additional settings
       try {
-        MPVApi.command(arrayOf("set", "sub-scale", "1.0"))
-        MPVApi.command(arrayOf("set", "sub-blur", "0"))
+        MPVLib.command(arrayOf("set", "sub-scale", "1.0"))
+        MPVLib.command(arrayOf("set", "sub-blur", "0"))
       } catch (_: Exception) {
       }
 
       // CRITICAL: Force MPV to reload subtitle rendering engine
       try {
-        MPVApi.command(arrayOf("sub-reload"))
+        MPVLib.command(arrayOf("sub-reload"))
         Log.d("MPVSubtitle", "Reloaded subtitle rendering")
       } catch (e: Exception) {
         Log.e("MPVSubtitle", "Failed to reload subtitles", e)
@@ -271,13 +270,13 @@ class MPVSubtitleFragment : Fragment() {
         // Use a longer delay to ensure settings are applied
         Handler(Looper.getMainLooper()).postDelayed({
           try {
-            MPVApi.command(arrayOf("set", "sid", curSid.toString()))
+            MPVLib.command(arrayOf("set", "sid", curSid.toString()))
             Log.d("MPVSubtitle", "Re-enabled subtitle track $curSid")
 
             // Force subtitle position update to current time to refresh display
             Handler(Looper.getMainLooper()).postDelayed({
               try {
-                MPVApi.command(arrayOf("seek", "0", "relative+exact"))
+                MPVLib.command(arrayOf("seek", "0", "relative+exact"))
                 Log.d("MPVSubtitle", "Refreshed subtitle display")
               } catch (_: Exception) {
               }
