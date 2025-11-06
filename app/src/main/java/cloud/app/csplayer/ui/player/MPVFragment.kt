@@ -3,7 +3,6 @@ package cloud.app.csplayer.ui.player
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.net.Uri
@@ -42,7 +41,6 @@ import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.model.SubtitleData
 import cloud.app.csplayer.model.SubtitleOrigin
 import cloud.app.csplayer.model.VideoLink
-import cloud.app.csplayer.ui.player.mpv.DOUBLE_TAB_MINIMUM_TIME_BETWEEN
 import cloud.app.csplayer.ui.player.mpv.MPVLib
 import cloud.app.csplayer.ui.player.mpv.MPVUtils
 import cloud.app.csplayer.ui.player.mpv.MPVView
@@ -323,6 +321,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         },
         onSingleTap = {
           uiController.toggleControls()
+          Timber.i("onSingleTap ${Utils.getStackTrace()}")
         },
         onTogglePlayPause = {
           togglePlayPause()
@@ -729,6 +728,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           override fun onScrubStart(previewBar: PreviewBar?) {
             resume = player?.paused == false
             if (resume) player?.paused = true
+            uiController.resetAutoHideTimer()
           }
 
           override fun onScrubMove(
@@ -741,6 +741,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           override fun onScrubStop(previewBar: PreviewBar?) {
             player?.timePos = previewBar?.progress?.toDouble()
             if (resume) player?.paused = false
+            uiController.resetAutoHideTimer()
           }
         })
 
@@ -754,6 +755,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       playPauseToggle.setOnClickListener {
         togglePlayPause()
+        uiController.resetAutoHideTimer()
       }
 
       ytOverlay.performListener(object : YouTubeOverlay.PerformListener {
@@ -780,12 +782,14 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       playerRotateBtt.setOnClickListener {
         toggleRotate()
+        uiController.resetAutoHideTimer()
       }
 
       // init clicks
       playerResizeBtt.setOnClickListener {
         nextResize()
         setReizeIcon()
+        uiController.resetAutoHideTimer()
       }
 
       playerSpeedBtt.setOnClickListener {
@@ -808,10 +812,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       exoRew.setOnClickListener {
         rewind()
+        uiController.resetAutoHideTimer()
       }
 
       exoFfwd.setOnClickListener {
         fastForward()
+        uiController.resetAutoHideTimer()
       }
 
       playerGoBack.setOnClickListener {

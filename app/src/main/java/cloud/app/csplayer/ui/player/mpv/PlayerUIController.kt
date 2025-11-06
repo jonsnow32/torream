@@ -56,24 +56,6 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
   init {
     // Set initial lock icon
     updateLockIcon()
-
-    // Setup click listener on root layout to toggle controls
-    setupRootClickListener()
-  }
-
-  /**
-   * Setup click listener on pipHide layout to detect user clicks
-   * This enables shallow touch detection without interfering with child views
-   */
-  private fun setupRootClickListener() {
-    binding.pipHide.setOnClickListener {
-      if (!isLocked) {
-        toggleControls()
-        if (isShowing) {
-          scheduleAutoHide()
-        }
-      }
-    }
   }
 
   // ========== Public API ==========
@@ -84,6 +66,11 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
   fun toggleControls() {
     isShowing = !isShowing
     applyUIState()
+
+    // Schedule auto-hide if controls are now showing
+    if (isShowing && !isLocked) {
+      scheduleAutoHide()
+    }
   }
 
   /**
@@ -325,8 +312,6 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
    * - UNLOCKED: All controls visible/hidden based on isShowing
    */
   private fun applyUIState() {
-
-    Timber.i("applyUIState %s", Exception().stackTrace.toString())
     if (isLocked) {
       // LOCKED STATE: Only lock button visible
       animateLocked()

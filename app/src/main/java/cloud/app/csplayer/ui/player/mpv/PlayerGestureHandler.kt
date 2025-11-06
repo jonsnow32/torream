@@ -4,27 +4,38 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.MotionEvent
 import android.view.View
 import cloud.app.csplayer.R
 import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.formatDuration
+import timber.log.Timber
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.round
 
+// ========== Gesture Configuration Constants ==========
 
-const val MINIMUM_SEEK_TIME = 7L         // when swipe seeking
-const val MINIMUM_VERTICAL_SWIPE = 2.0f     // in percentage
-const val MINIMUM_HORIZONTAL_SWIPE = 2.0f   // in percentage
-const val VERTICAL_MULTIPLIER = 2.0f
-const val HORIZONTAL_MULTIPLIER = 2.0f
-const val DOUBLE_TAB_MAXIMUM_HOLD_TIME = 200L
-const val DOUBLE_TAB_MINIMUM_TIME_BETWEEN = 200L    // this also affects the UI show response time
-const val DOUBLE_TAB_PAUSE_PERCENTAGE = 0.15        // in both directions
+// Swipe thresholds
+private const val MINIMUM_SEEK_TIME = 7L              // Minimum time difference for seek commit (ms)
+private const val MINIMUM_VERTICAL_SWIPE = 2.0f       // Minimum vertical swipe distance (%)
+private const val MINIMUM_HORIZONTAL_SWIPE = 2.0f     // Minimum horizontal swipe distance (%)
+private const val VERTICAL_MULTIPLIER = 2.0f          // Sensitivity multiplier for vertical swipes
+private const val HORIZONTAL_MULTIPLIER = 2.0f        // Sensitivity multiplier for horizontal swipes
 
+// Tap detection thresholds
+private const val DOUBLE_TAP_MAX_HOLD_TIME = 200L     // Maximum hold time to be considered a tap (ms)
+private const val DOUBLE_TAP_TIME_WINDOW = 200L       // Time window between taps for double tap (ms)
+private const val DOUBLE_TAP_PAUSE_ZONE = 0.15f       // Center zone percentage for pause on double tap
+
+// Brightness adjustment
+private const val BRIGHTNESS_SCALE = 255f             // System brightness scale (0-255)
+
+/**
+ * Touch action types for gesture recognition
+ */
 enum class TouchAction {
   Brightness,
   Volume,
@@ -33,30 +44,37 @@ enum class TouchAction {
 
 /**
  * Comprehensive gesture handler for the player
- * Handles:
+ *
+ * Features:
  * - Swipe gestures (brightness, volume, seeking)
- * - Double tap for seek forward/backward
- * - Single tap for UI toggle
- * - Touch validation
+ * - Double tap for seek forward/backward or pause
+ * - Single tap for UI toggle (with delayed detection to avoid conflict with double tap)
+ * - Touch validation and lock state handling
+ *
+ * Performance optimizations:
+ * - Lazy initialization of audio manager
+ * - Minimal object allocations during gesture handling
+ * - Efficient state management
  */
 class PlayerGestureHandler(
   private val context: Context,
   private val sWidth: Int,
   private val sHeight: Int,
-  private val isLocked: () -> Boolean,                       // Check if player is locked
-  private val isShowing: () -> Boolean,                      // Check if UI is showing
-  private val onBrightnessUpdate: (Float, Boolean) -> Unit,  // brightness, showUI
-  private val onVolumeUpdate: (Float, Boolean) -> Unit,      // volume ratio, showUI
-  private val onSeekUpdate: (Long, String, Boolean) -> Unit, // time, text, showUI
-  private val onSeekCommit: (Long) -> Unit,                  // final seek position
+  private val isLocked: () -> Boolean,
+  private val isShowing: () -> Boolean,
+  private val onBrightnessUpdate: (Float, Boolean) -> Unit,
+  private val onVolumeUpdate: (Float, Boolean) -> Unit,
+  private val onSeekUpdate: (Long, String, Boolean) -> Unit,
+  private val onSeekCommit: (Long) -> Unit,
   private val onDoubleTapRewind: () -> Unit,
   private val onDoubleTapForward: () -> Unit,
   private val onSingleTap: () -> Unit,
   private val onTogglePlayPause: () -> Unit,
   private val hideUIForBrightness: () -> Unit
 ) {
-  // ...existing code...
-  // Touch state variables
+
+  // ========== Touch State Management ==========
+
   private var isCurrentTouchValid = false
   private var currentTouchStart: Utils.Vector2? = null
   private var currentTouchLast: Utils.Vector2? = null
@@ -65,56 +83,76 @@ class PlayerGestureHandler(
   private var currentTouchStartPlayerTime: Long? = null
   private var currentTouchStartTime: Long? = null
   private var currentLastTouchEndTime: Long = 0
+
+  // ========== Tap Detection State ==========
+
   private var currentClickCount: Int = 0
   private var currentDoubleTapIndex = 0
+  private val singleTapHandler = Handler(Looper.getMainLooper())
+  private var pendingSingleTapRunnable: Runnable? = null
 
-  // Requested volume and brightness for smooth swiping
+  // ========== Gesture Settings ==========
+
   private var currentRequestedVolume: Float = 0.0f
   private var currentRequestedBrightness: Float = 1.0f
-
-  // Settings
   private var swipeHorizontalEnabled = false
   private var swipeVerticalEnabled = false
   private var doubleTapEnabled = false
   private var doubleTapPauseEnabled = true
   private var useTrueSystemBrightness = true
 
-  // Audio manager for volume control
-  private var audioManager: AudioManager? = null
+  // ========== System Services (Lazy Init) ==========
 
-  // Icons
-  private val brightnessIcons = intArrayOf(
-    R.drawable.sun_1,
-    R.drawable.sun_2,
-    R.drawable.sun_3,
-    R.drawable.sun_4,
-    R.drawable.sun_5,
-    R.drawable.sun_6,
-  )
-
-  private val volumeIcons = intArrayOf(
-    R.drawable.ic_baseline_volume_mute_24,
-    R.drawable.ic_baseline_volume_down_24,
-    R.drawable.ic_baseline_volume_up_24,
-  )
-
-  init {
-    audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+  private val audioManager: AudioManager? by lazy {
+    context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
   }
+
+  // ========== UI Resources (Lazy Init) ==========
+
+  private val brightnessIcons by lazy {
+    intArrayOf(
+      R.drawable.sun_1,
+      R.drawable.sun_2,
+      R.drawable.sun_3,
+      R.drawable.sun_4,
+      R.drawable.sun_5,
+      R.drawable.sun_6,
+    )
+  }
+
+  private val volumeIcons by lazy {
+    intArrayOf(
+      R.drawable.ic_baseline_volume_mute_24,
+      R.drawable.ic_baseline_volume_down_24,
+      R.drawable.ic_baseline_volume_up_24,
+    )
+  }
+
+  // ========== Screen Dimension Helpers ==========
+
+  private val halfScreenWidth = sWidth / 2
+  private val doubleTapPauseZoneStart = halfScreenWidth - (DOUBLE_TAP_PAUSE_ZONE * sWidth)
+  private val doubleTapPauseZoneEnd = halfScreenWidth + (DOUBLE_TAP_PAUSE_ZONE * sWidth)
+
+
+  // ========== Public API ==========
 
   /**
    * Update gesture handler settings
+   * @param horizontalEnabled Enable horizontal swipe for seeking
+   * @param verticalEnabled Enable vertical swipe for brightness/volume
    */
   fun updateSettings(
     horizontalEnabled: Boolean,
     verticalEnabled: Boolean,
   ) {
-    this.swipeHorizontalEnabled = horizontalEnabled
-    this.swipeVerticalEnabled = verticalEnabled
+    swipeHorizontalEnabled = horizontalEnabled
+    swipeVerticalEnabled = verticalEnabled
   }
 
   /**
    * Main motion event handler
+   * @return true if event was handled, false otherwise
    */
   @SuppressLint("SetTextI18n")
   fun handleMotionEvent(
@@ -124,99 +162,138 @@ class PlayerGestureHandler(
     duration: Long?,
     isValidTouch: (Float, Float) -> Boolean
   ): Boolean {
+    // Early return for invalid input
     if (event == null || view == null) return false
+
     val currentTouch = Utils.Vector2(event.x, event.y)
-    val startTouch = currentTouchStart
 
     when (event.action) {
-      MotionEvent.ACTION_DOWN -> {
-        handleActionDown(currentTouch, isValidTouch, currentPlayerTime)
-      }
-
-      MotionEvent.ACTION_UP -> {
-        handleActionUp(currentTouch, startTouch, duration)
-      }
-
-      MotionEvent.ACTION_MOVE -> {
-        handleActionMove(currentTouch, startTouch, duration)
-      }
+      MotionEvent.ACTION_DOWN -> handleActionDown(currentTouch, isValidTouch, currentPlayerTime)
+      MotionEvent.ACTION_UP -> handleActionUp(currentTouch, currentTouchStart, duration)
+      MotionEvent.ACTION_MOVE -> handleActionMove(currentTouch, currentTouchStart, duration)
     }
 
     currentTouchLast = currentTouch
     return true
   }
 
+  // ========== Motion Event Handlers ==========
+
+
+  /**
+   * Handle ACTION_DOWN event - initialize touch state
+   */
   private fun handleActionDown(
     currentTouch: Utils.Vector2,
     isValidTouch: (Float, Float) -> Boolean,
     currentPlayerTime: Long?
   ) {
-    // Validates if the touch is inside of the player area
+    // Validate touch location
     isCurrentTouchValid = isValidTouch(currentTouch.x, currentTouch.y)
 
-    if (isCurrentTouchValid) {
-      currentTouchStartTime = System.currentTimeMillis()
-      currentTouchStart = currentTouch
-      currentTouchLast = currentTouch
-      currentTouchStartPlayerTime = currentPlayerTime
+    if (!isCurrentTouchValid) return
 
-      getBrightness()?.let {
-        currentRequestedBrightness = it
-      }
-      getVolume()?.let { currentVolume ->
-        getMaxVolume()?.let { maxVolume ->
-          currentRequestedVolume = currentVolume.toFloat() / maxVolume.toFloat()
-        }
+    // Initialize touch state
+    val currentTime = System.currentTimeMillis()
+    currentTouchStartTime = currentTime
+    currentTouchStart = currentTouch
+    currentTouchLast = currentTouch
+    currentTouchStartPlayerTime = currentPlayerTime
+
+    // Cache current brightness and volume for smooth adjustment
+    currentRequestedBrightness = getBrightness() ?: 1.0f
+    getVolume()?.let { volume ->
+      getMaxVolume()?.let { maxVolume ->
+        currentRequestedVolume = volume.toFloat() / maxVolume.toFloat()
       }
     }
   }
 
+
+  /**
+   * Handle ACTION_UP event - finalize gesture and detect taps
+   */
   private fun handleActionUp(
     currentTouch: Utils.Vector2,
     startTouch: Utils.Vector2?,
     duration: Long?
   ) {
-    if (isCurrentTouchValid && !isLocked()) {
-      // Commit seek time
-      if (swipeHorizontalEnabled && currentTouchAction == TouchAction.Time) {
-        val startTime = currentTouchStartPlayerTime
-        if (startTime != null) {
-          calculateNewTime(startTime, startTouch, currentTouch, duration)?.let { seekTo ->
-            if (abs(seekTo - startTime) > MINIMUM_SEEK_TIME) {
-              onSeekCommit(seekTo)
-            }
-          }
-        }
-      }
+    // Commit seek if horizontal swipe was performed
+    if (isCurrentTouchValid && !isLocked() && swipeHorizontalEnabled && currentTouchAction == TouchAction.Time) {
+      commitSeek(startTouch, currentTouch, duration)
     }
 
-    // Check if click is eligible for double tap or single tap
-    val holdTime = currentTouchStartTime?.let { System.currentTimeMillis() - it }
-    if (isCurrentTouchValid
-      && currentTouchAction == null
-      && currentLastTouchAction == null
-      && holdTime != null
-      && holdTime < DOUBLE_TAB_MAXIMUM_HOLD_TIME
-    ) {
-      if (!isLocked()
-        && (System.currentTimeMillis() - currentLastTouchEndTime) < DOUBLE_TAB_MINIMUM_TIME_BETWEEN
-      ) {
-        currentClickCount++
+    // Detect tap gestures (single or double)
+    detectTapGesture(currentTouch)
 
-        if (currentClickCount >= 1) {
-          currentDoubleTapIndex++
-          handleDoubleTap(currentTouch)
-        }
-      } else {
-        // Valid click but not fast enough for double tap
-        currentClickCount = 0
-        onSingleTap()
+    // Cleanup touch state
+    resetTouchState()
+  }
+
+  /**
+   * Commit seek operation after horizontal swipe
+   */
+  private fun commitSeek(
+    startTouch: Utils.Vector2?,
+    currentTouch: Utils.Vector2,
+    duration: Long?
+  ) {
+    val startTime = currentTouchStartPlayerTime ?: return
+    calculateNewTime(startTime, startTouch, currentTouch, duration)?.let { seekTo ->
+      if (abs(seekTo - startTime) > MINIMUM_SEEK_TIME) {
+        onSeekCommit(seekTo)
+      }
+    }
+  }
+
+  /**
+   * Detect single tap or double tap gesture
+   */
+  private fun detectTapGesture(currentTouch: Utils.Vector2) {
+    // Check if this is a valid tap (short hold time, no swipe action)
+    val holdTime = currentTouchStartTime?.let { System.currentTimeMillis() - it } ?: return
+
+    if (!isCurrentTouchValid
+        || currentTouchAction != null
+        || currentLastTouchAction != null
+        || holdTime >= DOUBLE_TAP_MAX_HOLD_TIME) {
+      currentClickCount = 0
+      return
+    }
+
+    if (isLocked()) {
+      currentClickCount = 0
+      return
+    }
+
+    val timeSinceLastTap = System.currentTimeMillis() - currentLastTouchEndTime
+
+    if (timeSinceLastTap < DOUBLE_TAP_TIME_WINDOW) {
+      // Double tap detected!
+      cancelPendingSingleTap()
+      currentClickCount++
+
+      if (currentClickCount >= 1) {
+        currentDoubleTapIndex++
+        Timber.i("Double tap confirmed")
+        handleDoubleTap(currentTouch)
       }
     } else {
+      // Potential single tap - wait to confirm no second tap
       currentClickCount = 0
+      scheduleSingleTap()
+    }
+  }
+
+  /**
+   * Reset touch state after ACTION_UP
+   */
+  private fun resetTouchState() {
+    // Sync volume with actual system value when gesture ends
+    if (currentLastTouchAction == TouchAction.Volume || currentTouchAction == TouchAction.Volume) {
+      syncVolumeWithSystem()
     }
 
-    // Reset variables
     isCurrentTouchValid = false
     currentTouchStart = null
     currentLastTouchAction = currentTouchAction
@@ -225,7 +302,7 @@ class PlayerGestureHandler(
     currentTouchLast = null
     currentTouchStartTime = null
 
-    // Reset UI (notify listeners)
+    // Reset UI overlays
     onSeekUpdate(0, "", false)
     onVolumeUpdate(0f, false)
     onBrightnessUpdate(0f, false)
@@ -233,52 +310,92 @@ class PlayerGestureHandler(
     currentLastTouchEndTime = System.currentTimeMillis()
   }
 
+  /**
+   * Sync cached volume with actual system volume
+   */
+  private fun syncVolumeWithSystem() {
+    val maxVolume = getMaxVolume() ?: return
+    val actualVolume = getVolume() ?: return
+    currentRequestedVolume = actualVolume.toFloat() / maxVolume.toFloat()
+  }
+
+
+  /**
+   * Handle ACTION_MOVE event - detect and process swipe gestures
+   */
   private fun handleActionMove(
     currentTouch: Utils.Vector2,
     startTouch: Utils.Vector2?,
     duration: Long?
   ) {
-    if (startTouch != null && isCurrentTouchValid && !isLocked()) {
-      // Assign action if unassigned
-      if (currentTouchAction == null) {
-        val diffFromStart = startTouch - currentTouch
+    if (startTouch == null || !isCurrentTouchValid || isLocked()) return
 
-        if (swipeVerticalEnabled) {
-          if (abs(diffFromStart.y * 100 / sHeight) > MINIMUM_VERTICAL_SWIPE) {
-            currentTouchAction = if (startTouch.x < sWidth / 2) {
-              // Hide UI when adjusting brightness for better UX
-              if (isShowing()) {
-                hideUIForBrightness()
-              }
-              TouchAction.Brightness
-            } else {
-              TouchAction.Volume
-            }
-          }
-        }
-        if (swipeHorizontalEnabled) {
-          if (abs(diffFromStart.x * 100 / sHeight) > MINIMUM_HORIZONTAL_SWIPE) {
-            currentTouchAction = TouchAction.Time
-          }
-        }
+    // Detect gesture type if not yet determined
+    if (currentTouchAction == null) {
+      detectGestureType(startTouch, currentTouch)
+    }
+
+    // Process the detected gesture
+    val lastTouch = currentTouchLast ?: return
+    processGesture(startTouch, currentTouch, lastTouch, duration)
+  }
+
+  /**
+   * Detect which gesture type based on swipe direction
+   */
+  private fun detectGestureType(startTouch: Utils.Vector2, currentTouch: Utils.Vector2) {
+    val diffFromStart = startTouch - currentTouch
+    val verticalSwipePercent = abs(diffFromStart.y * 100 / sHeight)
+    val horizontalSwipePercent = abs(diffFromStart.x * 100 / sHeight)
+
+    // Check vertical swipe (brightness/volume)
+    if (swipeVerticalEnabled && verticalSwipePercent > MINIMUM_VERTICAL_SWIPE) {
+      currentTouchAction = if (startTouch.x < halfScreenWidth) {
+        // Left side = brightness, hide UI for better UX
+        if (isShowing()) hideUIForBrightness()
+        TouchAction.Brightness
+      } else {
+        // Right side = volume
+        TouchAction.Volume
       }
-
-      // Display action
-      val lastTouch = currentTouchLast
-      if (lastTouch != null) {
-        val diffFromLast = lastTouch - currentTouch
-        val verticalAddition = diffFromLast.y * VERTICAL_MULTIPLIER / sHeight.toFloat()
-
-        when (currentTouchAction) {
-          TouchAction.Time -> handleTimeSwipe(startTouch, currentTouch, duration)
-          TouchAction.Brightness -> handleBrightnessSwipe(verticalAddition)
-          TouchAction.Volume -> handleVolumeSwipe(verticalAddition)
-          else -> Unit
-        }
-      }
+    }
+    // Check horizontal swipe (seeking)
+    else if (swipeHorizontalEnabled && horizontalSwipePercent > MINIMUM_HORIZONTAL_SWIPE) {
+      currentTouchAction = TouchAction.Time
     }
   }
 
+  /**
+   * Process the detected gesture
+   */
+  private fun processGesture(
+    startTouch: Utils.Vector2,
+    currentTouch: Utils.Vector2,
+    lastTouch: Utils.Vector2,
+    duration: Long?
+  ) {
+    when (currentTouchAction) {
+      TouchAction.Time -> handleTimeSwipe(startTouch, currentTouch, duration)
+      TouchAction.Brightness -> {
+        val diffFromLast = lastTouch - currentTouch
+        val verticalAddition = diffFromLast.y * VERTICAL_MULTIPLIER / sHeight.toFloat()
+        handleBrightnessSwipe(verticalAddition)
+      }
+      TouchAction.Volume -> {
+        val diffFromLast = lastTouch - currentTouch
+        val verticalAddition = diffFromLast.y * VERTICAL_MULTIPLIER / sHeight.toFloat()
+        handleVolumeSwipe(verticalAddition)
+      }
+      null -> Unit
+    }
+  }
+
+
+  // ========== Gesture-Specific Handlers ==========
+
+  /**
+   * Handle horizontal swipe for time seeking
+   */
   private fun handleTimeSwipe(
     startTouch: Utils.Vector2,
     currentTouch: Utils.Vector2,
@@ -288,62 +405,73 @@ class PlayerGestureHandler(
 
     calculateNewTime(startTime, startTouch, currentTouch, duration)?.let { newMs ->
       val skipMs = newMs - startTime
-      val text = "${newMs.formatDuration()} [${
-        (if (abs(skipMs) < 0) "" else (if (skipMs > 0) "+" else "-"))
-      }${(abs(skipMs)).formatDuration()}]"
+      val skipPrefix = when {
+        abs(skipMs) < 0 -> ""
+        skipMs > 0 -> "+"
+        else -> "-"
+      }
+      val text = "${newMs.formatDuration()} [$skipPrefix${abs(skipMs).formatDuration()}]"
       onSeekUpdate(newMs, text, true)
     }
   }
 
+  /**
+   * Handle vertical swipe for brightness adjustment
+   */
   private fun handleBrightnessSwipe(verticalAddition: Float) {
-    currentRequestedBrightness = min(
-      1.0f,
-      max(currentRequestedBrightness + verticalAddition, 0.0f)
-    )
-
+    currentRequestedBrightness = (currentRequestedBrightness + verticalAddition).coerceIn(0.0f, 1.0f)
     setBrightness(currentRequestedBrightness)
     onBrightnessUpdate(currentRequestedBrightness, true)
   }
 
+  /**
+   * Handle vertical swipe for volume adjustment
+   */
   private fun handleVolumeSwipe(verticalAddition: Float) {
-    getMaxVolume()?.let { maxVolume ->
-      getVolume()?.let { currentVolume ->
-        // Clamps volume and adds swipe
-        currentRequestedVolume = min(
-          1.0f,
-          max(currentRequestedVolume + verticalAddition, 0.0f)
-        )
+    val maxVolume = getMaxVolume() ?: return
 
-        // Adjust volume
-        val desiredVolume = round(currentRequestedVolume * maxVolume).toInt()
-        if (desiredVolume != currentVolume) {
-          val newVolumeAdjusted =
-            if (desiredVolume < currentVolume) AudioManager.ADJUST_LOWER else AudioManager.ADJUST_RAISE
-          audioManager?.adjustVolume(newVolumeAdjusted, 0)
-        }
+    // Update requested volume with clamping
+    currentRequestedVolume = (currentRequestedVolume + verticalAddition).coerceIn(0.0f, 1.0f)
 
-        onVolumeUpdate(currentRequestedVolume, true)
+    // Calculate desired volume level
+    val desiredVolume = round(currentRequestedVolume * maxVolume).toInt()
+    val currentVolume = getVolume() ?: return
+
+    // Adjust system volume if needed
+    if (desiredVolume != currentVolume) {
+      val adjustment = if (desiredVolume < currentVolume) {
+        AudioManager.ADJUST_LOWER
+      } else {
+        AudioManager.ADJUST_RAISE
       }
+      audioManager?.adjustVolume(adjustment, 0)
     }
+
+    // Always update UI with requested volume for smooth feedback
+    // The actual system volume will be slightly behind, but this provides better UX
+    onVolumeUpdate(currentRequestedVolume, true)
   }
 
+
+  /**
+   * Handle double tap gesture
+   * Maps screen position to action: rewind (left), pause (center), forward (right)
+   */
   private fun handleDoubleTap(currentTouch: Utils.Vector2) {
+    Timber.i("Double tap at x=${currentTouch.x}, y=${currentTouch.y}")
+
     if (doubleTapPauseEnabled) {
       when {
-        currentTouch.x < sWidth / 2 - (DOUBLE_TAB_PAUSE_PERCENTAGE * sWidth) -> {
+        currentTouch.x < doubleTapPauseZoneStart -> {
           if (doubleTapEnabled) onDoubleTapRewind()
         }
-
-        currentTouch.x > sWidth / 2 + (DOUBLE_TAB_PAUSE_PERCENTAGE * sWidth) -> {
+        currentTouch.x > doubleTapPauseZoneEnd -> {
           if (doubleTapEnabled) onDoubleTapForward()
         }
-
-        else -> {
-          onTogglePlayPause()
-        }
+        else -> onTogglePlayPause()
       }
     } else if (doubleTapEnabled) {
-      if (currentTouch.x < sWidth / 2) {
+      if (currentTouch.x < halfScreenWidth) {
         onDoubleTapRewind()
       } else {
         onDoubleTapForward()
@@ -351,6 +479,42 @@ class PlayerGestureHandler(
     }
   }
 
+  /**
+   * Schedule a delayed single tap confirmation
+   * Allows time to detect if a second tap occurs (double tap)
+   */
+  private fun scheduleSingleTap() {
+    cancelPendingSingleTap()
+
+    pendingSingleTapRunnable = Runnable {
+      Timber.i("Single tap confirmed")
+      onSingleTap()
+      pendingSingleTapRunnable = null
+    }
+
+    // Delay execution by double tap window time
+    singleTapHandler.postDelayed(pendingSingleTapRunnable!!, DOUBLE_TAP_TIME_WINDOW)
+  }
+
+  /**
+   * Cancel any pending single tap
+   * Called when a double tap is detected to prevent false single tap
+   */
+  private fun cancelPendingSingleTap() {
+    pendingSingleTapRunnable?.let {
+      singleTapHandler.removeCallbacks(it)
+      pendingSingleTapRunnable = null
+      Timber.i("Single tap cancelled - double tap detected")
+    }
+  }
+
+
+  // ========== Helper Methods ==========
+
+  /**
+   * Calculate new seek time based on horizontal swipe distance
+   * Uses quadratic function for natural seeking feel
+   */
   private fun calculateNewTime(
     startTime: Long,
     touchStart: Utils.Vector2?,
@@ -358,36 +522,44 @@ class PlayerGestureHandler(
     duration: Long?
   ): Long? {
     if (touchStart == null || touchEnd == null || duration == null) return null
-    val diffX = (touchEnd.x - touchStart.x) * HORIZONTAL_MULTIPLIER / sWidth.toFloat()
 
-    return max(
-      min(
-        startTime + ((duration * (diffX * diffX)) * (if (diffX < 0.0f) -1 else 1)).toLong(),
-        duration
-      ), 0
-    )
+    val diffX = (touchEnd.x - touchStart.x) * HORIZONTAL_MULTIPLIER / sWidth.toFloat()
+    val sign = if (diffX < 0.0f) -1 else 1
+    val seekOffset = (duration * (diffX * diffX) * sign).toLong()
+
+    return (startTime + seekOffset).coerceIn(0, duration)
   }
 
+  // ========== System Integration Methods ==========
+
+  /**
+   * Get current screen brightness
+   * Falls back to window brightness if system brightness unavailable
+   */
   private fun getBrightness(): Float? {
     return if (useTrueSystemBrightness) {
       try {
         Settings.System.getInt(
           context.contentResolver,
           Settings.System.SCREEN_BRIGHTNESS
-        ) / 255f
-      } catch (e: Exception) {
+        ) / BRIGHTNESS_SCALE
+      } catch (_: Exception) {
         useTrueSystemBrightness = false
-        getBrightness()
+        getBrightness() // Retry with window brightness
       }
     } else {
       try {
         (context as? Activity)?.window?.attributes?.screenBrightness
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         null
       }
     }
   }
 
+  /**
+   * Set screen brightness
+   * Attempts system brightness first, falls back to window brightness
+   */
   private fun setBrightness(brightness: Float) {
     if (useTrueSystemBrightness) {
       try {
@@ -399,51 +571,62 @@ class PlayerGestureHandler(
         Settings.System.putInt(
           context.contentResolver,
           Settings.System.SCREEN_BRIGHTNESS,
-          (brightness * 255).toInt()
+          (brightness * BRIGHTNESS_SCALE).toInt()
         )
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         useTrueSystemBrightness = false
-        setBrightness(brightness)
+        setBrightness(brightness) // Retry with window brightness
       }
     } else {
       try {
-        val lp = (context as? Activity)?.window?.attributes
-        lp?.screenBrightness = brightness
-        (context as? Activity)?.window?.attributes = lp
-      } catch (e: Exception) {
-        // Ignore
+        val activity = context as? Activity ?: return
+        val lp = activity.window?.attributes ?: return
+        lp.screenBrightness = brightness
+        activity.window?.attributes = lp
+      } catch (_: Exception) {
+        // Silently fail - brightness control not available
       }
     }
   }
 
+  /**
+   * Get current media volume
+   */
   private fun getVolume(): Int? {
     return try {
       audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
       null
     }
   }
 
+  /**
+   * Get maximum media volume
+   */
   private fun getMaxVolume(): Int? {
     return try {
       audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
       null
     }
   }
 
+  // ========== Public Icon Helpers ==========
+
+  /**
+   * Get appropriate brightness icon for current level
+   */
   fun getBrightnessIcon(brightness: Float): Int {
-    return brightnessIcons[min(
-      brightnessIcons.size - 1,
-      max(0, round(brightness * (brightnessIcons.size - 1)).toInt())
-    )]
+    val index = round(brightness * (brightnessIcons.size - 1)).toInt()
+    return brightnessIcons[index.coerceIn(0, brightnessIcons.size - 1)]
   }
 
+  /**
+   * Get appropriate volume icon for current level
+   */
   fun getVolumeIcon(volumeRatio: Float): Int {
-    return volumeIcons[min(
-      volumeIcons.size - 1,
-      max(0, round(volumeRatio * (volumeIcons.size - 1)).toInt())
-    )]
+    val index = round(volumeRatio * (volumeIcons.size - 1)).toInt()
+    return volumeIcons[index.coerceIn(0, volumeIcons.size - 1)]
   }
 }
 

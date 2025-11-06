@@ -103,6 +103,31 @@ object Utils {
     throwable.printStackTrace()
     Log.d("ApiError", "-------------------------------------------------------------------")
   }
+
+  /**
+   * Get current stack trace as a string for debugging
+   * Filters out system/VM stack frames to show only relevant application code
+   */
+  fun getStackTrace(): String {
+    val stackTrace = Thread.currentThread().stackTrace
+    val relevantFrames = stackTrace
+      .filterIndexed { index, element ->
+        // Skip VMStack, Thread, and Utils.getStackTrace itself
+        index > 0 &&
+        !element.className.startsWith("dalvik.system.VMStack") &&
+        !element.className.startsWith("java.lang.Thread") &&
+        !(element.className == "cloud.app.csplayer.utils.Utils" && element.methodName == "getStackTrace")
+      }
+      .take(10) // Limit to 10 frames for readability
+
+    return if (relevantFrames.isEmpty()) {
+      "No relevant stack trace found"
+    } else {
+      relevantFrames.joinToString("\n") { element ->
+        "  at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})"
+      }
+    }
+  }
   private var currentToast: Toast? = null
 
 
