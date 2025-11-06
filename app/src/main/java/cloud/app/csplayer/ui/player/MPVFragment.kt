@@ -1472,6 +1472,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       sHeight = screenWidth
     }
 
+    // Update gesture handler with new dimensions
+    gestureHandler.updateDimensions(sWidth, sHeight)
+
     // Hide gesture UI overlays on configuration change
     playerBinding?.apply {
       playerTimeText.isVisible = false
@@ -1479,7 +1482,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       playerProgressbarRightHolder.isVisible = false
     }
 
-    Timber.d("Configuration changed - orientation: ${newConfig.orientation}")
+    Timber.d("Configuration changed - orientation: ${newConfig.orientation}, dims: ${sWidth}x${sHeight}")
   }
 
   override fun onDestroyView() {

@@ -58,8 +58,8 @@ enum class TouchAction {
  */
 class PlayerGestureHandler(
   private val context: Context,
-  private val sWidth: Int,
-  private val sHeight: Int,
+  private var sWidth: Int,
+  private var sHeight: Int,
   private val isLocked: () -> Boolean,
   private val isShowing: () -> Boolean,
   private val onBrightnessUpdate: (Float, Boolean) -> Unit,
@@ -128,14 +128,30 @@ class PlayerGestureHandler(
     )
   }
 
-  // ========== Screen Dimension Helpers ==========
+  // ========== Screen Dimension Helpers (Dynamic) ==========
 
-  private val halfScreenWidth = sWidth / 2
-  private val doubleTapPauseZoneStart = halfScreenWidth - (DOUBLE_TAP_PAUSE_ZONE * sWidth)
-  private val doubleTapPauseZoneEnd = halfScreenWidth + (DOUBLE_TAP_PAUSE_ZONE * sWidth)
+  private val halfScreenWidth: Int
+    get() = sWidth / 2
+
+  private val doubleTapPauseZoneStart: Float
+    get() = halfScreenWidth - (DOUBLE_TAP_PAUSE_ZONE * sWidth)
+
+  private val doubleTapPauseZoneEnd: Float
+    get() = halfScreenWidth + (DOUBLE_TAP_PAUSE_ZONE * sWidth)
 
 
   // ========== Public API ==========
+
+  /**
+   * Update screen dimensions when orientation changes
+   * @param newWidth New screen width
+   * @param newHeight New screen height
+   */
+  fun updateDimensions(newWidth: Int, newHeight: Int) {
+    sWidth = newWidth
+    sHeight = newHeight
+    Timber.d("Gesture dimensions updated: ${newWidth}x${newHeight}")
+  }
 
   /**
    * Update gesture handler settings
