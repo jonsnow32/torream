@@ -20,6 +20,7 @@ import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.databinding.ToastBinding
 import cloud.app.csplayer.datastore.Serializer
 import cloud.app.csplayer.model.SubtitleData
+import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.utils.UIHelper.toPx
 import kotlinx.serialization.serializer
 import java.lang.ref.WeakReference
@@ -330,8 +331,8 @@ object Utils {
         oldList[oldItemPosition] == newList[newItemPosition]
     }
   }
-  fun sortUrls(urls: Set<ExtractorLink>): List<ExtractorLink> {
-    return urls.sortedBy { t -> -t.quality }
+  fun sortUrls(urls: Set<VideoLink>): List<VideoLink> {
+    return urls.sortedBy { t -> t.name }
   }
 
   fun sortSubs(subs: Set<SubtitleData>): List<SubtitleData> {

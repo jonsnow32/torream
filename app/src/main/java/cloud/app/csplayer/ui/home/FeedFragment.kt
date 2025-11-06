@@ -390,8 +390,8 @@ class FeedFragment : Fragment(), FeedClickListener {
       }
 
       is FeedData.MediaItem -> {
-        // Build playlist with all media files in current folder/context
-        buildAndPlayPlaylist(item)
+        // Play video with auto-next enabled for continuous playback through feed
+        playVideosWithAutoNext(item)
       }
 
       is FeedData.AdItem -> {
@@ -410,9 +410,11 @@ class FeedFragment : Fragment(), FeedClickListener {
   }
 
   /**
-   * Build playlist from current feed data and play starting from clicked item
+   * Play videos with auto-next feature enabled.
+   * Builds a list of video links from feed and enables automatic playback of next video on EOF.
+   * Note: This uses app-level episode navigation (isSameEpisode = false), not MPV playlist mode.
    */
-  private fun buildAndPlayPlaylist(clickedItem: FeedData.MediaItem) {
+  private fun playVideosWithAutoNext(clickedItem: FeedData.MediaItem) {
     // Launch coroutine to collect current feed data
     viewLifecycleOwner.lifecycleScope.launch {
       try {
@@ -445,6 +447,11 @@ class FeedFragment : Fragment(), FeedClickListener {
         }
 
         // Create PlaybackData object
+        // isSameEpisode = false: These are DIFFERENT videos (not same content with different quality)
+        // When isSameEpisode = false + multiple videoLinks, MPVFragment will automatically:
+        //   1. Load ALL videos into MPV playlist (isPlaylistMode = true)
+        //   2. Enable MPV-level auto-navigation between videos
+        //   3. User can skip/navigate through playlist seamlessly
         val playbackData = PlaybackData(
           title = clickedItem.title,
           position = 0L,
@@ -452,7 +459,7 @@ class FeedFragment : Fragment(), FeedClickListener {
           subtitles = emptyList(), // Local files typically don't have embedded subtitle data here
           videoStartIndex = clickedIndex,
           subtitleStartIndex = 0,
-          isSameEpisode = false, // Playlist mode
+          isSameEpisode = false, // Different videos → will trigger MPV playlist mode
           useMpv = true, // Use MPV for local files
           hasAd = false
         )

@@ -94,6 +94,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
 
   private var filePath: String? = null
   private var playList: List<String>? = null
+  private var playListStartIndex: Int = 0
   private var headers: Map<String, String>? = null
   // Handler to delay marking MPV as initialized to avoid races with native threads
   private val mpvInitHandler = Handler(Looper.getMainLooper())
@@ -137,10 +138,12 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     }
   }
 
-  fun playPlayList(playList: List<String>, headers: Map<String, String>?) {
+  fun playPlayList(playList: List<String>, headers: Map<String, String>?, startIndex: Int = 0) {
+    this.playList = playList
+    this.playListStartIndex = startIndex
     this.headers = headers
     // Only attempt to call native MPV APIs if MPV is already initialized
-    if (MPVLib.isInitialized() && this.playList != null) {
+    if (MPVLib.isInitialized()) {
       var headerList = ""
       for ((key, value) in getHeader(headers)) {
         if (key.lowercase() == "referer") {
@@ -156,11 +159,25 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
       if (headerList.isNotEmpty()) {
         MPVLib.setPropertyString("http-header-fields", headerList)
       }
-      playList.forEach {
-        MPVLib.command(arrayOf("loadfile", it, "append-play"))
+
+      // Load all files into playlist
+      this.playList!!.forEachIndexed { index, url ->
+        if (index == 0) {
+          // First file: use "replace" to start fresh playlist
+          MPVLib.command(arrayOf("loadfile", url, "replace"))
+        } else {
+          // Subsequent files: append to playlist
+          MPVLib.command(arrayOf("loadfile", url, "append"))
+        }
+      }
+
+      // If startIndex is not 0, jump to that position
+      if (startIndex > 0 && startIndex < this.playList!!.size) {
+        MPVLib.setPropertyInt("playlist-pos", startIndex)
       }
 
       this.playList = null
+      this.playListStartIndex = 0
     }
   }
 
@@ -217,8 +234,10 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
         playFile(file!!, headers)
       } else if (playList != null) {
         val list = playList
+        val startIdx = playListStartIndex
         playList = null
-        playPlayList(list!!, headers)
+        playListStartIndex = 0
+        playPlayList(list!!, headers, startIdx)
       }
 
       // Notify listener that MPV initialization is complete

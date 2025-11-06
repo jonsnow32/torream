@@ -23,7 +23,7 @@ class PlayerViewModel @Inject constructor(
 ) : AndroidViewModel(application) {
 
   private val _allLinks = MutableLiveData<List<VideoLink>>()
-  val allLinks: LiveData<List<VideoLink>> = _allLinks
+  val allLinks: LiveData<List<VideoLink>> get() =  _allLinks
 
   private val _currentSubs = MutableLiveData<Set<SubtitleData>>(setOf())
   val currentSubs: LiveData<Set<SubtitleData>> = _currentSubs
@@ -47,11 +47,13 @@ class PlayerViewModel @Inject constructor(
 
     if (playbackData != null) {
       // New way: use PlaybackData object
-      _allLinks.postValue(playbackData.videoLinks)
-      _currentSubs.postValue(playbackData.subtitles.toSet())
       _currentLinkIndex.postValue(playbackData.videoStartIndex)
       _currentSubtitleIndex.postValue(playbackData.subtitleStartIndex)
       _isSameEpisode.postValue(playbackData.isSameEpisode)
+      _currentSubs.postValue(playbackData.subtitles.toSet())
+      _allLinks.postValue(playbackData.videoLinks)
+
+
     }
   }
 

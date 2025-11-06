@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.media3.common.MimeTypes
 import cloud.app.csplayer.MetadataHolder
 import cloud.app.csplayer.model.SubtitleData
+import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.utils.Coroutines.main
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.toJson
@@ -22,16 +23,17 @@ import org.json.JSONObject
 
 object CastHelper {
     fun getMediaInfo(
-      holder: MetadataHolder,
-      index: Int,
-      data: JSONObject?,
-      subtitles: List<SubtitleData>
+        holder: MetadataHolder,
+        index: Int,
+        data: JSONObject?,
+        subtitles: List<SubtitleData>
     ): MediaInfo {
         val link = holder.currentLinks[index]
         val movieMetadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE)
         movieMetadata.putString(
             MediaMetadata.KEY_SUBTITLE,
-          "${link.name} ${Qualities.getStringByInt(link.quality)}")
+            link.name
+        )
 
         holder.title?.let {
             movieMetadata.putString(MediaMetadata.KEY_TITLE, it)
@@ -53,15 +55,19 @@ object CastHelper {
 
         val builder = MediaInfo.Builder(link.url)
             .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-            .setContentType(when(link.type) {
-                ExtractorLinkType.M3U8 -> MimeTypes.APPLICATION_M3U8
-                ExtractorLinkType.DASH -> MimeTypes.APPLICATION_MPD
-                else -> MimeTypes.VIDEO_MP4
-            })
+            .setContentType(
+                // Infer content type from URL
+                when {
+                    link.url.contains(".m3u8", ignoreCase = true) -> MimeTypes.APPLICATION_M3U8
+                    link.url.contains(".mpd", ignoreCase = true) -> MimeTypes.APPLICATION_MPD
+                    else -> MimeTypes.VIDEO_MP4
+                }
+            )
             .setMetadata(movieMetadata)
             .setMediaTracks(tracks)
+
         data?.let {
-            builder.setCustomData(data)
+            builder.setCustomData(it)
         }
 
         return builder.build()
@@ -89,7 +95,7 @@ object CastHelper {
         isMovie: Boolean,
         title: String?,
         poster: String?,
-        currentLinks: List<ExtractorLink>,
+        currentLinks: List<VideoLink>,
         subtitles: List<SubtitleData>,
         startIndex: Int? = null,
         startTime: Long? = null,
@@ -136,3 +142,4 @@ object CastHelper {
         }
     }
 }
+

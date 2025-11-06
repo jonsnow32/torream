@@ -119,6 +119,7 @@
   <string name="no_data">No Data</string>
   <string name="episode_more_options_des">More Options</string>
   <string name="next_episode">Next episode</string>
+  <string name="previous_episode">Previous episode</string>
   <string name="result_plot" translatable="false">@string/synopsis</string>
   <string name="result_tags">Genres</string>
   <string name="result_share">Share</string>

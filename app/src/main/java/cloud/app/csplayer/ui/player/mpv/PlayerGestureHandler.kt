@@ -567,7 +567,6 @@ class PlayerGestureHandler(
     cancelPendingSingleTap()
 
     pendingSingleTapRunnable = Runnable {
-      Timber.i("Single tap confirmed")
       onSingleTap()
       pendingSingleTapRunnable = null
     }

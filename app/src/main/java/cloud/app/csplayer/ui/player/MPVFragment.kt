@@ -5,12 +5,10 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.ParcelFileDescriptor
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
@@ -27,7 +25,6 @@ import androidx.annotation.OptIn
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
 import androidx.appcompat.app.AppCompatActivity.RESULT_OK
-import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -190,7 +187,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private var shouldAutoPlay = true
   private var playbackHasStarted = false
-  private var onloadCommands = mutableListOf<Array<String>>()
   private var allLinks: List<VideoLink> = emptyList()
   private var currentSubs: Set<SubtitleData> = mutableSetOf()
   private var currentSelectedLink: VideoLink? = null
@@ -200,9 +196,39 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private var triedSwDecFallback = false
 
   private var playlistState: PlaylistState? = null
-  private var isPlaylistMode = false
   private val seekActionTime = 30000L
   private var decodeMode = DecodeMode.hwDec;
+
+  private var playbackInitialized = false
+
+  /**
+   * Check if ready to initialize playback and determine mode (single vs playlist)
+   * Called when allLinks or isSameEpisode changes
+   */
+  private fun checkAndInitializePlayback() {
+    // Only initialize once
+    if (playbackInitialized) return
+
+    // Need both values to be set
+    if (allLinks.isEmpty()) return
+
+    // Now determine playback mode
+    if (isSameEpisode || allLinks.size == 1) {
+      // Single video playback mode
+      Timber.tag(TAG).d("Initializing SINGLE video playback")
+      val startIndex = viewModel.currentLinkIndex.value ?: 0
+      normalSafeApiCall {
+        loadLink(allLinks.getOrNull(startIndex))
+      }
+    } else {
+      // Playlist mode - multiple different videos
+      Timber.tag(TAG).d("Initializing PLAYLIST mode with ${allLinks.size} videos")
+      val startIndex = viewModel.currentLinkIndex.value ?: 0
+      loadPlaylist(allLinks, startIndex)
+    }
+
+    playbackInitialized = true
+  }
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -234,24 +260,22 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     observe(viewModel.allLinks) {
       allLinks = it
-      //currentSelectedLink = allLinks.first()
+
+      // Check if ready to determine playback mode
+      checkAndInitializePlayback()
     }
     observe(viewModel.isSameEpisode) {
-      isSameEpisode = it;
+      isSameEpisode = it
+
+      // Check if ready to determine playback mode
+      checkAndInitializePlayback()
     }
     observe(viewModel.currentLinkIndex) {
-      if (!isPlaylistMode) {
-        normalSafeApiCall {
-          loadLink(allLinks.getOrNull(it))
-        }
-      }
+      // Current link index changed - will be used by checkAndInitializePlayback
     }
     observe(viewModel.currentSubs) { set ->
       for (sub in set) {
-        val url = resolveUri(Uri.parse(sub.url)) ?: continue
-        val flag = "select"
-        Timber.v("Adding subtitles from intent extras: $url")
-        onloadCommands.add(arrayOf("sub-add", url, flag))
+        mediaManager.addSubtitle(sub, select = true)
       }
     }
 
@@ -267,7 +291,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     } else {
       Timber.v("Audio focus not granted")
       if (!ignoreAudioFocus) {
-        onloadCommands.add(arrayOf("set", "pause", "yes"))
+        mediaManager.queueCommand(arrayOf("set", "pause", "yes"))
         shouldAutoPlay = false // Don't auto-play without audio focus
       } else {
         shouldAutoPlay = true // Auto-play even without audio focus if ignoring
@@ -309,7 +333,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         // Restore pause state after video loads
         if (savedPaused) {
           shouldAutoPlay = false
-          onloadCommands.add(arrayOf("set", "pause", "yes"))
+          mediaManager.queueCommand(arrayOf("set", "pause", "yes"))
         }
 
         Timber.v("Restored playback state - position: $savedPosition, paused: $savedPaused")
@@ -325,11 +349,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
         PlayerEventType.NextEpisode -> {
           // Check if in playlist mode first
-          if (isPlaylistMode && playlistState?.hasNext() == true) {
+          if (playlistState?.hasNext() == true) {
             playNextInPlaylist()
           } else {
-            // Use existing episode navigation
-            playNext()
+            //todo playNextInAllLink()
           }
         }
 
@@ -357,10 +380,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
         PlayerEventType.PrevEpisode -> {
           // Check if in playlist mode first
-          if (isPlaylistMode && playlistState?.hasPrevious() == true) {
+          if (playlistState?.hasPrevious() == true) {
             playPreviousInPlaylist()
+          } else {
+            //todo playPreviousInAllLink()
           }
-          // Note: No existing "play previous" logic for episodes
+
         }
 
         PlayerEventType.SeekForward -> {
@@ -515,11 +540,19 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       playerSkipEpisode.setOnClickListener {
         // Check if in playlist mode first
-        if (isPlaylistMode && playlistState?.hasNext() == true) {
+        if (playlistState?.hasNext() == true) {
           playNextInPlaylist()
         } else {
-          playNext()
+          //todo playNextInAllLink()
         }
+      }
+
+      playerPrevEpisode.setOnClickListener {
+        // Check if in playlist mode first
+        if (playlistState?.hasPrevious() == true) {
+          playPreviousInPlaylist()
+        }
+        // Note: No app-level "previous episode" logic for non-playlist mode
       }
 
       playerLock.setOnClickListener {
@@ -699,7 +732,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         val items = mpv.loadPlaylist()
         if (items.size > 1) {
           val currentPos = MPVLib.getPropertyInt("playlist-pos") ?: 0
-          isPlaylistMode = true
           playlistState = PlaylistState(
             items = items,
             currentIndex = currentPos,
@@ -781,9 +813,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         }
         uiController.setTitle(titleText)
 
-        // Update skip button visibility
-        playerSkipEpisode.isVisible = state.currentIndex < state.items.size - 1
-
+        // Update navigation buttons visibility based on playlist position
+        playerSkipEpisode.isVisible = state.hasNext()
+        playerPrevEpisode.isVisible = state.hasPrevious()
       }
 
       Timber.tag(TAG).d("Updated playlist UI: ${state.currentIndex + 1}/${state.items.size}")
@@ -817,7 +849,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private fun finishPlaylist() {
     Timber.tag(TAG).d("Playlist finished")
     playlistState = null
-    isPlaylistMode = false
     CommonActivitty.activityResultEvent?.invoke(
       PlayBackResult(
         RESULT_OK,
@@ -1100,7 +1131,31 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  @SuppressLint("UseKtx")
+
+  /**
+   * Load multiple videos as MPV playlist
+   * This enables MPV-level playlist mode with automatic navigation
+   */
+  private fun loadPlaylist(links: List<VideoLink>, startIndex: Int = 0) {
+    if (links.isEmpty()) return
+
+    Timber.tag(TAG).d("Loading playlist: ${links.size} videos, starting at index $startIndex")
+
+    // Use mediaManager to load playlist
+    mediaManager.loadPlaylist(
+      links = links,
+      startPosition = if (psc.position > 0) psc.position else (links.getOrNull(startIndex)?.position ?: 0L),
+      startIndex = startIndex
+    )
+
+    playerBinding?.playerBuffering?.isVisible = true
+    try {
+      uiReset()
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
   private fun loadLink(
     link: VideoLink?,
     sub: SubtitleData? = null,
@@ -1110,28 +1165,19 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     currentSelectedLink = link
 
-    pushOption(
-      "force-media-title",
-      currentSelectedLink?.name ?: currentSelectedLink?.url ?: ""
-    )
-    if (nextEpisode) {
-      pushOption(
-        "start",
-        "0"
-      )
+    // Use mediaManager to handle media loading
+    val startPosition = if (nextEpisode) {
+      0L
     } else {
-      pushOption(
-        "start",
-        "${if (psc.position > 0) psc.positionSec else (currentSelectedLink?.position ?: 0L) / 1000}"
-      )
+      if (psc.position > 0) psc.position else (link.position)
     }
-    val uri = currentSelectedLink?.url?.toUri() ?: return
-    // Enable auto-play for new video
-    shouldAutoPlay = true
-    player?.playFile(
-      resolveUri(uri) ?: "",
-      currentSelectedLink?.headers
+
+    mediaManager.loadFile(
+      link = link,
+      startPosition = startPosition,
+      title = link.name
     )
+
     playerBinding?.playerBuffering?.isVisible = true
     try {
       uiReset()
@@ -1401,6 +1447,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     // Release audio manager (handles media session and audio focus)
     playerAudioManager.release()
 
+    // Reset media manager state
+    mediaManager.reset()
+
     player?.removeObserver(this)
     player?.destroy()
 
@@ -1451,7 +1500,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   fun pushOption(key: String, value: String) {
-    onloadCommands.add(arrayOf("set", "file-local-options/${key}", value))
+    mediaManager.pushOption(key, value)
   }
 
   override fun eventProperty(property: String) {
@@ -1520,9 +1569,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
 
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_START_FILE) {
-      for (c in onloadCommands)
-        MPVLib.command(c)
-      onloadCommands.clear()
+      mediaManager.onPlaybackStarted()
       playbackHasStarted = true
     }
 
@@ -1537,9 +1584,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
 
       // Try to load playlist info from MPV if not already in playlist mode
-      if (!isPlaylistMode) {
-        loadPlaylistFromMPV()
-      }
+      loadPlaylistFromMPV()
     }
 
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART) {
@@ -1590,22 +1635,17 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     when (property) {
       "time-pos" -> updatePlaybackPos(value.toInt())
       "playlist-pos" -> {
-        // Update playlist state when MPV changes position
-        if (isPlaylistMode) {
-          val newIndex = value.toInt()
-          if (newIndex >= 0 && playlistState?.currentIndex != newIndex) {
-            playlistState = playlistState?.copy(currentIndex = newIndex)
-            updatePlaylistUI()
-            Timber.tag(TAG).d("Playlist position changed to: $newIndex")
-          }
+        val newIndex = value.toInt()
+        if (newIndex >= 0 && playlistState?.currentIndex != newIndex) {
+          playlistState = playlistState?.copy(currentIndex = newIndex)
+          updatePlaylistUI()
+          Timber.tag(TAG).d("Playlist position changed to: $newIndex")
         }
       }
 
       "playlist-count" -> {
         // Playlist count changed - reload if needed
-        if (isPlaylistMode) {
-          Timber.tag(TAG).d("Playlist count: $value")
-        }
+        Timber.tag(TAG).d("Playlist count: $value")
       }
 
       "track-list/count" -> {
@@ -1737,32 +1777,32 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun playNext() {
-    val sourceIndex = currentSelectedLink?.let { allLinks.indexOf(it) } ?: -1
-    CommonActivitty.activityResultEvent?.invoke(
-      PlayBackResult(
-        RESULT_OK,
-        psc.positionSec,
-        resources.getString(R.string.end_of_file),
-        sourceIndex + 1
-      )
-    )
-
-    if (sourceIndex >= allLinks.size - 1) {
-      playerBinding?.playerSkipEpisode?.isVisible = false
-    } else {
-      try {
-        MPVLib.command(arrayOf("stop"))
-        val link = allLinks.getOrNull(sourceIndex + 1)
-        loadLink(link, currentSelectedSubtitles, true)
-        showToast(resources.getString(R.string.next_episode))
-      } catch (e: Exception) {
-        logError(e)
-        showToast(resources.getString(R.string.next_episode))
-      }
-    }
-
-  }
+//  private fun playNext() {
+//    val sourceIndex = currentSelectedLink?.let { allLinks.indexOf(it) } ?: -1
+//    CommonActivitty.activityResultEvent?.invoke(
+//      PlayBackResult(
+//        RESULT_OK,
+//        psc.positionSec,
+//        resources.getString(R.string.end_of_file),
+//        sourceIndex + 1
+//      )
+//    )
+//
+//    if (sourceIndex >= allLinks.size - 1) {
+//      playerBinding?.playerSkipEpisode?.isVisible = false
+//    } else {
+//      try {
+//        MPVLib.command(arrayOf("stop"))
+//        val link = allLinks.getOrNull(sourceIndex + 1)
+//        loadLink(link, currentSelectedSubtitles, true)
+//        showToast(resources.getString(R.string.next_episode))
+//      } catch (e: Exception) {
+//        logError(e)
+//        showToast(resources.getString(R.string.next_episode))
+//      }
+//    }
+//
+//  }
 
   private fun finishWithResult(code: Int, includeTimePos: Boolean = false, endFileReason: Int) {
     // Refer to http://mpv-android.github.io/mpv-android/intent.html
@@ -1792,7 +1832,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     when (endFileReason) {
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_EOF -> {
         // Priority 1: Check if in playlist mode and auto-advance
-        if (isPlaylistMode && playlistState != null) {
+        if (playlistState != null) {
           val state = playlistState!!
           if (state.hasNext()) {
             Timber.tag(TAG).d("EOF in playlist mode - auto-playing next item")
@@ -1807,8 +1847,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         }
 
         // Priority 2: Handle episode navigation (existing logic)
-        if (!isSameEpisode) {
-          playNext()
+        if (isSameEpisode) {
+          //todo playNextInAllLink()
         } else {
           // End of file for a standalone item
           player?.timePos?.let {
@@ -1953,7 +1993,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private fun initMediaSession(): MediaSessionCompat {
     /*
-        https://developer.android.com/guide/topics/media-apps/working-with-a-media-session
+        https://developer.android.com/guide/topics/media-apps/working-with-a-media_session
         https://developer.android.com/guide/topics/media-apps/audio-app/mediasession-callbacks
         https://developer.android.com/reference/android/support/v4/media/session/MediaSessionCompat
      */
@@ -2017,44 +2057,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun resolveUri(data: Uri): String? {
-    val filepath = when (data.scheme) {
-      "file" -> data.path
-      "content" -> openContentFd(data)
-      // mpv supports data URIs but needs data:// to pass it through correctly
-      "data" -> "data://${data.schemeSpecificPart}"
-      "http", "https", "rtmp", "rtmps", "rtp", "rtsp", "mms", "mmst", "mmsh", "tcp", "udp", "lavf"
-        -> data.toString()
-
-      else -> data.path
-    }
-
-    if (filepath == null)
-      Timber.e("unknown scheme: ${data.scheme}")
-    return filepath
-  }
-
-  private fun openContentFd(uri: Uri): String? {
-    val resolver = requireActivity().applicationContext.contentResolver
-    Timber.v("Resolving content URI: $uri")
-    val fd = try {
-      val desc = resolver.openFileDescriptor(uri, "r")
-      desc!!.detachFd()
-    } catch (e: Exception) {
-      Timber.e("Failed to open content fd: $e")
-      return null
-    }
-    // See if we skip the indirection and read the real file directly
-    val path = MPVUtils.findRealPath(fd)
-    if (path != null) {
-      Timber.v("Found real file path: $path")
-      ParcelFileDescriptor.adoptFd(fd).close() // we don't need that anymore
-      return path
-    }
-    // Else, pass the fd to mpv
-    return "fd://${fd}"
-  }
-
   @OptIn(UnstableApi::class)
   private fun openSubPicker() {
     try {
@@ -2114,18 +2116,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     val selectedSubtitle = subtitleData.first()
     val ctx = context ?: return
 
-    // Add subtitles to MPV
+    // Add subtitles to MPV using mediaManager
     subtitleData.forEachIndexed { index, sub ->
       try {
-        val url = resolveUri(Uri.parse(sub.url))
-        if (url != null) {
-          // Use "select" flag for first subtitle, "auto" for others
-          val flag = if (index == 0) "select" else "auto"
-          MPVLib.command(arrayOf("sub-add", url, flag))
-          Timber.d("Added subtitle to MPV: ${sub.name} ($url)")
-        } else {
-          Timber.e("Failed to resolve subtitle URL: ${sub.url}")
-        }
+        // Use "select" flag for first subtitle, "auto" for others
+        val select = index == 0
+        mediaManager.addSubtitle(sub, select)
+        Timber.d("Added subtitle to MPV: ${sub.name}")
       } catch (e: Exception) {
         Timber.e(e, "Failed to add subtitle to MPV: ${sub.name}")
       }

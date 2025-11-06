@@ -720,12 +720,25 @@
           android:paddingHorizontal="12dp">
 
           <ImageButton
+            android:id="@+id/playerPrevEpisode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/transparent_circle_background"
+            android:contentDescription="@string/previous_episode"
+            android:padding="12dp"
+            android:src="@drawable/ic_skip_previous_black_24dp"
+            android:visibility="gone"
+            app:tint="@android:color/white"
+            tools:visibility="visible" />
+
+          <ImageButton
             android:id="@+id/playerSkipEpisode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:background="@drawable/transparent_circle_background"
-            android:contentDescription="@string/background_audio"
+            android:contentDescription="@string/next_episode"
             android:padding="12dp"
             android:src="@drawable/rounded_skip_next_24"
             android:visibility="gone"

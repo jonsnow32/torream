@@ -8,6 +8,7 @@ import android.view.View.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import cloud.app.csplayer.model.SubtitleData
+import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.player.PlayBackResult
 import cloud.app.csplayer.ui.subtitles.ChromecastSubtitlesFragment.Companion.getCurrentSavedStyle
 import cloud.app.csplayer.utils.CastHelper.awaitLinks
@@ -15,8 +16,6 @@ import cloud.app.csplayer.utils.CastHelper.getMediaInfo
 import cloud.app.csplayer.utils.CommonActivitty
 import cloud.app.csplayer.utils.Coroutines.ioSafe
 import cloud.app.csplayer.utils.DataStore.toKotlinObject
-import cloud.app.csplayer.utils.ExtractorLink
-import cloud.app.csplayer.utils.Qualities
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.sortSubs
@@ -82,7 +81,7 @@ data class MetadataHolder(
   val apiName: String,
   val title: String?,
   val poster: String?,
-  val currentLinks: List<ExtractorLink>,
+  val currentLinks: List<VideoLink>,
   val currentSubtitles: List<SubtitleData>
 )
 
@@ -173,7 +172,7 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                         ?: remoteMediaClient?.currentItem?.media?.contentId)
 
                     val sortingMethods =
-                        items.map { "${it.name} ${Qualities.getStringByInt(it.quality)}" }
+                        items.map { it.name }
                             .toTypedArray()
                     val sotringIndex = items.indexOfFirst { it.url == contentUrl }
 
@@ -281,7 +280,7 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                 if (itemCount != null && itemCount - currentIdIndex == 1 && !isLoadingMore) {
                     isLoadingMore = true
                     ioSafe {
-                        val currentLinks = mutableSetOf<ExtractorLink>()
+                        val currentLinks = mutableSetOf<VideoLink>()
                         val currentSubs = mutableSetOf<SubtitleData>()
 
 
