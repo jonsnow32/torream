@@ -229,7 +229,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="@string/quality"
-                android:src="@drawable/ic_baseline_link_24"
+                android:src="@drawable/outline_format_list_bulleted_24"
                 app:tint="@android:color/white" />
 
               <TextView
@@ -352,6 +352,7 @@
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
             </LinearLayout>
+
 
             <LinearLayout
               android:id="@+id/playerCodecBtt"

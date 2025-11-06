@@ -9,6 +9,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.MotionEvent
 import android.view.View
+import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.formatDuration
@@ -101,6 +102,48 @@ class PlayerGestureHandler(
   private var doubleTapPauseEnabled = true
   private var useTrueSystemBrightness = true
 
+  init {
+    // Load gesture settings from SharedPreferences
+    loadGestureSettings()
+  }
+
+  /**
+   * Load gesture settings from SharedPreferences
+   */
+  private fun loadGestureSettings() {
+    try {
+      val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+
+      // Load swipe settings
+      swipeHorizontalEnabled = prefs.getBoolean(
+        context.getString(R.string.swipe_enabled_key),
+        true  // Default: enabled
+      )
+      swipeVerticalEnabled = prefs.getBoolean(
+        context.getString(R.string.swipe_vertical_enabled_key),
+        true  // Default: enabled
+      )
+
+      // Load double tap settings
+      doubleTapEnabled = prefs.getBoolean(
+        context.getString(R.string.double_tap_enabled_key),
+        true  // Default: enabled
+      )
+      doubleTapPauseEnabled = prefs.getBoolean(
+        context.getString(R.string.double_tap_pause_enabled_key),
+        true  // Default: enabled
+      )
+
+      // Note: brightness system mode is determined at runtime
+      // useTrueSystemBrightness will auto-fallback if system settings not available
+
+      Timber.d("Gesture settings loaded - H:$swipeHorizontalEnabled V:$swipeVerticalEnabled DoubleTap:$doubleTapEnabled DoubleTapPause:$doubleTapPauseEnabled")
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to load gesture settings, using defaults")
+      // Keep default values on error
+    }
+  }
+
   // ========== System Services (Lazy Init) ==========
 
   private val audioManager: AudioManager? by lazy {
@@ -153,17 +196,13 @@ class PlayerGestureHandler(
     Timber.d("Gesture dimensions updated: ${newWidth}x${newHeight}")
   }
 
+
   /**
-   * Update gesture handler settings
-   * @param horizontalEnabled Enable horizontal swipe for seeking
-   * @param verticalEnabled Enable vertical swipe for brightness/volume
+   * Reload all gesture settings from SharedPreferences
+   * Call this when preferences are changed in settings screen
    */
-  fun updateSettings(
-    horizontalEnabled: Boolean,
-    verticalEnabled: Boolean,
-  ) {
-    swipeHorizontalEnabled = horizontalEnabled
-    swipeVerticalEnabled = verticalEnabled
+  fun reloadSettings() {
+    loadGestureSettings()
   }
 
   /**

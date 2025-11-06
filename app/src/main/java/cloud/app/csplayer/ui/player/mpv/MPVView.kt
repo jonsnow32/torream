@@ -38,7 +38,6 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     File(context.filesDir, "fonts")
   }
 
-  @SuppressLint("LogNotTimber")
   override fun initOptions() {
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
@@ -61,18 +60,11 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     }
 
     // vo: set display fps as reported by android
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-      val disp = ContextCompat.getDisplayOrDefault(context)
-      val refreshRate = disp.mode.refreshRate
+    val disp = ContextCompat.getDisplayOrDefault(context)
+    val refreshRate = disp.mode.refreshRate
 
-      Timber.tag(TAG).v("Display ${disp.displayId} reports FPS of $refreshRate")
-      MPVLib.setOptionString("display-fps-override", refreshRate.toString())
-    } else {
-      Timber.tag(TAG).v(
-        "Android version too old, disabling refresh rate functionality " +
-          "(${Build.VERSION.SDK_INT} < ${Build.VERSION_CODES.M})"
-      )
-    }
+    Timber.tag(TAG).v("Display ${disp.displayId} reports FPS of $refreshRate")
+    MPVLib.setOptionString("display-fps-override", refreshRate.toString())
 
     // set non-complex options - optimized with apply
     val opts = arrayOf(
