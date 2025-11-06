@@ -1,13 +1,14 @@
 package cloud.app.csplayer.ui.player.mpv
 
 import android.animation.ObjectAnimator
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.utils.UIHelper.toPx
-import com.ironsource.adqualitysdk.sdk.i.fa
 import timber.log.Timber
 
 /**
@@ -44,9 +45,35 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
   var isLocked: Boolean = false
     private set
 
+  // Auto-hide handler
+  private val autoHideHandler = Handler(Looper.getMainLooper())
+  private val autoHideRunnable = Runnable {
+    if (!isLocked && isShowing) {
+      hide()
+    }
+  }
+
   init {
     // Set initial lock icon
     updateLockIcon()
+
+    // Setup click listener on root layout to toggle controls
+    setupRootClickListener()
+  }
+
+  /**
+   * Setup click listener on pipHide layout to detect user clicks
+   * This enables shallow touch detection without interfering with child views
+   */
+  private fun setupRootClickListener() {
+    binding.pipHide.setOnClickListener {
+      if (!isLocked) {
+        toggleControls()
+        if (isShowing) {
+          scheduleAutoHide()
+        }
+      }
+    }
   }
 
   // ========== Public API ==========
@@ -65,7 +92,9 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
   fun show() {
     isShowing = true
     applyUIState()
+    scheduleAutoHide()
   }
+
 
   /**
    * Hide controls
@@ -75,6 +104,7 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
 
     isShowing = false
     applyUIState()
+    cancelAutoHide()
   }
 
   /**
@@ -107,8 +137,32 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
     isShowing = true // Show controls when unlocked
     updateLockIcon()
     applyUIState()
+    scheduleAutoHide()
   }
 
+  /**
+   * Schedule auto-hide controls after a delay
+   */
+  private fun scheduleAutoHide() {
+    cancelAutoHide()
+    autoHideHandler.postDelayed(autoHideRunnable, AUTO_HIDE_DELAY_MS)
+  }
+
+  /**
+   * Cancel any pending auto-hide
+   */
+  private fun cancelAutoHide() {
+    autoHideHandler.removeCallbacks(autoHideRunnable)
+  }
+
+  /**
+   * Reset auto-hide timer (call this when user interacts with controls)
+   */
+  fun resetAutoHideTimer() {
+    if (isShowing && !isLocked) {
+      scheduleAutoHide()
+    }
+  }
   /**
    * Update lock icon based on current state
    */
@@ -403,6 +457,7 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
 
   companion object {
     private const val ANIMATION_DURATION = 200L
+    private const val AUTO_HIDE_DELAY_MS = 3000L // 3 seconds
   }
 }
 

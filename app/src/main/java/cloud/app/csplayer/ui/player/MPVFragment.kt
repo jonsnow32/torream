@@ -511,15 +511,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 //        setSubtitles(currentSubs.elementAt(index))
     }
 
-//    preferredAutoSelectSubtitles = context?.getAutoSelectLanguageISO639_1()
-
-
-//    player?.setOnClickListener {
-//      uiController.toggleControls()
-//      autoHide()
-//    }
-
-
     // Initialize audio manager and request audio focus
     val audioFocusGranted = playerAudioManager.initialize()
     if (audioFocusGranted) {
@@ -925,7 +916,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private fun handleKeyEvent(event: KeyEvent, hasNavigated: Boolean): Boolean {
     if (hasNavigated) {
     } else {
-      autoHide()
       event.keyCode.let { keyCode ->
         when (event.action) {
           KeyEvent.ACTION_DOWN -> {
@@ -1254,10 +1244,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   fun togglePlayPause() {
     player?.paused = player?.paused?.not();
-    if (player?.paused == false)
-      autoHide()
-    else
-      currentTapIndex++;
   }
 
   private fun rewind() {
@@ -1437,16 +1423,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
-  private var currentTapIndex = 0
-  protected fun autoHide() {
-//    currentTapIndex++
-//    val index = currentTapIndex
-//    playerBinding?.playerHolder?.postDelayed({
-//      if (uiController.isShowing && activityIsForeground && index == currentTapIndex) {
-//        uiController.toggleControls()
-//      }
-//    }, 2000)
-  }
+
 
   private fun setPlayBackSpeed(speed: Float) {
     try {
@@ -1658,7 +1635,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       // IMPORTANT: Only auto-play if activity is in foreground to prevent playing in background
       if (shouldAutoPlay && playbackHasStarted && activityIsForeground) {
         player?.paused = false
-        autoHide() // Auto-hide controls when video starts playing
         Timber.tag(TAG).v("Auto-playing video on file loaded")
       } else if (!activityIsForeground) {
         Timber.tag(TAG).v("Skipping auto-play on file loaded: activity is in background")
@@ -1680,7 +1656,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       // IMPORTANT: Only auto-play if activity is in foreground to prevent playing in background
       if (shouldAutoPlay && playbackHasStarted && activityIsForeground) {
         player?.paused = false
-        autoHide() // Auto-hide controls when playback restarts
         Timber.tag(TAG).v("Auto-playing video on playback restart")
       } else if (!activityIsForeground) {
         Timber.tag(TAG).v("Skipping auto-play: activity is in background")
