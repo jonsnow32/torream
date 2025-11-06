@@ -140,22 +140,10 @@ data class PlaylistState(
 }
 
 class MPVFragment : Fragment(), MPVLib.EventObserver {
-
-  private var isSameEpisode: Boolean = false;
-
+  private var player: MPVView? = null
   private val viewModel by viewModels<PlayerViewModel>()
-
-  // for calls to eventUi() and eventPropertyUi()
   private val eventUiHandler = Handler(Looper.getMainLooper())
 
-  // for use with fadeRunnable1..3
-  private val fadeHandler = Handler(Looper.getMainLooper())
-
-  // for use with stopServiceRunnable
-  private val stopServiceHandler = Handler(Looper.getMainLooper())
-
-
-  private var player: MPVView? = null
   private var playerBinding: PlayerCustomLayoutBinding? = null
 
   // Manager components for cleaner architecture
@@ -173,12 +161,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private var fastForwardTime = 10000L
   private var androidTVInterfaceOffSeekTime = 10000L
   private var androidTVInterfaceOnSeekTime = 30000L
-  private var swipeHorizontalEnabled = false
-  private var swipeVerticalEnabled = false
-  private var playBackSpeedEnabled = true
-  private var playerResizeEnabled = false
-  private var playerRotateEnabled = false
-  private var autoPlayerRotateEnabled = false
   private var activityIsForeground = true
   private var sWidth = screenWidth
   private var sHeight = screenHeight
@@ -206,23 +188,21 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private val psc = MPVUtils.PlaybackStateCache()
   private var ignoreAudioFocus = false
 
-  // Track if video should auto-play when ready
   private var shouldAutoPlay = true
   private var playbackHasStarted = false
   private var onloadCommands = mutableListOf<Array<String>>()
-
-
   private var allLinks: List<VideoLink> = emptyList()
   private var currentSubs: Set<SubtitleData> = mutableSetOf()
   private var currentSelectedLink: VideoLink? = null
   private var currentSelectedSubtitles: SubtitleData? = null
 
-  // Track if we've already retried with software decoding
+  private var isSameEpisode: Boolean = false;
   private var triedSwDecFallback = false
 
-  // Playlist management
   private var playlistState: PlaylistState? = null
   private var isPlaylistMode = false
+  private val seekActionTime = 30000L
+  private var decodeMode = DecodeMode.hwDec;
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -242,236 +222,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     return view;
   }
 
-  private val seekActionTime = 30000L
-  private var decodeMode = DecodeMode.hwDec;
-
-  private fun initializeManagers() {
-    playerBinding?.let { binding ->
-      // Initialize gesture handler with all required callbacks
-
-      // Initialize UI controller
-      uiController = PlayerUIController(binding)
-
-      // Initialize audio manager
-      playerAudioManager = PlayerAudioManager(
-        context = requireContext(),
-        onAudioFocusLost = {
-          val wasPlayerPaused = player?.paused ?: false
-          player?.paused = true
-        },
-        onAudioFocusGained = {
-          // Will be called by audioFocusRestore callback
-        },
-        onDuckAudio = { ducking ->
-          MPVLib.command(arrayOf("multiply", "volume", ducking.toString()))
-        },
-        onRestoreAudio = { multiplier ->
-          MPVLib.command(arrayOf("multiply", "volume", multiplier.toString()))
-        },
-        getIgnoreAudioFocus = { ignoreAudioFocus }
-      )
-
-      // Initialize media manager
-      mediaManager = PlayerMediaManager(
-        context = requireContext(),
-        onCommandQueued = { cmd ->
-          Timber.v("Queued command: ${cmd.joinToString(" ")}")
-        }
-      )
-      mediaManager.setPlayer(player)
-
-      // Initialize dialog manager
-      dialogManager = PlayerDialogManager(requireActivity())
-
-      gestureHandler = PlayerGestureHandler(
-        context = requireContext(),
-        sWidth = sWidth,
-        sHeight = sHeight,
-        isLocked = { uiController.isLocked },
-        isShowing = { uiController.isShowing },
-        onBrightnessUpdate = { brightness, showUI ->
-          if (showUI) {
-            updateBrightnessOverlay(brightness)
-          } else {
-            hideBrightnessOverlay()
-          }
-        },
-        onVolumeUpdate = { volumeRatio, showUI ->
-          if (showUI) {
-            updateVolumeOverlay(volumeRatio)
-          } else {
-            hideVolumeOverlay()
-          }
-        },
-        onSeekUpdate = { position, text, showUI ->
-          if (showUI) {
-            updateSeekOverlay(position, text)
-          } else {
-            hideSeekOverlay()
-          }
-        },
-        onSeekCommit = { seekTo ->
-          player?.timePos = seekTo.toDouble()
-        },
-        onDoubleTapRewind = {
-          doubleTapRewind()
-        },
-        onDoubleTapForward = {
-          doubleTapForawd()
-        },
-        onSingleTap = {
-          uiController.toggleControls()
-          Timber.i("onSingleTap ${Utils.getStackTrace()}")
-        },
-        onTogglePlayPause = {
-          togglePlayPause()
-        },
-        hideUIForBrightness = {
-          uiController.hide()
-        }
-      )
-
-    }
-  }
-
-  /**
-   * Load playlist from MPV after video is loaded
-   * Called when MPV has loaded files and playlist info is available
-   */
-  private fun loadPlaylistFromMPV() {
-    player?.let { mpv ->
-      try {
-        val items = mpv.loadPlaylist()
-        if (items.size > 1) {
-          val currentPos = MPVLib.getPropertyInt("playlist-pos") ?: 0
-          isPlaylistMode = true
-          playlistState = PlaylistState(
-            items = items,
-            currentIndex = currentPos,
-            repeatMode = playlistState?.repeatMode ?: PlaylistState.RepeatMode.NONE
-          )
-          updatePlaylistUI()
-          Timber.tag(TAG)
-            .d("Loaded playlist from MPV: ${items.size} items, current index: $currentPos")
-        }
-      } catch (e: Exception) {
-        Timber.tag(TAG).e(e, "Failed to load playlist from MPV")
-      }
-    }
-  }
-
-  /**
-   * Navigate to next item in playlist
-   */
-  private fun playNextInPlaylist() {
-    val state = playlistState ?: return
-    val nextIndex = state.getNextIndex()
-
-    if (nextIndex != null) {
-      playlistState = state.copy(currentIndex = nextIndex)
-
-      // Use MPV playlist command to navigate
-      MPVLib.command(arrayOf("playlist-play-index", nextIndex.toString()))
-
-      updatePlaylistUI()
-
-      // Show toast feedback
-      val nextItem = state.items.getOrNull(nextIndex)
-      val itemTitle = nextItem?.title ?: "Item ${nextIndex + 1}"
-      showToast("Playing: $itemTitle (${nextIndex + 1}/${state.items.size})", Toast.LENGTH_SHORT)
-
-      Timber.tag(TAG).d("Playing next: index $nextIndex")
-    } else {
-      Timber.tag(TAG).d("End of playlist reached")
-      finishPlaylist()
-    }
-  }
-
-  /**
-   * Navigate to previous item in playlist
-   */
-  private fun playPreviousInPlaylist() {
-    val state = playlistState ?: return
-    val prevIndex = state.getPreviousIndex()
-
-    if (prevIndex != null) {
-      playlistState = state.copy(currentIndex = prevIndex)
-
-      // Use MPV playlist command to navigate
-      MPVLib.command(arrayOf("playlist-play-index", prevIndex.toString()))
-
-      updatePlaylistUI()
-
-      // Show toast feedback
-      val prevItem = state.items.getOrNull(prevIndex)
-      val itemTitle = prevItem?.title ?: "Item ${prevIndex + 1}"
-      showToast("Playing: $itemTitle (${prevIndex + 1}/${state.items.size})", Toast.LENGTH_SHORT)
-
-      Timber.tag(TAG).d("Playing previous: index $prevIndex")
-    }
-  }
-
-  private fun updatePlaylistUI() {
-    val state = playlistState ?: return
-
-    // Ensure UI updates run on main thread
-    eventUiHandler.post {
-      playerBinding?.apply {
-        // Update video title to include playlist position
-        val currentItem = state.items.getOrNull(state.currentIndex)
-        val titleText = if (currentItem?.title != null) {
-          "${currentItem.title} (${state.currentIndex + 1}/${state.items.size})"
-        } else {
-          "Playing ${state.currentIndex + 1} of ${state.items.size}"
-        }
-        uiController.setTitle(titleText)
-
-        // Update skip button visibility
-        playerSkipEpisode.isVisible = state.currentIndex < state.items.size - 1
-
-      }
-
-      Timber.tag(TAG).d("Updated playlist UI: ${state.currentIndex + 1}/${state.items.size}")
-    }
-  }
-
-  /**
-   * Update repeat mode icon
-   */
-  private fun updateRepeatIcon() {
-    val state = playlistState ?: return
-
-    val modeText = when (state.repeatMode) {
-      PlaylistState.RepeatMode.NONE -> "Repeat: Off"
-      PlaylistState.RepeatMode.ALL -> "Repeat: All"
-      PlaylistState.RepeatMode.ONE -> "Repeat: One"
-    }
-
-    Timber.tag(TAG).d("Repeat mode: ${state.repeatMode}")
-    // TODO: Add repeat button to layout and update icon
-    // playerBinding?.btnRepeat?.setImageResource(when (state.repeatMode) {
-    //   PlaylistState.RepeatMode.NONE -> R.drawable.ic_repeat_off
-    //   PlaylistState.RepeatMode.ALL -> R.drawable.ic_repeat_all
-    //   PlaylistState.RepeatMode.ONE -> R.drawable.ic_repeat_one
-    // })
-  }
-
-  /**
-   * Handle playlist end - finish activity or fragment
-   */
-  private fun finishPlaylist() {
-    Timber.tag(TAG).d("Playlist finished")
-    playlistState = null
-    isPlaylistMode = false
-    CommonActivitty.activityResultEvent?.invoke(
-      PlayBackResult(
-        RESULT_OK,
-        player?.timePos?.toLong()?.times(1000L) ?: 0L,
-        "playlist_end"
-      )
-    )
-    activity?.popCurrentPage()
-  }
 
   @SuppressLint("ClickableViewAccessibility")
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -681,43 +431,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         navigationBarHeight = ctx.getNavigationBarHeight()
         statusBarHeight = ctx.getStatusBarHeight()
 
-        swipeHorizontalEnabled =
-          settingsManager.getBoolean(ctx.getString(R.string.swipe_enabled_key), true)
-        swipeVerticalEnabled =
-          settingsManager.getBoolean(
-            ctx.getString(R.string.swipe_vertical_enabled_key),
-            true
-          )
-        playBackSpeedEnabled = settingsManager.getBoolean(
-          ctx.getString(R.string.playback_speed_enabled_key),
-          true
-        )
-        playerRotateEnabled = settingsManager.getBoolean(
-          ctx.getString(R.string.rotate_video_key),
-          false
-        )
-        autoPlayerRotateEnabled = settingsManager.getBoolean(
-          ctx.getString(R.string.auto_rotate_video_key),
-          false
-        )
-        playerResizeEnabled =
-          settingsManager.getBoolean(
-            ctx.getString(R.string.player_resize_enabled_key),
-            true
-          )
-
-
-        // Update gesture handler with loaded settings
-        gestureHandler.updateSettings(
-          horizontalEnabled = swipeHorizontalEnabled,
-          verticalEnabled = swipeVerticalEnabled,
-        )
       }
 
       playerBinding?.apply {
-        playerSpeedBtt.isVisible = playBackSpeedEnabled
-        playerResizeBtt.isVisible = playerResizeEnabled
-        playerRotateBtt.isVisible = playerRotateEnabled
         playerBinding?.exoFfwdText?.text =
           getString(R.string.ffw_text_regular_format).format(fastForwardTime / 1000)
         playerBinding?.exoRewText?.text =
@@ -885,6 +601,233 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
+  private fun initializeManagers() {
+    playerBinding?.let { binding ->
+      // Initialize gesture handler with all required callbacks
+
+      // Initialize UI controller
+      uiController = PlayerUIController(binding)
+
+      // Initialize audio manager
+      playerAudioManager = PlayerAudioManager(
+        context = requireContext(),
+        onAudioFocusLost = {
+          val wasPlayerPaused = player?.paused ?: false
+          player?.paused = true
+        },
+        onAudioFocusGained = {
+          // Will be called by audioFocusRestore callback
+        },
+        onDuckAudio = { ducking ->
+          MPVLib.command(arrayOf("multiply", "volume", ducking.toString()))
+        },
+        onRestoreAudio = { multiplier ->
+          MPVLib.command(arrayOf("multiply", "volume", multiplier.toString()))
+        },
+        getIgnoreAudioFocus = { ignoreAudioFocus }
+      )
+
+      // Initialize media manager
+      mediaManager = PlayerMediaManager(
+        context = requireContext(),
+        onCommandQueued = { cmd ->
+          Timber.v("Queued command: ${cmd.joinToString(" ")}")
+        }
+      )
+      mediaManager.setPlayer(player)
+
+      // Initialize dialog manager
+      dialogManager = PlayerDialogManager(requireActivity())
+
+      gestureHandler = PlayerGestureHandler(
+        context = requireContext(),
+        sWidth = sWidth,
+        sHeight = sHeight,
+        isLocked = { uiController.isLocked },
+        isShowing = { uiController.isShowing },
+        onBrightnessUpdate = { brightness, showUI ->
+          if (showUI) {
+            updateBrightnessOverlay(brightness)
+          } else {
+            hideBrightnessOverlay()
+          }
+        },
+        onVolumeUpdate = { volumeRatio, showUI ->
+          if (showUI) {
+            updateVolumeOverlay(volumeRatio)
+          } else {
+            hideVolumeOverlay()
+          }
+        },
+        onSeekUpdate = { position, text, showUI ->
+          if (showUI) {
+            updateSeekOverlay(position, text)
+          } else {
+            hideSeekOverlay()
+          }
+        },
+        onSeekCommit = { seekTo ->
+          player?.timePos = seekTo.toDouble()
+        },
+        onDoubleTapRewind = {
+          doubleTapRewind()
+        },
+        onDoubleTapForward = {
+          doubleTapForawd()
+        },
+        onSingleTap = {
+          uiController.toggleControls()
+          Timber.i("onSingleTap ${Utils.getStackTrace()}")
+        },
+        onTogglePlayPause = {
+          togglePlayPause()
+        },
+        hideUIForBrightness = {
+          uiController.hide()
+        }
+      )
+
+    }
+  }
+  /**
+   * Load playlist from MPV after video is loaded
+   * Called when MPV has loaded files and playlist info is available
+   */
+  private fun loadPlaylistFromMPV() {
+    player?.let { mpv ->
+      try {
+        val items = mpv.loadPlaylist()
+        if (items.size > 1) {
+          val currentPos = MPVLib.getPropertyInt("playlist-pos") ?: 0
+          isPlaylistMode = true
+          playlistState = PlaylistState(
+            items = items,
+            currentIndex = currentPos,
+            repeatMode = playlistState?.repeatMode ?: PlaylistState.RepeatMode.NONE
+          )
+          updatePlaylistUI()
+          Timber.tag(TAG)
+            .d("Loaded playlist from MPV: ${items.size} items, current index: $currentPos")
+        }
+      } catch (e: Exception) {
+        Timber.tag(TAG).e(e, "Failed to load playlist from MPV")
+      }
+    }
+  }
+
+  /**
+   * Navigate to next item in playlist
+   */
+  private fun playNextInPlaylist() {
+    val state = playlistState ?: return
+    val nextIndex = state.getNextIndex()
+
+    if (nextIndex != null) {
+      playlistState = state.copy(currentIndex = nextIndex)
+
+      // Use MPV playlist command to navigate
+      MPVLib.command(arrayOf("playlist-play-index", nextIndex.toString()))
+
+      updatePlaylistUI()
+
+      // Show toast feedback
+      val nextItem = state.items.getOrNull(nextIndex)
+      val itemTitle = nextItem?.title ?: "Item ${nextIndex + 1}"
+      showToast("Playing: $itemTitle (${nextIndex + 1}/${state.items.size})", Toast.LENGTH_SHORT)
+
+      Timber.tag(TAG).d("Playing next: index $nextIndex")
+    } else {
+      Timber.tag(TAG).d("End of playlist reached")
+      finishPlaylist()
+    }
+  }
+
+  /**
+   * Navigate to previous item in playlist
+   */
+  private fun playPreviousInPlaylist() {
+    val state = playlistState ?: return
+    val prevIndex = state.getPreviousIndex()
+
+    if (prevIndex != null) {
+      playlistState = state.copy(currentIndex = prevIndex)
+
+      // Use MPV playlist command to navigate
+      MPVLib.command(arrayOf("playlist-play-index", prevIndex.toString()))
+
+      updatePlaylistUI()
+
+      // Show toast feedback
+      val prevItem = state.items.getOrNull(prevIndex)
+      val itemTitle = prevItem?.title ?: "Item ${prevIndex + 1}"
+      showToast("Playing: $itemTitle (${prevIndex + 1}/${state.items.size})", Toast.LENGTH_SHORT)
+
+      Timber.tag(TAG).d("Playing previous: index $prevIndex")
+    }
+  }
+
+  private fun updatePlaylistUI() {
+    val state = playlistState ?: return
+
+    // Ensure UI updates run on main thread
+    eventUiHandler.post {
+      playerBinding?.apply {
+        // Update video title to include playlist position
+        val currentItem = state.items.getOrNull(state.currentIndex)
+        val titleText = if (currentItem?.title != null) {
+          "${currentItem.title} (${state.currentIndex + 1}/${state.items.size})"
+        } else {
+          "Playing ${state.currentIndex + 1} of ${state.items.size}"
+        }
+        uiController.setTitle(titleText)
+
+        // Update skip button visibility
+        playerSkipEpisode.isVisible = state.currentIndex < state.items.size - 1
+
+      }
+
+      Timber.tag(TAG).d("Updated playlist UI: ${state.currentIndex + 1}/${state.items.size}")
+    }
+  }
+
+  /**
+   * Update repeat mode icon
+   */
+  private fun updateRepeatIcon() {
+    val state = playlistState ?: return
+
+    val modeText = when (state.repeatMode) {
+      PlaylistState.RepeatMode.NONE -> "Repeat: Off"
+      PlaylistState.RepeatMode.ALL -> "Repeat: All"
+      PlaylistState.RepeatMode.ONE -> "Repeat: One"
+    }
+
+    Timber.tag(TAG).d("Repeat mode: ${state.repeatMode}")
+    // TODO: Add repeat button to layout and update icon
+    // playerBinding?.btnRepeat?.setImageResource(when (state.repeatMode) {
+    //   PlaylistState.RepeatMode.NONE -> R.drawable.ic_repeat_off
+    //   PlaylistState.RepeatMode.ALL -> R.drawable.ic_repeat_all
+    //   PlaylistState.RepeatMode.ONE -> R.drawable.ic_repeat_one
+    // })
+  }
+
+  /**
+   * Handle playlist end - finish activity or fragment
+   */
+  private fun finishPlaylist() {
+    Timber.tag(TAG).d("Playlist finished")
+    playlistState = null
+    isPlaylistMode = false
+    CommonActivitty.activityResultEvent?.invoke(
+      PlayBackResult(
+        RESULT_OK,
+        player?.timePos?.toLong()?.times(1000L) ?: 0L,
+        "playlist_end"
+      )
+    )
+    activity?.popCurrentPage()
+  }
+
   private fun doubleTapRewind() {
     try {
       playerBinding?.apply {
@@ -1042,27 +985,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
-  private fun showVideoTracks() {
-    try {
-      val tracks = player?.tracks ?: return
-      player?.paused = true
-
-      dialogManager.showVideoTracksDialog(
-        tracks = tracks,
-        onTrackSelected = { videoIndex ->
-          player?.vid = videoIndex
-        },
-        onDismiss = {
-          player?.paused = false
-          activity?.hideSystemUI()
-        }
-      )
-    } catch (e: Exception) {
-      logError(e)
-    }
-  }
-
-  // UI overlay update methods for gesture handler
   private fun updateBrightnessOverlay(brightness: Float) {
     playerBinding?.apply {
       playerProgressbarRightHolder.isVisible = true
@@ -1101,6 +1023,26 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     playerBinding?.playerTimeText?.isVisible = false
   }
 
+
+  private fun showVideoTracks() {
+    try {
+      val tracks = player?.tracks ?: return
+      player?.paused = true
+
+      dialogManager.showVideoTracksDialog(
+        tracks = tracks,
+        onTrackSelected = { videoIndex ->
+          player?.vid = videoIndex
+        },
+        onDismiss = {
+          player?.paused = false
+          activity?.hideSystemUI()
+        }
+      )
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
 
   private fun showTracksDialogue() {
     try {
@@ -1158,36 +1100,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun loadPlayList() {
-    if (decodeMode == DecodeMode.swDec) {
-      pushOption("hwdec", "no")
-    }
-//    pushOption(
-//      "force-media-title",
-//      currentSelectedLink?.name ?: currentSelectedLink?.url ?: ""
-//    )
-
-    pushOption(
-      "start",
-      "${if (psc.position > 0) psc.positionSec else (currentSelectedLink?.position ?: 0L) / 1000}"
-    )
-
-    // Enable auto-play for playlist
-    shouldAutoPlay = true
-
-    player?.playPlayList(
-      allLinks.map { it.url },
-      allLinks.firstOrNull()?.headers
-    )
-    playerBinding?.playerBuffering?.isVisible = true
-
-    try {
-      uiReset()
-    } catch (e: Exception) {
-      logError(e)
-    }
-  }
-
   @SuppressLint("UseKtx")
   private fun loadLink(
     link: VideoLink?,
@@ -1198,22 +1110,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     currentSelectedLink = link
 
-    // Force software decoding on emulator or if already in swDec mode
-//    if (decodeMode == DecodeMode.swDec || context?.isTvOrEmulator() == true) {
-//      pushOption("hwdec", "no")
-//      // Additional options to ensure software decoding on emulator
-//      pushOption("vd-lavc-software-fallback", "yes")
-//      pushOption("ad-lavc-downmix", "yes")
-//      // Force software video decoder to avoid goldfish decoder issues
-//      pushOption("vd", "lavc:h264")
-//      // Disable hardware accelerated codecs that might trigger goldfish
-//      pushOption("hwdec-codecs", "")
-//    }
     pushOption(
       "force-media-title",
       currentSelectedLink?.name ?: currentSelectedLink?.url ?: ""
     )
-
     if (nextEpisode) {
       pushOption(
         "start",
@@ -1225,28 +1125,19 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         "${if (psc.position > 0) psc.positionSec else (currentSelectedLink?.position ?: 0L) / 1000}"
       )
     }
-
     val uri = currentSelectedLink?.url?.toUri() ?: return
-
     // Enable auto-play for new video
     shouldAutoPlay = true
-
     player?.playFile(
       resolveUri(uri) ?: "",
       currentSelectedLink?.headers
     )
-
     playerBinding?.playerBuffering?.isVisible = true
-
     try {
       uiReset()
     } catch (e: Exception) {
       logError(e)
     }
-  }
-
-  fun pushOption(key: String, value: String) {
-    onloadCommands.add(arrayOf("set", "file-local-options/${key}", value))
   }
 
   fun togglePlayPause() {
@@ -1461,6 +1352,20 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     super.onResume()
   }
 
+  override fun onPause() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      if (requireActivity().isInMultiWindowMode || requireActivity().isInPictureInPictureMode) {
+        Timber.v("Going into multi-window mode")
+        super.onPause()
+        return
+      }
+    }
+    onPauseImpl()
+    super.onPause()
+
+  }
+
+
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
 
@@ -1517,29 +1422,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     Timber.v("Saved playback state - position: ${psc.position}, paused: ${player?.paused}")
   }
 
-  private fun updateUIVisibility() {
-    // Update skip episode button based on playlist or episode state
-    val shouldHideSkipButton = when {
-      isPlaylistMode -> !(playlistState?.hasNext() ?: false)
-      !isSameEpisode -> currentSelectedLink?.let { allLinks.indexOf(it) >= allLinks.size - 1 }
-        ?: true
-
-      else -> true
-    }
-    playerBinding?.playerSkipEpisode?.isVisible = !shouldHideSkipButton
-
-    // Handle title visibility based on preferences
-    var togglePlayerTitleGone = uiController.isLocked || !uiController.isShowing
-    context?.let {
-      val settingsManager = PreferenceManager.getDefaultSharedPreferences(it)
-      val limitTitle = settingsManager.getInt(getString(R.string.prefer_limit_title_key), 0)
-      if (limitTitle < 0) {
-        togglePlayerTitleGone = true
-      }
-    }
-    playerBinding?.playerVideoTitle?.isVisible = !togglePlayerTitleGone
-  }
-
 
   private fun enterFullscreen() {
     activity?.hideSystemUI()
@@ -1566,6 +1448,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
     activity?.window?.attributes = lp
     activity?.showSystemUI()
+  }
+
+  fun pushOption(key: String, value: String) {
+    onloadCommands.add(arrayOf("set", "file-local-options/${key}", value))
   }
 
   override fun eventProperty(property: String) {
@@ -1672,10 +1558,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
-
-
-  // mpv events
-
   private fun eventPropertyUi(property: String, dummy: Any?, metaUpdated: Boolean) {
     if (!activityIsForeground) return
     when (property) {
@@ -1691,7 +1573,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     if (metaUpdated)
       updateMetadataDisplay()
   }
-
   private fun eventPropertyUi(property: String, value: Boolean) {
     if (!activityIsForeground) return
     when (property) {
@@ -1704,7 +1585,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
-
   private fun eventPropertyUi(property: String, value: Long) {
     if (!activityIsForeground) return
     when (property) {
@@ -1766,7 +1646,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
-
   private fun updatePlaybackPos(position: Int) {
     playerBinding?.exoPosition?.text = MPVUtils.prettyTime(position.toLong())
     val diff = psc.durationSec - position
@@ -1779,8 +1658,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     // Use property observation instead.
     //updateStats()
   }
-
-  private var firstTime = false;
   private fun eventPropertyUi(property: String, value: Double) {
     if (!activityIsForeground) return
     when (property) {
@@ -1798,6 +1675,23 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
+  private fun eventPropertyUi(property: String, value: String, metaUpdated: Boolean) {
+    if (!activityIsForeground) return
+    when (property) {
+      "speed" -> {
+        //updateSpeedButton()
+      }
+
+      "hwdec-current" -> {
+        // Use the value delivered by the event instead of querying MPV synchronously
+        updateDecoderButton(value)
+      }
+    }
+    if (metaUpdated)
+      updateMetadataDisplay()
+  }
+  private fun playlistPrev() = MPVLib.command(arrayOf("playlist-prev"))
+  private fun playlistNext() = MPVLib.command(arrayOf("playlist-next"))
 
   private fun updateOrientation(rotate: Double) {
 
@@ -1821,21 +1715,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     activity?.requestedOrientation = orientation
   }
 
-  private fun eventPropertyUi(property: String, value: String, metaUpdated: Boolean) {
-    if (!activityIsForeground) return
-    when (property) {
-      "speed" -> {
-        //updateSpeedButton()
-      }
-
-      "hwdec-current" -> {
-        // Use the value delivered by the event instead of querying MPV synchronously
-        updateDecoderButton(value)
-      }
-    }
-    if (metaUpdated)
-      updateMetadataDisplay()
-  }
 
   private fun updateMetadataDisplay() {
     playerBinding?.playerVideoTitleRez?.text = psc.meta.formatTitle()
@@ -1859,7 +1738,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   private fun playNext() {
-
     val sourceIndex = currentSelectedLink?.let { allLinks.indexOf(it) } ?: -1
     CommonActivitty.activityResultEvent?.invoke(
       PlayBackResult(
@@ -2009,18 +1887,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     //
   }
 
-  override fun onPause() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-      if (requireActivity().isInMultiWindowMode || requireActivity().isInPictureInPictureMode) {
-        Timber.v("Going into multi-window mode")
-        super.onPause()
-        return
-      }
-    }
-    onPauseImpl()
-    super.onPause()
-
-  }
 
   private fun isPlayingAudioOnly(): Boolean {
     if (player?.aid == -1)
@@ -2130,10 +1996,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     })
   }
 
-  private fun playlistPrev() = MPVLib.command(arrayOf("playlist-prev"))
-  private fun playlistNext() = MPVLib.command(arrayOf("playlist-next"))
-
-
   fun showSourcesDialog() {
     try {
       player?.paused = true
@@ -2228,7 +2090,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
         val file = File(requireNotNull(uri.path))// SafeFile.fromUri(ctx, uri)
         val fileName = file.name
-        println("Loaded subtitle file. Selected URI path: $uri - Name: $fileName")
+        Timber.i("Loaded subtitle file. Selected URI path: $uri - Name: $fileName")
         // DO NOT REMOVE THE FILE EXTENSION FROM NAME, IT'S NEEDED FOR MIME TYPES
         val name = fileName ?: uri.toString()
 
@@ -2252,16 +2114,22 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     val selectedSubtitle = subtitleData.first()
     val ctx = context ?: return
 
-    val subs = currentSubs + subtitleData
-
-    // this is used instead of observe(viewModel._currentSubs), because observe is too slow
-//    player.setActiveSubtitles(subs)
-//
-//    // Save current time as to not reset player to 00:00
-//    player.saveData()
-//    player.reloadPlayer(ctx)
-//
-//    setSubtitles(selectedSubtitle)
+    // Add subtitles to MPV
+    subtitleData.forEachIndexed { index, sub ->
+      try {
+        val url = resolveUri(Uri.parse(sub.url))
+        if (url != null) {
+          // Use "select" flag for first subtitle, "auto" for others
+          val flag = if (index == 0) "select" else "auto"
+          MPVLib.command(arrayOf("sub-add", url, flag))
+          Timber.d("Added subtitle to MPV: ${sub.name} ($url)")
+        } else {
+          Timber.e("Failed to resolve subtitle URL: ${sub.url}")
+        }
+      } catch (e: Exception) {
+        Timber.e(e, "Failed to add subtitle to MPV: ${sub.name}")
+      }
+    }
 
     viewModel.addSubtitles(subtitleData.toSet())
 
