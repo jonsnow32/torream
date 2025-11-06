@@ -297,37 +297,9 @@
                 android:textSize="12sp" />
             </LinearLayout>
 
-            <!-- Subtitle Option -->
-            <LinearLayout
-              android:id="@+id/playerSubtitleOffset"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_marginStart="12dp"
-              android:clickable="true"
-              android:focusable="true"
-              android:gravity="center"
-              android:orientation="vertical"
-              android:padding="8dp">
-
-              <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:contentDescription="@string/subtitle"
-                android:src="@drawable/ic_outline_subtitles_24"
-                app:tint="@android:color/white" />
-
-              <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/subtitle"
-                android:textColor="@android:color/white"
-                android:textSize="12sp" />
-            </LinearLayout>
-
             <!-- Audio Track Option -->
             <LinearLayout
-              android:id="@+id/playerTracksBtt"
+              android:id="@+id/playerAudioTracksBtt"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:layout_marginStart="12dp"
@@ -341,14 +313,42 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="@string/audio"
-                android:src="@drawable/track_source_merge_24dp"
+                android:src="@drawable/ic_baseline_volume_up_24"
                 app:tint="@android:color/white" />
 
               <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="@string/tracks"
+                android:text="@string/audio"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Subtitle Track Option -->
+            <LinearLayout
+              android:id="@+id/playerSubtitleTracksBtt"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginStart="12dp"
+              android:clickable="true"
+              android:focusable="true"
+              android:gravity="center"
+              android:orientation="vertical"
+              android:padding="8dp">
+
+              <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@string/pick_subtitle"
+                android:src="@drawable/ic_outline_subtitles_24"
+                app:tint="@android:color/white" />
+
+              <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/pick_subtitle"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
             </LinearLayout>

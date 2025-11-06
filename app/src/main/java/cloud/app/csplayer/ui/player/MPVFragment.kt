@@ -594,8 +594,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         showSourcesDialog()
       }
 
-      playerTracksBtt.setOnClickListener {
-        showTracksDialogue()
+      playerAudioTracksBtt.setOnClickListener {
+        showAudioTracksDialogue()
+      }
+
+      playerSubtitleTracksBtt.setOnClickListener {
+        showSubtitleTracksDialogue()
       }
 
       playerVideoTracks.setOnClickListener {
@@ -1075,6 +1079,58 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
+  private fun showAudioTracksDialogue() {
+    try {
+      val tracks = player?.tracks ?: return
+      player?.paused = true
+
+      dialogManager.showAudioTracksDialog(
+        tracks = tracks,
+        onAudioSelected = { audioIndex ->
+          player?.aid = audioIndex
+          // Reload tracks to update the selected state
+          player?.loadTracks()
+        },
+        onDismiss = {
+          player?.paused = false
+          activity?.hideSystemUI()
+        }
+      )
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
+  private fun showSubtitleTracksDialogue() {
+    try {
+      val tracks = player?.tracks ?: return
+      player?.paused = true
+
+      dialogManager.showSubtitleTracksDialog(
+        tracks = tracks,
+        onSubtitleSelected = { subtitleIndex ->
+          player?.sid = subtitleIndex
+          // Reload tracks to update the selected state
+          player?.loadTracks()
+        },
+        onLoadSubtitlesFromFile = {
+          player?.paused = true
+          openSubPicker()
+        },
+        onLoadSubtitlesOnline = {
+          showToast("Not implemented yet", Toast.LENGTH_SHORT)
+        },
+        onDismiss = {
+          //player?.paused = false
+          activity?.hideSystemUI()
+        }
+      )
+    } catch (e: Exception) {
+      logError(e)
+    }
+  }
+
+  @Deprecated("Use showAudioTracksDialogue() and showSubtitleTracksDialogue() separately")
   private fun showTracksDialogue() {
     try {
       val tracks = player?.tracks ?: return
@@ -2106,6 +2162,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         )
 
         addAndSelectSubtitles(subtitleData)
+        player?.paused = false
       }
     }
 

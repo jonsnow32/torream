@@ -194,8 +194,167 @@ class PlayerDialogManager(
     }
 
     /**
-     * Show audio and subtitle tracks selection dialog
+     * Show audio tracks selection dialog
      */
+    fun showAudioTracksDialog(
+        tracks: Map<String, List<MPVView.Track>>,
+        onAudioSelected: (audioIndex: Int) -> Unit,
+        onDismiss: () -> Unit
+    ) {
+        val ctx = activity
+        val currentAudioTracks = tracks["audio"]
+        if (currentAudioTracks == null || currentAudioTracks.isEmpty()) {
+            Toast.makeText(ctx, "No audio tracks available", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        var audioIndex = max((currentAudioTracks.indexOfFirst { it.selected }), 0)
+
+        val binding = PlayerSelectTracksBinding.inflate(LayoutInflater.from(ctx), null, false)
+        val trackDialog = Dialog(ctx, R.style.AlertDialogCustom)
+        trackDialog.setContentView(binding.root)
+        trackDialog.show()
+        selectTrackDialog = trackDialog
+
+        binding.apply {
+            // Show only audio tracks, hide subtitles
+            audioTracksHolder.isVisible = true
+            sortSubtitlesHolder.isVisible = false
+
+            autoTracksList.apply {
+                val audioArrayAdapter = ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+                audioArrayAdapter.addAll(currentAudioTracks.map { it.name })
+
+                adapter = audioArrayAdapter
+                choiceMode = AbsListView.CHOICE_MODE_SINGLE
+                setSelection(audioIndex)
+                setItemChecked(audioIndex, true)
+
+                setOnItemClickListener { _, _, which, _ ->
+                    audioIndex = which
+                    setItemChecked(which, true)
+                }
+            }
+
+            trackDialog.setOnDismissListener {
+                onDismiss()
+                selectTrackDialog = null
+            }
+
+            cancelBtt.setOnClickListener {
+                trackDialog.dismissSafe(activity)
+            }
+
+            applyBtt.setOnClickListener {
+                onAudioSelected(audioIndex)
+                trackDialog.dismissSafe(activity)
+            }
+        }
+    }
+
+    /**
+     * Show subtitle/text tracks selection dialog
+     */
+    fun showSubtitleTracksDialog(
+        tracks: Map<String, List<MPVView.Track>>,
+        onSubtitleSelected: (subtitleIndex: Int) -> Unit,
+        onLoadSubtitlesFromFile: () -> Unit,
+        onLoadSubtitlesOnline: () -> Unit,
+        onDismiss: () -> Unit
+    ) {
+        val ctx = activity
+        val currentSubtitleTracks = tracks["sub"]
+        if (currentSubtitleTracks == null || currentSubtitleTracks.isEmpty()) {
+            Toast.makeText(ctx, "No subtitle tracks available", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        var subtitleIndex = max((currentSubtitleTracks.indexOfFirst { it.selected }), 0)
+
+        val binding = PlayerSelectTracksBinding.inflate(LayoutInflater.from(ctx), null, false)
+        val trackDialog = Dialog(ctx, R.style.AlertDialogCustom)
+        trackDialog.setContentView(binding.root)
+        trackDialog.show()
+        selectTrackDialog = trackDialog
+
+        binding.apply {
+            // Show only subtitles, hide audio tracks
+            audioTracksHolder.isVisible = false
+            sortSubtitlesHolder.isVisible = true
+
+            sortSubtitles.apply {
+                // Add "Load from file" footer
+                val loadFromFileFooter = LayoutInflater.from(ctx)
+                    .inflate(R.layout.sort_bottom_footer_add_choice, null) as TextView
+                loadFromFileFooter.text = ctx.getString(R.string.player_load_subtitles)
+                loadFromFileFooter.setOnClickListener {
+                    onLoadSubtitlesFromFile()
+                    trackDialog.dismissSafe(activity)
+                }
+                addFooterView(loadFromFileFooter)
+
+                // Add "Load from network" footer
+                val loadFromNetworkFooter = LayoutInflater.from(ctx)
+                    .inflate(R.layout.sort_bottom_footer_add_choice, null) as TextView
+                loadFromNetworkFooter.text = ctx.getString(R.string.player_load_subtitles_online)
+                loadFromNetworkFooter.setOnClickListener {
+                    onLoadSubtitlesOnline()
+                    trackDialog.dismissSafe(activity)
+                }
+                addFooterView(loadFromNetworkFooter)
+
+                val subsArrayAdapter = ArrayAdapter<String>(ctx, R.layout.sort_bottom_single_choice)
+                subsArrayAdapter.addAll(currentSubtitleTracks.map { it.name })
+
+                adapter = subsArrayAdapter
+                choiceMode = AbsListView.CHOICE_MODE_SINGLE
+                setSelection(subtitleIndex)
+                setItemChecked(subtitleIndex, true)
+
+                setOnItemClickListener { _, _, which, _ ->
+                    if (which > currentSubtitleTracks.size - 1) {
+                        // Click footer view instead
+                        val child = adapter.getView(which, null, this)
+                        child?.performClick()
+                    } else {
+                        subtitleIndex = which
+                        setItemChecked(which, true)
+                    }
+                }
+            }
+
+            // Subtitle encoding display
+            subtitlesEncodingFormat.apply {
+                val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
+                val prefNames = ctx.resources.getStringArray(R.array.subtitles_encoding_list)
+                val prefValues = ctx.resources.getStringArray(R.array.subtitles_encoding_values)
+
+                val value = settingsManager.getString(ctx.getString(R.string.subtitles_encoding_key), null)
+                val index = prefValues.indexOf(value)
+                text = prefNames[if (index == -1) 0 else index]
+            }
+
+            trackDialog.setOnDismissListener {
+                onDismiss()
+                selectTrackDialog = null
+            }
+
+            cancelBtt.setOnClickListener {
+                trackDialog.dismissSafe(activity)
+            }
+
+            applyBtt.setOnClickListener {
+                onSubtitleSelected(subtitleIndex)
+                trackDialog.dismissSafe(activity)
+            }
+        }
+    }
+
+    /**
+     * Show audio and subtitle tracks selection dialog (combined)
+     * @deprecated Use showAudioTracksDialog() and showSubtitleTracksDialog() separately
+     */
+    @Deprecated("Split into separate audio and subtitle dialogs")
     fun showTracksDialog(
         tracks: Map<String, List<MPVView.Track>>,
         onTracksSelected: (audioIndex: Int, subtitleIndex: Int) -> Unit,
