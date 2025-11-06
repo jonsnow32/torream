@@ -1077,6 +1077,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   private fun updateVolumeOverlay(volumeRatio: Float) {
+    Timber.i("updateVolumeOverlay: $volumeRatio")
     playerBinding?.apply {
       playerProgressbarLeftHolder.isVisible = true
       playerProgressbarLeft.max = 100_000

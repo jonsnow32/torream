@@ -93,7 +93,7 @@ class PlayerGestureHandler(
 
   // ========== Gesture Settings ==========
 
-  private var currentRequestedVolume: Float = 0.0f
+  private var currentRequestedVolume: Float = -1f  // -1 means uninitialized
   private var currentRequestedBrightness: Float = 1.0f
   private var swipeHorizontalEnabled = false
   private var swipeVerticalEnabled = false
@@ -200,12 +200,29 @@ class PlayerGestureHandler(
     currentTouchLast = currentTouch
     currentTouchStartPlayerTime = currentPlayerTime
 
-    // Cache current brightness and volume for smooth adjustment
+    // Cache current brightness for smooth adjustment
     currentRequestedBrightness = getBrightness() ?: 1.0f
+
+    // Initialize volume only if not yet initialized (first use or after external change)
+    if (currentRequestedVolume < 0f) {
+      initializeVolumeFromSystem()
+    }
+  }
+
+  /**
+   * Initialize volume from system - only called on first use
+   */
+  private fun initializeVolumeFromSystem() {
     getVolume()?.let { volume ->
       getMaxVolume()?.let { maxVolume ->
         currentRequestedVolume = volume.toFloat() / maxVolume.toFloat()
+        Timber.d("Volume initialized from system: $currentRequestedVolume")
       }
+    }
+
+    // Fallback if system volume unavailable
+    if (currentRequestedVolume < 0f) {
+      currentRequestedVolume = 0.5f  // Default to 50%
     }
   }
 
@@ -312,11 +329,26 @@ class PlayerGestureHandler(
 
   /**
    * Sync cached volume with actual system volume
+   * Call this when you suspect external volume changes (e.g., hardware buttons)
    */
   private fun syncVolumeWithSystem() {
     val maxVolume = getMaxVolume() ?: return
     val actualVolume = getVolume() ?: return
-    currentRequestedVolume = actualVolume.toFloat() / maxVolume.toFloat()
+    val newVolumeRatio = actualVolume.toFloat() / maxVolume.toFloat()
+
+    if (currentRequestedVolume != newVolumeRatio) {
+      Timber.d("Volume synced: $currentRequestedVolume -> $newVolumeRatio")
+      currentRequestedVolume = newVolumeRatio
+    }
+  }
+
+  /**
+   * Force re-initialization of volume from system
+   * Call this when app resumes or external volume changes detected
+   */
+  fun resetVolumeCache() {
+    currentRequestedVolume = -1f
+    Timber.d("Volume cache reset - will re-initialize on next gesture")
   }
 
 
@@ -426,6 +458,7 @@ class PlayerGestureHandler(
 
   /**
    * Handle vertical swipe for volume adjustment
+   * Uses direct volume setting (like handleBrightnessSwipe) for immediate, smooth response
    */
   private fun handleVolumeSwipe(verticalAddition: Float) {
     val maxVolume = getMaxVolume() ?: return
@@ -434,21 +467,13 @@ class PlayerGestureHandler(
     currentRequestedVolume = (currentRequestedVolume + verticalAddition).coerceIn(0.0f, 1.0f)
 
     // Calculate desired volume level
-    val desiredVolume = round(currentRequestedVolume * maxVolume).toInt()
-    val currentVolume = getVolume() ?: return
+    val desiredVolume = round(currentRequestedVolume * maxVolume).toInt().coerceIn(0, maxVolume)
 
-    // Adjust system volume if needed
-    if (desiredVolume != currentVolume) {
-      val adjustment = if (desiredVolume < currentVolume) {
-        AudioManager.ADJUST_LOWER
-      } else {
-        AudioManager.ADJUST_RAISE
-      }
-      audioManager?.adjustVolume(adjustment, 0)
-    }
+    // Set volume directly for immediate response (like brightness adjustment)
+    // Using FLAG_SHOW_UI = 0 to not show system volume UI (we have our own overlay)
+    audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, desiredVolume, 0)
 
-    // Always update UI with requested volume for smooth feedback
-    // The actual system volume will be slightly behind, but this provides better UX
+    // Update UI with requested volume for smooth feedback
     onVolumeUpdate(currentRequestedVolume, true)
   }
 
