@@ -2,49 +2,79 @@ package cloud.app.csplayer.ui.player.mpv
 
 import android.animation.ObjectAnimator
 import android.view.View
-import android.view.animation.AlphaAnimation
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.utils.UIHelper.toPx
+import com.ironsource.adqualitysdk.sdk.i.fa
+import timber.log.Timber
 
 /**
- * Manages UI visibility and animations for the player
+ * PlayerUIController - Clean and simple UI state management
+ *
+ * Responsibilities:
+ * - Manage UI visibility (show/hide controls)
+ * - Manage lock state
+ * - Handle animations
+ * - Update UI elements (title, progress, etc.)
+ *
+ * Does NOT handle:
+ * - MPV events (handled by MPVFragment)
+ * - Gesture detection (handled by PlayerGestureHandler)
+ * - Dialogs (handled by PlayerDialogManager)
  */
 class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
 
+  // ========== UI State ==========
+
+  /**
+   * Controls visibility state
+   * When true: All controls are visible
+   * When false: Controls are hidden (unless locked)
+   */
   var isShowing: Boolean = true
     private set
 
+  /**
+   * Lock state
+   * When true: Only lock button visible, prevents accidental touches
+   * When false: Normal control behavior
+   */
   var isLocked: Boolean = false
     private set
 
+  init {
+    // Set initial lock icon
+    updateLockIcon()
+  }
+
+  // ========== Public API ==========
+
   /**
-   * Toggle the visibility of player controls
+   * Toggle controls visibility
    */
   fun toggleControls() {
     isShowing = !isShowing
-    animateLayoutChanges()
+    applyUIState()
   }
 
   /**
-   * Show player controls
+   * Show controls
    */
-  fun showControls() {
-    if (!isShowing) {
-      isShowing = true
-      animateLayoutChanges()
-    }
+  fun show() {
+    isShowing = true
+    applyUIState()
   }
 
   /**
-   * Hide player controls
+   * Hide controls
    */
-  fun hideControls() {
-    if (isShowing) {
-      isShowing = false
-      animateLayoutChanges()
-    }
+  fun hide() {
+    if (isLocked || !isShowing) return
+
+    isShowing = false
+    applyUIState()
   }
 
   /**
@@ -52,97 +82,79 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
    */
   fun toggleLock() {
     isLocked = !isLocked
-    updateUIVisibility()
-
-    val fadeTo = if (isLocked) 0f else 1f
-    val fadeAnimation = AlphaAnimation(1f - fadeTo, fadeTo).apply {
-      duration = 100
-      fillAfter = true
-    }
-
-    binding.apply {
-      playerTopHolder.startAnimation(fadeAnimation)
-      playerBottomHolder.startAnimation(fadeAnimation)
-      playerCenterMenu.startAnimation(fadeAnimation)
-    }
+    updateLockIcon()
+    applyUIState()
   }
 
   /**
-   * Set lock state
+   * Lock the player (show only lock button)
    */
-  fun setLocked(locked: Boolean) {
-    if (isLocked != locked) {
-      toggleLock()
-    }
+  fun lock() {
+    if (isLocked) return
+
+    isLocked = true
+    updateLockIcon()
+    applyUIState()
   }
 
   /**
-   * Update UI visibility based on current state
+   * Unlock the player
    */
-  fun updateUIVisibility() {
-    val isGone = isLocked || !isShowing
+  fun unlock() {
+    if (!isLocked) return
 
-    binding.apply {
-      playerVideoBar.isGone = isGone
-      playPauseToggle.isGone = isGone
-      playerCenterMenu.isGone = isGone
-      playerLock.isGone = !isShowing
-      extraControls.isGone = isGone
-      playerTopHolder.isGone = isGone
-      playerGoBackHolder.isGone = isGone
-      playerSourcesBtt.isGone = isGone
-      playerSubtitleOffset.isGone = true
-
-    }
+    isLocked = false
+    isShowing = true // Show controls when unlocked
+    updateLockIcon()
+    applyUIState()
   }
 
   /**
-   * Animate layout changes when showing/hiding controls
+   * Update lock icon based on current state
    */
-
-  fun View.moveUp(distance: Float, duration: Long = 200) {
-    ObjectAnimator.ofFloat(this, "translationY", -distance).apply {
-      this.duration = duration
-      start()
-    }
-  }
-
-  fun View.moveDown(distance: Float, duration: Long = 200) {
-    ObjectAnimator.ofFloat(this, "translationY", distance).apply {
-      this.duration = duration
-      start()
-    }
-  }
-  fun View.fadeIn(duration: Long = 200) {
-    ObjectAnimator.ofFloat(this, "alpha", 1f).apply {
-      this.duration = duration
-      start()
-    }
-  }
-  fun View.fadeOut(duration: Long = 200) {
-    ObjectAnimator.ofFloat(this, "alpha", 0f).apply {
-      this.duration = duration
-      start()
-    }
-  }
-
-  fun animateLayoutChanges() {
-    if (isShowing) {
-      updateUIVisibility()
+  private fun updateLockIcon() {
+    val iconRes = if (isLocked) {
+      R.drawable.lock_close_icon  // Locked
     } else {
-      binding.playerHolder.postDelayed({ updateUIVisibility() }, 200)
+      R.drawable.lock_open_icon   // Unlocked
     }
+    binding.playerLock.setImageResource(iconRes)
+  }
 
-    if (isShowing) {
-      binding.playerTopHolder.moveDown(0.0f)
-      binding.playerBottomHolder.moveUp(0.0f)
-      binding.shadowOverlay.fadeIn()
-      binding.playerCenterMenu.fadeIn()
+  // ========== UI Updates ==========
+
+  /**
+   * Set video title
+   */
+  fun setTitle(title: String) {
+    binding.playerVideoTitle.text = title
+  }
+
+  /**
+   * Set video title with resolution
+   */
+  fun setTitleWithResolution(title: String, resolution: String) {
+    binding.playerVideoTitle.text = if (resolution.isNotEmpty()) {
+      "$title - $resolution"
     } else {
-      binding.playerTopHolder.moveUp(70.toPx.toFloat())
-      binding.playerBottomHolder.moveDown(70.toPx.toFloat())
-      binding.playerCenterMenu.fadeOut()
-      binding.shadowOverlay.fadeOut()
+      title
+    }
+  }
+
+  /**
+   * Update play/pause button state
+   */
+  fun setPlaying(isPlaying: Boolean) {
+    binding.playPauseToggle.isChecked = isPlaying
+  }
+
+  /**
+   * Update progress bar
+   */
+  fun setProgress(position: Long, duration: Long) {
+    binding.exoProgress.apply {
+      setDuration(duration)
+      setPosition(position)
     }
   }
 
@@ -161,42 +173,61 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
   }
 
   /**
-   * Update playback button state
+   * Show intro play button
    */
-  fun updatePlayPauseButton(isPlaying: Boolean) {
-    binding.playPauseToggle.isChecked = isPlaying
+  fun showIntroPlay() {
+    binding.playerIntroPlay.isVisible = true
   }
 
   /**
-   * Update progress bar
+   * Hide intro play button
    */
-  fun updateProgress(position: Int, duration: Int) {
-    binding.exoProgress.apply {
-      setDuration(duration.toLong())
-      setPosition(position.toLong())
+  fun hideIntroPlay() {
+    binding.playerIntroPlay.isVisible = false
+  }
+
+  // ========== Gesture Overlays ==========
+
+  /**
+   * Show brightness overlay with progress
+   */
+  fun showBrightnessOverlay(brightness: Float, icons: IntArray) {
+    binding.apply {
+      playerProgressbarRightHolder.isVisible = true
+      playerProgressbarRight.max = 100_000
+      playerProgressbarRight.progress = (brightness * 100_000f).toInt().coerceAtLeast(2_000)
+
+      val iconIndex = (brightness * (icons.size - 1)).toInt().coerceIn(0, icons.size - 1)
+      playerProgressbarRightIcon.setImageResource(icons[iconIndex])
     }
   }
 
   /**
-   * Set video title
+   * Show volume overlay with progress
    */
-  fun setVideoTitle(title: String) {
-    binding.playerVideoTitle.text = title
+  fun showVolumeOverlay(volume: Int, maxVolume: Int, icons: IntArray) {
+    val percent = volume.toFloat() / maxVolume.toFloat()
+
+    binding.apply {
+      playerProgressbarLeftHolder.isVisible = true
+      playerProgressbarLeft.max = 100_000
+      playerProgressbarLeft.progress = (percent * 100_000f).toInt().coerceAtLeast(2_000)
+
+      val iconIndex = (percent * (icons.size - 1)).toInt().coerceIn(0, icons.size - 1)
+      playerProgressbarLeftIcon.setImageResource(icons[iconIndex])
+    }
   }
 
   /**
-   * Show gesture overlays
+   * Show seek overlay with time text
    */
-  fun showBrightnessOverlay() {
-    binding.playerProgressbarRightHolder.isVisible = true
-  }
-
-  fun showVolumeOverlay() {
-    binding.playerProgressbarLeftHolder.isVisible = true
-  }
-
-  fun showSeekOverlay() {
-    binding.playerTimeText.isVisible = true
+  fun showSeekOverlay(timeText: String) {
+    binding.apply {
+      playerTimeText.text = timeText
+      playerTimeText.isVisible = true
+      playerProgressbarLeftHolder.isVisible = false
+      playerProgressbarRightHolder.isVisible = false
+    }
   }
 
   /**
@@ -210,220 +241,168 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
     }
   }
 
-  /**
-   * Update brightness overlay with icon
-   */
-  fun updateBrightnessOverlay(brightness: Float, brightnessIcons: IntArray) {
-    binding.apply {
-      playerProgressbarRightHolder.isVisible = true
-      playerProgressbarRight.max = 100_000
-      playerProgressbarRight.progress = kotlin.math.max(2_000, (brightness * 100_000f).toInt())
-
-      val iconIndex = kotlin.math.min(
-        brightnessIcons.size - 1,
-        kotlin.math.max(0, kotlin.math.round(brightness * (brightnessIcons.size - 1)).toInt())
-      )
-      playerProgressbarRightIcon.setImageResource(brightnessIcons[iconIndex])
-    }
-  }
+  // ========== Special UI States ==========
 
   /**
-   * Update volume overlay with icon
-   */
-  fun updateVolumeOverlay(volume: Int, maxVolume: Int, volumeIcons: IntArray) {
-    binding.apply {
-      val volumePercent = volume.toFloat() / maxVolume.toFloat()
-
-      playerProgressbarLeftHolder.isVisible = true
-      playerProgressbarLeft.max = 100_000
-      playerProgressbarLeft.progress = kotlin.math.max(2_000, (volumePercent * 100_000f).toInt())
-
-      val iconIndex = kotlin.math.min(
-        volumeIcons.size - 1,
-        kotlin.math.max(0, kotlin.math.round(volumePercent * (volumeIcons.size - 1)).toInt())
-      )
-      playerProgressbarLeftIcon.setImageResource(volumeIcons[iconIndex])
-    }
-  }
-
-  /**
-   * Update seek overlay
-   */
-  fun updateSeekOverlay(text: String) {
-    binding.apply {
-      playerTimeText.text = text
-      playerTimeText.isVisible = true
-      playerProgressbarLeftHolder.isVisible = false
-      playerProgressbarRightHolder.isVisible = false
-    }
-  }
-
-  /**
-   * Update brightness overlay progress
-   */
-  fun updateBrightnessProgress(progress: Int, max: Int = 100_000) {
-    binding.apply {
-      playerProgressbarRight.max = max
-      playerProgressbarRight.progress = progress
-    }
-  }
-
-  /**
-   * Update volume overlay progress
-   */
-  fun updateVolumeProgress(progress: Int, max: Int = 100_000) {
-    binding.apply {
-      playerProgressbarLeft.max = max
-      playerProgressbarLeft.progress = progress
-    }
-  }
-
-  /**
-   * Set seek overlay text
-   */
-  fun setSeekText(text: String) {
-    binding.playerTimeText.text = text
-  }
-
-  /**
-   * Enable/disable specific UI elements
-   */
-  fun setSpeedButtonVisible(visible: Boolean) {
-    binding.playerSpeedBtt.isVisible = visible
-  }
-
-  fun setResizeButtonVisible(visible: Boolean) {
-    binding.playerResizeBtt.isVisible = visible
-  }
-
-  fun setRotateButtonVisible(visible: Boolean) {
-    binding.playerRotateBtt.isVisible = visible
-  }
-
-  /**
-   * Update skip episode button visibility
-   */
-  fun setSkipEpisodeVisible(visible: Boolean) {
-    binding.playerSkipEpisode.isVisible = visible
-  }
-
-  /**
-   * Set video title visibility
-   */
-  fun setVideoTitleVisible(visible: Boolean) {
-    binding.playerVideoTitle.isVisible = visible
-  }
-
-  /**
-   * Set video title and resolution
-   */
-  fun setVideoTitleWithResolution(title: String, resolution: String) {
-    binding.apply {
-      playerVideoTitle.text = title
-      playerVideoTitleRez.text = resolution
-    }
-  }
-
-  /**
-   * Update center menu visibility (for YouTube overlay integration)
+   * Set center menu visibility (for YouTube overlay)
    */
   fun setCenterMenuVisible(visible: Boolean) {
+    if (isLocked) return // Don't change when locked
     binding.playerCenterMenu.isVisible = visible
   }
 
   /**
-   * Update intro play button visibility
+   * Reset to initial state
    */
-  fun setIntroPlayVisible(visible: Boolean) {
-    binding.playerIntroPlay.isVisible = visible
-  }
-
-  /**
-   * Get the root view
-   */
-  fun getRootView(): View = binding.root
-
-  // ========== MPV Event Handlers ==========
-
-  /**
-   * Handle MPV play event
-   */
-  fun onPlay() {
-    updatePlayPauseButton(isPlaying = true)
+  fun reset() {
+    isShowing = true
+    isLocked = false
     hideLoading()
+    hideGestureOverlays()
+    applyUIState()
   }
 
-  /**
-   * Handle MPV pause event
-   */
-  fun onPause() {
-    updatePlayPauseButton(isPlaying = false)
-  }
+  // ========== Internal Logic ==========
 
   /**
-   * Handle MPV buffering event
+   * Apply current UI state with animations
+   * Core logic: 2 states only
+   * - LOCKED: Only lock button visible
+   * - UNLOCKED: All controls visible/hidden based on isShowing
    */
-  fun onBuffering(isBuffering: Boolean) {
-    if (isBuffering) {
-      showLoading()
+  private fun applyUIState() {
+
+    Timber.i("applyUIState %s", Exception().stackTrace.toString())
+    if (isLocked) {
+      // LOCKED STATE: Only lock button visible
+      animateLocked()
     } else {
-      hideLoading()
+      // UNLOCKED STATE: Show/hide based on isShowing
+      if (isShowing) {
+        animateShow()
+      } else {
+        animateHide()
+      }
     }
   }
 
   /**
-   * Handle MPV seek event
+   * Animate to locked state (only lock button visible)
    */
-  fun onSeek(position: Long, duration: Long) {
-    updateProgress(position.toInt(), duration.toInt())
+  private fun animateLocked() {
+    binding.apply {
+      playerLock.animateToVisible()
+      playerTopHolder.animateSlideUp()
+      playerVideoBar.animateSlideDown()
+      extraControls.animateSlideDown()
+      shadowOverlay.animateFadeOut()
+      playerCenterMenu.animateFadeOut()
+    }
+
+    // Update visibility after animation
+    binding.root.postDelayed({
+      binding.apply {
+        playerLock.isGone = false
+        playerLock.isVisible = true
+        playerTopHolder.isGone = true
+        shadowOverlay.isGone = true
+        playerCenterMenu.isGone = true
+        playerVideoBar.isGone = true
+        extraControls.isGone = true
+      }
+    }, ANIMATION_DURATION)
   }
 
   /**
-   * Handle MPV time position change
+   * Animate to show all controls
    */
-  fun onTimePositionChange(position: Long, duration: Long) {
-    updateProgress(position.toInt(), duration.toInt())
+  private fun animateShow() {
+    binding.apply {
+      playerLock.isGone = false
+      playerTopHolder.isGone = false
+      extraControls.isGone = false
+      shadowOverlay.isGone = false
+      playerCenterMenu.isGone = false
+      playerVideoBar.isGone = false
+
+      playerLock.animateToVisible()
+      playerTopHolder.animateToVisible()
+      extraControls.animateToVisible()
+      shadowOverlay.animateFadeIn()
+      playerCenterMenu.animateFadeIn()
+      playerVideoBar.animateToVisible()
+    }
+
   }
 
   /**
-   * Handle MPV error event
+   * Animate to hide all controls
    */
-  fun onError() {
-    hideLoading()
+  private fun animateHide() {
+    binding.apply {
+      playerLock.animateSlideDown()
+      playerTopHolder.animateSlideUp()
+      extraControls.animateSlideDown()
+      shadowOverlay.animateFadeOut()
+      playerCenterMenu.animateFadeOut()
+      playerVideoBar.animateSlideDown()
+    }
+
+    // Update visibility after animation
+    binding.root.postDelayed({
+      binding.apply {
+        playerLock.isGone = true
+        playerTopHolder.isGone = true
+        extraControls.isGone = true
+        shadowOverlay.isGone = true
+        playerCenterMenu.isGone = true
+        playerVideoBar.isGone = true
+      }
+    }, ANIMATION_DURATION)
   }
 
-  /**
-   * Handle MPV video loaded event
-   */
-  fun onVideoLoaded(title: String, resolution: String = "") {
-    setVideoTitleWithResolution(title, resolution)
-    hideLoading()
+  // ========== Animation Extensions ==========
+
+  private fun View.animateToVisible() {
+    isVisible = true
+    isGone = false
+    animateFadeIn()
+    ObjectAnimator.ofFloat(this, "translationY", 0f).apply {
+      this.duration = ANIMATION_DURATION
+      start()
+    }
   }
 
-  /**
-   * Handle user interaction (tap/click)
-   */
-  fun onUserInteraction() {
-    toggleControls()
+  private fun View.animateSlideUp() {
+    ObjectAnimator.ofFloat(this, "translationY", -100.toPx.toFloat()).apply {
+      this.duration = ANIMATION_DURATION
+      start()
+    }
   }
 
-  /**
-   * Handle double tap for seek
-   */
-  fun onDoubleTap(isForward: Boolean, seekTime: Int) {
-    val text = if (isForward) "+$seekTime s" else "-$seekTime s"
-    updateSeekOverlay(text)
+  private fun View.animateSlideDown() {
+    ObjectAnimator.ofFloat(this, "translationY", 100.toPx.toFloat()).apply {
+      this.duration = ANIMATION_DURATION
+      start()
+    }
   }
 
-  /**
-   * Reset all UI states
-   */
-  fun reset() {
-    hideLoading()
-    hideGestureOverlays()
-    isShowing = true
-    isLocked = false
-    updateUIVisibility()
+  private fun View.animateFadeIn() {
+    ObjectAnimator.ofFloat(this, "alpha", 0f, 1f).apply {
+      this.duration = ANIMATION_DURATION
+      start()
+    }
+  }
+
+  private fun View.animateFadeOut() {
+    ObjectAnimator.ofFloat(this, "alpha", 1f, 0f).apply {
+      this.duration = ANIMATION_DURATION
+      start()
+    }
+  }
+
+  companion object {
+    private const val ANIMATION_DURATION = 200L
   }
 }
 

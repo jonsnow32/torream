@@ -43,18 +43,19 @@ class PlayerGestureHandler(
   private val context: Context,
   private val sWidth: Int,
   private val sHeight: Int,
-  private val onBrightnessUpdate: (Float, Boolean) -> Unit, // brightness, showUI
-  private val onVolumeUpdate: (Float, Boolean) -> Unit,     // volume ratio, showUI
+  private val isLocked: () -> Boolean,                       // Check if player is locked
+  private val isShowing: () -> Boolean,                      // Check if UI is showing
+  private val onBrightnessUpdate: (Float, Boolean) -> Unit,  // brightness, showUI
+  private val onVolumeUpdate: (Float, Boolean) -> Unit,      // volume ratio, showUI
   private val onSeekUpdate: (Long, String, Boolean) -> Unit, // time, text, showUI
   private val onSeekCommit: (Long) -> Unit,                  // final seek position
   private val onDoubleTapRewind: () -> Unit,
   private val onDoubleTapForward: () -> Unit,
   private val onSingleTap: () -> Unit,
   private val onTogglePlayPause: () -> Unit,
-  private val isLocked: () -> Boolean,
-  private val isShowing: () -> Boolean,
   private val hideUIForBrightness: () -> Unit
 ) {
+  // ...existing code...
   // Touch state variables
   private var isCurrentTouchValid = false
   private var currentTouchStart: Utils.Vector2? = null
@@ -107,13 +108,9 @@ class PlayerGestureHandler(
   fun updateSettings(
     horizontalEnabled: Boolean,
     verticalEnabled: Boolean,
-    doubleTapEnabled: Boolean,
-    doubleTapPauseEnabled: Boolean
   ) {
     this.swipeHorizontalEnabled = horizontalEnabled
     this.swipeVerticalEnabled = verticalEnabled
-    this.doubleTapEnabled = doubleTapEnabled
-    this.doubleTapPauseEnabled = doubleTapPauseEnabled
   }
 
   /**

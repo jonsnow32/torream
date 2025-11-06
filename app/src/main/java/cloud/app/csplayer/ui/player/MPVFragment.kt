@@ -168,8 +168,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private lateinit var dialogManager: PlayerDialogManager
 
   // state of player UI
-  private var isShowing = true
-  private var isLocked = false
   private var resizeMode: Int = 0
   private var backgroundPlayMode = ""
 
@@ -181,8 +179,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private var swipeVerticalEnabled = false
   private var playBackSpeedEnabled = true
   private var playerResizeEnabled = false
-  private var doubleTapEnabled = false
-  private var doubleTapPauseEnabled = true
   private var playerRotateEnabled = false
   private var autoPlayerRotateEnabled = false
   private var activityIsForeground = true
@@ -254,53 +250,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private fun initializeManagers() {
     playerBinding?.let { binding ->
       // Initialize gesture handler with all required callbacks
-      gestureHandler = PlayerGestureHandler(
-        context = requireContext(),
-        sWidth = sWidth,
-        sHeight = sHeight,
-        onBrightnessUpdate = { brightness, showUI ->
-          if (showUI) {
-            updateBrightnessOverlay(brightness)
-          } else {
-            hideBrightnessOverlay()
-          }
-        },
-        onVolumeUpdate = { volumeRatio, showUI ->
-          if (showUI) {
-            updateVolumeOverlay(volumeRatio)
-          } else {
-            hideVolumeOverlay()
-          }
-        },
-        onSeekUpdate = { position, text, showUI ->
-          if (showUI) {
-            updateSeekOverlay(position, text)
-          } else {
-            hideSeekOverlay()
-          }
-        },
-        onSeekCommit = { seekTo ->
-          player?.timePos = seekTo.toDouble()
-        },
-        onDoubleTapRewind = {
-          doubleTapRewind()
-        },
-        onDoubleTapForward = {
-          doubleTapForawd()
-        },
-        onSingleTap = {
-          toggleShowDelayed()
-        },
-        onTogglePlayPause = {
-          togglePlayPause()
-        },
-        isLocked = { isLocked },
-        isShowing = { isShowing },
-        hideUIForBrightness = {
-          isShowing = false
-          animateLayoutChanges()
-        }
-      )
 
       // Initialize UI controller
       uiController = PlayerUIController(binding)
@@ -335,6 +284,54 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       // Initialize dialog manager
       dialogManager = PlayerDialogManager(requireActivity())
+
+      gestureHandler = PlayerGestureHandler(
+        context = requireContext(),
+        sWidth = sWidth,
+        sHeight = sHeight,
+        isLocked = { uiController.isLocked },
+        isShowing = { uiController.isShowing },
+        onBrightnessUpdate = { brightness, showUI ->
+          if (showUI) {
+            updateBrightnessOverlay(brightness)
+          } else {
+            hideBrightnessOverlay()
+          }
+        },
+        onVolumeUpdate = { volumeRatio, showUI ->
+          if (showUI) {
+            updateVolumeOverlay(volumeRatio)
+          } else {
+            hideVolumeOverlay()
+          }
+        },
+        onSeekUpdate = { position, text, showUI ->
+          if (showUI) {
+            updateSeekOverlay(position, text)
+          } else {
+            hideSeekOverlay()
+          }
+        },
+        onSeekCommit = { seekTo ->
+          player?.timePos = seekTo.toDouble()
+        },
+        onDoubleTapRewind = {
+          doubleTapRewind()
+        },
+        onDoubleTapForward = {
+          doubleTapForawd()
+        },
+        onSingleTap = {
+          uiController.toggleControls()
+        },
+        onTogglePlayPause = {
+          togglePlayPause()
+        },
+        hideUIForBrightness = {
+          uiController.hide()
+        }
+      )
+
     }
   }
 
@@ -415,32 +412,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  /**
-   * Cycle through repeat modes: NONE -> ALL -> ONE -> NONE
-   */
-  private fun cycleRepeatMode() {
-    val state = playlistState ?: return
-    val newMode = when (state.repeatMode) {
-      PlaylistState.RepeatMode.NONE -> PlaylistState.RepeatMode.ALL
-      PlaylistState.RepeatMode.ALL -> PlaylistState.RepeatMode.ONE
-      PlaylistState.RepeatMode.ONE -> PlaylistState.RepeatMode.NONE
-    }
-
-    playlistState = state.copy(repeatMode = newMode)
-    updateRepeatIcon()
-
-    val modeText = when (newMode) {
-      PlaylistState.RepeatMode.NONE -> "Off"
-      PlaylistState.RepeatMode.ALL -> "All"
-      PlaylistState.RepeatMode.ONE -> "One"
-    }
-    showToast("Repeat: $modeText", Toast.LENGTH_SHORT)
-    Timber.tag(TAG).d("Repeat mode changed to: $newMode")
-  }
-
-  /**
-   * Update playlist UI elements
-   */
   private fun updatePlaylistUI() {
     val state = playlistState ?: return
 
@@ -454,7 +425,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         } else {
           "Playing ${state.currentIndex + 1} of ${state.items.size}"
         }
-        uiController.setVideoTitle(titleText)
+        uiController.setTitle(titleText)
 
         // Update skip button visibility
         playerSkipEpisode.isVisible = state.currentIndex < state.items.size - 1
@@ -543,10 +514,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 //    preferredAutoSelectSubtitles = context?.getAutoSelectLanguageISO639_1()
 
 
-    player?.setOnClickListener {
-      autoHide()
-      toggleControls()
-    }
+//    player?.setOnClickListener {
+//      uiController.toggleControls()
+//      autoHide()
+//    }
 
 
     // Initialize audio manager and request audio focus
@@ -609,7 +580,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     playerEventListener = { eventType ->
       when (eventType) {
         PlayerEventType.Lock -> {
-          toggleLock()
+          uiController.toggleLock()
         }
 
         PlayerEventType.NextEpisode -> {
@@ -669,7 +640,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         }
 
         PlayerEventType.ToggleHide -> {
-          toggleControls()
+          uiController.hide()
         }
 
         PlayerEventType.ShowMirrors -> {
@@ -744,24 +715,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
             ctx.getString(R.string.player_resize_enabled_key),
             true
           )
-        doubleTapEnabled =
-          settingsManager.getBoolean(
-            ctx.getString(R.string.double_tap_enabled_key),
-            true
-          )
 
-        doubleTapPauseEnabled =
-          settingsManager.getBoolean(
-            ctx.getString(R.string.double_tap_pause_enabled_key),
-            false
-          )
 
         // Update gesture handler with loaded settings
         gestureHandler.updateSettings(
           horizontalEnabled = swipeHorizontalEnabled,
           verticalEnabled = swipeVerticalEnabled,
-          doubleTapEnabled = doubleTapEnabled,
-          doubleTapPauseEnabled = doubleTapPauseEnabled
         )
       }
 
@@ -853,7 +812,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerLock.setOnClickListener {
-        toggleLock()
+        uiController.toggleLock()
       }
 
       exoRew.setOnClickListener {
@@ -903,7 +862,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       // it is !not! a bug that you cant touch the right side, it does not register inputs on navbar or status bar
       playerHolder.setOnTouchListener { callView, event ->
-        uiController.setIntroPlayVisible(false)
+        uiController.hideIntroPlay()
         return@setOnTouchListener gestureHandler.handleMotionEvent(
           callView,
           event,
@@ -928,21 +887,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private var currentDoubleTapIndex = 0
-  private fun toggleShowDelayed() {
-    if (doubleTapEnabled || doubleTapPauseEnabled) {
-      val index = currentDoubleTapIndex
-      playerBinding?.playerHolder?.postDelayed({
-        if (index == currentDoubleTapIndex) {
-          autoHide()
-          toggleControls()
-        }
-      }, DOUBLE_TAB_MINIMUM_TIME_BETWEEN)
-    } else {
-      autoHide()
-      toggleControls()
-    }
-  }
 
   private fun doubleTapRewind() {
     try {
@@ -987,25 +931,25 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           KeyEvent.ACTION_DOWN -> {
             when (keyCode) {
               KeyEvent.KEYCODE_DPAD_CENTER -> {
-                if (!isShowing) {
-                  if (!isLocked) {
+                if (!uiController.isShowing) {
+                  if (!uiController.isLocked) {
                     togglePlayPause()
                   }
-                  toggleControls()
+                  uiController.toggleControls()
                   return true
                 }
               }
 
               KeyEvent.KEYCODE_DPAD_DOWN,
               KeyEvent.KEYCODE_DPAD_UP -> {
-                if (!isShowing) {
-                  toggleControls()
+                if (!uiController.isShowing) {
+                  uiController.toggleControls()
                   return true
                 }
               }
 
               KeyEvent.KEYCODE_DPAD_LEFT -> {
-                if (!isShowing && !isLocked) {
+                if (!uiController.isShowing && !uiController.isLocked) {
                   player?.timePos =
                     player?.timePos?.plus(-androidTVInterfaceOffSeekTime / 1000L)
                   return true
@@ -1017,7 +961,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
               }
 
               KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                if (!isShowing && !isLocked) {
+                if (!uiController.isShowing && !uiController.isLocked) {
                   player?.timePos =
                     player?.timePos?.plus(androidTVInterfaceOffSeekTime / 1000L)
                   return true
@@ -1040,7 +984,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           KeyEvent.KEYCODE_DPAD_DOWN_RIGHT,
           KeyEvent.KEYCODE_DPAD_UP_LEFT,
           KeyEvent.KEYCODE_DPAD_UP_RIGHT -> {
-            if (!isShowing) {
+            if (!uiController.isShowing) {
               return true
             } else {
             }
@@ -1048,8 +992,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
           // netflix capture back and hide ~monke
           KeyEvent.KEYCODE_BACK -> {
-            if (isShowing) {
-              toggleControls()
+            if (uiController.isShowing) {
+              uiController.toggleControls()
               return true
             } else {
               player?.timePos
@@ -1336,8 +1280,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           override fun onAnimationEnd(animation: Animation?) {
             exoRewText.post {
               resetRewindText()
-              uiController.setCenterMenuVisible(isShowing)
-              playerRewHolder.alpha = if (isShowing) 1f else 0f
+              uiController.setCenterMenuVisible(uiController.isShowing)
+              playerRewHolder.alpha = if (uiController.isShowing) 1f else 0f
             }
           }
         })
@@ -1368,8 +1312,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           override fun onAnimationEnd(animation: Animation?) {
             exoFfwdText.post {
               resetFastForwardText()
-              uiController.setCenterMenuVisible(isShowing)
-              playerFfwdHolder.alpha = if (isShowing) 1f else 0f
+              uiController.setCenterMenuVisible(uiController.isShowing)
+              playerFfwdHolder.alpha = if (uiController.isShowing) 1f else 0f
             }
           }
         })
@@ -1394,7 +1338,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   protected fun uiReset() {
-    isShowing = false
+    uiController.hide()
     // if nothing has loaded these buttons should not be visible
     playerBinding?.apply {
       //shadowOverlay.isVisible = false
@@ -1402,8 +1346,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       setReizeIcon()
     }
     //updateLockUI()
-    updateUIVisibility()
-    animateLayoutChanges()
     resetFastForwardText()
     updateDecoderButton()
     resetRewindText()
@@ -1497,13 +1439,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private var currentTapIndex = 0
   protected fun autoHide() {
-    currentTapIndex++
-    val index = currentTapIndex
-    playerBinding?.playerHolder?.postDelayed({
-      if (isShowing && activityIsForeground && index == currentTapIndex) {
-        toggleControls()
-      }
-    }, 2000)
+//    currentTapIndex++
+//    val index = currentTapIndex
+//    playerBinding?.playerHolder?.postDelayed({
+//      if (uiController.isShowing && activityIsForeground && index == currentTapIndex) {
+//        uiController.toggleControls()
+//      }
+//    }, 2000)
   }
 
   private fun setPlayBackSpeed(speed: Float) {
@@ -1527,8 +1469,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       return
     }
 
-    player?.paused = false
+    // Set activityIsForeground BEFORE unpausing to ensure correct state
     activityIsForeground = true
+    player?.paused = false
 
     uiReset()
     super.onResume()
@@ -1587,23 +1530,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     Timber.v("Saved playback state - position: ${psc.position}, paused: ${player?.paused}")
   }
 
-
-  private fun toggleControls() {
-    uiController.toggleControls()
-    isShowing = uiController.isShowing
-    playerBinding?.playPauseToggle?.requestFocus()
-  }
-
-  protected fun animateLayoutChanges() {
-    uiController.animateLayoutChanges()
-    isShowing = uiController.isShowing
-  }
-
-  fun updateUIVisibility() {
-    uiController.updateUIVisibility()
-    isShowing = uiController.isShowing
-    isLocked = uiController.isLocked
-
+  private fun updateUIVisibility() {
     // Update skip episode button based on playlist or episode state
     val shouldHideSkipButton = when {
       isPlaylistMode -> !(playlistState?.hasNext() ?: false)
@@ -1612,10 +1539,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       else -> true
     }
-    uiController.setSkipEpisodeVisible(!shouldHideSkipButton)
+    playerBinding?.playerSkipEpisode?.isVisible = !shouldHideSkipButton
 
     // Handle title visibility based on preferences
-    var togglePlayerTitleGone = isLocked || !isShowing
+    var togglePlayerTitleGone = uiController.isLocked || !uiController.isShowing
     context?.let {
       val settingsManager = PreferenceManager.getDefaultSharedPreferences(it)
       val limitTitle = settingsManager.getInt(getString(R.string.prefer_limit_title_key), 0)
@@ -1623,21 +1550,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         togglePlayerTitleGone = true
       }
     }
-    uiController.setVideoTitleVisible(!togglePlayerTitleGone)
+    playerBinding?.playerVideoTitle?.isVisible = !togglePlayerTitleGone
   }
 
-  private fun toggleLock() {
-    uiController.toggleLock()
-    isLocked = uiController.isLocked
-
-    if (isLocked && isShowing) {
-      playerBinding?.playerHolder?.postDelayed({
-        if (isLocked && uiController.isShowing) {
-          toggleControls()
-        }
-      }, 200)
-    }
-  }
 
   private fun enterFullscreen() {
     activity?.hideSystemUI()
@@ -1740,10 +1655,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     // Auto-play when file is loaded and ready
     if (eventId == MPVLib.mpvEventId.MPV_EVENT_FILE_LOADED) {
-      if (shouldAutoPlay && playbackHasStarted) {
+      // IMPORTANT: Only auto-play if activity is in foreground to prevent playing in background
+      if (shouldAutoPlay && playbackHasStarted && activityIsForeground) {
         player?.paused = false
         autoHide() // Auto-hide controls when video starts playing
         Timber.tag(TAG).v("Auto-playing video on file loaded")
+      } else if (!activityIsForeground) {
+        Timber.tag(TAG).v("Skipping auto-play on file loaded: activity is in background")
       }
 
       // Try to load playlist info from MPV if not already in playlist mode
@@ -1759,10 +1677,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
 
       // Auto-play when ready if shouldAutoPlay is true
-      if (shouldAutoPlay && playbackHasStarted) {
+      // IMPORTANT: Only auto-play if activity is in foreground to prevent playing in background
+      if (shouldAutoPlay && playbackHasStarted && activityIsForeground) {
         player?.paused = false
         autoHide() // Auto-hide controls when playback restarts
         Timber.tag(TAG).v("Auto-playing video on playback restart")
+      } else if (!activityIsForeground) {
+        Timber.tag(TAG).v("Skipping auto-play: activity is in background")
       }
     }
   }
@@ -1790,7 +1711,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     if (!activityIsForeground) return
     when (property) {
       "pause" -> {
-        uiController.updatePlayPauseButton(!value)
+        uiController.setPlaying(!value)
       }
 
       "paused-for-cache" -> {
@@ -1933,7 +1854,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private fun updateMetadataDisplay() {
     playerBinding?.playerVideoTitleRez?.text = psc.meta.formatTitle()
-    //playerBinding?.playerVideoTitleRez?.text = psc.meta.formatArtistAlbum()
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireActivity())
     val limitTitle =
       settingsManager.getInt(requireActivity().getString(R.string.prefer_limit_title_key), 0)
@@ -1966,7 +1886,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     )
 
     if (sourceIndex >= allLinks.size - 1) {
-      uiController.setSkipEpisodeVisible(false)
+      playerBinding?.playerSkipEpisode?.isVisible = false
     } else {
       try {
         MPVLib.command(arrayOf("stop"))

@@ -487,8 +487,6 @@
             app:buttonTint="@color/white"
             android:layout_gravity="center"
             android:checked="false"
-            android:visibility="invisible"
-            tools:visibility="visible"
             tools:ignore="DuplicateSpeakableTextCheck" />
 
         </FrameLayout>
@@ -713,90 +711,90 @@
 
 
         <LinearLayout
+          android:id="@+id/extraControls"
           android:layout_width="match_parent"
-          android:layout_height="wrap_content">
+          android:layout_height="wrap_content"
+          android:gravity="end"
+          android:orientation="horizontal"
+          android:paddingHorizontal="12dp">
+
           <ImageButton
-            android:id="@+id/playerLock"
+            android:id="@+id/playerSkipEpisode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
             android:background="@drawable/transparent_circle_background"
-            android:contentDescription="@string/lock_screen"
+            android:contentDescription="@string/background_audio"
             android:padding="12dp"
-            android:src="@drawable/lock_close_icon"
+            android:src="@drawable/rounded_skip_next_24"
+            android:visibility="gone"
+            app:tint="@android:color/white"
+            tools:visibility="visible" />
+          <ImageButton
+            android:id="@+id/playerResizeBtt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/transparent_circle_background"
+            android:contentDescription="@string/resize_zoom"
+            android:padding="12dp"
+            android:src="@drawable/ic_baseline_resize_fit_24"
             app:tint="@android:color/white" />
 
-          <LinearLayout
-            android:id="@+id/extraControls"
-            android:layout_width="0dp"
+          <ImageButton
+            android:id="@+id/playerOptionPip"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="end"
-            android:orientation="horizontal"
-            android:paddingHorizontal="12dp">
+            android:layout_marginStart="4dp"
+            android:background="@drawable/transparent_circle_background"
+            android:contentDescription="@string/picture_in_picture"
+            android:padding="12dp"
+            android:src="@drawable/ic_baseline_picture_in_picture_alt_24"
+            android:visibility="gone"
+            app:tint="@android:color/white"
+            tools:visibility="visible" />
 
-            <ImageButton
-              android:id="@+id/playerSkipEpisode"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_marginStart="4dp"
-              android:background="@drawable/transparent_circle_background"
-              android:contentDescription="@string/background_audio"
-              android:padding="12dp"
-              android:src="@drawable/rounded_skip_next_24"
-              android:visibility="gone"
-              app:tint="@android:color/white"
-              tools:visibility="visible" />
-            <ImageButton
-              android:id="@+id/playerResizeBtt"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_marginStart="4dp"
-              android:background="@drawable/transparent_circle_background"
-              android:contentDescription="@string/resize_zoom"
-              android:padding="12dp"
-              android:src="@drawable/ic_baseline_resize_fit_24"
-              app:tint="@android:color/white" />
-
-            <ImageButton
-              android:id="@+id/playerOptionPip"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_marginStart="4dp"
-              android:background="@drawable/transparent_circle_background"
-              android:contentDescription="@string/picture_in_picture"
-              android:padding="12dp"
-              android:src="@drawable/ic_baseline_picture_in_picture_alt_24"
-              android:visibility="gone"
-              app:tint="@android:color/white"
-              tools:visibility="visible" />
-
-            <ImageButton
-              android:id="@+id/btnBackground"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_marginStart="4dp"
-              android:background="@drawable/transparent_circle_background"
-              android:contentDescription="@string/background_audio"
-              android:padding="12dp"
-              android:src="@drawable/ic_headset"
-              android:visibility="gone"
-              app:tint="@android:color/white"
-              tools:visibility="visible" />
+          <ImageButton
+            android:id="@+id/btnBackground"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/transparent_circle_background"
+            android:contentDescription="@string/background_audio"
+            android:padding="12dp"
+            android:src="@drawable/ic_headset"
+            android:visibility="gone"
+            app:tint="@android:color/white"
+            tools:visibility="visible" />
 
 
-            <ImageButton
-              android:id="@+id/playerRotateBtt"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_gravity="end"
-              android:background="@drawable/transparent_circle_background"
-              android:contentDescription="@string/rotate_video"
-              android:padding="12dp"
-              android:src="@drawable/screen_rotation"
-              app:tint="@android:color/white" />
-          </LinearLayout>
+          <ImageButton
+            android:id="@+id/playerRotateBtt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:background="@drawable/transparent_circle_background"
+            android:contentDescription="@string/rotate_video"
+            android:padding="12dp"
+            android:src="@drawable/screen_rotation"
+            app:tint="@android:color/white" />
         </LinearLayout>
       </LinearLayout>
+
+      <!-- Lock button - Independent from playerBottomHolder so it can be shown when locked -->
+      <ImageButton
+        android:id="@+id/playerLock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/transparent_circle_background"
+        android:contentDescription="@string/lock_screen"
+        android:padding="12dp"
+        android:src="@drawable/lock_close_icon"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:tint="@android:color/white" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
