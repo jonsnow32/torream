@@ -8,10 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import timber.log.Timber
 
 class NotificationButtonReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
-        Log.v(TAG, "NotificationButtonReceiver: ${intent!!.action}")
+        Timber.v( "NotificationButtonReceiver: ${intent!!.action}")
         // remember to update AndroidManifest.xml too when adding here
         when (intent.action) {
             "$PREFIX.PLAY_PAUSE" -> MPVLib.command(arrayOf("cycle", "pause"))
@@ -21,18 +22,13 @@ class NotificationButtonReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        @SuppressLint("UnspecifiedImmutableFlag")
         fun createIntent(context: Context, action: String): PendingIntent {
             val intent = Intent("$PREFIX.$action")
             // turn into explicit intent
             intent.component = ComponentName(context, NotificationButtonReceiver::class.java)
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-            else
-                PendingIntent.getBroadcast(context, 0, intent, 0)
+            return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         }
 
-        private const val TAG = "mpv"
         private const val PREFIX = "cloud.app.csplayer.ui.player.mpv"
     }
 }

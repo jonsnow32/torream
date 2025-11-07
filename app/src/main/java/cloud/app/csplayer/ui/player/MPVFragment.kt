@@ -3,6 +3,7 @@ package cloud.app.csplayer.ui.player
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.Build
@@ -41,6 +42,7 @@ import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.player.mpv.MPVLib
 import cloud.app.csplayer.ui.player.mpv.MPVUtils
 import cloud.app.csplayer.ui.player.mpv.MPVView
+import cloud.app.csplayer.ui.player.mpv.PipActionManager
 import cloud.app.csplayer.ui.player.mpv.PlayerAudioManager
 import cloud.app.csplayer.ui.player.mpv.PlayerDialogManager
 import cloud.app.csplayer.ui.player.mpv.PlayerGestureHandler
@@ -149,6 +151,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private lateinit var playerAudioManager: PlayerAudioManager
   private lateinit var mediaManager: PlayerMediaManager
   private lateinit var dialogManager: PlayerDialogManager
+  private var pipActionManager: PipActionManager? = null
 
   // state of player UI
   private var resizeMode: Int = 0
@@ -610,6 +613,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         showCodecsDialog()
       }
 
+      playerOptionPip.setOnClickListener {
+        enterPipMode()
+      }
+
+      // Show PIP button only on Android N (7.0) and above
+      playerOptionPip.isVisible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+
       // it is !not! a bug that you cant touch the right side, it does not register inputs on navbar or status bar
       playerHolder.setOnTouchListener { callView, event ->
         uiController.hideIntroPlay()
@@ -676,6 +686,35 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       // Initialize dialog manager
       dialogManager = PlayerDialogManager(requireActivity())
 
+      // Initialize PIP action manager (Android O+)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        pipActionManager = PipActionManager(
+          context = requireContext(),
+          onPlayPause = {
+            togglePlayPause()
+          },
+          onPrevious = {
+            if (playlistState?.hasPrevious() == true) {
+              playPreviousInPlaylist()
+            }
+          },
+          onNext = {
+            if (playlistState?.hasNext() == true) {
+              playNextInPlaylist()
+            }
+            // Note: Non-playlist "next episode" not supported in PIP
+          },
+          onRewind = {
+            rewind()
+          },
+          onFastForward = {
+            fastForward()
+          }
+        )
+        pipActionManager?.register()
+        Timber.tag(TAG).d("PIP action manager initialized and registered")
+      }
+
       gestureHandler = PlayerGestureHandler(
         context = requireContext(),
         sWidth = sWidth,
@@ -714,7 +753,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         },
         onSingleTap = {
           uiController.toggleControls()
-          Timber.i("onSingleTap ${Utils.getStackTrace()}")
         },
         onTogglePlayPause = {
           togglePlayPause()
@@ -766,6 +804,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       updatePlaylistUI()
 
+      // Update PIP actions with new playlist position
+      updatePipActions()
+
       // Show toast feedback
       val nextItem = state.items.getOrNull(nextIndex)
       val itemTitle = nextItem?.title ?: "Item ${nextIndex + 1}"
@@ -792,6 +833,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       MPVLib.command(arrayOf("playlist-play-index", prevIndex.toString()))
 
       updatePlaylistUI()
+
+      // Update PIP actions with new playlist position
+      updatePipActions()
 
       // Show toast feedback
       val prevItem = state.items.getOrNull(prevIndex)
@@ -1187,6 +1231,152 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
+  /**
+   * Enter Picture-in-Picture mode
+   */
+  private fun enterPipMode() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      try {
+        val activity = requireActivity()
+
+        // Check if PIP is supported
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          if (activity.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            // Get current playback state
+            val isPlaying = player?.paused == false
+            val hasPlaylist = playlistState != null
+            val hasPrevious = playlistState?.hasPrevious() ?: false
+            val hasNext = playlistState?.hasNext() ?: false
+
+            // Create PIP actions
+            val pipActions = pipActionManager?.createPipActions(
+              isPlaying = isPlaying,
+              hasPlaylist = hasPlaylist,
+              hasPrevious = hasPrevious,
+              hasNext = hasNext
+            ) ?: emptyList()
+
+            // Build PIP params with actions
+            val params = android.app.PictureInPictureParams.Builder()
+              .apply {
+                if (pipActions.isNotEmpty()) {
+                  setActions(pipActions)
+                }
+
+                // Set aspect ratio with clamping to Android's acceptable range
+                try {
+                  val width = MPVLib.getPropertyInt("dwidth") ?: 16
+                  val height = MPVLib.getPropertyInt("dheight") ?: 9
+
+                  if (width > 0 && height > 0) {
+                    // Calculate aspect ratio
+                    var aspectRatio = width.toFloat() / height.toFloat()
+
+                    // Android PIP aspect ratio limits: min ~0.4184 (5:12), max ~2.39 (12:5)
+                    // Clamp to slightly safer range to avoid edge cases
+                    val minAspectRatio = 0.42f  // ~5:12 (portrait limit)
+                    val maxAspectRatio = 2.39f  // ~12:5 (landscape limit)
+
+                    val originalRatio = aspectRatio
+                    aspectRatio = aspectRatio.coerceIn(minAspectRatio, maxAspectRatio)
+
+                    if (originalRatio != aspectRatio) {
+                      Timber.tag(TAG).w(
+                        "Video aspect ratio $originalRatio is outside PIP limits, " +
+                        "clamped to $aspectRatio (min: $minAspectRatio, max: $maxAspectRatio)"
+                      )
+                    }
+
+                    // Convert to rational and set
+                    // Use scaled integers to maintain precision
+                    val scale = 1000
+                    val rationalWidth = (aspectRatio * scale).toInt()
+                    val rationalHeight = scale
+
+                    setAspectRatio(android.util.Rational(rationalWidth, rationalHeight))
+                    Timber.tag(TAG).d("Set PIP aspect ratio: $aspectRatio ($rationalWidth:$rationalHeight)")
+                  } else {
+                    // Default to 16:9 if dimensions invalid
+                    setAspectRatio(android.util.Rational(16, 9))
+                    Timber.tag(TAG).d("Using default 16:9 aspect ratio")
+                  }
+                } catch (e: Exception) {
+                  // Fallback to safe 16:9 aspect ratio
+                  Timber.tag(TAG).e(e, "Failed to set aspect ratio, using default 16:9")
+                  try {
+                    setAspectRatio(android.util.Rational(16, 9))
+                  } catch (e2: Exception) {
+                    Timber.tag(TAG).e(e2, "Failed to set default aspect ratio")
+                  }
+                }
+              }
+              .build()
+
+            @Suppress("DEPRECATION")
+            activity.enterPictureInPictureMode(params)
+            Timber.tag(TAG).d("Entered PIP mode with ${pipActions.size} actions")
+          } else {
+            showToast("Picture-in-Picture not supported on this device", Toast.LENGTH_SHORT)
+          }
+        } else {
+          // Android N - simple PIP mode without actions
+          @Suppress("DEPRECATION")
+          activity.enterPictureInPictureMode()
+          Timber.tag(TAG).d("Entered PIP mode (Android N - no actions)")
+        }
+      } catch (e: Exception) {
+        Timber.tag(TAG).e(e, "Failed to enter PIP mode")
+        showToast("Failed to enter Picture-in-Picture mode", Toast.LENGTH_SHORT)
+        logError(e)
+      }
+    } else {
+      showToast("Picture-in-Picture requires Android 7.0+", Toast.LENGTH_SHORT)
+    }
+  }
+
+  /**
+   * Update PIP actions when playback state changes
+   * Call this when play/pause state changes or playlist position changes
+   */
+  private fun updatePipActions() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      try {
+        val activity = requireActivity()
+
+        // Only update if currently in PIP mode
+        if (!activity.isInPictureInPictureMode) return
+
+        // Get current playback state
+        val isPlaying = player?.paused == false
+        val hasPlaylist = playlistState != null
+        val hasPrevious = playlistState?.hasPrevious() ?: false
+        val hasNext = playlistState?.hasNext() ?: false
+
+        // Create updated PIP actions
+        val pipActions = pipActionManager?.createPipActions(
+          isPlaying = isPlaying,
+          hasPlaylist = hasPlaylist,
+          hasPrevious = hasPrevious,
+          hasNext = hasNext
+        ) ?: emptyList()
+
+        // Update PIP params with new actions
+        val params = android.app.PictureInPictureParams.Builder()
+          .apply {
+            if (pipActions.isNotEmpty()) {
+              setActions(pipActions)
+            }
+          }
+          .build()
+
+        activity.setPictureInPictureParams(params)
+        Timber.tag(TAG).d("Updated PIP actions (playing: $isPlaying, playlist: $hasPlaylist)")
+      } catch (e: Exception) {
+        Timber.tag(TAG).e(e, "Failed to update PIP actions")
+      }
+    }
+  }
+
 
   /**
    * Load multiple videos as MPV playlist
@@ -1243,7 +1433,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   fun togglePlayPause() {
-    player?.paused = player?.paused?.not();
+    player?.paused = player?.paused?.not()
+
+    // Update PIP actions if in PIP mode
+    updatePipActions()
   }
 
   private fun rewind() {
@@ -1492,8 +1685,29 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     Timber.d("Configuration changed - orientation: ${newConfig.orientation}, dims: ${sWidth}x${sHeight}")
   }
 
+  override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean) {
+    super.onPictureInPictureModeChanged(isInPictureInPictureMode)
+
+    if (isInPictureInPictureMode) {
+      // Entered PIP mode - use UI controller to hide all UI
+      uiController.hide()
+      Timber.tag(TAG).d("Entered PIP mode - controls hidden via UI controller")
+    } else {
+      // Exited PIP mode - use UI controller to restore UI
+      uiController.show()
+      Timber.tag(TAG).d("Exited PIP mode - controls restored via UI controller")
+    }
+  }
+
   override fun onDestroyView() {
     exitFullscreen()
+
+    // Unregister PIP action manager (Android O+ only)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      pipActionManager?.unregister()
+      pipActionManager = null
+    }
+
     playerBinding = null
     Timber.v("Exiting.")
 
