@@ -2,6 +2,7 @@ package cloud.app.csplayer.media.dao
 
 import androidx.room.*
 import cloud.app.csplayer.media.entities.MediaPlaybackEntity
+import cloud.app.csplayer.model.SubtitleData
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -64,8 +65,8 @@ interface MediaPlaybackDao {
   /**
    * Update subtitle configuration
    */
-  @Query("UPDATE media_playback SET subtitle_config = :subtitleConfig WHERE media_uri = :mediaUri")
-  suspend fun updateSubtitleConfig(mediaUri: String, subtitleConfig: String?)
+  @Query("UPDATE media_playback SET subtitles = :subtitles WHERE media_uri = :mediaUri")
+  suspend fun updateSubtitles(mediaUri: String, subtitles: List<SubtitleData>?)
 
   /**
    * Mark media as finished

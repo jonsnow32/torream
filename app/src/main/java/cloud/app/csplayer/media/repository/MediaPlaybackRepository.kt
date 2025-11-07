@@ -2,7 +2,11 @@ package cloud.app.csplayer.media.repository
 
 import cloud.app.csplayer.media.dao.MediaPlaybackDao
 import cloud.app.csplayer.media.entities.MediaPlaybackEntity
+import cloud.app.csplayer.model.SubtitleData
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,6 +20,7 @@ class MediaPlaybackRepository @Inject constructor(
    */
   suspend fun savePlayback(playback: MediaPlaybackEntity) {
     playbackDao.insertOrUpdate(playback)
+    _playbackUpdateTrigger.emit(1)
   }
 
   /**
@@ -37,6 +42,7 @@ class MediaPlaybackRepository @Inject constructor(
    */
   suspend fun updatePosition(mediaUri: String, position: Long) {
     playbackDao.updatePosition(mediaUri, position)
+    _playbackUpdateTrigger.emit(currentValue++)
   }
 
   /**
@@ -44,6 +50,7 @@ class MediaPlaybackRepository @Inject constructor(
    */
   suspend fun updateSpeed(mediaUri: String, speed: Float) {
     playbackDao.updateSpeed(mediaUri, speed)
+    _playbackUpdateTrigger.emit(currentValue++)
   }
 
   /**
@@ -51,6 +58,7 @@ class MediaPlaybackRepository @Inject constructor(
    */
   suspend fun updateAspectRatio(mediaUri: String, aspectRatio: String?) {
     playbackDao.updateAspectRatio(mediaUri, aspectRatio)
+    _playbackUpdateTrigger.emit(currentValue++)
   }
 
   /**
@@ -58,6 +66,7 @@ class MediaPlaybackRepository @Inject constructor(
    */
   suspend fun updateAudioTrack(mediaUri: String, trackIndex: Int) {
     playbackDao.updateAudioTrack(mediaUri, trackIndex)
+    _playbackUpdateTrigger.emit(currentValue++)
   }
 
   /**
@@ -65,6 +74,7 @@ class MediaPlaybackRepository @Inject constructor(
    */
   suspend fun updateTextTrack(mediaUri: String, trackIndex: Int) {
     playbackDao.updateTextTrack(mediaUri, trackIndex)
+    _playbackUpdateTrigger.emit(currentValue++)
   }
 
   /**
@@ -72,13 +82,15 @@ class MediaPlaybackRepository @Inject constructor(
    */
   suspend fun updateZoomType(mediaUri: String, zoomType: String) {
     playbackDao.updateZoomType(mediaUri, zoomType)
+    _playbackUpdateTrigger.emit(currentValue++)
   }
 
   /**
    * Update subtitle configuration
    */
-  suspend fun updateSubtitleConfig(mediaUri: String, subtitleConfig: String?) {
-    playbackDao.updateSubtitleConfig(mediaUri, subtitleConfig)
+  suspend fun updateSubtitles(mediaUri: String, subtitles: List<SubtitleData>?) {
+    playbackDao.updateSubtitles(mediaUri, subtitles)
+    _playbackUpdateTrigger.emit(currentValue++)
   }
 
   /**
@@ -86,6 +98,7 @@ class MediaPlaybackRepository @Inject constructor(
    */
   suspend fun markAsFinished(mediaUri: String, isFinished: Boolean = true) {
     playbackDao.markAsFinished(mediaUri, isFinished)
+    _playbackUpdateTrigger.emit(currentValue++)
   }
 
   /**
@@ -135,9 +148,7 @@ class MediaPlaybackRepository @Inject constructor(
     audioTrackIndex: Int = -1,
     textTrackIndex: Int = -1,
     zoomType: String = "fit",
-    subtitleConfig: String? = null,
-    volume: Float = 1.0f,
-    brightness: Float = 0f,
+    subtitles: List<SubtitleData>?,
     isFinished: Boolean = false
   ) {
     val playback = MediaPlaybackEntity(
@@ -148,11 +159,16 @@ class MediaPlaybackRepository @Inject constructor(
       audioTrackIndex = audioTrackIndex,
       textTrackIndex = textTrackIndex,
       zoomType = zoomType,
-      subtitleConfig = subtitleConfig,
+      subtitles = subtitles,
       lastPlayedAt = System.currentTimeMillis(),
       isFinished = isFinished
     )
     playbackDao.insertOrUpdate(playback)
   }
+
+  var currentValue = 0;
+  private val _playbackUpdateTrigger = MutableStateFlow<Int>(0)
+  val playbackUpdateTrigger: MutableStateFlow<Int> = _playbackUpdateTrigger
+
 }
 

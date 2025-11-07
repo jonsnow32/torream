@@ -11,16 +11,19 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import cloud.app.csplayer.R
-import cloud.app.csplayer.media.model.MediaTypeFilter
+import cloud.app.csplayer.media.repository.MediaPlaybackRepository
+import cloud.app.csplayer.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import cloud.app.csplayer.utils.PREFERENCES_NAME
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -28,6 +31,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+import kotlin.inc
 
 /**
  * Data class to hold feed data parameters for paging source
@@ -36,14 +40,16 @@ private data class FeedDataParams(
   val viewMode: FeedFilterConfig.ViewMode,
   val groupMode: FeedFilterConfig.GroupMode,
   val mediaType: MediaTypeFilter,
-  val searchQuery: String?
+  val searchQuery: String?,
+  val refresh: Int
 )
 
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
 class FeedViewModel @Inject constructor(
   @param:ApplicationContext private val context: Context,
-  private val mediaRepository: MediaRepository
+  private val mediaRepository: MediaRepository,
+  private val mediaPlaybackRepository: MediaPlaybackRepository
 ) : ViewModel() {
 
   // Title - shows app name by default, or folder name when browsing
@@ -79,9 +85,10 @@ class FeedViewModel @Inject constructor(
   val feedData: Flow<PagingData<FeedData>> = combine(
     filterConfig,
     mediaTypeFilter,
-    searchQuery
-  ) { config, mediaType, query ->
-    FeedDataParams(config.viewMode, config.groupMode, mediaType, query)
+    searchQuery,
+    mediaPlaybackRepository.playbackUpdateTrigger
+  ) { config, mediaType, query , refresh->
+    FeedDataParams(config.viewMode, config.groupMode, mediaType, query, refresh)
   }.distinctUntilChanged().flatMapLatest { params ->
     Pager(
       config = PagingConfig(
@@ -101,10 +108,9 @@ class FeedViewModel @Inject constructor(
       }
     ).flow
   }.cachedIn(viewModelScope)
-
-
   // Expose sync state from MediaRepository for UI feedback
   val syncState = mediaRepository.observeSyncState()
+
 
   /**
    * Set root folder path to filter feed

@@ -1,6 +1,6 @@
 package cloud.app.csplayer.media.dataSource
 
-import cloud.app.csplayer.media.model.Media
+import cloud.app.csplayer.model.Media
 import kotlinx.coroutines.flow.Flow
 
 interface MediaStoreDataSource {

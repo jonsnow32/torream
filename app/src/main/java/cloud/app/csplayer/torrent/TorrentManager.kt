@@ -1,8 +1,8 @@
 package cloud.app.csplayer.torrent
 
 import android.content.Context
-import cloud.app.csplayer.media.model.TorrentDownloadStatus
-import cloud.app.csplayer.media.model.TorrentState
+import cloud.app.csplayer.model.TorrentDownloadStatus
+import cloud.app.csplayer.model.TorrentState
 import cloud.app.csplayer.media.repository.TorrentRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope

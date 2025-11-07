@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
 import androidx.room.Index
+import cloud.app.csplayer.model.SubtitleData
 
 /**
  * Entity to store playback information for media files
@@ -35,7 +36,7 @@ data class MediaPlaybackEntity(
   @ColumnInfo(name = "zoom_type") val zoomType: String = "fit",
   // Subtitle configuration as JSON string
   // Contains: font size, color, background, position, etc.
-  @ColumnInfo(name = "subtitle_config") val subtitleConfig: String? = null,
+  @ColumnInfo(name = "subtitles") val subtitles: List<SubtitleData>? = null,
   // Timestamp when last played
   @ColumnInfo(name = "last_played_at") val lastPlayedAt: Long = System.currentTimeMillis(),
   // Whether the media was finished/completed

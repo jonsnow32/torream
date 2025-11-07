@@ -24,8 +24,21 @@ class VideoSmallViewHolder(
     // Load thumbnail asynchronously
     binding.imgCover.loadThumbnail(feed.media.uri)
 
+// Update playback progress
+    updatePlaybackProgress(feed.media.duration, feed.media.position)
+
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)
+    }
+  }
+
+  private fun updatePlaybackProgress(duration: Long, position: Long) {
+    if (duration > 0 && position > 0) {
+      val progress = ((position.toFloat() / duration.toFloat()) * 100).toInt()
+      binding.progressPlayback.progress = progress
+      binding.progressPlayback.visibility = android.view.View.VISIBLE
+    } else {
+      binding.progressPlayback.visibility = android.view.View.GONE
     }
   }
 }

@@ -2,7 +2,7 @@ package cloud.app.csplayer.ui.home
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import cloud.app.csplayer.media.model.MediaTypeFilter
+import cloud.app.csplayer.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig

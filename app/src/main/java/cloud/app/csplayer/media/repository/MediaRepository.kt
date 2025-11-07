@@ -1,10 +1,10 @@
 package cloud.app.csplayer.media.repository
 
 import android.media.MediaMetadata
-import cloud.app.csplayer.media.model.Folder
-import cloud.app.csplayer.media.model.Media
-import cloud.app.csplayer.media.model.MediaTypeFilter
-import cloud.app.csplayer.media.model.SyncState
+import cloud.app.csplayer.model.Folder
+import cloud.app.csplayer.model.Media
+import cloud.app.csplayer.model.MediaTypeFilter
+import cloud.app.csplayer.model.SyncState
 import kotlinx.coroutines.flow.Flow
 
 interface MediaRepository {

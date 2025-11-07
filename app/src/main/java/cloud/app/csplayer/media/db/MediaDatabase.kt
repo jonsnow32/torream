@@ -2,6 +2,8 @@ package cloud.app.csplayer.media.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import cloud.app.csplayer.media.converters.Converters
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
 import cloud.app.csplayer.media.dao.MediaPlaybackDao
@@ -18,9 +20,10 @@ import cloud.app.csplayer.media.entities.TorrentEntity
     MediaPlaybackEntity::class,
     TorrentEntity::class
   ],
-  version = 4,
+  version = 5,
   exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class MediaDatabase : RoomDatabase() {
   abstract fun mediaDao(): MediaDao
   abstract fun folderDao(): FolderDao

@@ -2,7 +2,6 @@ package cloud.app.csplayer.model
 
 import android.content.Context
 import android.net.Uri
-import android.os.Bundle
 import android.os.Parcelable
 import androidx.core.content.FileProvider
 import kotlinx.parcelize.Parcelize
@@ -21,13 +20,14 @@ import java.io.File
 @Serializable
 data class PlaybackData(
   val title: String? = null,
-  val position: Long = 0L,
   val videoLinks: List<VideoLink> = emptyList(),
-  val subtitles: List<SubtitleData> = emptyList(),
   val videoStartIndex: Int = 0,
-  val subtitleStartIndex: Int = 0,
+
+  //Use for series playback to indicate if continuing same episode
   val isSameEpisode: Boolean = true,
-  val useMpv: Boolean = false,
+  val subtitles: List<SubtitleData> = emptyList(),
+  val subtitleStartIndex: Int = 0,
+
   val hasAd: Boolean = false
 ) : Parcelable {
   companion object {

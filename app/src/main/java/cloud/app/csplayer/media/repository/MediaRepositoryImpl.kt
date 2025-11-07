@@ -7,10 +7,11 @@ import cloud.app.csplayer.media.dao.MediaDao
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSource
 import cloud.app.csplayer.media.entities.FolderEntity
 import cloud.app.csplayer.media.entities.MediaEntity
-import cloud.app.csplayer.media.model.Folder
-import cloud.app.csplayer.media.model.Media
-import cloud.app.csplayer.media.model.MediaTypeFilter
-import cloud.app.csplayer.media.model.SyncState
+import cloud.app.csplayer.media.entities.MediaWithPlayback
+import cloud.app.csplayer.model.Folder
+import cloud.app.csplayer.model.Media
+import cloud.app.csplayer.model.MediaTypeFilter
+import cloud.app.csplayer.model.SyncState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
 
@@ -44,13 +46,13 @@ class MediaRepositoryImpl @Inject constructor(
 
   override fun observeMedia(): Flow<List<Media>> {
     return mediaDao.observeAll()
-      .map { entities: List<MediaEntity> -> entities.map { e -> e.toDomain() } }
+      .map { entities -> entities.map { e -> e.toMediaDomain() } }
       .flowOn(Dispatchers.IO)
   }
 
   override fun observeFolders(): Flow<List<Folder>> {
     return folderDao.observeAll()
-      .map { entities: List<FolderEntity> -> entities.map { e -> e.toDomain() } }
+      .map { entities -> entities.map { e -> e.toFolderDomain() } }
       .flowOn(Dispatchers.IO)
   }
 
@@ -65,12 +67,12 @@ class MediaRepositoryImpl @Inject constructor(
   }
 
   internal suspend fun performSync() {
-    timber.log.Timber.d("performSync: Starting sync...")
+    Timber.d("performSync: Starting sync...")
     _syncState.value = SyncState.Syncing(0f)
 
     try {
       val mediaItems = mediaStore.queryAllMedia()
-      timber.log.Timber.d("performSync: Found ${mediaItems.size} media items")
+      Timber.d("performSync: Found ${mediaItems.size} media items")
 
       // Parallel processing
       coroutineScope {
@@ -81,20 +83,20 @@ class MediaRepositoryImpl @Inject constructor(
         folderJob.join()
       }
 
-      timber.log.Timber.d("performSync: Sync completed successfully")
+      Timber.d("performSync: Sync completed successfully")
       _syncState.value = SyncState.Completed
     } catch (e: SecurityException) {
-      timber.log.Timber.e(e, "performSync: Missing permission")
+      Timber.e(e, "performSync: Missing permission")
       _syncState.value = SyncState.Error.MissingPermission(
         e.message ?: "Storage permission is required to access media files"
       )
     } catch (e: java.io.IOException) {
-      timber.log.Timber.e(e, "performSync: Storage error")
+      Timber.e(e, "performSync: Storage error")
       _syncState.value = SyncState.Error.StorageError(
         e.message ?: "Unable to access storage"
       )
     } catch (e: Exception) {
-      timber.log.Timber.e(e, "performSync: Sync failed")
+      Timber.e(e, "performSync: Sync failed")
       _syncState.value = SyncState.Error.Generic(
         e.message ?: "Unknown error occurred"
       )
@@ -124,13 +126,29 @@ class MediaRepositoryImpl @Inject constructor(
 
   private suspend fun syncMedia(items: List<Media>) = withContext(Dispatchers.IO) {
     val currentUris = items.map { it.uri }.toSet()
-    val existingMedia = mediaDao.getAll().associateBy { it.uri }
+
+    // Get all media with their playback information joined
+    val existingMediaWithPlayback = mediaDao.getAllWithPlayback().associateBy { it.media.uri }
 
     // Prepare batch operations
     val toUpsert = items.map { item ->
-      val existing = existingMedia[item.uri]
-      existing?.// Preserve user metadata
-      copy(
+      val existing = existingMediaWithPlayback[item.uri]
+
+      existing?.media?.copy(
+        // Update media information from MediaStore
+        path = item.path,
+        name = item.name,
+        parentPath = File(item.path).parent ?: "/",
+        size = item.size,
+        duration = item.duration,
+        width = item.width,
+        height = item.height,
+        dateModified = item.dateModified,
+        mediaStoreId = item.id,
+        mimeType = item.mimeType
+        // Preserve user metadata (thumbnailPath, isFavorite, customMetadata)
+      ) ?: MediaEntity(
+        uri = item.uri,
         path = item.path,
         name = item.name,
         parentPath = File(item.path).parent ?: "/",
@@ -142,22 +160,9 @@ class MediaRepositoryImpl @Inject constructor(
         mediaStoreId = item.id,
         mimeType = item.mimeType
       )
-          ?: MediaEntity(
-            uri = item.uri,
-            path = item.path,
-            name = item.name,
-            parentPath = File(item.path).parent ?: "/",
-            size = item.size,
-            duration = item.duration,
-            width = item.width,
-            height = item.height,
-            dateModified = item.dateModified,
-            mediaStoreId = item.id,
-            mimeType = item.mimeType
-          )
     }
 
-    val toDelete = existingMedia.keys.filterNot { it in currentUris }
+    val toDelete = existingMediaWithPlayback.keys.filterNot { it in currentUris }
 
     // Execute in transaction
     mediaDao.transaction {
@@ -166,11 +171,15 @@ class MediaRepositoryImpl @Inject constructor(
       }
       if (toDelete.isNotEmpty()) {
         mediaDao.deleteByUris(toDelete)
+        // Note: MediaPlaybackEntity has CASCADE delete, so playback data will be automatically deleted
       }
     }
 
     // Async cleanup
     launch { cleanupOrphanedFiles(toDelete) }
+
+    Timber.d("syncMedia: Synced ${toUpsert.size} media items, " +
+      "${existingMediaWithPlayback.count { it.value.playback != null }} had playback data preserved")
   }
 
   private suspend fun syncFolders(items: List<Media>) = withContext(Dispatchers.IO) {
@@ -298,7 +307,7 @@ class MediaRepositoryImpl @Inject constructor(
       updatedFolders = filtered
     }
 
-    timber.log.Timber.d(
+    Timber.d(
       "buildFolderTree: Kept ${updatedFolders.size} folders out of ${allFolders.size} " +
         "(filtered ${allFolders.size - updatedFolders.size} empty/invalid folders)"
     )
@@ -314,12 +323,12 @@ class MediaRepositoryImpl @Inject constructor(
   }
 
   override suspend fun getMediaByFolder(folderPath: String): List<Media> = withContext(Dispatchers.IO) {
-    return@withContext mediaDao.getByFolder(folderPath).map { it.toDomain() }
+    return@withContext mediaDao.getByFolderWithPlayback(folderPath).map { it.toMediaDomain() }
   }
 
   override suspend fun getMediaByFolderPaged(folderPath: String, limit: Int, offset: Int): List<Media> =
     withContext(Dispatchers.IO) {
-      return@withContext mediaDao.getByFolderPaged(folderPath, limit, offset).map { it.toDomain() }
+      return@withContext mediaDao.getByFolderPagedWithPlayback(folderPath, limit, offset).map { it.toMediaDomain() }
     }
 
   override suspend fun getMediaByFolderPagedFiltered(
@@ -340,11 +349,11 @@ class MediaRepositoryImpl @Inject constructor(
       MediaTypeFilter.ALL -> "%"
     }
 
-    return@withContext mediaDao.getByFolderPagedFiltered(folderPath, mimeTypePattern, limit, offset).map { it.toDomain() }
+    return@withContext mediaDao.getByFolderPagedFilteredWithPlayback(folderPath, mimeTypePattern, limit, offset).map { it.toMediaDomain() }
   }
 
   override suspend fun getAllMediaPaged(limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
-    return@withContext mediaDao.getAllPaged(limit, offset).map { it.toDomain() }
+    return@withContext mediaDao.getAllPagedWithPlayback(limit, offset).map { it.toMediaDomain() }
   }
 
   override suspend fun getAllMediaPagedFiltered(
@@ -364,13 +373,13 @@ class MediaRepositoryImpl @Inject constructor(
       MediaTypeFilter.ALL -> "%"
     }
 
-    return@withContext mediaDao.getAllPagedFiltered(mimeTypePattern, limit, offset).map { it.toDomain() }
+    return@withContext mediaDao.getAllPagedFilteredWithPlayback(mimeTypePattern, limit, offset).map { it.toMediaDomain() }
   }
 
   override suspend fun getFoldersPaged(limit: Int, offset: Int): List<Folder> =
     withContext(Dispatchers.IO) {
       // Get only root-level folders (folders with no parent or common root paths)
-      val allFolders = folderDao.getAll().map { it.toDomain() }
+      val allFolders = folderDao.getAll().map { it.toFolderDomain() }
       val rootFolders = allFolders.filter { folder ->
         folder.parentPath.isEmpty() ||
         folder.parentPath == "/" ||
@@ -383,14 +392,14 @@ class MediaRepositoryImpl @Inject constructor(
       val start = offset.coerceAtMost(rootFolders.size)
       val end = (offset + limit).coerceAtMost(rootFolders.size)
 
-      timber.log.Timber.d("getFoldersPaged: Found ${rootFolders.size} root folders, returning ${end - start}")
+      Timber.d("getFoldersPaged: Found ${rootFolders.size} root folders, returning ${end - start}")
       return@withContext rootFolders.subList(start, end)
     }
 
   override suspend fun getSubfoldersPaged(parentPath: String, limit: Int, offset: Int): List<Folder> =
     withContext(Dispatchers.IO) {
       // Get only direct children of the specified parent
-      val allFolders = folderDao.getAll().map { it.toDomain() }
+      val allFolders = folderDao.getAll().map { it.toFolderDomain() }
       val subfolders = allFolders
         .filter { it.parentPath == parentPath }
         .sortedBy { it.name.lowercase() }
@@ -399,7 +408,7 @@ class MediaRepositoryImpl @Inject constructor(
       val start = offset.coerceAtMost(subfolders.size)
       val end = (offset + limit).coerceAtMost(subfolders.size)
 
-      timber.log.Timber.d("getSubfoldersPaged: Found ${subfolders.size} subfolders in $parentPath, returning ${end - start}")
+      Timber.d("getSubfoldersPaged: Found ${subfolders.size} subfolders in $parentPath, returning ${end - start}")
       return@withContext subfolders.subList(start, end)
     }
 
@@ -447,24 +456,24 @@ class MediaRepositoryImpl @Inject constructor(
   override suspend fun search(query: String, limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
     // Query MediaStore directly with pagination for real-time media search
     // This bypasses the database and queries MediaStore on-demand
-    timber.log.Timber.d("search: Querying MediaStore directly with query='$query', limit=$limit, offset=$offset")
+    Timber.d("search: Querying MediaStore directly with query='$query', limit=$limit, offset=$offset")
 
     try {
       // Use the new queryMedia method with pagination support
       val result = mediaStore.queryMedia(query, limit, offset)
-      timber.log.Timber.d("search: Returning ${result.size} items from MediaStore")
+      Timber.d("search: Returning ${result.size} items from MediaStore")
 
       return@withContext result
     } catch (e: SecurityException) {
-      timber.log.Timber.e(e, "search: Permission denied accessing MediaStore")
+      Timber.e(e, "search: Permission denied accessing MediaStore")
       throw e
     } catch (e: Exception) {
-      timber.log.Timber.e(e, "search: Error querying MediaStore")
+      Timber.e(e, "search: Error querying MediaStore")
       emptyList()
     }
   }
   // Mapping helpers
-  private fun MediaEntity.toDomain(): Media {
+  private fun MediaEntity.toMediaDomain(): Media {
     return Media(
       id = this.mediaStoreId,
       uri = this.uri,
@@ -479,7 +488,32 @@ class MediaRepositoryImpl @Inject constructor(
     )
   }
 
-  private fun FolderEntity.toDomain(): Folder {
+  private fun MediaWithPlayback.toMediaDomain(): Media {
+    return Media(
+      id = this.media.mediaStoreId,
+      uri = this.media.uri,
+      path = this.media.path,
+      name = this.media.name,
+      size = this.media.size,
+      duration = this.media.duration,
+      width = this.media.width,
+      height = this.media.height,
+      dateModified = this.media.dateModified,
+      mimeType = this.media.mimeType,
+      // Include playback information
+      position = this.playback?.position ?: 0L,
+      speed = this.playback?.speed ?: 1.0f,
+      aspectRatio = this.playback?.aspectRatio,
+      audioTrackIndex = this.playback?.audioTrackIndex ?: -1,
+      textTrackIndex = this.playback?.textTrackIndex ?: -1,
+      zoomType = this.playback?.zoomType ?: "fit",
+      subtitles = this.playback?.subtitles,
+      isFinished = this.playback?.isFinished ?: false,
+      plays = 0 // Not tracked in MediaPlaybackEntity
+    )
+  }
+
+  private fun FolderEntity.toFolderDomain(): Folder {
     return Folder(
       path = this.path,
       name = this.name,

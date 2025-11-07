@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import cloud.app.csplayer.media.entities.MediaEntity
+import cloud.app.csplayer.media.entities.MediaWithPlayback
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -15,20 +16,44 @@ interface MediaDao {
   @Query("SELECT * FROM media")
   suspend fun getAll(): List<MediaEntity>
 
+  @Transaction
+  @Query("SELECT * FROM media")
+  suspend fun getAllWithPlayback(): List<MediaWithPlayback>
+
   @Query("SELECT * FROM media LIMIT :limit OFFSET :offset")
   suspend fun getAllPaged(limit: Int, offset: Int): List<MediaEntity>
+
+  @Transaction
+  @Query("SELECT * FROM media LIMIT :limit OFFSET :offset")
+  suspend fun getAllPagedWithPlayback(limit: Int, offset: Int): List<MediaWithPlayback>
 
   @Query("SELECT * FROM media WHERE mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
   suspend fun getAllPagedFiltered(mimeTypePattern: String, limit: Int, offset: Int): List<MediaEntity>
 
+  @Transaction
+  @Query("SELECT * FROM media WHERE mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
+  suspend fun getAllPagedFilteredWithPlayback(mimeTypePattern: String, limit: Int, offset: Int): List<MediaWithPlayback>
+
   @Query("SELECT * FROM media WHERE parent_path = :folderPath")
   suspend fun getByFolder(folderPath: String): List<MediaEntity>
+
+  @Transaction
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath")
+  suspend fun getByFolderWithPlayback(folderPath: String): List<MediaWithPlayback>
 
   @Query("SELECT * FROM media WHERE parent_path = :folderPath LIMIT :limit OFFSET :offset")
   suspend fun getByFolderPaged(folderPath: String, limit: Int, offset: Int): List<MediaEntity>
 
+  @Transaction
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath LIMIT :limit OFFSET :offset")
+  suspend fun getByFolderPagedWithPlayback(folderPath: String, limit: Int, offset: Int): List<MediaWithPlayback>
+
   @Query("SELECT * FROM media WHERE parent_path = :folderPath AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
   suspend fun getByFolderPagedFiltered(folderPath: String, mimeTypePattern: String, limit: Int, offset: Int): List<MediaEntity>
+
+  @Transaction
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
+  suspend fun getByFolderPagedFilteredWithPlayback(folderPath: String, mimeTypePattern: String, limit: Int, offset: Int): List<MediaWithPlayback>
 
   @Query("SELECT COUNT(*) FROM media WHERE parent_path = :folderPath")
   suspend fun countMediaInFolder(folderPath: String): Int

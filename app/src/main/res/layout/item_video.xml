@@ -5,16 +5,16 @@
   style="@style/MediaItem"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:gravity="center_vertical"
   android:layout_marginVertical="8dp"
+  android:gravity="center_vertical"
   android:orientation="horizontal">
 
   <!-- Thumbnail with border -->
   <com.google.android.material.card.MaterialCardView
     android:layout_width="?attr/itemCoverSize3x"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="8dp"
     android:layout_marginEnd="4dp"
+    app:cardCornerRadius="8dp"
     app:cardElevation="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -51,6 +51,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+      <ProgressBar
+        android:id="@+id/progressPlayback"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="0dp"
+        android:layout_height="6dp"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="?attr/colorPrimary"
+        android:progressBackgroundTint="?white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
   </com.google.android.material.card.MaterialCardView>

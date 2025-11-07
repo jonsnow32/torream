@@ -35,6 +35,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
+import cloud.app.csplayer.media.dao.MediaPlaybackDao
+import cloud.app.csplayer.media.repository.MediaPlaybackRepository
 import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.model.SubtitleData
 import cloud.app.csplayer.model.SubtitleOrigin
@@ -71,8 +73,10 @@ import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.utils.observe
 import com.github.rubensousa.previewseekbar.PreviewBar
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import java.io.File
+import javax.inject.Inject
 import kotlin.math.max
 
 
@@ -138,7 +142,11 @@ data class PlaylistState(
   fun hasPrevious(): Boolean = getPreviousIndex() != null
 }
 
+@AndroidEntryPoint
 class MPVFragment : Fragment(), MPVLib.EventObserver {
+  @Inject
+  lateinit var mediaPlaybackDao: MediaPlaybackRepository
+
   private var player: MPVView? = null
   private val viewModel by viewModels<PlayerViewModel>()
   private val eventUiHandler = Handler(Looper.getMainLooper())
@@ -677,6 +685,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       // Initialize media manager
       mediaManager = PlayerMediaManager(
         context = requireContext(),
+        mediaPlaybackRepository = mediaPlaybackDao,
         onCommandQueued = { cmd ->
           Timber.v("Queued command: ${cmd.joinToString(" ")}")
         }
@@ -1909,6 +1918,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         if (newIndex >= 0 && playlistState?.currentIndex != newIndex) {
           playlistState = playlistState?.copy(currentIndex = newIndex)
           updatePlaylistUI()
+
+          // Update current media URI in mediaManager for state tracking
+          playlistState?.items?.getOrNull(newIndex)?.let { item ->
+            mediaManager.updateCurrentMediaUri(item.filename)
+          }
+
           Timber.tag(TAG).d("Playlist position changed to: $newIndex")
         }
       }
@@ -1964,6 +1979,11 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     else
       MPVUtils.prettyTime(-diff, true)
     playerBinding?.exoProgress?.setPosition((position).toLong())
+
+    // Save position periodically (every update, which is ~1 second)
+    // MediaManager will handle debouncing and background thread
+    mediaManager.updatePosition(position * 1000L)
+
     // Note: do NOT add other update functions here just because this is called every second.
     // Use property observation instead.
     //updateStats()
@@ -2120,7 +2140,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         if (isSameEpisode) {
           //todo playNextInAllLink()
         } else {
-          // End of file for a standalone item
+          // End of file for a standalone item - mark as finished
+          mediaManager.markFinished()
+
           player?.timePos?.let {
             val playbackResult = PlayBackResult(
               RESULT_OK,
@@ -2238,6 +2260,25 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     // media session uses the same thumbnail
     updateMediaSession()
+
+    // Save full playback state with all settings
+    try {
+      val position = (MPVLib.getPropertyInt("time-pos") ?: 0) * 1000L
+      val speed = MPVLib.getPropertyDouble("speed")?.toFloat() ?: 1.0f
+      val audioTrack = MPVLib.getPropertyInt("aid") ?: -1
+      val subtitleTrack = MPVLib.getPropertyInt("sid") ?: -1
+
+      mediaManager.savePlaybackState(
+        position = position,
+        speed = speed,
+        audioTrackIndex = audioTrack,
+        textTrackIndex = subtitleTrack,
+        subtitles = null, //todo need to save subtitles here
+        isFinished = false
+      )
+    } catch (e: Exception) {
+      Timber.tag(TAG).e(e, "Failed to save playback state on pause")
+    }
 
     activityIsForeground = false
     eventUiHandler.removeCallbacksAndMessages(null)

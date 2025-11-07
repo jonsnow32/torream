@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.ItemTorrentDownloadBinding
-import cloud.app.csplayer.media.model.TorrentDownloadStatus
+import cloud.app.csplayer.model.TorrentDownloadStatus
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder

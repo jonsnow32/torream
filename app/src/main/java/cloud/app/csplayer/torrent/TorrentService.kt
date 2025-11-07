@@ -12,8 +12,8 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import cloud.app.csplayer.MainActivity
-import cloud.app.csplayer.media.model.TorrentDownloadStatus
-import cloud.app.csplayer.media.model.TorrentState
+import cloud.app.csplayer.model.TorrentDownloadStatus
+import cloud.app.csplayer.model.TorrentState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest

@@ -20,8 +20,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentTorrentBinding
-import cloud.app.csplayer.media.model.TorrentDownloadStatus
-import cloud.app.csplayer.media.model.TorrentState
+import cloud.app.csplayer.model.TorrentDownloadStatus
+import cloud.app.csplayer.model.TorrentState
 import cloud.app.csplayer.ui.library.download.TorrentUiState
 import cloud.app.csplayer.ui.library.download.TorrentViewModel
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared

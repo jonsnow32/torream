@@ -1,7 +1,7 @@
 package cloud.app.csplayer.datastore.app.helper
 
 import cloud.app.csplayer.R
-import cloud.app.csplayer.media.model.Media
+import cloud.app.csplayer.model.Media
 import kotlinx.serialization.Serializable
 
 const val BOOKMARK_FOLDER = "bookmarks"

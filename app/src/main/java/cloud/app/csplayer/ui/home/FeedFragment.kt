@@ -16,7 +16,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -26,8 +25,9 @@ import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.R
 import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.databinding.FragmentFeedBinding
-import cloud.app.csplayer.media.model.SyncState
+import cloud.app.csplayer.media.dao.MediaPlaybackDao
 import cloud.app.csplayer.model.PlaybackData
+import cloud.app.csplayer.model.SyncState
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
@@ -390,8 +390,9 @@ class FeedFragment : Fragment(), FeedClickListener {
       }
 
       is FeedData.MediaItem -> {
+        playMediaItem(item)
         // Play video with auto-next enabled for continuous playback through feed
-        playVideosWithAutoNext(item)
+        //playVideosWithAutoNext(item)
       }
 
       is FeedData.AdItem -> {
@@ -414,6 +415,7 @@ class FeedFragment : Fragment(), FeedClickListener {
    * Builds a list of video links from feed and enables automatic playback of next video on EOF.
    * Note: This uses app-level episode navigation (isSameEpisode = false), not MPV playlist mode.
    */
+
   private fun playVideosWithAutoNext(clickedItem: FeedData.MediaItem) {
     // Launch coroutine to collect current feed data
     viewLifecycleOwner.lifecycleScope.launch {
@@ -435,14 +437,17 @@ class FeedFragment : Fragment(), FeedClickListener {
           it.media.uri == clickedItem.media.uri
         }.coerceAtLeast(0)
 
+
         // Convert media items to VideoLink objects
-        val videoLinks = allMediaItems.map { mediaItem ->
+        // For the clicked item, apply saved playback state
+        val videoLinks = allMediaItems.mapIndexed { index, mediaItem ->
           VideoLink(
             url = mediaItem.media.uri,
             name = mediaItem.title,
             headers = emptyMap(),
-            position = 0L, // Will be loaded from database if exists,
-            ratio = mediaItem.media.width / mediaItem.media.height.toFloat()
+            subtitles = emptyList(),
+            width = mediaItem.media.width,
+            height = mediaItem.media.height,
           )
         }
 
@@ -454,13 +459,11 @@ class FeedFragment : Fragment(), FeedClickListener {
         //   3. User can skip/navigate through playlist seamlessly
         val playbackData = PlaybackData(
           title = clickedItem.title,
-          position = 0L,
           videoLinks = videoLinks,
           subtitles = emptyList(), // Local files typically don't have embedded subtitle data here
           videoStartIndex = clickedIndex,
           subtitleStartIndex = 0,
           isSameEpisode = false, // Different videos → will trigger MPV playlist mode
-          useMpv = true, // Use MPV for local files
           hasAd = false
         )
 
@@ -482,29 +485,34 @@ class FeedFragment : Fragment(), FeedClickListener {
    * Play single media item (fallback)
    */
   private fun playMediaItem(item: FeedData.MediaItem) {
-    // Create PlaybackData for single file
-    val playbackData = PlaybackData(
-      title = item.title,
-      position = 0L,
-      videoLinks = listOf(
-        VideoLink(
-          url = item.media.uri,
-          name = item.title,
-          headers = emptyMap(),
-          position = 0L
-        )
-      ),
-      subtitles = emptyList(),
-      videoStartIndex = 0,
-      subtitleStartIndex = 0,
-      isSameEpisode = true,
-      useMpv = true, // Use MPV for local files
-      hasAd = false
-    )
+    viewLifecycleOwner.lifecycleScope.launch {
 
-    // Navigate to MPV player with PlaybackData
-    val bundle = PlaybackDataHelper.createBundle(playbackData)
-    activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
+      // Create VideoLink and apply playback state
+      val videoLink = VideoLink(
+        url = item.media.uri,
+        name = item.title,
+        headers = emptyMap(),
+        subtitles = emptyList(),
+        position = item.media.position,
+        width = item.media.width,
+        height = item.media.height
+      )
+
+      // Create PlaybackData for single file
+      val playbackData = PlaybackData(
+        title = item.title,
+        videoLinks = listOf(videoLink),
+        subtitles = emptyList(),
+        videoStartIndex = 0,
+        subtitleStartIndex = 0,
+        isSameEpisode = true,
+        hasAd = false
+      )
+
+      // Navigate to MPV player with PlaybackData
+      val bundle = PlaybackDataHelper.createBundle(playbackData)
+      activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
+    }
   }
 
 

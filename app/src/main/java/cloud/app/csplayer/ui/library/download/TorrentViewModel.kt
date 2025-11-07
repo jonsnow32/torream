@@ -8,7 +8,7 @@ import android.os.IBinder
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cloud.app.csplayer.media.model.TorrentState
+import cloud.app.csplayer.model.TorrentState
 import cloud.app.csplayer.torrent.TorrentFile
 import cloud.app.csplayer.torrent.TorrentService
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -1,4 +1,4 @@
-package cloud.app.csplayer.media.model
+package cloud.app.csplayer.model
 
 enum class MediaTypeFilter(val value: String) {
   ALL("all"),

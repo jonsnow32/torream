@@ -1,8 +1,8 @@
 package cloud.app.csplayer.ui.feed
 
-import cloud.app.csplayer.media.model.Folder
-import cloud.app.csplayer.media.model.Media
-import cloud.app.csplayer.media.model.TorrentState
+import cloud.app.csplayer.model.Folder
+import cloud.app.csplayer.model.Media
+import cloud.app.csplayer.model.TorrentState
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfItem
 
 /**

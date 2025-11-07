@@ -218,20 +218,19 @@ class SettingsFragment : Fragment() {
           // Create PlaybackData for URL playback
           val playbackData = PlaybackData(
             title = "Network Stream",
-            position = 0L,
             videoLinks = listOf(
               VideoLink(
                 url = url,
                 name = "Network Stream",
                 headers = emptyMap(),
-                position = 0L
+                position = 0L,
+                subtitles = emptyList(),
               )
             ),
             subtitles = emptyList(),
             videoStartIndex = 0,
             subtitleStartIndex = 0,
             isSameEpisode = true,
-            useMpv = true,
             hasAd = false
           )
 
@@ -297,20 +296,19 @@ class SettingsFragment : Fragment() {
     // Create PlaybackData for local video file
     val playbackData = PlaybackData(
       title = "Local Video",
-      position = 0L,
       videoLinks = listOf(
         VideoLink(
           url = selectedVideoUri.toString(),
           name = "Local Video",
           headers = emptyMap(),
-          position = 0L
+          position = 0L,
+          subtitles = emptyList()
         )
       ),
       subtitles = emptyList(),
       videoStartIndex = 0,
       subtitleStartIndex = 0,
       isSameEpisode = true,
-      useMpv = true,
       hasAd = false
     )
 

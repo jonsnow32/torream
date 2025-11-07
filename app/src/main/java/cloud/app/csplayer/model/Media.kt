@@ -1,4 +1,4 @@
-package cloud.app.csplayer.media.model
+package cloud.app.csplayer.model
 
 import android.net.Uri
 import kotlinx.serialization.Serializable
@@ -14,7 +14,18 @@ data class Media(
   val width: Int,
   val height: Int,
   val dateModified: Long,
-  val mimeType: String
+  val mimeType: String,
+
+  //playback info
+  val position: Long = 0L,
+  val speed: Float = 1.0f,
+  val aspectRatio: String? = null,
+  val audioTrackIndex: Int = -1,
+  val textTrackIndex: Int = -1,
+  val zoomType: String = "fit",
+  val subtitles: List<SubtitleData>? = null,
+  val isFinished: Boolean = false,
+  val plays: Int = 0,
 )
 
 // Helper to convert stored string back to Uri when needed

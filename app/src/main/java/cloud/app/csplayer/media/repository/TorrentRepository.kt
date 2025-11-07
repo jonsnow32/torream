@@ -2,8 +2,8 @@ package cloud.app.csplayer.media.repository
 
 import cloud.app.csplayer.media.dao.TorrentDao
 import cloud.app.csplayer.media.entities.TorrentEntity
-import cloud.app.csplayer.media.model.TorrentDownloadStatus
-import cloud.app.csplayer.media.model.TorrentState
+import cloud.app.csplayer.model.TorrentDownloadStatus
+import cloud.app.csplayer.model.TorrentState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
