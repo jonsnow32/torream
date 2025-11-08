@@ -14,8 +14,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.Dimension
-import androidx.annotation.StringRes
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.children
 import androidx.fragment.app.Fragment
@@ -30,21 +28,19 @@ import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
 import cloud.app.csplayer.utils.GlobalEvent.onDialogDismissedEvent
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.SubtitleHelper
-import cloud.app.csplayer.utils.UIHelper.fixPaddingStatusbar
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
 import cloud.app.csplayer.utils.isLayout
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
+import cloud.app.csplayer.ui.dialog.SelectionDialog
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.DataStore.setKey
-import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
-import cloud.app.csplayer.utils.SingleSelectionHelper.showMultiDialog
-import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.isTvOrEmulator
-import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.MaterialToolbar
 import java.io.File
+import androidx.core.content.edit
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 
 const val SUBTITLE_KEY = "subtitle_settings"
 const val SUBTITLE_AUTO_SELECT_KEY = "subs_auto_select"
@@ -236,6 +232,8 @@ class SubtitlesFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+    applyContentRect()
+
     hide = arguments?.getBoolean("hide") ?: true
     onColorSelectedEvent += ::onColorSelected
     onDialogDismissedEvent += ::onDialogDismissed
@@ -243,7 +241,7 @@ class SubtitlesFragment : Fragment() {
       context?.getExternalFilesDir(null)?.absolutePath.toString() + "/Fonts"
     )
 
-    if(isTvOrEmulator()) {
+    if (isTvOrEmulator()) {
       binding?.subtitleSettingScrollView?.viewTreeObserver?.addOnGlobalFocusChangeListener { oldFocus, newFocus ->
         if (newFocus != null && oldFocus != null) {
           val scrollY = binding?.subtitleSettingScrollView?.scrollY ?: 0
@@ -260,7 +258,8 @@ class SubtitlesFragment : Fragment() {
       }
     }
 
-    val settingsToolbar = view.findViewById<MaterialToolbar>(R.id.subtitle_settings_toolbar) ?: return
+    val settingsToolbar =
+      view.findViewById<MaterialToolbar>(R.id.subtitle_settings_toolbar) ?: return
     settingsToolbar.apply {
       setTitle(title)
       setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
@@ -269,9 +268,6 @@ class SubtitlesFragment : Fragment() {
         activity?.onBackPressedDispatcher?.onBackPressed()
       }
     }
-
-    fixPaddingStatusbar(binding?.subsRoot)
-
     state = requireContext().getCurrentSavedStyle()
     context?.updateState()
 
@@ -329,17 +325,22 @@ class SubtitlesFragment : Fragment() {
         )
 
         //showBottomDialog
-        activity.showDialog(
+
+        SelectionDialog.single(
           elevationTypes.map { it.second },
           elevationTypes.map { it.first }.indexOf(state.elevation),
           (textView as TextView).text.toString(),
-          false,
-          dismissCallback
-        ) { index ->
-          state.elevation = elevationTypes.map { it.first }[index]
-          textView.context.updateState()
-          if (hide)
-            activity?.hideSystemUI()
+          false
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+              state.elevation = elevationTypes.map { it.first }[index]
+              textView.context.updateState()
+              if (hide)
+                activity?.hideSystemUI()
+            }
+          }
+          dismissCallback()
         }
       }
 
@@ -376,15 +377,19 @@ class SubtitlesFragment : Fragment() {
         )
 
         //showBottomDialog
-        activity?.showDialog(
+        SelectionDialog.single(
           edgeTypes.map { it.second },
           edgeTypes.map { it.first }.indexOf(state.edgeType),
           (textView as TextView).text.toString(),
-          false,
-          dismissCallback
-        ) { index ->
-          state.edgeType = edgeTypes.map { it.first }[index]
-          textView.context.updateState()
+          false
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+              state.edgeType = edgeTypes.map { it.first }[index]
+              textView.context.updateState()
+            }
+          }
+          dismissCallback()
         }
       }
 
@@ -430,15 +435,19 @@ class SubtitlesFragment : Fragment() {
         )
 
         //showBottomDialog
-        activity?.showDialog(
+        SelectionDialog.single(
           fontSizes.map { it.second },
           fontSizes.map { it.first }.indexOf(state.fixedTextSize),
           (textView as TextView).text.toString(),
-          false,
-          dismissCallback
-        ) { index ->
-          state.fixedTextSize = fontSizes.map { it.first }[index]
-          textView.context.updateState() // font size not changed
+          false
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+              state.fixedTextSize = fontSizes.map { it.first }[index]
+              textView.context.updateState() // font size not changed
+            }
+          }
+          dismissCallback()
         }
       }
 
@@ -510,21 +519,25 @@ class SubtitlesFragment : Fragment() {
             }
 
         //showBottomDialog
-        activity?.showDialog(
+        SelectionDialog.single(
           fontTypes.map { it.second } + savedFontTypes.map { it.name },
           currentIndex,
           (textView as TextView).text.toString(),
-          false,
-          dismissCallback
-        ) { index ->
-          if (index < fontTypes.size) {
-            state.typeface = fontTypes[index].first
-            state.typefaceFilePath = null
-          } else {
-            state.typefaceFilePath = savedFontTypes[index - fontTypes.size].absolutePath
-            state.typeface = null
+          false
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+              if (index < fontTypes.size) {
+                state.typeface = fontTypes[index].first
+                state.typefaceFilePath = null
+              } else {
+                state.typefaceFilePath = savedFontTypes[index - fontTypes.size].absolutePath
+                state.typeface = null
+              }
+              textView.context.updateState()
+            }
           }
-          textView.context.updateState()
+          dismissCallback()
         }
       }
 
@@ -552,14 +565,18 @@ class SubtitlesFragment : Fragment() {
         langMap.addAll(SubtitleHelper.languages)
 
         val lang639_1 = langMap.map { it.ISO_639_1 }
-        activity?.showDialog(
+        SelectionDialog.single(
           langMap.map { it.languageName },
           lang639_1.indexOf(requireContext().getAutoSelectLanguageISO639_1()),
           (textView as TextView).text.toString(),
-          true,
-          dismissCallback
-        ) { index ->
-          requireContext().setKey(SUBTITLE_AUTO_SELECT_KEY, lang639_1[index])
+          true
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+              requireContext().setKey(SUBTITLE_AUTO_SELECT_KEY, lang639_1[index])
+            }
+          }
+          dismissCallback()
         }
       }
 
@@ -576,13 +593,20 @@ class SubtitlesFragment : Fragment() {
         val keys = requireContext().getDownloadSubsLanguageISO639_1()
         val keyMap = keys.map { lang639_1.indexOf(it) }.filter { it >= 0 }
 
-        activity?.showMultiDialog(
+        SelectionDialog.multiple(
           langMap.map { it.languageName },
           keyMap,
-          (textView as TextView).text.toString(),
-          dismissCallback
-        ) { indexList ->
-          requireContext().setKey(SUBTITLE_DOWNLOAD_KEY, indexList.map { lang639_1[it] }.toList())
+          (textView as TextView).text.toString()
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.let { indexList ->
+              requireContext().setKey(
+                SUBTITLE_DOWNLOAD_KEY,
+                indexList.map { lang639_1[it] }.toList()
+              )
+            }
+          }
+          dismissCallback()
         }
       }
 
@@ -626,7 +650,7 @@ class SubtitlesFragment : Fragment() {
         context?.let { ctx ->
           subtitlesFilterSubLang.isChecked = false
           PreferenceManager.getDefaultSharedPreferences(ctx)
-            .edit().putBoolean(getString(R.string.filter_sub_lang_key), false).apply()
+            .edit { putBoolean(getString(R.string.filter_sub_lang_key), false) }
         }
       }
     }

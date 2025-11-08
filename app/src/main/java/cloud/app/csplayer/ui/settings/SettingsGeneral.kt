@@ -20,8 +20,6 @@ import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setUpToolbar
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
 import cloud.app.csplayer.utils.CommonActivitty.setLocale
 import cloud.app.csplayer.utils.LayoutMode
-import cloud.app.csplayer.utils.SingleSelectionHelper.showBottomDialog
-import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
 import cloud.app.csplayer.utils.SubtitleHelper
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.isLayout
@@ -30,6 +28,8 @@ import kotlinx.serialization.Serializable
 import androidx.core.content.edit
 import androidx.core.view.isGone
 import cloud.app.csplayer.BuildConfig
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
+import cloud.app.csplayer.ui.dialog.SelectionDialog
 
 // Change local language settings in the app.
 fun getCurrentLocale(context: Context): String {
@@ -110,8 +110,10 @@ val appLanguages = arrayListOf(
 ).sortedBy { it.second.lowercase() } //ye, we go alphabetical, so ppl don't put their lang on top
 
 class SettingsGeneral : PreferenceFragmentCompat() {
+
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+    applyContentRect()
     setUpToolbar(R.string.category_general)
     setPaddingBottom()
     setToolBarScrollFlags()
@@ -154,7 +156,7 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       // File path here is purely for cosmetic purposes in settings
       (filePath ?: uri.toString()).let {
         PreferenceManager.getDefaultSharedPreferences(context)
-          .edit().putString(getString(R.string.download_path_pref), it).apply()
+          .edit { putString(getString(R.string.download_path_pref), it) }
       }
     }
 
@@ -170,19 +172,19 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       val currentLayout =
         settingsManager.getInt(getString(R.string.app_layout_key), -1)
 
-      activity?.showBottomDialog(
+      SelectionDialog.single(
         prefNames.toList(),
         prefValues.indexOf(currentLayout),
-        getString(R.string.app_layout),
-        true,
-        {}) {
-        try {
-          settingsManager.edit()
-            .putInt(getString(R.string.app_layout_key), prefValues[it])
-            .apply()
-          activity?.recreate()
-        } catch (e: Exception) {
-          logError(e)
+        getString(R.string.codec),
+        false
+      ).show(parentFragmentManager) { bundle ->
+        bundle?.apply {
+          getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            settingsManager.edit {
+              putInt(getString(R.string.app_layout_key), prefValues[index])
+            }
+            activity?.recreate()
+          }
         }
       }
       return@setOnPreferenceClickListener true
@@ -207,56 +209,24 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       val currentLayout =
         settingsManager.getString(getString(R.string.app_theme_key), prefValues.first())
 
-      activity?.showBottomDialog(
+      SelectionDialog.single(
         prefNames.toList(),
         prefValues.indexOf(currentLayout),
         getString(R.string.app_theme_settings),
-        true,
-        {}) {
-        try {
-          settingsManager.edit()
-            .putString(getString(R.string.app_theme_key), prefValues[it])
-            .apply()
-          activity?.recreate()
-        } catch (e: Exception) {
-          logError(e)
-        }
-      }
-      return@setOnPreferenceClickListener true
-    }
+        true
+      ).show(parentFragmentManager) { bundle ->
 
-    getPref(R.string.primary_color_key)?.setOnPreferenceClickListener {
-      val prefNames = resources.getStringArray(R.array.themes_overlay_names).toMutableList()
-      val prefValues = resources.getStringArray(R.array.themes_overlay_names_values).toMutableList()
-
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) { // remove monet on android 11 and less
-        val toRemove = prefValues
-          .mapIndexed { idx, s -> if (s.startsWith("Monet")) idx else null }
-          .filterNotNull()
-        var offset = 0
-        toRemove.forEach { idx ->
-          prefNames.removeAt(idx - offset)
-          prefValues.removeAt(idx - offset)
-          offset += 1
-        }
-      }
-
-      val currentLayout =
-        settingsManager.getString(getString(R.string.primary_color_key), prefValues.first())
-
-      activity?.showDialog(
-        prefNames.toList(),
-        prefValues.indexOf(currentLayout),
-        getString(R.string.primary_color_settings),
-        true,
-        {}) {
-        try {
-          settingsManager.edit()
-            .putString(getString(R.string.primary_color_key), prefValues[it])
-            .apply()
-          activity?.recreate()
-        } catch (e: Exception) {
-          logError(e)
+        bundle?.apply {
+          getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            try {
+              settingsManager.edit {
+                putString(getString(R.string.app_layout_key), prefValues[index])
+              }
+              activity?.recreate()
+            } catch (e: Exception) {
+              logError(e)
+            }
+          }
         }
       }
       return@setOnPreferenceClickListener true
@@ -273,23 +243,30 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       }
       val index = languageCodes.indexOf(current)
 
-      activity?.showDialog(
-        languageNames, index, getString(R.string.app_language), true, { }
-      ) { languageIndex ->
-        try {
-          val code = languageCodes[languageIndex]
-          setLocale(activity, code)
-          settingsManager.edit().putString(getString(R.string.locale_key), code).apply()
-          activity?.recreate()
-        } catch (e: Exception) {
-          logError(e)
+      SelectionDialog.single(
+        languageNames, index, getString(R.string.app_language), true
+      ).show(parentFragmentManager) { bundle ->
+
+        bundle?.apply {
+          getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            try {
+              val code = languageCodes[index]
+              setLocale(activity, code)
+              settingsManager.edit { putString(getString(R.string.locale_key), code) }
+              activity?.recreate()
+            } catch (e: Exception) {
+              logError(e)
+            }
+          }
         }
+
       }
       return@setOnPreferenceClickListener true
     }
 
     // disable preference on tvs and emulators
-    getPref(R.string.battery_optimisation_key)?.isEnabled = context?.isLayout(LayoutMode.Phone.id) == true
+    getPref(R.string.battery_optimisation_key)?.isEnabled =
+      context?.isLayout(LayoutMode.Phone.id) == true
     getPref(R.string.battery_optimisation_key)?.setOnPreferenceClickListener {
       val ctx = context ?: return@setOnPreferenceClickListener false
 
@@ -306,7 +283,7 @@ class SettingsGeneral : PreferenceFragmentCompat() {
 
     getPref(R.string.legal_notice_key)?.setOnPreferenceClickListener {
       val builder: AlertDialog.Builder =
-        AlertDialog.Builder(it.context, R.style.AlertDialogCustom)
+        AlertDialog.Builder(it.context)
       builder.setTitle(R.string.legal_notice)
       builder.setMessage(R.string.legal_notice_text)
       builder.show()
@@ -320,14 +297,24 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       val currentDns =
         settingsManager.getInt(getString(R.string.dns_pref), 0)
 
-      activity?.showBottomDialog(
+      SelectionDialog.single(
         prefNames.toList(),
         prefValues.indexOf(currentDns),
         getString(R.string.dns_pref),
-        true,
-        {}) {
-        settingsManager.edit { putInt(getString(R.string.dns_pref), prefValues[it]) }
-        context?.let { ctx -> app.initClient(ctx) }
+        true
+      ).show(parentFragmentManager) { bundle ->
+        bundle?.apply {
+          getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            try {
+              settingsManager.edit { putInt(getString(R.string.dns_pref), prefValues[index]) }
+              context?.let { ctx -> app.initClient(ctx) }
+            } catch (e: Exception) {
+              logError(e)
+            }
+          }
+        }
+
+
       }
       return@setOnPreferenceClickListener true
     }

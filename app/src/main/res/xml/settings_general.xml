@@ -3,16 +3,13 @@
   xmlns:app="http://schemas.android.com/apk/res-auto">
 
   <PreferenceCategory android:title="@string/category_ui">
-    <Preference
-      android:layout="@layout/custom_preference"
-      android:icon="@drawable/ic_baseline_color_lens_24"
-      android:key="@string/primary_color_key"
-      android:title="@string/primary_color_settings" />
+
     <Preference
       android:layout="@layout/custom_preference"
       android:icon="@drawable/ic_baseline_color_lens_24"
       android:key="@string/app_theme_key"
       android:title="@string/app_theme_settings" />
+
     <Preference
       android:layout="@layout/custom_preference"
       android:icon="@drawable/ic_baseline_tv_24"
@@ -25,25 +22,6 @@
       android:layout="@layout/custom_preference"
       android:title="@string/app_language" />
 
-    <ListPreference
-      android:icon="@drawable/ic_folder"
-      android:key="@string/folder_view_mode_key"
-      android:layout="@layout/custom_preference"
-      android:title="@string/folder_view_mode"
-      android:summary="@string/folder_view_mode_summary"
-      android:entries="@array/folder_view_mode_entries"
-      android:entryValues="@array/folder_view_mode_values"
-      android:defaultValue="hierarchical" />
-
-    <ListPreference
-      android:icon="@drawable/ic_baseline_filter_list_24"
-      android:key="@string/media_type_filter_key"
-      android:layout="@layout/custom_preference"
-      android:title="@string/media_type_filter"
-      android:summary="@string/media_type_filter_summary"
-      android:entries="@array/media_type_filter_entries"
-      android:entryValues="@array/media_type_filter_values"
-      android:defaultValue="all" />
 
   </PreferenceCategory>
 
@@ -87,18 +65,4 @@
 
   </PreferenceCategory>
 
-
-<!--  <PreferenceCategory-->
-<!--    android:title="@string/pref_category_links">-->
-
-<!--    <Preference-->
-<!--      android:title="@string/github"-->
-<!--      android:layout="@layout/custom_preference"-->
-<!--      android:icon="@drawable/ic_github_logo"-->
-<!--      app:summary="https://github.com/recloudstream/cloudstream">-->
-<!--      <intent-->
-<!--        android:action="android.intent.action.VIEW"-->
-<!--        android:data="https://github.com/recloudstream/cloudstream" />-->
-<!--    </Preference>-->
-<!--  </PreferenceCategory>-->
 </PreferenceScreen>

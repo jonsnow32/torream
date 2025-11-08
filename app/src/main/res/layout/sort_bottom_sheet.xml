@@ -20,7 +20,7 @@
                 android:textStyle="bold"
                 android:text="@string/pick_source"
                 android:textSize="20sp"
-                android:textColor="?attr/textColor"
+                android:textColor="@color/text_primary"
                 android:layout_width="match_parent"
                 android:layout_rowWeight="1"
                 android:layout_height="wrap_content" />
@@ -52,7 +52,7 @@
                 android:textStyle="bold"
                 android:text="@string/pick_subtitle"
                 android:textSize="20sp"
-                android:textColor="?attr/textColor"
+                android:textColor="@color/text_primary"
                 android:layout_rowWeight="1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />

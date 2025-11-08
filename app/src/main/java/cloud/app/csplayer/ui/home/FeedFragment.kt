@@ -4,7 +4,6 @@ import adapters.FeedAdapter
 import adapters.FeedAdapter.Companion.getFeedAdapter
 import android.Manifest
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
@@ -16,21 +15,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import cloud.app.csplayer.MainActivityViewModel
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 import cloud.app.csplayer.R
 import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.databinding.FragmentFeedBinding
-import cloud.app.csplayer.media.dao.MediaPlaybackDao
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.SyncState
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
-import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterBottomSheet
@@ -52,6 +50,7 @@ import javax.inject.Inject
 class FeedFragment : Fragment(), FeedClickListener {
   private var binding by autoCleared<FragmentFeedBinding>()
   private val viewModel: FeedViewModel by viewModels()
+  private val mainViewModel: MainActivityViewModel by activityViewModels()
 
   @Inject
   lateinit var adManager: AdManager
@@ -128,7 +127,7 @@ class FeedFragment : Fragment(), FeedClickListener {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-
+    applyContentRect()
     FastScrollerHelper.applyTo(binding.rvFeed)
     adapter = getFeedAdapter(viewModel, adManager)
     // Observe title from ViewModel (will be root folder name or "Feed")
@@ -172,17 +171,6 @@ class FeedFragment : Fragment(), FeedClickListener {
       binding.toolbar.subtitle = null
     }
 
-    ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
-      val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-      val displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
-      view.setPadding(
-        maxOf(systemBars.left, displayCutout.left),
-        maxOf(systemBars.top, displayCutout.top),
-        maxOf(systemBars.right, displayCutout.right),
-        systemBars.bottom
-      )
-      insets
-    }
 
     // Configure adapter with error handling
     val adapterWithStates = adapter.withLoadingStates(
@@ -595,21 +583,21 @@ class FeedFragment : Fragment(), FeedClickListener {
     showToast("Settings applied: ${config.groupMode.name} / ${config.viewMode.name}")
   }
 
-  /**
-   * Handle configuration changes (like orientation) to recalculate grid layout
-   * This is called from MainActivity.onConfigurationChanged()
-   */
-  override fun onConfigurationChanged(newConfig: Configuration) {
-    super.onConfigurationChanged(newConfig)
-    Timber.d("FeedFragment configuration changed: orientation=${newConfig.orientation}")
-
-    recalculateGridLayout(
-      binding.rvFeed,
-      adapter
-    )
-    Timber.d("Grid layout recalculated for new orientation")
-
-  }
+//  /**
+//   * Handle configuration changes (like orientation) to recalculate grid layout
+//   * This is called from MainActivity.onConfigurationChanged()
+//   */
+//  override fun onConfigurationChanged(newConfig: Configuration) {
+//    super.onConfigurationChanged(newConfig)
+//    Timber.d("FeedFragment configuration changed: orientation=${newConfig.orientation}")
+//
+//    recalculateGridLayout(
+//      binding.rvFeed,
+//      adapter
+//    )
+//    Timber.d("Grid layout recalculated for new orientation")
+//
+//  }
 
   companion object {
     private const val ARG_ROOT_FOLDER_PATH = "root_folder_path"

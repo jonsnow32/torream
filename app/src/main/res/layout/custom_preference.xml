@@ -33,7 +33,7 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:textAppearance="?attr/textAppearanceListItem"
-      android:textColor="?android:attr/textColor"
+      android:textColor="@color/text_primary"
       android:ellipsize="end"
       android:singleLine="true"
       android:maxLines="1" />
@@ -43,7 +43,7 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:textAppearance="?attr/textAppearanceListItemSecondary"
-      android:textColor="?android:attr/textColorSecondary"
+      android:textColor="@color/text_secondary"
       android:visibility="gone"
       android:ellipsize="end"
       android:singleLine="true"

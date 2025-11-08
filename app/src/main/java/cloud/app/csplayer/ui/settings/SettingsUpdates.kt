@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import android.content.Intent
-import android.net.Uri
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -16,7 +15,6 @@ import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setPaddingBotto
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setUpToolbar
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
-import cloud.app.csplayer.utils.SingleSelectionHelper.showBottomDialog
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.Utils.logError
@@ -25,10 +23,15 @@ import cloud.app.csplayer.utils.txt
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import androidx.core.net.toUri
+import cloud.app.csplayer.ui.dialog.SelectionDialog
+import androidx.core.content.edit
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 
 class SettingsUpdates : PreferenceFragmentCompat() {
+
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+    applyContentRect()
     setUpToolbar(R.string.category_updates)
     setPaddingBottom()
     setToolBarScrollFlags()
@@ -42,7 +45,7 @@ class SettingsUpdates : PreferenceFragmentCompat() {
 
     getPref(R.string.show_logcat_key)?.setOnPreferenceClickListener { pref ->
       val builder =
-        AlertDialog.Builder(pref.context, R.style.AlertDialogCustom)
+        AlertDialog.Builder(pref.context)
 
       val binding = LogcatBinding.inflate(layoutInflater, null, false)
       builder.setView(binding.root)
@@ -115,18 +118,21 @@ class SettingsUpdates : PreferenceFragmentCompat() {
       val currentInstaller =
         settingsManager.getInt(getString(R.string.apk_installer_key), 0)
 
-      activity?.showBottomDialog(
+      SelectionDialog.single(
         prefNames.toList(),
         prefValues.indexOf(currentInstaller),
         getString(R.string.apk_installer_settings),
-        true,
-        {}) {
-        try {
-          settingsManager.edit()
-            .putInt(getString(R.string.apk_installer_key), prefValues[it])
-            .apply()
-        } catch (e: Exception) {
-          logError(e)
+        true).show(parentFragmentManager) { bundle ->
+        bundle?.apply {
+          getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            try {
+              settingsManager.edit {
+                putInt(getString(R.string.apk_installer_key), prefValues[index])
+              }
+            } catch (e: Exception) {
+              logError(e)
+            }
+          }
         }
       }
       return@setOnPreferenceClickListener true

@@ -57,11 +57,11 @@
       android:layout_width="match_parent"
       android:layout_height="200dp"
       android:orientation="horizontal"
-      app:layout_constraintBottom_toTopOf="@+id/player_center_menu"
+      app:layout_constraintBottom_toTopOf="@+id/playerCenterMenu"
       app:layout_constraintTop_toBottomOf="@+id/topMenuRight">
 
       <TextView
-        android:id="@+id/player_time_text"
+        android:id="@+id/playerTimeText"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
@@ -74,7 +74,7 @@
 
     <!-- atm this is useless, however it might be used for PIP one day? -->
     <ImageView
-      android:id="@+id/player_fullscreen"
+      android:id="@+id/playerFullscreen"
       android:layout_width="30dp"
       android:layout_height="30dp"
       android:layout_gravity="center_vertical"
@@ -85,13 +85,13 @@
       app:tint="@color/white" />
 
     <FrameLayout
-      android:id="@+id/player_intro_play"
+      android:id="@+id/playerIntroPlay"
       android:layout_width="0dp"
       android:layout_height="0dp"
       android:visibility="gone" />
 
     <ImageView
-      android:id="@+id/player_open_source"
+      android:id="@+id/playerOpenSource"
       android:layout_width="0dp"
       android:layout_height="0dp"
       android:clickable="false"
@@ -102,7 +102,7 @@
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
-      android:id="@+id/player_video_holder"
+      android:id="@+id/playerVideoHolder"
       android:layout_width="match_parent"
       android:layout_height="match_parent">
 
@@ -140,7 +140,7 @@
             android:clickable="true"
             android:contentDescription="@string/go_back_img_des"
             android:focusable="true"
-            app:tint="?attr/iconColor" />
+            app:tint="@color/text_primary" />
         </FrameLayout>
 
         <LinearLayout
@@ -455,8 +455,8 @@
 
             android:background="@drawable/video_tap_button_skip"
             android:nextFocusLeft="@id/exo_rew"
-            android:nextFocusUp="@id/player_go_back"
-            android:nextFocusDown="@id/player_lock"
+            android:nextFocusUp="@id/playerGoBack"
+            android:nextFocusDown="@id/playerLock"
             android:padding="10dp"
             android:scaleType="fitCenter"
             android:scaleX="-1"
@@ -522,8 +522,8 @@
 
             android:background="@drawable/video_tap_button_skip"
             android:nextFocusRight="@id/exo_rew"
-            android:nextFocusUp="@id/player_go_back"
-            android:nextFocusDown="@id/player_lock"
+            android:nextFocusUp="@id/playerGoBack"
+            android:nextFocusDown="@id/playerLock"
             android:padding="10dp"
             android:scaleType="fitCenter"
             android:src="@drawable/netflix_skip_forward"
@@ -768,18 +768,18 @@
             app:tint="@android:color/white"
             tools:visibility="visible" />
 
-          <ImageButton
-            android:id="@+id/btnBackground"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:background="@drawable/transparent_circle_background"
-            android:contentDescription="@string/background_audio"
-            android:padding="12dp"
-            android:src="@drawable/ic_headset"
-            android:visibility="gone"
-            app:tint="@android:color/white"
-            tools:visibility="visible" />
+<!--          <ImageButton-->
+<!--            android:id="@+id/btnBackground"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="4dp"-->
+<!--            android:background="@drawable/transparent_circle_background"-->
+<!--            android:contentDescription="@string/background_audio"-->
+<!--            android:padding="12dp"-->
+<!--            android:src="@drawable/ic_headset"-->
+<!--            android:visibility="gone"-->
+<!--            app:tint="@android:color/white"-->
+<!--            tools:visibility="visible" />-->
 
 
           <ImageButton

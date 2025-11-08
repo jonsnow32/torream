@@ -5,7 +5,7 @@
         android:layout_height="?android:attr/listPreferredItemHeightSmall"
         android:textAppearance="?android:attr/textAppearanceListItemSmall"
         android:gravity="center_vertical"
-        android:textColor="?attr/textColor"
+        android:textColor="@color/text_primary"
         tools:text="Example Text"
         android:background="?attr/bitDarkerGrayBackground"
         android:checkMark="?android:attr/listChoiceIndicatorSingle"
@@ -17,6 +17,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@android:id/text1"
     style="@style/NoCheckLabel"
-    android:textColor="?attr/textColor"
+    android:textColor="@color/text_primary"
     android:textStyle="normal"
     tools:text="hello" />

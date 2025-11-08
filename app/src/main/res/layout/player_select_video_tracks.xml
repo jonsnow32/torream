@@ -18,8 +18,8 @@
       android:id="@+id/video_tracks_holder"
       android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:layout_weight="50"
       android:layout_margin="10dp"
+      android:layout_weight="50"
       android:orientation="vertical">
 
       <TextView
@@ -32,7 +32,7 @@
         android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
         android:paddingBottom="10dp"
         android:text="@string/video_tracks"
-        android:textColor="?attr/textColor"
+        android:textColor="@color/text_primary"
         android:textSize="20sp"
         android:textStyle="bold" />
 
@@ -60,16 +60,16 @@
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/apply_btt"
-      style="@style/WhiteButton"
       android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
       android:layout_gravity="center_vertical|end"
       android:nextFocusLeft="@id/auto_tracks_list"
       android:text="@string/sort_apply" />
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/cancel_btt"
-      style="@style/BlackButton"
       android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
       android:layout_gravity="center_vertical|end"
       android:text="@string/sort_cancel" />
   </LinearLayout>

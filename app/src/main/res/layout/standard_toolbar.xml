@@ -5,15 +5,15 @@
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   android:background="?android:statusBarColor"
-  android:id="@+id/settings_appbar">
+  android:id="@+id/general_appbar">
 
   <com.google.android.material.appbar.MaterialToolbar
-    android:id="@+id/settings_toolbar"
+    android:id="@+id/general_toolbar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:descendantFocusability="afterDescendants"
     app:layout_scrollFlags="scroll|enterAlways"
-    app:navigationIconTint="?attr/textColor"
-    app:titleTextColor="?attr/textColor"
+    app:navigationIconTint="@color/text_primary"
+    app:titleTextColor="@color/text_primary"
     tools:title="Overlord" />
 </com.google.android.material.appbar.AppBarLayout>

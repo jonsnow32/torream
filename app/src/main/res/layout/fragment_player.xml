@@ -52,11 +52,11 @@
 
       android:text="@string/skip_loading"
       android:textAllCaps="false"
-      android:textColor="?attr/textColor"
+      android:textColor="@color/text_primary"
       android:visibility="gone"
       app:cornerRadius="4dp"
       app:icon="@drawable/ic_baseline_skip_next_24"
-      app:iconTint="?attr/textColor"
+      app:iconTint="@color/text_primary"
       app:rippleColor="?attr/colorPrimary"
       tools:visibility="visible" />
 
@@ -126,7 +126,7 @@
            android:gravity="start"
            android:textColor="@color/white"
            app:layout_constraintLeft_toLeftOf="parent"
-           app:layout_constraintTop_toBottomOf="@+id/player_video_title"
+           app:layout_constraintTop_toBottomOf="@+id/playerVideoTitle"
            tools:text="17 seeders" />
    </FrameLayout>-->
 

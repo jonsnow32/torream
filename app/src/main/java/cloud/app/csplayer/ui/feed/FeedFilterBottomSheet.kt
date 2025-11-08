@@ -4,14 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import androidx.fragment.app.DialogFragment
 import com.google.android.material.tabs.TabLayout
 import cloud.app.csplayer.databinding.BottomSheetFeedFilterBinding
+import cloud.app.csplayer.ui.dialog.DockingDialog
 
 /**
  * Bottom sheet dialog for feed filtering and display options
  */
-class FeedFilterBottomSheet : BottomSheetDialogFragment() {
+class FeedFilterBottomSheet : DockingDialog() {
 
   private var _binding: BottomSheetFeedFilterBinding? = null
   private val binding get() = _binding!!

@@ -127,7 +127,7 @@
           android:gravity="start"
           android:textColor="@color/white"
           app:layout_constraintLeft_toLeftOf="parent"
-          app:layout_constraintTop_toBottomOf="@+id/player_video_title"
+          app:layout_constraintTop_toBottomOf="@+id/playerVideoTitle"
           tools:text="17 seeders" />
   </FrameLayout>-->
 </androidx.constraintlayout.widget.ConstraintLayout>

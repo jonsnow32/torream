@@ -1,18 +1,24 @@
 package cloud.app.csplayer
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
+import android.util.AttributeSet
 import android.view.KeyEvent
+import android.view.View
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.viewModels
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -20,7 +26,6 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import androidx.preference.PreferenceManager
 import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
@@ -43,21 +48,23 @@ import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
 import cloud.app.csplayer.utils.Utils.USER_AGENT
-import cloud.app.csplayer.utils.Utils.isMPVSupported
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.datastore.Serializer
-import cloud.app.csplayer.model.PlaybackData
+import cloud.app.csplayer.model.PlaybackData.Companion.KEY_PLAYBACK_JSON_URI
 import kotlinx.serialization.serializer
 
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.Session
 import com.google.android.gms.cast.framework.SessionManager
 import com.google.android.gms.cast.framework.SessionManagerListener
+import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.navigationrail.NavigationRailView
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 import kotlin.reflect.KClass
 
 
@@ -99,7 +106,9 @@ var app = Requests(responseParser = object : ResponseParser {
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
-  private lateinit var binding: ActivityMainBinding
+
+  val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+  private val viewmodel by viewModels<MainActivityViewModel>()
   private var result = mutableListOf<PlayBackResult>()
   lateinit var mSessionManager: SessionManager
   private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
@@ -135,9 +144,19 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
   }
 
+  override fun onCreateView(name: String, context: Context, attrs: AttributeSet): View? {
+    return super.onCreateView(name, context, attrs)
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     loadThemes()
     super.onCreate(savedInstanceState)
+
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      window.attributes.layoutInDisplayCutoutMode =
+        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+    }
 
     // Move heavy I/O operations to background thread to avoid ANR
     ioSafe {
@@ -156,9 +175,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     } catch (t: Throwable) {
       logError(t)
     }
-    binding = ActivityMainBinding.inflate(layoutInflater)
-    val view = binding.root
-    setContentView(view)
+    setContentView(binding.root)
 
     // Use AndroidX EdgeToEdge helper which handles decor fitting and system bar styling.
     try {
@@ -172,7 +189,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
     val navController = navHostFragment.navController
 
-    binding.navView.setOnItemSelectedListener { menuItem ->
+    val navView = binding.navView as NavigationBarView
+    navView.setOnItemSelectedListener { menuItem ->
       val currentDestination = navController.currentDestination?.id
       val targetDestination = when (menuItem.itemId) {
         R.id.homeFragment -> R.id.feedFragment
@@ -198,14 +216,41 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       } else {
         true
       }
+
+
+    }
+    val isRail = binding.navView is NavigationRailView
+    navView.post {
+      val safeRect = resources.run {
+        val height = getDimensionPixelSize(R.dimen.nav_height)
+        if (!isRail) return@run MainActivityViewModel.SafeRect(bottom = height)
+        else
+          return@run MainActivityViewModel.SafeRect(start = height)
+      }
+      viewmodel.setNavSafeRect(safeRect)
+    }
+
+    ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+      viewmodel.setSystemSafeRect(this, insets)
+      val cutout = insets.displayCutout
+      if (cutout != null) {
+        viewmodel.setNotchSafeRect(
+          MainActivityViewModel.SafeRect(
+            0, cutout.safeInsetBottom, cutout.safeInsetLeft, cutout.safeInsetRight
+          )
+        )
+        Timber.i("Top: ${cutout.safeInsetTop}, Bottom: ${cutout.safeInsetBottom}, Left: ${cutout.safeInsetLeft}, Right: ${cutout.safeInsetRight}")
+      }
+
+      insets
     }
 
     navController.addOnDestinationChangedListener { _: NavController, navDestination: NavDestination, bundle: Bundle? ->
       // Hide bottom navigation when in MPV player
       if (navDestination.matchDestination(R.id.mvpFragmentPlayer)) {
-        binding.navView.visibility = android.view.View.GONE
+        navView.visibility = android.view.View.GONE
       } else {
-        binding.navView.visibility = android.view.View.VISIBLE
+        navView.visibility = android.view.View.VISIBLE
       }
 
       if (isTvOrEmulator()) {
@@ -263,12 +308,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     super.onStop()
   }
 
-  override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
-    super.onConfigurationChanged(newConfig)
-    // Fragments will automatically receive onConfigurationChanged callback
-    // so they can recalculate their layouts (e.g., grid span counts)
-  }
-
   private var isSameEpisode = true
   override fun finish() {
     if (result.isNotEmpty()) {
@@ -291,8 +330,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
     }
     super.finish()
-
   }
+
 
   private fun NavDestination.matchDestination(@IdRes destId: Int): Boolean =
     hierarchy.any { it.id == destId }
@@ -315,7 +354,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         // Pass URI string to PlayerViewModel (let it read lazily)
         // This avoids reading the file twice and Bundle size limit
         val bundle = Bundle().apply {
-          putString(cloud.app.csplayer.model.PlaybackData.KEY_PLAYBACK_JSON_URI, jsonUri.toString())
+          putString(KEY_PLAYBACK_JSON_URI, jsonUri.toString())
         }
         navigate(
           R.id.global_to_navigation_mpv_player,
@@ -397,55 +436,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   }
 
   fun loadThemes() {
-    val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
-
-    val currentTheme =
-      when (settingsManager.getString(getString(R.string.app_theme_key), "AmoledLight")) {
-        "Light" -> R.style.LightMode
-        "AmoledLight" -> R.style.AmoledModeLight
-        "Ocean" -> R.style.OceanMode
-        "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-          R.style.MonetMode else R.style.AppTheme
-
-        else -> R.style.AppTheme
-      }
-
-    val currentOverlayTheme =
-      when (settingsManager.getString(getString(R.string.primary_color_key), "Banana")) {
-        "Normal" -> R.style.OverlayPrimaryColorNormal
-        "DandelionYellow" -> R.style.OverlayPrimaryColorDandelionYellow
-        "CarnationPink" -> R.style.OverlayPrimaryColorCarnationPink
-        "Orange" -> R.style.OverlayPrimaryColorOrange
-        "DarkGreen" -> R.style.OverlayPrimaryColorDarkGreen
-        "Maroon" -> R.style.OverlayPrimaryColorMaroon
-        "NavyBlue" -> R.style.OverlayPrimaryColorNavyBlue
-        "Grey" -> R.style.OverlayPrimaryColorGrey
-        "White" -> R.style.OverlayPrimaryColorWhite
-        "CoolBlue" -> R.style.OverlayPrimaryColorCoolBlue
-        "Brown" -> R.style.OverlayPrimaryColorBrown
-        "Purple" -> R.style.OverlayPrimaryColorPurple
-        "Green" -> R.style.OverlayPrimaryColorGreen
-        "GreenApple" -> R.style.OverlayPrimaryColorGreenApple
-        "Red" -> R.style.OverlayPrimaryColorRed
-        "Banana" -> R.style.OverlayPrimaryColorBanana
-        "Party" -> R.style.OverlayPrimaryColorParty
-        "Pink" -> R.style.OverlayPrimaryColorPink
-        "Lavender" -> R.style.OverlayPrimaryColorLavender
-        "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-          R.style.OverlayPrimaryColorMonet else R.style.OverlayPrimaryColorNormal
-
-        "Monet2" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-          R.style.OverlayPrimaryColorMonetTwo else R.style.OverlayPrimaryColorNormal
-
-        else -> R.style.OverlayPrimaryColorNormal
-      }
-    theme.applyStyle(currentTheme, true)
-    theme.applyStyle(currentOverlayTheme, true)
-
-    theme.applyStyle(
-      R.style.LoadedStyle,
-      true
-    ) // THEME IS SET BEFORE VIEW IS CREATED TO APPLY THE THEME TO THE MAIN VIEW
+    // Simple single theme - no theme switching needed
+    // AppTheme is already applied from AndroidManifest.xml
   }
 
   override fun onColorSelected(dialogId: Int, color: Int) {

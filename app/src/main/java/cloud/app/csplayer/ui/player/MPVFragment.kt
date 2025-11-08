@@ -693,7 +693,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       mediaManager.setPlayer(player)
 
       // Initialize dialog manager
-      dialogManager = PlayerDialogManager(requireActivity())
+      dialogManager = PlayerDialogManager(this)
 
       // Initialize PIP action manager (Android O+)
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -1183,35 +1183,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  @Deprecated("Use showAudioTracksDialogue() and showSubtitleTracksDialogue() separately")
-  private fun showTracksDialogue() {
-    try {
-      val tracks = player?.tracks ?: return
-      player?.paused = true
-
-      dialogManager.showTracksDialog(
-        tracks = tracks,
-        onTracksSelected = { audioIndex, subtitleIndex ->
-          player?.aid = audioIndex
-          player?.sid = subtitleIndex
-          // Reload tracks to update the selected state
-          player?.loadTracks()
-        },
-        onLoadSubtitlesFromFile = {
-          openSubPicker()
-        },
-        onLoadSubtitlesOnline = {
-          showToast("Not implemented yet", Toast.LENGTH_SHORT)
-        },
-        onDismiss = {
-          player?.paused = false
-          activity?.hideSystemUI()
-        }
-      )
-    } catch (e: Exception) {
-      logError(e)
-    }
-  }
 
 
   private fun showSubtitleOffsetDialog() {

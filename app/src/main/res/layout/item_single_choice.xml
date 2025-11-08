@@ -1,0 +1,6 @@
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:id="@android:id/text1"
+  style="@style/CheckLabel"
+  android:paddingVertical="4dp"
+  tools:text="@tools:sample/first_names" />

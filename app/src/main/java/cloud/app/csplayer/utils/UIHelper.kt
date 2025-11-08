@@ -61,16 +61,6 @@ object UIHelper {
     return result
   }
 
-  fun fixPaddingStatusbar(v: View?) {
-    if (v == null) return
-    val ctx = v.context ?: return
-    v.setPadding(
-      v.paddingLeft,
-      v.paddingTop + ctx.getStatusBarHeight(),
-      v.paddingRight,
-      v.paddingBottom
-    )
-  }
 
   fun Context.getNavigationBarHeight(): Int {
     var result = 0

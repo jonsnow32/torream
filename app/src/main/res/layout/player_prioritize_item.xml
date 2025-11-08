@@ -33,7 +33,7 @@
         android:layout_toStartOf="@id/add_button"
         android:gravity="center"
         android:minWidth="50dp"
-        android:textColor="?attr/textColor"
+        android:textColor="@color/text_primary"
         tools:text="1" />
 
     <ImageView

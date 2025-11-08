@@ -65,12 +65,6 @@
     <attr name="primaryBlackBackground" format="color" />
     <attr name="iconGrayBackground" format="color" />
     <attr name="boxItemBackground" format="color" />
-
-    <attr name="textColor" format="color" />
-    <attr name="grayTextColor" format="color" />
-    <attr name="iconColor" format="color" />
-    <attr name="white" format="color" />
-    <attr name="black" format="color" />
   </declare-styleable>
 
 

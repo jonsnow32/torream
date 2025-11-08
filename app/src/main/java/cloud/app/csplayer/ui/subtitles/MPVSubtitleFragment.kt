@@ -24,18 +24,18 @@ import androidx.fragment.app.Fragment
 import androidx.media3.common.text.Cue
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.CaptionStyleCompat
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSubtitleSettingsBinding
 import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
+import cloud.app.csplayer.ui.dialog.SelectionDialog
 import cloud.app.csplayer.ui.player.mpv.MPVLib
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.DataStore.setKey
 import cloud.app.csplayer.utils.Event
 import cloud.app.csplayer.utils.GlobalEvent
 import cloud.app.csplayer.utils.LayoutMode
-import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
-import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.Utils
 import cloud.app.csplayer.utils.hideSystemUI
@@ -64,27 +64,33 @@ class MPVSubtitleFragment : Fragment() {
 
     private fun Context.getCurrentSavedStyle(): SaveCaptionStyle {
       return this.getKey<SaveCaptionStyle>("subtitle_settings") ?: SaveCaptionStyle(
-          getDefColor(0),
-          getDefColor(2),
-          getDefColor(3),
-          CaptionStyleCompat.EDGE_TYPE_OUTLINE,
-          getDefColor(1),
-          null,
-          null,
-          20,
-          25.0f,
+        getDefColor(0),
+        getDefColor(2),
+        getDefColor(3),
+        CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+        getDefColor(1),
+        null,
+        null,
+        20,
+        25.0f,
       )
     }
+
     fun push(activity: Activity?, hide: Boolean = true) {
       activity.navigate(R.id.global_to_navigation_mpv_subtitles, Bundle().apply {
         putBoolean("hide", hide)
       })
     }
+
     private fun Context.getSavedFonts(): List<File> {
       val externalFiles = getExternalFilesDir(null) ?: return emptyList()
       val fontDir = File(externalFiles.absolutePath + "/Fonts").also { it.mkdirs() }
       return fontDir.listFiles()?.mapNotNull {
-        if (it != null && (it.name.endsWith(".ttf", true) || it.name.endsWith(".otf", true))) it else null
+        if (it != null && (it.name.endsWith(".ttf", true) || it.name.endsWith(
+            ".otf",
+            true
+          ))
+        ) it else null
       }?.toList() ?: emptyList()
     }
 
@@ -99,7 +105,13 @@ class MPVSubtitleFragment : Fragment() {
       val r = Color.red(color)
       val g = Color.green(color)
       val b = Color.blue(color)
-      return if (a in 0..254) String.format("#%02X%02X%02X%02X", a, r, g, b) else String.format("#%02X%02X%02X", r, g, b)
+      return if (a in 0..254) String.format(
+        "#%02X%02X%02X%02X",
+        a,
+        r,
+        g,
+        b
+      ) else String.format("#%02X%02X%02X", r, g, b)
     }
 
     private fun copyFontToMpvFontsDir(context: Context, srcPath: String?): String? {
@@ -155,7 +167,10 @@ class MPVSubtitleFragment : Fragment() {
       val window = colorToMpvHex(style.windowColor)
       val edge = colorToMpvHex(style.edgeColor)
 
-      Log.d("MPVSubtitle", "Applying subtitle style - fg: $fg, bg: $bg, window: $window, edge: $edge, fontSize: ${style.fixedTextSize}")
+      Log.d(
+        "MPVSubtitle",
+        "Applying subtitle style - fg: $fg, bg: $bg, window: $window, edge: $edge, fontSize: ${style.fixedTextSize}"
+      )
 
       // Get current subtitle track ID and current position
       val curSid = MPVLib.getPropertyInt("sid") ?: -1
@@ -230,10 +245,12 @@ class MPVSubtitleFragment : Fragment() {
           MPVLib.command(arrayOf("set", "sub-border-size", "0"))
           MPVLib.command(arrayOf("set", "sub-shadow-offset", "0"))
         }
+
         CaptionStyleCompat.EDGE_TYPE_OUTLINE -> {
           MPVLib.command(arrayOf("set", "sub-border-size", "2.5"))
           MPVLib.command(arrayOf("set", "sub-shadow-offset", "0"))
         }
+
         else -> {
           MPVLib.command(arrayOf("set", "sub-border-size", "0"))
           MPVLib.command(arrayOf("set", "sub-shadow-offset", "1.5"))
@@ -316,18 +333,18 @@ class MPVSubtitleFragment : Fragment() {
 
   private fun Context.updateState() {
     val captionStyle = CaptionStyleCompat(
-        state.foregroundColor,
-        state.backgroundColor,
-        state.windowColor,
-        state.edgeType,
-        state.edgeColor,
-        state.typefaceFilePath?.let {
-            try {
-                Typeface.createFromFile(File(it))
-            } catch (_: Exception) {
-                null
-            }
-        } ?: state.typeface?.let { ResourcesCompat.getFont(this, it) } ?: Typeface.SANS_SERIF
+      state.foregroundColor,
+      state.backgroundColor,
+      state.windowColor,
+      state.edgeType,
+      state.edgeColor,
+      state.typefaceFilePath?.let {
+        try {
+          Typeface.createFromFile(File(it))
+        } catch (_: Exception) {
+          null
+        }
+      } ?: state.typeface?.let { ResourcesCompat.getFont(this, it) } ?: Typeface.SANS_SERIF
     )
     binding?.subtitleText?.setStyle(captionStyle)
     val text = getString(R.string.subtitles_example_text)
@@ -369,9 +386,9 @@ class MPVSubtitleFragment : Fragment() {
 
   var binding: FragmentSubtitleSettingsBinding? = null
   override fun onCreateView(
-      inflater: LayoutInflater,
-      container: ViewGroup?,
-      savedInstanceState: Bundle?
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
   ): View {
     val localBinding = FragmentSubtitleSettingsBinding.inflate(inflater, container, false)
     binding = localBinding
@@ -388,6 +405,7 @@ class MPVSubtitleFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+    applyContentRect()
     hide = arguments?.getBoolean("hide") ?: true
     GlobalEvent.onColorSelectedEvent += ::onColorSelected
     GlobalEvent.onDialogDismissedEvent += ::onDialogDismissed
@@ -395,7 +413,8 @@ class MPVSubtitleFragment : Fragment() {
       context?.filesDir?.absolutePath.toString() + "/fonts"
     )
 
-    val settingsToolbar = view.findViewById<MaterialToolbar>(R.id.subtitle_settings_toolbar) ?: return
+    val settingsToolbar =
+      view.findViewById<MaterialToolbar>(R.id.subtitle_settings_toolbar) ?: return
     settingsToolbar.apply {
       setTitle(title)
       setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
@@ -403,13 +422,13 @@ class MPVSubtitleFragment : Fragment() {
       setNavigationOnClickListener { activity?.onBackPressedDispatcher?.onBackPressed() }
     }
 
-      UIHelper.fixPaddingStatusbar(binding?.subsRoot)
-
     state = requireContext().getCurrentSavedStyle()
     context?.updateState()
 
     val isTvTrueSettings = requireActivity().isLayout(LayoutMode.Tv.id)
-    fun View.setFocusableInTv() { this.isFocusableInTouchMode = isTvTrueSettings }
+    fun View.setFocusableInTv() {
+      this.isFocusableInTouchMode = isTvTrueSettings
+    }
 
     fun View.setup(id: Int) {
       setFocusableInTv()
@@ -426,7 +445,7 @@ class MPVSubtitleFragment : Fragment() {
 
       this.setOnLongClickListener {
         it.context.setColor(id, null)
-          Utils.showToast(R.string.subs_default_reset_toast, Toast.LENGTH_SHORT)
+        Utils.showToast(R.string.subs_default_reset_toast, Toast.LENGTH_SHORT)
         return@setOnLongClickListener true
       }
     }
@@ -448,15 +467,19 @@ class MPVSubtitleFragment : Fragment() {
           Pair(20, "20$suffix"),
           Pair(30, "30$suffix"),
         )
-        activity.showDialog(
+        SelectionDialog.single(
           elevationTypes.map { it.second },
           elevationTypes.map { it.first }.indexOf(state.elevation),
           (textView as TextView).text.toString(),
-          false,
-          dismissCallback
-        ) { index ->
-          state.elevation = elevationTypes.map { it.first }[index]
-          textView.context.updateState()
+          false
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+              state.elevation = elevationTypes.map { it.first }[index]
+              textView.context.updateState()
+            }
+          }
+          dismissCallback()
         }
       }
 
@@ -469,15 +492,19 @@ class MPVSubtitleFragment : Fragment() {
           Pair(24f, "24$suffix"),
           Pair(28f, "28$suffix"),
         )
-        activity?.showDialog(
+        SelectionDialog.single(
           fontSizes.map { it.second },
           fontSizes.map { it.first }.indexOf(state.fixedTextSize),
           (textView as TextView).text.toString(),
-          false,
+          false
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+              state.fixedTextSize = fontSizes.map { it.first }[index]
+              textView.context.updateState()
+            }
+          }
           dismissCallback
-        ) { index ->
-          state.fixedTextSize = fontSizes.map { it.first }[index]
-          textView.context.updateState()
         }
       }
 
@@ -496,22 +523,26 @@ class MPVSubtitleFragment : Fragment() {
           if (idx >= 0) fontTypes.size + idx else fontTypes.indexOfFirst { it.first == state.typeface }
         } else fontTypes.indexOfFirst { it.first == state.typeface }
 
-        activity?.showDialog(
+        SelectionDialog.single(
           fontList,
           currentIndex,
           (textView as TextView).text.toString(),
-          false,
-          dismissCallback
-        ) { index ->
-          if (index < fontTypes.size) {
-            state.typeface = fontTypes[index].first
-            state.typefaceFilePath = null
-          } else {
-            val idx = index - fontTypes.size
-            state.typefaceFilePath = savedFontTypes.getOrNull(idx)?.absolutePath
-            state.typeface = null
+          false
+        ).show(parentFragmentManager) { bundle ->
+          bundle?.apply {
+            getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+              if (index < fontTypes.size) {
+                state.typeface = fontTypes[index].first
+                state.typefaceFilePath = null
+              } else {
+                val idx = index - fontTypes.size
+                state.typefaceFilePath = savedFontTypes.getOrNull(idx)?.absolutePath
+                state.typeface = null
+              }
+              textView.context.updateState()
+            }
           }
-          textView.context.updateState()
+          dismissCallback()
         }
       }
 
@@ -526,15 +557,15 @@ class MPVSubtitleFragment : Fragment() {
 
       resetAllSubtitleSettings.setOnClickListener {
         state = SaveCaptionStyle(
-            getDefColor(0),
-            getDefColor(2),
-            getDefColor(3),
-            CaptionStyleCompat.EDGE_TYPE_OUTLINE,
-            getDefColor(1),
-            null,
-            null,
-            20,
-            25.0f,
+          getDefColor(0),
+          getDefColor(2),
+          getDefColor(3),
+          CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+          getDefColor(1),
+          null,
+          null,
+          20,
+          25.0f,
         )
         applyBtt.callOnClick()
         subtitleText.context.updateState()

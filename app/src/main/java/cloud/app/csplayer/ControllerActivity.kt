@@ -101,18 +101,18 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                         remoteMediaClient?.mediaInfo?.mediaTracks?.filter { it.type == MediaTrack.TYPE_TEXT }
                             ?: ArrayList()
 
-                    val bottomSheetDialogBuilder =
-                        AlertDialog.Builder(view.context, R.style.AlertDialogCustomBlack)
-                    bottomSheetDialogBuilder.setView(R.layout.sort_bottom_sheet)
-                    val bottomSheetDialog = bottomSheetDialogBuilder.create()
-                    bottomSheetDialog.show()
-                    //  bottomSheetDialog.setContentView(R.layout.sort_bottom_sheet)
+                    val dialogBuilder =
+                        AlertDialog.Builder(view.context)
+                    dialogBuilder.setView(R.layout.sort_bottom_sheet)
+                    val dialog = dialogBuilder.create()
+                    dialog.show()
+                    //  dialog.setContentView(R.layout.sort_bottom_sheet)
                     val providerList =
-                        bottomSheetDialog.findViewById<ListView>(R.id.sort_providers)!!
+                        dialog.findViewById<ListView>(R.id.sort_providers)!!
                     val subtitleList =
-                        bottomSheetDialog.findViewById<ListView>(R.id.sort_subtitles)!!
+                        dialog.findViewById<ListView>(R.id.sort_subtitles)!!
                     if (subTracks.isEmpty()) {
-                        bottomSheetDialog.findViewById<LinearLayout>(R.id.sort_subtitles_holder)?.visibility =
+                        dialog.findViewById<LinearLayout>(R.id.sort_subtitles_holder)?.visibility =
                             GONE
                     } else {
                         val arrayAdapter =
@@ -163,7 +163,7 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                                         }
                                     }
                             }
-                            bottomSheetDialog.dismissSafe(activity)
+                            dialog.dismissSafe(activity)
                         }
                     }
 
@@ -231,7 +231,7 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                         }
                         loadMirror(which)
 
-                        bottomSheetDialog.dismissSafe(activity)
+                        dialog.dismissSafe(activity)
                     }
                 }
             }

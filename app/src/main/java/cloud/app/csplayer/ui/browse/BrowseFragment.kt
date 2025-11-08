@@ -5,10 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
-import cloud.app.csplayer.R
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 import cloud.app.csplayer.databinding.FragmentBrowseBinding
-import cloud.app.csplayer.utils.UIHelper.navigate
 
 class BrowseFragment: Fragment() {
   lateinit var binding : FragmentBrowseBinding
@@ -23,7 +21,7 @@ class BrowseFragment: Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-
+    applyContentRect()
     binding.swipeRefresh.setOnRefreshListener {
 
     }

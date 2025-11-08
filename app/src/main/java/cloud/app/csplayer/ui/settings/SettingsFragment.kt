@@ -14,24 +14,22 @@ import android.widget.ImageView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import cloud.app.csplayer.BuildConfig
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.PlaybackDataHelper
-import cloud.app.csplayer.utils.SingleSelectionHelper.showNginxTextInputDialog
-import cloud.app.csplayer.utils.UIHelper
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
+//import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
@@ -68,22 +66,11 @@ class SettingsFragment : Fragment() {
       if (isTvOrEmulator()) {
         listView?.setPadding(0, 0, 0, 100.toPx)
       }
-      ViewCompat.setOnApplyWindowInsetsListener(listView) { view, insets ->
-        val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-        val displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
-        view.setPadding(
-          maxOf(systemBars.left, displayCutout.left),
-          0,
-          maxOf(systemBars.right, displayCutout.right),
-          systemBars.bottom
-        )
-        insets
-      }
     }
 
     fun PreferenceFragmentCompat.setToolBarScrollFlags() {
       if (isTvOrEmulator()) {
-        val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
+        val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.general_toolbar)
 
         settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
           scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
@@ -93,7 +80,7 @@ class SettingsFragment : Fragment() {
 
     fun Fragment?.setToolBarScrollFlags() {
       if (this?.isTvOrEmulator() == true) {
-        val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
+        val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.general_toolbar)
 
         settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
           scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
@@ -103,7 +90,7 @@ class SettingsFragment : Fragment() {
 
     fun Fragment?.setUpToolbar(title: String) {
       if (this == null) return
-      val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
+      val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.general_toolbar) ?: return
 
       settingsToolbar.apply {
         setTitle(title)
@@ -114,13 +101,12 @@ class SettingsFragment : Fragment() {
           }
         }
       }
-      UIHelper.fixPaddingStatusbar(settingsToolbar)
     }
 
     fun Fragment?.setUpToolbar(@StringRes title: Int) {
       if (this == null) return
-      val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
-      val settingsAppBar = view?.findViewById<AppBarLayout>(R.id.settings_appbar) ?: return
+      val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.general_toolbar) ?: return
+      val settingsAppBar = view?.findViewById<AppBarLayout>(R.id.general_appbar) ?: return
 
       settingsToolbar.apply {
         setTitle(title)
@@ -130,7 +116,6 @@ class SettingsFragment : Fragment() {
           activity?.onBackPressedDispatcher?.onBackPressed()
         }
       }
-      UIHelper.fixPaddingStatusbar(settingsAppBar)
     }
 
     fun getFolderSize(dir: File): Long {
@@ -165,22 +150,9 @@ class SettingsFragment : Fragment() {
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+    applyContentRect()
     binding?.apply {
-
-      UIHelper.fixPaddingStatusbar(binding?.settingsProfile)
-
-      ViewCompat.setOnApplyWindowInsetsListener(binding!!.root) { view, insets ->
-        val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-        val displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
-        view.setPadding(
-          maxOf(systemBars.left, displayCutout.left),
-          maxOf(systemBars.top, displayCutout.top),
-          maxOf(systemBars.right, displayCutout.right),
-          systemBars.bottom
-        )
-        insets
-      }
-
       listOf(
         settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
         settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
@@ -213,30 +185,30 @@ class SettingsFragment : Fragment() {
             text = copy;
         }
 
-        activity?.showNginxTextInputDialog("Your Link", text, 16, {
-        }, { url ->
-          // Create PlaybackData for URL playback
-          val playbackData = PlaybackData(
-            title = "Network Stream",
-            videoLinks = listOf(
-              VideoLink(
-                url = url,
-                name = "Network Stream",
-                headers = emptyMap(),
-                position = 0L,
-                subtitles = emptyList(),
-              )
-            ),
-            subtitles = emptyList(),
-            videoStartIndex = 0,
-            subtitleStartIndex = 0,
-            isSameEpisode = true,
-            hasAd = false
-          )
-
-          val bundle = PlaybackDataHelper.createBundle(playbackData)
-          activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
-        });
+//        activity?.showNginxTextInputDialog("Your Link", text, 16, {
+//        }, { url ->
+//          // Create PlaybackData for URL playback
+//          val playbackData = PlaybackData(
+//            title = "Network Stream",
+//            videoLinks = listOf(
+//              VideoLink(
+//                url = url,
+//                name = "Network Stream",
+//                headers = emptyMap(),
+//                position = 0L,
+//                subtitles = emptyList(),
+//              )
+//            ),
+//            subtitles = emptyList(),
+//            videoStartIndex = 0,
+//            subtitleStartIndex = 0,
+//            isSameEpisode = true,
+//            hasAd = false
+//          )
+//
+//          val bundle = PlaybackDataHelper.createBundle(playbackData)
+//          activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
+//        });
       }
 
       openLocal.setOnClickListener {

@@ -31,7 +31,7 @@
 
         <FrameLayout
           android:layout_width="match_parent"
-          android:layout_height="40dp"
+          android:layout_height="wrap_content"
           android:layout_margin="10dp"
           android:background="@drawable/search_background"
           android:visibility="visible">
@@ -67,7 +67,7 @@
 
             <LinearLayout
               android:layout_width="match_parent"
-              android:layout_height="match_parent"
+              android:layout_height="wrap_content"
               android:layout_gravity="end"
               android:gravity="end">
 
@@ -75,7 +75,7 @@
                 android:id="@+id/search_loading_bar"
                 style="@style/Widget.AppCompat.ProgressBar"
                 android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginEnd="10dp"
                 android:foregroundTint="@color/white"
@@ -87,9 +87,8 @@
 
               <com.google.android.material.button.MaterialButton
                 android:id="@+id/year_btt"
-                style="@style/WhiteButton"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical|end"
                 android:nextFocusLeft="@id/subtitles_search"
                 android:nextFocusRight="@id/search_filter"
@@ -100,7 +99,7 @@
           <ImageView
             android:id="@+id/search_filter"
             android:layout_width="25dp"
-            android:layout_height="25dp"
+            android:layout_height="wrap_content"
             android:layout_gravity="end|center_vertical"
 
             android:layout_margin="10dp"
@@ -108,7 +107,7 @@
             android:contentDescription="@string/change_providers_img_des"
             android:nextFocusLeft="@id/year_btt"
             android:src="@drawable/ic_baseline_tune_24"
-            app:tint="?attr/textColor" />
+            app:tint="@color/text_primary" />
         </FrameLayout>
 
 
@@ -139,15 +138,15 @@
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/apply_btt"
-      style="@style/WhiteButton"
       android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
       android:layout_gravity="center_vertical|end"
       android:text="@string/sort_apply" />
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/cancel_btt"
-      style="@style/BlackButton"
       android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
       android:layout_gravity="center_vertical|end"
       android:text="@string/sort_cancel" />
   </LinearLayout>

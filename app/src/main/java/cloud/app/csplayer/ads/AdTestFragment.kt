@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 import cloud.app.csplayer.ads.providers.AdProvider
 import cloud.app.csplayer.databinding.FragmentAdTestBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,6 +40,7 @@ class AdTestFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+    applyContentRect()
     setupBannerAd()
     setupClickListeners()
     startStatusUpdates()

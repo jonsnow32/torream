@@ -13,7 +13,7 @@
   <View
     android:id="@+id/appBarOutline"
     style="@style/AppBarOutline"
-    app:layout_anchor="@id/settings_toolbar"
+    app:layout_anchor="@id/general_toolbar"
     app:layout_anchorGravity="bottom" />
 
 

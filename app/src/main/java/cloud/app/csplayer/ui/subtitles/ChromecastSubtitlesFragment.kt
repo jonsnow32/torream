@@ -21,8 +21,6 @@ import cloud.app.csplayer.utils.DataStore.setKey
 import cloud.app.csplayer.utils.Event
 import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
 import cloud.app.csplayer.utils.GlobalEvent.onDialogDismissedEvent
-import cloud.app.csplayer.utils.SingleSelectionHelper.showDialog
-import cloud.app.csplayer.utils.UIHelper.fixPaddingStatusbar
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hideSystemUI
@@ -32,6 +30,7 @@ import kotlinx.serialization.Serializable
 import com.google.android.gms.cast.TextTrackStyle
 import com.google.android.gms.cast.TextTrackStyle.*
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
+import cloud.app.csplayer.ui.dialog.SelectionDialog
 import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.getCurrentSavedStyle
 import cloud.app.csplayer.utils.Utils
 
@@ -58,6 +57,7 @@ class ChromecastSubtitlesFragment : Fragment() {
         putBoolean("hide", hide)
       })
     }
+
     private fun getDefColor(id: Int): Int {
       return when (id) {
         0 -> Color.WHITE
@@ -156,8 +156,6 @@ class ChromecastSubtitlesFragment : Fragment() {
     onColorSelectedEvent += ::onColorSelected
     onDialogDismissedEvent += ::onDialogDismissed
 
-    fixPaddingStatusbar(binding?.subsRoot)
-
     state = getCurrentSavedStyle()
     context?.updateState()
 
@@ -223,17 +221,20 @@ class ChromecastSubtitlesFragment : Fragment() {
           textView.context.getString(R.string.subtitles_raised)
         ),
       )
-
       //showBottomDialog
-      activity?.showDialog(
+      SelectionDialog.single(
         edgeTypes.map { it.second },
         edgeTypes.map { it.first }.indexOf(state.edgeType),
         (textView as TextView).text.toString(),
-        false,
-        dismissCallback
-      ) { index ->
-        state.edgeType = edgeTypes.map { it.first }[index]
-        textView.context.updateState()
+        false
+      ).show(parentFragmentManager) { bundle ->
+        bundle?.apply {
+          getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            state.edgeType = edgeTypes.map { it.first }[index]
+            textView.context.updateState()
+          }
+          dismissCallback()
+        }
       }
     }
 
@@ -266,15 +267,19 @@ class ChromecastSubtitlesFragment : Fragment() {
       )
 
       //showBottomDialog
-      activity?.showDialog(
+      SelectionDialog.single(
         fontSizes.map { it.second },
         fontSizes.map { it.first }.indexOf(state.fontScale),
         (textView as TextView).text.toString(),
-        false,
-        dismissCallback
-      ) { index ->
-        state.fontScale = fontSizes.map { it.first }[index]
-        //textView.context.updateState() // font size not changed
+        false
+      ).show(parentFragmentManager) { bundle ->
+        bundle?.apply {
+          getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            state.fontScale = fontSizes.map { it.first }[index]
+            //textView.context.updateState() // font size not changed
+          }
+        }
+        dismissCallback()
       }
     }
 
@@ -284,8 +289,6 @@ class ChromecastSubtitlesFragment : Fragment() {
       showToast(R.string.subs_default_reset_toast, Toast.LENGTH_SHORT)
       return@setOnLongClickListener true
     }
-
-
 
     binding?.subsFont?.setFocusableInTv()
     binding?.subsFont?.setOnClickListener { textView ->
@@ -301,17 +304,22 @@ class ChromecastSubtitlesFragment : Fragment() {
       )
 
       //showBottomDialog
-      activity?.showDialog(
+      SelectionDialog.single(
         fontTypes.map { it.second },
         fontTypes.map { it.first }.indexOf(state.fontFamily),
         (textView as TextView).text.toString(),
-        false,
-        dismissCallback
-      ) { index ->
-        state.fontFamily = fontTypes.map { it.first }[index]
-        textView.context.updateState()
+        false
+      ).show(parentFragmentManager) { bundle ->
+        bundle?.apply {
+          getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            state.fontFamily = fontTypes.map { it.first }[index]
+            textView.context.updateState()
+          }
+          dismissCallback()
+        }
       }
     }
+
     binding?.subsFont?.setOnLongClickListener { textView ->
       state.fontFamily = defaultState.fontFamily
       textView.context.updateState()
@@ -344,3 +352,4 @@ class ChromecastSubtitlesFragment : Fragment() {
     }
   }
 }
+
