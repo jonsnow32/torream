@@ -27,3 +27,7 @@ local.properties
 /app/default
 /app/release
 ./.idea
+/buildscripts/deps/ffmpeg/_build
+/buildscripts/deps/ffmpeg/_build-arm64
+/buildscripts/deps/ffmpeg/_build-x86
+/buildscripts/deps/ffmpeg/_build-x64
