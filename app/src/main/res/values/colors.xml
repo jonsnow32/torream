@@ -26,9 +26,9 @@
   <color name="progressBackgroundColor">#404040</color>
 
   <!-- Video player colors -->
-  <color name="video_ripple">#40FFFFFF</color>
-  <color name="videoProgress">#BB86FC</color>
-  <color name="black_overlay">#80000000</color>
+  <color name="video_ripple">#80FFFFFF</color>
+  <color name="videoProgress">#66B5B5B5</color>
+  <color name="black_overlay">#66000000</color>
 
   <!-- Divider color -->
   <color name="divider_color">#33FFFFFF</color>

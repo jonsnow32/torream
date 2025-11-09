@@ -1,3 +1,4 @@
+// Kotlin
 package cloud.app.csplayer.ui.dialog
 
 import android.app.Dialog
@@ -12,11 +13,12 @@ import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import cloud.app.csplayer.R
+import cloud.app.csplayer.utils.isTvOrEmulator
 
 
 open class DockingDialog : DialogFragment() {
   enum class Docking {
-    LEFT, RIGHT, BOTTOM
+    LEFT, RIGHT, BOTTOM, CENTER
   }
   open val widthPercentage: Float = 0.4f
   private var orientation: Docking = Docking.RIGHT
@@ -25,7 +27,7 @@ open class DockingDialog : DialogFragment() {
   override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
     val isRTL = context?.isRTL() ?: false
     orientation = when (resources.configuration.orientation) {
-      Configuration.ORIENTATION_LANDSCAPE -> if (isRTL) Docking.LEFT else Docking.RIGHT
+      Configuration.ORIENTATION_LANDSCAPE -> if(!isTvOrEmulator()) Docking.CENTER else (if (isRTL) Docking.LEFT else Docking.RIGHT)
       Configuration.ORIENTATION_PORTRAIT -> Docking.BOTTOM
       else -> Docking.BOTTOM
     }
@@ -34,6 +36,7 @@ open class DockingDialog : DialogFragment() {
       Docking.RIGHT -> R.style.RightMaterialDialogTheme
       Docking.BOTTOM -> R.style.BottomMaterialDialogTheme
       Docking.LEFT -> R.style.LeftMaterialDialogTheme
+      Docking.CENTER -> R.style.CenterMaterialDialogTheme
     }
 
     return Dialog(requireContext(), dialogStyle).apply {
@@ -98,6 +101,12 @@ open class DockingDialog : DialogFragment() {
           params.width = (displayMetrics.widthPixels * widthPercentage).toInt()
           params.height = ViewGroup.LayoutParams.MATCH_PARENT
           params.gravity = Gravity.START
+        }
+
+        Docking.CENTER -> {
+          params.width = (displayMetrics.widthPixels * widthPercentage).toInt()
+          params.height = ViewGroup.LayoutParams.WRAP_CONTENT
+          params.gravity = Gravity.CENTER
         }
       }
 

@@ -42,16 +42,16 @@
 
   </LinearLayout>
 -->
+  <View
+    android:id="@+id/shadowOverlay"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black_gradient" />
+
   <FrameLayout
     android:id="@+id/pipHide"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <View
-      android:id="@+id/shadowOverlay"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:background="@color/black_gradient" />
 
     <RelativeLayout
       android:layout_width="match_parent"

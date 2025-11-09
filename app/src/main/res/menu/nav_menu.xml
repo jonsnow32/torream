@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
   <item
-    android:id="@+id/homeFragment"
+    android:id="@+id/feedFragment"
     android:icon="@drawable/anim_home"
     android:title="@string/home"
     />
 
   <item
-    android:id="@+id/networkStreamFragment"
+    android:id="@+id/navigation_settings"
     android:icon="@drawable/anim_stream"
     android:title="@string/streaming" />
 
 
   <item
-    android:id="@+id/libraryFragment"
+    android:id="@+id/navigation_libraryFragment"
     android:icon="@drawable/anim_bookmark"
     android:title="@string/library" />
 </menu>

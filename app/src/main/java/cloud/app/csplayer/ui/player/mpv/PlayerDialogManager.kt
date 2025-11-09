@@ -41,7 +41,7 @@ class PlayerDialogManager(
       speedsText,
       speedIndex,
       fragment.getString(R.string.player_speed),
-      false
+      true
     ).show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
@@ -71,7 +71,7 @@ class PlayerDialogManager(
       codecsDisplay,
       currentIndex,
       fragment.getString(R.string.codec),
-      false
+      true
     ).show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
@@ -100,7 +100,7 @@ class PlayerDialogManager(
       },
       sourceIndex,
       fragment.getString(R.string.pick_source),
-      false
+      true
     ).show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
@@ -161,7 +161,7 @@ class PlayerDialogManager(
       currentAudioTracks.map { it.name },
       audioIndex,
       ctx.getString(R.string.video_tracks),
-      false
+      true
     ).show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
@@ -193,7 +193,7 @@ class PlayerDialogManager(
       currentSubtitleTracks.map { it.name } + listOf<String>("Load from file", "Load from network"),
       subtitleIndex,
       fragment.getString(R.string.video_tracks),
-      false
+      true
     ).show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->

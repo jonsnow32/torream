@@ -33,6 +33,8 @@ import androidx.fragment.app.viewModels
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
+import cloud.app.csplayer.MainActivityViewModel.Companion.applyNotch
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.media.dao.MediaPlaybackDao
@@ -773,6 +775,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     }
   }
+
   /**
    * Load playlist from MPV after video is loaded
    * Called when MPV has loaded files and playlist info is available
@@ -1184,7 +1187,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
-
   private fun showSubtitleOffsetDialog() {
     dialogManager.showSubtitleOffsetDialog(
       currentOffset = subtitleDelay,
@@ -1263,7 +1265,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
                     if (originalRatio != aspectRatio) {
                       Timber.tag(TAG).w(
                         "Video aspect ratio $originalRatio is outside PIP limits, " +
-                        "clamped to $aspectRatio (min: $minAspectRatio, max: $maxAspectRatio)"
+                          "clamped to $aspectRatio (min: $minAspectRatio, max: $maxAspectRatio)"
                       )
                     }
 
@@ -1274,7 +1276,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
                     val rationalHeight = scale
 
                     setAspectRatio(android.util.Rational(rationalWidth, rationalHeight))
-                    Timber.tag(TAG).d("Set PIP aspect ratio: $aspectRatio ($rationalWidth:$rationalHeight)")
+                    Timber.tag(TAG)
+                      .d("Set PIP aspect ratio: $aspectRatio ($rationalWidth:$rationalHeight)")
                   } else {
                     // Default to 16:9 if dimensions invalid
                     setAspectRatio(android.util.Rational(16, 9))
@@ -1370,7 +1373,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     // Use mediaManager to load playlist
     mediaManager.loadPlaylist(
       links = links,
-      startPosition = if (psc.position > 0) psc.position else (links.getOrNull(startIndex)?.position ?: 0L),
+      startPosition = if (psc.position > 0) psc.position else (links.getOrNull(startIndex)?.position
+        ?: 0L),
       startIndex = startIndex
     )
 
@@ -1596,8 +1600,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
-
-
   private fun setPlayBackSpeed(speed: Float) {
     try {
       DataStore.playBackSpeed = speed
@@ -1660,6 +1662,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       playerTimeText.isVisible = false
       playerProgressbarLeftHolder.isVisible = false
       playerProgressbarRightHolder.isVisible = false
+      applyNotch(pipHide)
     }
 
     Timber.d("Configuration changed - orientation: ${newConfig.orientation}, dims: ${sWidth}x${sHeight}")
@@ -1853,6 +1856,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
+
   private fun eventPropertyUi(property: String, dummy: Any?, metaUpdated: Boolean) {
     if (!activityIsForeground) return
     when (property) {
@@ -1868,6 +1872,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     if (metaUpdated)
       updateMetadataDisplay()
   }
+
   private fun eventPropertyUi(property: String, value: Boolean) {
     if (!activityIsForeground) return
     when (property) {
@@ -1880,6 +1885,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
+
   private fun eventPropertyUi(property: String, value: Long) {
     if (!activityIsForeground) return
     when (property) {
@@ -1942,6 +1948,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
+
   private fun updatePlaybackPos(position: Int) {
     playerBinding?.exoPosition?.text = MPVUtils.prettyTime(position.toLong())
     val diff = psc.durationSec - position
@@ -1959,6 +1966,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     // Use property observation instead.
     //updateStats()
   }
+
   private fun eventPropertyUi(property: String, value: Double) {
     if (!activityIsForeground) return
     when (property) {
@@ -1976,6 +1984,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
     }
   }
+
   private fun eventPropertyUi(property: String, value: String, metaUpdated: Boolean) {
     if (!activityIsForeground) return
     when (property) {
@@ -1991,6 +2000,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     if (metaUpdated)
       updateMetadataDisplay()
   }
+
   private fun playlistPrev() = MPVLib.command(arrayOf("playlist-prev"))
   private fun playlistNext() = MPVLib.command(arrayOf("playlist-next"))
 

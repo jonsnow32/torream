@@ -4,11 +4,16 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
 import android.util.AttributeSet
+import android.util.Log
 import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -20,12 +25,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.isGone
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.ui.setupWithNavController
 import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
@@ -53,6 +61,9 @@ import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.datastore.Serializer
 import cloud.app.csplayer.model.PlaybackData.Companion.KEY_PLAYBACK_JSON_URI
+import cloud.app.csplayer.utils.UIHelper.getResourceColor
+import cloud.app.csplayer.utils.UIHelper.isLandscape
+import cloud.app.csplayer.utils.isLayout
 import kotlinx.serialization.serializer
 
 import com.google.android.gms.cast.framework.CastContext
@@ -184,43 +195,44 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     } catch (e: Exception) {
       logError(e)
     }
-
     val navHostFragment =
       supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
     val navController = navHostFragment.navController
 
-    val navView = binding.navView as NavigationBarView
-    navView.setOnItemSelectedListener { menuItem ->
-      val currentDestination = navController.currentDestination?.id
-      val targetDestination = when (menuItem.itemId) {
-        R.id.homeFragment -> R.id.feedFragment
-        R.id.networkStreamFragment -> R.id.navigation_settings
-        R.id.libraryFragment -> R.id.navigation_libraryFragment
-        else -> return@setOnItemSelectedListener false
+
+    val rippleColor = ColorStateList.valueOf(getResourceColor(R.attr.colorPrimary, 0.1f))
+
+    binding.navView.apply {
+      itemRippleColor = rippleColor
+      itemActiveIndicatorColor = rippleColor
+      setupWithNavController(navController)
+      setOnItemSelectedListener { item ->
+        onNavDestinationSelected(
+          item,
+          navController
+        )
       }
-
-      // Only navigate if we're not already at the destination
-      if (currentDestination != targetDestination) {
-        val navOptions = NavOptions.Builder()
-          .setPopUpTo(R.id.feedFragment, false)
-          .setLaunchSingleTop(true)
-          .build()
-
-        try {
-          navController.navigate(targetDestination, null, navOptions)
-          true
-        } catch (e: Exception) {
-          logError(e)
-          false
-        }
-      } else {
-        true
-      }
-
-
     }
-    val isRail = binding.navView is NavigationRailView
-    navView.post {
+
+    binding.navRailView.apply {
+      itemRippleColor = rippleColor
+      itemActiveIndicatorColor = rippleColor
+      setupWithNavController(navController)
+      if (isTvOrEmulator()) {
+        background?.alpha = 200
+      } else {
+        background?.alpha = 255
+      }
+      setOnItemSelectedListener { item ->
+        onNavDestinationSelected(
+          item,
+          navController
+        )
+      }
+    }
+    //calculate safeRect
+    val isRail = isLandscape()
+    binding.root.post {
       val safeRect = resources.run {
         val height = getDimensionPixelSize(R.dimen.nav_height)
         if (!isRail) return@run MainActivityViewModel.SafeRect(bottom = height)
@@ -229,7 +241,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
       viewmodel.setNavSafeRect(safeRect)
     }
-
     ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
       viewmodel.setSystemSafeRect(this, insets)
       val cutout = insets.displayCutout
@@ -239,18 +250,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             0, cutout.safeInsetBottom, cutout.safeInsetLeft, cutout.safeInsetRight
           )
         )
-        Timber.i("Top: ${cutout.safeInsetTop}, Bottom: ${cutout.safeInsetBottom}, Left: ${cutout.safeInsetLeft}, Right: ${cutout.safeInsetRight}")
       }
-
       insets
     }
 
     navController.addOnDestinationChangedListener { _: NavController, navDestination: NavDestination, bundle: Bundle? ->
       // Hide bottom navigation when in MPV player
       if (navDestination.matchDestination(R.id.mvpFragmentPlayer)) {
-        navView.visibility = android.view.View.GONE
+        binding.navView.isGone = true
+        binding.navRailView.isGone = true
       } else {
-        navView.visibility = android.view.View.VISIBLE
+        updateNavSafeRect(isLandscape())
       }
 
       if (isTvOrEmulator()) {
@@ -392,6 +402,40 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
   private fun detachBackPressedCallback() {
     backPressedCallback?.isEnabled = false
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+    val isLandScape = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    val navHostFragment =
+      supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+    navHostFragment.navController.currentDestination?.let {
+      if(!it.matchDestination( R.id.mvpFragmentPlayer))
+        updateNavSafeRect(isLandScape)
+      else {
+        binding.navView.isGone = true
+        binding.navRailView.isGone = true
+      }
+    }
+
+
+  }
+
+  private fun updateNavSafeRect(isLandscape: Boolean) {
+    binding.navView.isGone = isLandscape
+    binding.navRailView.isGone = !isLandscape
+
+    binding.root.post {
+      val safeRect = resources.run {
+        val height = getDimensionPixelSize(R.dimen.nav_height)
+        if (!isLandscape)
+          return@run MainActivityViewModel.SafeRect(bottom = height)
+        else
+          return@run MainActivityViewModel.SafeRect(start = height)
+      }
+      viewmodel.setNavSafeRect(safeRect)
+    }
   }
 
   private fun showConfirmExitDialog() {
@@ -597,4 +641,38 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
     return super.dispatchKeyEvent(event)
   }
+
+  private var lastNavTime = 0L
+  private fun onNavDestinationSelected(item: MenuItem, navController: NavController): Boolean {
+    val currentTime = System.currentTimeMillis()
+    // safeDebounce: Check if a previous tap happened within the last 400ms
+    if (currentTime - lastNavTime < 400) return false
+    lastNavTime = currentTime
+
+    val destinationId = item.itemId
+
+    // Check if we are already at the selected destination
+    if (navController.currentDestination?.id == destinationId) return false
+
+    val builder = NavOptions.Builder().setLaunchSingleTop(true).setRestoreState(true)
+      .setEnterAnim(R.anim.enter_anim)
+      .setExitAnim(R.anim.exit_anim)
+      .setPopEnterAnim(R.anim.pop_enter)
+      .setPopExitAnim(R.anim.pop_exit)
+    if (item.order and Menu.CATEGORY_SECONDARY == 0) {
+      builder.setPopUpTo(
+        navController.graph.findStartDestination().id,
+        inclusive = false,
+        saveState = true
+      )
+    }
+    return try {
+      navController.navigate(destinationId, null, builder.build())
+      navController.currentDestination?.matchDestination(destinationId) == true
+    } catch (e: IllegalArgumentException) {
+      Log.e("NavigationError", "Failed to navigate: ${e.message}")
+      false
+    }
+  }
+
 }

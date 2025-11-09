@@ -4,6 +4,7 @@ import adapters.FeedAdapter
 import adapters.FeedAdapter.Companion.getFeedAdapter
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
@@ -29,6 +30,7 @@ import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.SyncState
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
+import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterBottomSheet
@@ -583,21 +585,21 @@ class FeedFragment : Fragment(), FeedClickListener {
     showToast("Settings applied: ${config.groupMode.name} / ${config.viewMode.name}")
   }
 
-//  /**
-//   * Handle configuration changes (like orientation) to recalculate grid layout
-//   * This is called from MainActivity.onConfigurationChanged()
-//   */
-//  override fun onConfigurationChanged(newConfig: Configuration) {
-//    super.onConfigurationChanged(newConfig)
-//    Timber.d("FeedFragment configuration changed: orientation=${newConfig.orientation}")
-//
-//    recalculateGridLayout(
-//      binding.rvFeed,
-//      adapter
-//    )
-//    Timber.d("Grid layout recalculated for new orientation")
-//
-//  }
+  /**
+   * Handle configuration changes (like orientation) to recalculate grid layout
+   * This is called from MainActivity.onConfigurationChanged()
+   */
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+    Timber.d("FeedFragment configuration changed: orientation=${newConfig.orientation}")
+
+    recalculateGridLayout(
+      binding.rvFeed,
+      adapter
+    )
+    Timber.d("Grid layout recalculated for new orientation")
+
+  }
 
   companion object {
     private const val ARG_ROOT_FOLDER_PATH = "root_folder_path"

@@ -7,9 +7,11 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
+import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Resources
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.TransactionTooLargeException
@@ -20,9 +22,14 @@ import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.annotation.AttrRes
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.getSystemService
+import androidx.core.graphics.alpha
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -31,6 +38,7 @@ import androidx.navigation.fragment.NavHostFragment
 import cloud.app.csplayer.R
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.showToast
+import kotlin.math.roundToInt
 
 object UIHelper {
   val Int.toPx: Int get() = (this * Resources.getSystem().displayMetrics.density).toInt()
@@ -86,7 +94,11 @@ object UIHelper {
     return color
   }
 
-  fun Activity?.navigate(@IdRes navigation: Int, arguments: Bundle? = null, navOptions: NavOptions? = null) {
+  fun Activity?.navigate(
+    @IdRes navigation: Int,
+    arguments: Bundle? = null,
+    navOptions: NavOptions? = null
+  ) {
     try {
       if (this is FragmentActivity) {
         val navHostFragment =
@@ -144,6 +156,7 @@ object UIHelper {
 
     changeStatusBarState(isLayout(LayoutMode.Emulator.id))
   }
+
   fun Fragment.clipboardHelper(label: UiText, text: CharSequence) {
     val ctx = requireContext();
     try {
@@ -173,6 +186,7 @@ object UIHelper {
       }
     }
   }
+
   fun Context.hasPIPPermission(): Boolean {
     val appOps =
       getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
@@ -199,33 +213,67 @@ object UIHelper {
    * Uses WindowInsetsController for bar appearance on API 30+.
    * Falls back to legacy methods on older versions.
    */
-  fun Window.setSystemBarColors(statusBarColor: Int, navigationBarColor: Int, lightBars: Boolean = true) {
-      when {
-          Build.VERSION.SDK_INT >= 34 -> {
-              // On Android 15+, avoid deprecated setStatusBarColor/setNavigationBarColor
-              val controller = WindowInsetsControllerCompat(this, decorView)
-              controller.isAppearanceLightStatusBars = lightBars
-              controller.isAppearanceLightNavigationBars = lightBars
-              // Bar colors should be set via theme or systemBarAppearance, not directly
-          }
-          Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
-              // On Android 11-14, use WindowInsetsControllerCompat for bar appearance
-              val controller = WindowInsetsControllerCompat(this, decorView)
-              controller.isAppearanceLightStatusBars = lightBars
-              controller.isAppearanceLightNavigationBars = lightBars
-              this.statusBarColor = statusBarColor
-              this.navigationBarColor = navigationBarColor
-          }
-          else -> {
-              // On older versions, use legacy APIs
-              this.statusBarColor = statusBarColor
-              this.navigationBarColor = navigationBarColor
-          }
+  fun Window.setSystemBarColors(
+    statusBarColor: Int,
+    navigationBarColor: Int,
+    lightBars: Boolean = true
+  ) {
+    when {
+      Build.VERSION.SDK_INT >= 34 -> {
+        // On Android 15+, avoid deprecated setStatusBarColor/setNavigationBarColor
+        val controller = WindowInsetsControllerCompat(this, decorView)
+        controller.isAppearanceLightStatusBars = lightBars
+        controller.isAppearanceLightNavigationBars = lightBars
+        // Bar colors should be set via theme or systemBarAppearance, not directly
       }
+
+      Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+        // On Android 11-14, use WindowInsetsControllerCompat for bar appearance
+        val controller = WindowInsetsControllerCompat(this, decorView)
+        controller.isAppearanceLightStatusBars = lightBars
+        controller.isAppearanceLightNavigationBars = lightBars
+        this.statusBarColor = statusBarColor
+        this.navigationBarColor = navigationBarColor
+      }
+
+      else -> {
+        // On older versions, use legacy APIs
+        this.statusBarColor = statusBarColor
+        this.navigationBarColor = navigationBarColor
+      }
+    }
   }
+
   fun Context.resolveStyledDimension(attr: Int): Int {
     val typed = theme.obtainStyledAttributes(intArrayOf(attr))
     val itemWidth = typed.getDimensionPixelSize(typed.getIndex(0), 0)
     return itemWidth
+  }
+
+  fun Context.getResourceColor(@AttrRes resource: Int, alphaFactor: Float = 1f): Int {
+    val typedArray = obtainStyledAttributes(intArrayOf(resource))
+    val color = typedArray.getColor(0, 0)
+    typedArray.recycle()
+
+    if (alphaFactor < 1f) {
+      val alpha = (color.alpha * alphaFactor).roundToInt()
+      return Color.argb(alpha, color.red, color.green, color.blue)
+    }
+
+    return color
+  }
+
+  fun Context.isLandscape() = when (resources.configuration.orientation) {
+    Configuration.ORIENTATION_LANDSCAPE -> {
+      true
+    }
+
+    Configuration.ORIENTATION_PORTRAIT -> {
+      isTvOrEmulator() // TV or Emulator(TV or EMULATOR)
+    }
+
+    else -> {
+      false
+    }
   }
 }

@@ -69,5 +69,12 @@ class MainActivityViewModel @Inject constructor() : ViewModel() {
         view?.setPadding(it.start, it.top, it.end, it.bottom)
       }
     }
+
+    fun Fragment.applyNotch(view: View) {
+      val viewModel by activityViewModels<MainActivityViewModel>()
+      observe(viewModel.notchedSafeRect) {
+        view.setPadding(it.start, it.top, it.end, it.bottom)
+      }
+    }
   }
 }

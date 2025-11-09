@@ -34,7 +34,6 @@
       android:nestedScrollingEnabled="true"
       android:paddingHorizontal="8dp"
       android:paddingTop="8dp"
-      android:paddingBottom="72dp"
       android:scrollbars="vertical"
       tools:listitem="@layout/item_video" />
   </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

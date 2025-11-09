@@ -220,7 +220,7 @@ class SettingsGeneral : PreferenceFragmentCompat() {
           getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
             try {
               settingsManager.edit {
-                putString(getString(R.string.app_layout_key), prefValues[index])
+                putString(getString(R.string.app_theme_key), prefValues[index])
               }
               activity?.recreate()
             } catch (e: Exception) {
@@ -265,8 +265,7 @@ class SettingsGeneral : PreferenceFragmentCompat() {
     }
 
     // disable preference on tvs and emulators
-    getPref(R.string.battery_optimisation_key)?.isEnabled =
-      context?.isLayout(LayoutMode.Phone.id) == true
+    getPref(R.string.battery_optimisation_key)?.isEnabled = context?.isLayout(LayoutMode.Phone.id) == true
     getPref(R.string.battery_optimisation_key)?.setOnPreferenceClickListener {
       val ctx = context ?: return@setOnPreferenceClickListener false
 
