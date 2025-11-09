@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Night mode theme (Dark Theme) -->
+  <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
+    <!-- Primary colors -->
+    <item name="colorPrimary">#BB86FC</item>
+    <item name="colorPrimaryVariant">#3700B3</item>
+    <item name="colorOnPrimary">#000000</item>
+
+    <!-- Secondary colors -->
+    <item name="colorSecondary">#03DAC6</item>
+    <item name="colorSecondaryVariant">#018786</item>
+    <item name="colorOnSecondary">#000000</item>
+
+    <!-- Background colors -->
+    <item name="android:colorBackground">#121212</item>
+    <item name="colorSurface">#121212</item>
+    <item name="colorOnBackground">#FFFFFF</item>
+    <item name="colorOnSurface">#FFFFFF</item>
+
+    <!-- Status bar -->
+    <item name="android:statusBarColor">@android:color/transparent</item>
+    <item name="android:navigationBarColor">#121212</item>
+    <item name="android:windowLightStatusBar">false</item>
+
+    <!-- Dialog theme -->
+    <item name="alertDialogTheme">@style/Theme.AlertDialog.Dark</item>
+
+    <!-- Tab style -->
+    <item name="tabStyle">@style/Theme.Widget.Tabs.Dark</item>
+
+    <!-- Item Cover Sizes -->
+    <item name="itemCoverSize">55dp</item>
+    <item name="itemCoverSize2x">110dp</item>
+    <item name="itemCoverSize3x">165dp</item>
+
+    <!-- MainColors attributes -->
+    <item name="colorSearch">#BB86FC</item>
+    <item name="colorOngoing">#03DAC6</item>
+    <item name="primaryGrayBackground">#1E1E1E</item>
+    <item name="primaryBlackBackground">#000000</item>
+    <item name="iconGrayBackground">#2A2A2A</item>
+    <item name="boxItemBackground">#1E1E1E</item>
+
+    <item name="android:divider">@color/transparent</item>
+    <item name="divider">@color/transparent</item>
+    <item name="android:dividerHeight">0dp</item>
+    <item name="showDividers">none</item>
+    <item name="android:listViewStyle">@style/ListViewStyle</item>
+    <item name="android:textViewStyle">@style/AppTextViewStyle</item>
+
+    <!-- preferences -->
+    <item name="preferenceTheme">@style/CustomPreferenceThemeOverlay</item>
+  </style>
+</resources>

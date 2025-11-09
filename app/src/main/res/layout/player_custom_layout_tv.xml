@@ -192,7 +192,7 @@
       android:background="?android:attr/selectableItemBackgroundBorderless"
       android:src="@drawable/baseline_fullscreen_24"
       android:visibility="gone"
-      app:tint="@color/white" />
+      app:tint="@color/icon_tint" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
       android:id="@+id/playerVideoHolder"
@@ -233,7 +233,7 @@
             android:clickable="true"
             android:contentDescription="@string/go_back_img_des"
             android:focusable="true"
-            app:tint="@color/white" />
+            app:tint="@color/icon_tint" />
         </FrameLayout>
 
         <LinearLayout
@@ -346,7 +346,7 @@
             android:scaleX="-1"
             android:src="@drawable/netflix_skip_forward"
             android:tintMode="src_in"
-            app:tint="@color/white"
+            app:tint="@color/icon_tint"
             tools:ignore="ContentDescription" />
         </FrameLayout>
 
@@ -387,7 +387,7 @@
             android:scaleType="fitCenter"
             android:src="@drawable/netflix_skip_forward"
             android:tintMode="src_in"
-            app:tint="@color/white"
+            app:tint="@color/icon_tint"
             tools:ignore="ContentDescription" />
         </FrameLayout>
       </androidx.constraintlayout.widget.ConstraintLayout>

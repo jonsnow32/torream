@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Primary colors (same for both themes) -->
+  <color name="colorPrimary">#BB86FC</color>
+  <color name="colorPrimaryDark">#3700B3</color>
+  <color name="colorAccent">#03DAC6</color>
+
+  <!-- Background colors (Dark theme) -->
+  <color name="background">#121212</color>
+  <color name="background_secondary">#1E1E1E</color>
+
+  <!-- Text colors (Dark theme) -->
+  <color name="text_primary">#FFFFFF</color>
+  <color name="text_secondary">#BBBBBB</color>
+
+  <!-- Basic colors -->
+  <color name="white">#FFFFFF</color>
+  <color name="black">#000000</color>
+  <color name="transparent">#00000000</color>
+
+  <!-- Subtitle/Audio button colors -->
+  <color name="dubColorBg">#BB86FC</color>
+  <color name="subColorBg">#03DAC6</color>
+
+  <!-- Progress bar colors -->
+  <color name="progressBackgroundColor">#404040</color>
+
+  <!-- Video player colors -->
+  <color name="video_ripple">#80FFFFFF</color>
+  <color name="videoProgress">#66B5B5B5</color>
+  <color name="black_overlay">#66000000</color>
+
+  <!-- Divider colors -->
+  <color name="divider_color">#2A2A2A</color>
+
+  <!-- Form elements -->
+  <color name="form_text_color">#FFFFFF</color>
+  <color name="form_hint_color">#BBBBBB</color>
+  <color name="form_background">#1E1E1E</color>
+
+  <!-- Toggle colors -->
+  <color name="toggle_on">#BB86FC</color>
+  <color name="toggle_off">#666666</color>
+
+  <!-- Card colors -->
+  <color name="card_background">#1E1E1E</color>
+  <color name="card_outline">#2A2A2A</color>
+
+  <!-- Alert colors -->
+  <color name="alert_success">#4CAF50</color>
+  <color name="alert_error">#F44336</color>
+  <color name="alert_warning">#FF9800</color>
+
+  <!-- Navigation -->
+  <color name="nav_selected">#BB86FC</color>
+  <color name="nav_unselected">#666666</color>
+
+  <!-- Icon color (Dark theme) -->
+  <color name="icon_tint">#FFFFFF</color>
+</resources>

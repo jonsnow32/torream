@@ -1,6 +1,8 @@
 package cloud.app.csplayer
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.preference.PreferenceManager
 import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.ads.AdPreloadManager
 import coil.ImageLoader
@@ -26,6 +28,9 @@ class CSApplication : Application(), ImageLoaderFactory {
 
   override fun onCreate() {
     super.onCreate()
+
+    // Initialize theme before anything else
+    initializeTheme()
 
     if (BuildConfig.DEBUG) {
       Timber.plant(Timber.DebugTree())
@@ -59,5 +64,23 @@ class CSApplication : Application(), ImageLoaderFactory {
       .diskCachePolicy(coil.request.CachePolicy.ENABLED)
       .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
       .build()
+  }
+
+  private fun initializeTheme() {
+    try {
+      val preferences = PreferenceManager.getDefaultSharedPreferences(this)
+      val themeKey = getString(R.string.app_theme_key)
+      val savedTheme = preferences.getString(themeKey, "Dark")
+
+      when (savedTheme) {
+        "Light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        "Dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES) // Default to dark
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to initialize theme")
+      // Fallback to dark theme
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+    }
   }
 }

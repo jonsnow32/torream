@@ -5,13 +5,13 @@
   <color name="colorPrimaryDark">#3700B3</color>
   <color name="colorAccent">#03DAC6</color>
 
-  <!-- Background colors -->
-  <color name="background">#121212</color>
-  <color name="background_secondary">#1E1E1E</color>
+  <!-- Background colors (Light theme) -->
+  <color name="background">#FFFFFF</color>
+  <color name="background_secondary">#F5F5F5</color>
 
-  <!-- Text colors -->
-  <color name="text_primary">#FFFFFF</color>
-  <color name="text_secondary">#BBBBBB</color>
+  <!-- Text colors (Light theme) -->
+  <color name="text_primary">#000000</color>
+  <color name="text_secondary">#757575</color>
 
   <!-- Basic colors -->
   <color name="white">#FFFFFF</color>
@@ -30,7 +30,32 @@
   <color name="videoProgress">#66B5B5B5</color>
   <color name="black_overlay">#66000000</color>
 
-  <!-- Divider color -->
-  <color name="divider_color">#33FFFFFF</color>
+  <!-- Divider color (Light theme) -->
+  <color name="divider_color">#E0E0E0</color>
+
+  <!-- Form elements (Light theme) -->
+  <color name="form_text_color">#000000</color>
+  <color name="form_hint_color">#757575</color>
+  <color name="form_background">#FFFFFF</color>
+
+  <!-- Toggle colors (Light theme) -->
+  <color name="toggle_on">#6200EE</color>
+  <color name="toggle_off">#BDBDBD</color>
+
+  <!-- Card colors (Light theme) -->
+  <color name="card_background">#FFFFFF</color>
+  <color name="card_outline">#E0E0E0</color>
+
+  <!-- Alert colors (same for both themes) -->
+  <color name="alert_success">#4CAF50</color>
+  <color name="alert_error">#F44336</color>
+  <color name="alert_warning">#FF9800</color>
+
+  <!-- Navigation (Light theme) -->
+  <color name="nav_selected">#6200EE</color>
+  <color name="nav_unselected">#BDBDBD</color>
+
+  <!-- Icon color (Light theme) -->
+  <color name="icon_tint">#000000</color>
 </resources>
 

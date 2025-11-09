@@ -22,6 +22,7 @@ import androidx.activity.viewModels
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -34,6 +35,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
+import androidx.preference.PreferenceManager
 import cloud.app.csplayer.databinding.ActivityMainBinding
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
@@ -480,8 +482,28 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   }
 
   fun loadThemes() {
-    // Simple single theme - no theme switching needed
-    // AppTheme is already applied from AndroidManifest.xml
+    try {
+      val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
+      val themeKey = getString(R.string.app_theme_key)
+      val savedTheme = settingsManager.getString(themeKey, "Dark") // Default to Dark for existing users
+
+      when (savedTheme) {
+        "Light" -> {
+          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
+        "Dark" -> {
+          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        }
+        else -> {
+          // Default to Dark theme for compatibility
+          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        }
+      }
+    } catch (e: Exception) {
+      logError(e)
+      // Fallback to dark theme on error
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+    }
   }
 
   override fun onColorSelected(dialogId: Int, color: Int) {

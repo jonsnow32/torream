@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -194,18 +195,6 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       val prefNames = resources.getStringArray(R.array.themes_names).toMutableList()
       val prefValues = resources.getStringArray(R.array.themes_names_values).toMutableList()
 
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) { // remove monet on android 11 and less
-        val toRemove = prefValues
-          .mapIndexed { idx, s -> if (s.startsWith("Monet")) idx else null }
-          .filterNotNull()
-        var offset = 0
-        toRemove.forEach { idx ->
-          prefNames.removeAt(idx - offset)
-          prefValues.removeAt(idx - offset)
-          offset += 1
-        }
-      }
-
       val currentLayout =
         settingsManager.getString(getString(R.string.app_theme_key), prefValues.first())
 
@@ -221,6 +210,18 @@ class SettingsGeneral : PreferenceFragmentCompat() {
             try {
               settingsManager.edit {
                 putString(getString(R.string.app_theme_key), prefValues[index])
+              }
+              // Apply the theme based on the selected value, not the index
+              when (prefValues[index]) {
+                "Light" -> {
+                  AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                }
+                "Dark" -> {
+                  AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                }
+                else -> {
+                  AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                }
               }
               activity?.recreate()
             } catch (e: Exception) {

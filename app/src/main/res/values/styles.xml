@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <!-- Base application theme - Simple Dark Theme -->
-  <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
+  <!-- Base application theme - Light Theme (Default) -->
+  <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
     <!-- Primary colors -->
-    <item name="colorPrimary">#BB86FC</item>
+    <item name="colorPrimary">#6200EE</item>
     <item name="colorPrimaryVariant">#3700B3</item>
-    <item name="colorOnPrimary">#000000</item>
+    <item name="colorOnPrimary">#FFFFFF</item>
 
     <!-- Secondary colors -->
     <item name="colorSecondary">#03DAC6</item>
@@ -13,21 +13,21 @@
     <item name="colorOnSecondary">#000000</item>
 
     <!-- Background colors -->
-    <item name="android:colorBackground">#121212</item>
-    <item name="colorSurface">#121212</item>
-    <item name="colorOnBackground">#FFFFFF</item>
-    <item name="colorOnSurface">#FFFFFF</item>
+    <item name="android:colorBackground">#FFFFFF</item>
+    <item name="colorSurface">#FFFFFF</item>
+    <item name="colorOnBackground">#000000</item>
+    <item name="colorOnSurface">#000000</item>
 
     <!-- Status bar -->
     <item name="android:statusBarColor">@android:color/transparent</item>
-    <item name="android:navigationBarColor">#121212</item>
-    <item name="android:windowLightStatusBar">false</item>
+    <item name="android:navigationBarColor">#FFFFFF</item>
+    <item name="android:windowLightStatusBar">true</item>
 
     <!-- Dialog theme -->
-    <item name="alertDialogTheme">@style/Theme.AlertDialog</item>
+    <item name="alertDialogTheme">@style/Theme.AlertDialog.Light</item>
 
     <!-- Tab style -->
-    <item name="tabStyle">@style/Theme.Widget.Tabs</item>
+    <item name="tabStyle">@style/Theme.Widget.Tabs.Light</item>
 
     <!-- Item Cover Sizes -->
     <item name="itemCoverSize">55dp</item>
@@ -35,12 +35,12 @@
     <item name="itemCoverSize3x">165dp</item>
 
     <!-- MainColors attributes -->
-    <item name="colorSearch">#BB86FC</item>
+    <item name="colorSearch">#6200EE</item>
     <item name="colorOngoing">#03DAC6</item>
-    <item name="primaryGrayBackground">#1E1E1E</item>
-    <item name="primaryBlackBackground">#000000</item>
-    <item name="iconGrayBackground">#2A2A2A</item>
-    <item name="boxItemBackground">#1E1E1E</item>
+    <item name="primaryGrayBackground">#F5F5F5</item>
+    <item name="primaryBlackBackground">#FFFFFF</item>
+    <item name="iconGrayBackground">#E0E0E0</item>
+    <item name="boxItemBackground">#F5F5F5</item>
 
     <item name="android:divider">@color/transparent</item>
     <item name="divider">@color/transparent</item>
@@ -53,19 +53,32 @@
     <item name="preferenceTheme">@style/CustomPreferenceThemeOverlay</item>
   </style>
 
-  <!-- Alert Dialog Theme -->
-  <style name="Theme.AlertDialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+  <!-- Alert Dialog Theme - Dark -->
+  <style name="Theme.AlertDialog.Dark" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
     <item name="colorPrimary">#BB86FC</item>
     <item name="colorOnSurface">#FFFFFF</item>
     <item name="android:colorBackground">#1E1E1E</item>
   </style>
 
+  <!-- Alert Dialog Theme - Light -->
+  <style name="Theme.AlertDialog.Light" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+    <item name="colorPrimary">#6200EE</item>
+    <item name="colorOnSurface">#000000</item>
+    <item name="android:colorBackground">#FFFFFF</item>
+  </style>
 
-  <!-- Tab Layout Style -->
-  <style name="Theme.Widget.Tabs" parent="Widget.MaterialComponents.TabLayout.Colored">
+  <!-- Tab Layout Style - Dark -->
+  <style name="Theme.Widget.Tabs.Dark" parent="Widget.MaterialComponents.TabLayout.Colored">
     <item name="tabIndicatorColor">#BB86FC</item>
     <item name="tabTextColor">#BBBBBB</item>
     <item name="tabSelectedTextColor">#FFFFFF</item>
+  </style>
+
+  <!-- Tab Layout Style - Light -->
+  <style name="Theme.Widget.Tabs.Light" parent="Widget.MaterialComponents.TabLayout.Colored">
+    <item name="tabIndicatorColor">#6200EE</item>
+    <item name="tabTextColor">#757575</item>
+    <item name="tabSelectedTextColor">#000000</item>
   </style>
 
   <!-- Chip Style -->
@@ -92,16 +105,15 @@
 
   <!-- App Bar Outline Style -->
   <style name="AppBarOutline">
-    <item name="android:background">#1E1E1E</item>
+    <item name="android:background">?attr/primaryGrayBackground</item>
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">2dp</item>
   </style>
 
-
   <!-- Search Box Style - Base for subtitle/audio buttons -->
   <style name="SearchBox">
-    <item name="android:textColor">#FFFFFF</item>
-    <item name="android:background">#1E1E1E</item>
+    <item name="android:textColor">?attr/colorOnSurface</item>
+    <item name="android:background">?attr/primaryGrayBackground</item>
   </style>
 
   <!-- Loaded Style - Empty placeholder for compatibility -->
@@ -110,20 +122,20 @@
 
   <!-- Color Picker View Style -->
   <style name="cpv_ColorPickerViewStyle">
-    <item name="android:background">#1E1E1E</item>
+    <item name="android:background">?attr/primaryGrayBackground</item>
   </style>
 
   <!-- Video Button Styles -->
   <style name="VideoButton">
     <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
-    <item name="android:tint">#FFFFFF</item>
+    <item name="android:tint">?attr/colorOnSurface</item>
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">25dp</item>
   </style>
 
   <style name="VideoButtonTV">
     <item name="android:background">?attr/selectableItemBackground</item>
-    <item name="android:tint">#FFFFFF</item>
+    <item name="android:tint">?attr/colorOnSurface</item>
     <item name="android:focusable">true</item>
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">25dp</item>

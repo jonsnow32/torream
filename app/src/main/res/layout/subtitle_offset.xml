@@ -39,7 +39,7 @@
       android:nextFocusRight="@id/subtitle_offset_subtract"
       android:padding="10dp"
       android:src="@drawable/ic_baseline_keyboard_arrow_left_24"
-      app:tint="@color/white"
+      app:tint="@color/icon_tint"
       tools:ignore="ContentDescription" />
 
     <ImageView
@@ -53,7 +53,7 @@
       android:nextFocusLeft="@id/subtitle_offset_subtract_more"
       android:padding="10dp"
       android:src="@drawable/baseline_remove_24"
-      app:tint="@color/white"
+      app:tint="@color/icon_tint"
       tools:ignore="ContentDescription" />
 
     <EditText
@@ -76,7 +76,7 @@
       android:nextFocusRight="@id/subtitle_offset_add_more"
       android:padding="10dp"
       android:src="@drawable/ic_baseline_add_24"
-      app:tint="@color/white"
+      app:tint="@color/icon_tint"
       tools:ignore="ContentDescription" />
 
     <ImageView
@@ -91,7 +91,7 @@
       android:nextFocusDown="@id/apply_btt"
       android:padding="10dp"
       android:src="@drawable/ic_baseline_keyboard_arrow_right_24"
-      app:tint="@color/white"
+      app:tint="@color/icon_tint"
       tools:ignore="ContentDescription" />
   </LinearLayout>
 
