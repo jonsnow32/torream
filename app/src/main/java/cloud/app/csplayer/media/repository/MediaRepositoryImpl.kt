@@ -115,6 +115,10 @@ class MediaRepositoryImpl @Inject constructor(
 
       Timber.d("performSync: Sync completed successfully")
       _syncState.value = SyncState.Completed
+    } catch (e: kotlinx.coroutines.CancellationException) {
+      // Don't catch CancellationException - let it propagate to properly cancel the coroutine
+      Timber.d("performSync: Cancelled")
+      throw e
     } catch (e: SecurityException) {
       Timber.e(e, "performSync: Missing permission")
       _syncState.value = SyncState.Error.MissingPermission(
