@@ -77,8 +77,9 @@ object DatabaseModule {
     folderDao: FolderDao,
     mediaStore: MediaStoreDataSource,
     @ApplicationScope scope: CoroutineScope,
+    @ApplicationContext context: Context,
   ): MediaRepository {
-    return MediaRepositoryImpl(mediaDao, folderDao, mediaStore, scope)
+    return MediaRepositoryImpl(mediaDao, folderDao, mediaStore, scope, context)
   }
 }
 

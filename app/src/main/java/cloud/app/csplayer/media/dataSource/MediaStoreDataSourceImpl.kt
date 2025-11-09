@@ -81,7 +81,8 @@ class MediaStoreDataSourceImpl @Inject constructor(
   override suspend fun queryMedia(query: String?, limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
     // Check permissions before querying
     if (!hasMediaPermissions()) {
-      throw SecurityException("Media access permission is required to load videos and audio files")
+      timber.log.Timber.w("Media access permission not granted - throwing exception")
+      throw MediaPermissionException()
     }
 
     timber.log.Timber.d("queryMedia: Searching with query='$query', limit=$limit, offset=$offset")
@@ -343,7 +344,8 @@ class MediaStoreDataSourceImpl @Inject constructor(
   override suspend fun queryAllMedia(query: String?): List<Media> = withContext(Dispatchers.IO) {
     // Check permissions before querying
     if (!hasMediaPermissions()) {
-      throw SecurityException("Media access permission is required to load videos and audio files")
+      timber.log.Timber.w("Media access permission not granted - throwing exception")
+      throw MediaPermissionException()
     }
 
     val items = mutableListOf<Media>()

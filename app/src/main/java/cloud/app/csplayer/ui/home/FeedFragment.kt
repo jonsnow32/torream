@@ -69,19 +69,27 @@ class FeedFragment : Fragment(), FeedClickListener {
   ) { permissions ->
     val allGranted = permissions.values.all { it }
     if (allGranted) {
-      // Permissions granted, trigger MediaRepository refresh and reload dat
+      // Permissions granted, trigger MediaRepository refresh and reload data
       showToast(getString(R.string.permissions_granted))
 
-      // Refresh MediaRepository to sync from MediaStore
+      Timber.d("Permission granted - starting data refresh")
+
+      // Set flag to refresh adapter when sync completes
+      waitingForSyncToRefresh = true
+
+      // Trigger MediaRepository sync to populate database
       viewModel.refreshMediaRepository()
 
-      // Refresh adapter to reload with new data
-      adapter.refresh()
+      // Note: adapter.refresh() will be called when syncState becomes Completed
+      // See syncState observer below
     } else {
-      // Permissions denied
+      // Permissions denied - adapter will continue showing error state
       showToast(getString(R.string.permissions_denied))
     }
   }
+
+  // Flag to track if we should refresh adapter after sync completes
+  private var waitingForSyncToRefresh = false
 
   // Multiple permission request launcher (for sync errors - need both video and audio)
   private val requestPermissionLauncher = registerForActivityResult(
@@ -131,7 +139,18 @@ class FeedFragment : Fragment(), FeedClickListener {
     super.onViewCreated(view, savedInstanceState)
     applyContentRect()
     FastScrollerHelper.applyTo(binding.rvFeed)
-    adapter = getFeedAdapter(viewModel, adManager)
+
+    // Setup basic UI components (toolbar, search, etc.)
+    setupBasicUI()
+
+    // Always setup adapter - it will show error state if no permission
+    setupAdapter()
+  }
+
+  /**
+   * Setup basic UI components (toolbar, search) that don't require permissions
+   */
+  private fun setupBasicUI() {
     // Observe title from ViewModel (will be root folder name or "Feed")
     observe(viewModel.title) { title ->
       binding.toolbar.title = title
@@ -163,7 +182,7 @@ class FeedFragment : Fragment(), FeedClickListener {
             setSingleLine()
             ellipsize = TextUtils.TruncateAt.MIDDLE
           }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
           // Ignore if we can't find the subtitle view
         }
       }
@@ -173,8 +192,59 @@ class FeedFragment : Fragment(), FeedClickListener {
       binding.toolbar.subtitle = null
     }
 
+    // Setup SearchView
+    val searchItem = binding.toolbar.menu.findItem(R.id.search)
+    val searchView = searchItem?.actionView as? SearchView
 
-    // Configure adapter with error handling
+    if (searchView != null) {
+      Timber.d("SearchView found and configured")
+      searchView.apply {
+        queryHint = getString(R.string.search_hint)
+        maxWidth = Integer.MAX_VALUE // Make SearchView expand fully
+
+        setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+          override fun onQueryTextSubmit(query: String?): Boolean {
+            Timber.d("onQueryTextSubmit called with query: $query")
+            viewModel.searchQuery.value = query?.trim()?.takeIf { it.isNotEmpty() }
+            return true
+          }
+
+          override fun onQueryTextChange(newText: String?): Boolean {
+            Timber.d("onQueryTextChange called with text: $newText")
+            viewModel.searchQuery.value = newText?.trim()?.takeIf { it.isNotEmpty() }
+            return true
+          }
+        })
+
+        setOnCloseListener {
+          Timber.d("SearchView closed")
+          viewModel.searchQuery.value = null
+          false
+        }
+      }
+    } else {
+      Timber.e("SearchView not found in menu!")
+    }
+
+    binding.toolbar.setOnMenuItemClickListener {
+      when (it.itemId) {
+        R.id.quickSettings -> {
+          FeedFilterBottomSheet.newInstance { config ->
+            applyFilterConfig(config)
+          }.show(parentFragmentManager, FeedFilterBottomSheet.TAG)
+        }
+      }
+      true
+    }
+  }
+
+  /**
+   * Setup adapter and data loading
+   */
+  private fun setupAdapter() {
+    adapter = getFeedAdapter(viewModel, adManager)
+
+    // Configure adapter with dynamic error handling
     val adapterWithStates = adapter.withLoadingStates(
       errorMessage = null,
       buttonText = null
@@ -187,35 +257,39 @@ class FeedFragment : Fragment(), FeedClickListener {
       }
     }
 
-
-//    // Listen to load states to detect and handle different error types
-//    adapter.addLoadStateListener { loadStates ->
-//      val errorState = loadStates.refresh as? androidx.paging.LoadState.Error
-//      if (errorState != null) {
-//        val exception = errorState.error
-//
-//        // Update error message based on exception type
-//        when {
-//          exception is SecurityException || !hasMediaPermissions() -> {
-//            // Permission error
-//            adapterWithStates.updateErrorMessage(
-//              message = getString(R.string.permission_required_message),
-//              buttonText = getString(R.string.grant_permission)
-//            )
-//          }
-//
-//          else -> {
-//            // Generic error - use default messages
-//            adapterWithStates.updateErrorMessage(
-//              message = exception.message ?: getString(R.string.error_loading),
-//              buttonText = getString(R.string.retry)
-//            )
-//          }
-//        }
-//      }
-//    }
+    // Listen to load states to dynamically update error message based on permission state
+    adapter.addLoadStateListener { loadStates ->
+      val errorState = loadStates.refresh as? androidx.paging.LoadState.Error
+      if (errorState != null) {
+        // Check if it's a permission error
+        if (!hasMediaPermissions()) {
+          adapterWithStates.updateErrorMessage(
+            message = getString(R.string.permission_required_message),
+            buttonText = getString(R.string.grant_permission)
+          )
+        } else {
+          // Generic error
+          adapterWithStates.updateErrorMessage(
+            message = errorState.error.message ?: getString(R.string.error_loading),
+            buttonText = getString(R.string.retry)
+          )
+        }
+      }
+    }
 
     configureGridLayout(binding.rvFeed, adapterWithStates)
+
+    // If no permission at startup, force show error state by clearing data first
+    if (!hasMediaPermissions()) {
+      Timber.d("No permission detected - forcing error state display")
+      // Trigger refresh which will call PagingSource that should throw exception
+      viewLifecycleOwner.lifecycleScope.launch {
+        // Submit empty data first to clear any cached data
+        adapter.submitData(androidx.paging.PagingData.empty())
+        // Then refresh to trigger error
+        adapter.refresh()
+      }
+    }
 
     // Setup SwipeRefreshLayout
     binding.swipeRefresh.setOnRefreshListener {
@@ -237,11 +311,18 @@ class FeedFragment : Fragment(), FeedClickListener {
         }
 
         is SyncState.Syncing -> {
-
+          Timber.d("Sync in progress...")
         }
 
         is SyncState.Completed -> {
-          //adapter.refresh()
+          Timber.d("Sync completed")
+
+          // If we were waiting for sync to complete after permission grant, refresh adapter now
+          if (waitingForSyncToRefresh) {
+            Timber.d("Permission was granted, refreshing adapter to load new data")
+            waitingForSyncToRefresh = false
+            adapter.refresh()
+          }
         }
 
         is SyncState.Error -> {
@@ -250,16 +331,10 @@ class FeedFragment : Fragment(), FeedClickListener {
 
           when (state) {
             is SyncState.Error.MissingPermission -> {
-              syncSnackbar = Snackbar.make(
-                binding.root,
-                state.message,
-                Snackbar.LENGTH_LONG
-              ).apply {
-                setAction("Grant Permission") {
-                  requestPermissionLauncher.launch(getRequiredPermissions())
-                }
-                show()
-              }
+              // Don't show snackbar for permission error
+              // It's already shown in RecyclerView error adapter
+              // Just log it
+              Timber.w("Permission missing - error UI shown in RecyclerView")
             }
 
             is SyncState.Error.StorageError -> {
@@ -306,58 +381,6 @@ class FeedFragment : Fragment(), FeedClickListener {
     }
 
 
-    observe(viewModel.viewMode) {
-
-    }
-
-    // Setup SearchView
-    val searchItem = binding.toolbar.menu.findItem(R.id.search)
-    val searchView = searchItem?.actionView as? SearchView
-
-    if (searchView != null) {
-      Timber.d("SearchView found and configured")
-      searchView.apply {
-        queryHint = getString(R.string.search_hint)
-        maxWidth = Integer.MAX_VALUE // Make SearchView expand fully
-
-        setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-          override fun onQueryTextSubmit(query: String?): Boolean {
-            Timber.d("onQueryTextSubmit called with query: $query")
-            // Update search query in ViewModel
-            viewModel.searchQuery.value = query?.trim()?.takeIf { it.isNotEmpty() }
-            return true
-          }
-
-          override fun onQueryTextChange(newText: String?): Boolean {
-            Timber.d("onQueryTextChange called with text: $newText")
-            // Update search query in ViewModel as user types
-            viewModel.searchQuery.value = newText?.trim()?.takeIf { it.isNotEmpty() }
-            return true
-          }
-        })
-
-        // Clear search query when SearchView is closed
-        setOnCloseListener {
-          Timber.d("SearchView closed")
-          viewModel.searchQuery.value = null
-          false
-        }
-      }
-    } else {
-      Timber.e("SearchView not found in menu!")
-    }
-
-    binding.toolbar.setOnMenuItemClickListener {
-      when (it.itemId) {
-        R.id.quickSettings -> {
-          FeedFilterBottomSheet.Companion.newInstance { config ->
-            // Apply filter config
-            applyFilterConfig(config)
-          }.show(parentFragmentManager, FeedFilterBottomSheet.Companion.TAG)
-        }
-      }
-      true
-    }
   }
 
   override fun onItemClick(item: FeedData) {
@@ -551,6 +574,7 @@ class FeedFragment : Fragment(), FeedClickListener {
 
     permissionLauncher.launch(permissions)
   }
+
 
 
   /**

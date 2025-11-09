@@ -2,26 +2,27 @@
 <resources>
   <!-- Base application theme - Light Theme (Default) -->
   <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
-    <!-- Primary colors -->
-    <item name="colorPrimary">#6200EE</item>
-    <item name="colorPrimaryVariant">#3700B3</item>
+    <!-- Primary colors - OneUI Blue -->
+    <item name="colorPrimary">#0078D4</item>
+    <item name="colorPrimaryVariant">#005A9E</item>
     <item name="colorOnPrimary">#FFFFFF</item>
 
-    <!-- Secondary colors -->
-    <item name="colorSecondary">#03DAC6</item>
-    <item name="colorSecondaryVariant">#018786</item>
-    <item name="colorOnSecondary">#000000</item>
+    <!-- Secondary colors - OneUI Accent -->
+    <item name="colorSecondary">#0078D4</item>
+    <item name="colorSecondaryVariant">#005A9E</item>
+    <item name="colorOnSecondary">#FFFFFF</item>
 
-    <!-- Background colors -->
-    <item name="android:colorBackground">#FFFFFF</item>
-    <item name="colorSurface">#FFFFFF</item>
-    <item name="colorOnBackground">#000000</item>
-    <item name="colorOnSurface">#000000</item>
+    <!-- Background colors - OneUI Light -->
+    <item name="android:colorBackground">#EEEEEE</item>
+    <item name="colorSurface">#F5F5F5</item>
+    <item name="colorOnBackground">#1C1C1E</item>
+    <item name="colorOnSurface">#1C1C1E</item>
 
     <!-- Status bar -->
-    <item name="android:statusBarColor">@android:color/transparent</item>
-    <item name="android:navigationBarColor">#FFFFFF</item>
+    <item name="android:statusBarColor">#80FFFFFF</item>
+    <item name="android:navigationBarColor">#EEEEEE</item>
     <item name="android:windowLightStatusBar">true</item>
+    <item name="android:windowDrawsSystemBarBackgrounds">true</item>
 
     <!-- Dialog theme -->
     <item name="alertDialogTheme">@style/Theme.AlertDialog.Light</item>
@@ -34,13 +35,13 @@
     <item name="itemCoverSize2x">110dp</item>
     <item name="itemCoverSize3x">165dp</item>
 
-    <!-- MainColors attributes -->
-    <item name="colorSearch">#6200EE</item>
-    <item name="colorOngoing">#03DAC6</item>
-    <item name="primaryGrayBackground">#F5F5F5</item>
-    <item name="primaryBlackBackground">#FFFFFF</item>
-    <item name="iconGrayBackground">#E0E0E0</item>
-    <item name="boxItemBackground">#F5F5F5</item>
+    <!-- MainColors attributes - OneUI Style -->
+    <item name="colorSearch">#0078D4</item>
+    <item name="colorOngoing">#0078D4</item>
+    <item name="primaryGrayBackground">#EEEEEE</item>
+    <item name="primaryBlackBackground">#F5F5F5</item>
+    <item name="iconGrayBackground">#DCDCDC</item>
+    <item name="boxItemBackground">#EEEEEE</item>
 
     <item name="android:divider">@color/transparent</item>
     <item name="divider">@color/transparent</item>
@@ -62,9 +63,9 @@
 
   <!-- Alert Dialog Theme - Light -->
   <style name="Theme.AlertDialog.Light" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
-    <item name="colorPrimary">#6200EE</item>
-    <item name="colorOnSurface">#000000</item>
-    <item name="android:colorBackground">#FFFFFF</item>
+    <item name="colorPrimary">#0078D4</item>
+    <item name="colorOnSurface">#666666</item>
+    <item name="android:colorBackground">#F5F5F5</item>
   </style>
 
   <!-- Tab Layout Style - Dark -->
@@ -76,9 +77,9 @@
 
   <!-- Tab Layout Style - Light -->
   <style name="Theme.Widget.Tabs.Light" parent="Widget.MaterialComponents.TabLayout.Colored">
-    <item name="tabIndicatorColor">#6200EE</item>
-    <item name="tabTextColor">#757575</item>
-    <item name="tabSelectedTextColor">#000000</item>
+    <item name="tabIndicatorColor">#0078D4</item>
+    <item name="tabTextColor">#999999</item>
+    <item name="tabSelectedTextColor">#666666</item>
   </style>
 
   <!-- Chip Style -->
@@ -154,11 +155,10 @@
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:minHeight">?android:attr/listPreferredItemHeightSmall</item>
-    <item name="android:textSize">16sp</item>
-    <item name="android:textStyle">bold</item>
     <item name="android:gravity">center_vertical</item>
     <item name="android:paddingHorizontal">12dp</item>
     <item name="android:ellipsize">marquee</item>
+    <item name="android:maxLines">2</item>
     <item name="android:foreground">?attr/selectableItemBackgroundBorderless</item>
     <item name="android:drawablePadding">20dp</item>
   </style>
@@ -231,11 +231,19 @@
     <item name="android:layout">@layout/custom_preference_material</item>
   </style>
 
+  <style name="CustomSwitchPreferenceStyle" parent="@style/Preference.SwitchPreference.Material">
+    <item name="android:layout">@layout/custom_preference_material</item>
+  </style>
+
+  <style name="CustomSeekBarPreferenceStyle" parent="@style/Preference.SeekBarPreference.Material">
+    <item name="android:layout">@layout/custom_preference_widget_seekbar</item>
+  </style>
+
   <style name="CustomPreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
     <item name="android:layout">@layout/settings_title_top</item>
     <item name="preferenceStyle">@style/CustomPreferenceStyle</item>
-    <!--    <item name="switchPreferenceStyle">@style/CustomSwitchPreferenceStyle</item>-->
-    <!--    <item name="seekBarPreferenceStyle">@style/CustomSeekBarPreferenceStyle</item>-->
+    <item name="switchPreferenceStyle">@style/CustomSwitchPreferenceStyle</item>
+    <item name="seekBarPreferenceStyle">@style/CustomSeekBarPreferenceStyle</item>
   </style>
 
   <!-- Navigation View Style -->
@@ -246,7 +254,7 @@
   </style>
 
   <style name="NavView" parent="Widget.Material3.BottomNavigationView">
-    <item name="android:background">?attr/colorSurfaceContainer</item>
+    <item name="android:background">?colorSurface</item>
     <item name="itemActiveIndicatorStyle">@style/BottomNavbarActiveIndicator</item>
     <item name="labelVisibilityMode">labeled</item>
     <item name="itemPaddingBottom">12dp</item>
@@ -256,10 +264,11 @@
     <item name="android:paddingBottom">0dp</item>
     <item name="itemIconTint">@color/item_select_color</item>
     <item name="itemTextColor">@color/item_select_color</item>
+
   </style>
 
   <style name="NavRailView" parent="Widget.Material3.BottomNavigationView">
-    <item name="android:background">?attr/colorSurfaceContainer</item>
+    <item name="android:background">?colorSurface</item>
     <item name="itemActiveIndicatorStyle">@style/BottomNavbarActiveIndicator</item>
     <item name="labelVisibilityMode">labeled</item>
     <item name="itemPaddingBottom">12dp</item>

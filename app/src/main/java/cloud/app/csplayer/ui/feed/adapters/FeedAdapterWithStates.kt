@@ -46,6 +46,8 @@ class FeedAdapterWithStates(
       val newIsError = refresh is LoadState.Error
       val newIsEmpty = refresh is LoadState.NotLoading && mainAdapter.itemCount == 0
 
+      timber.log.Timber.d("LoadState changed - Loading: $newIsLoading, Error: $newIsError, Empty: $newIsEmpty, ItemCount: ${mainAdapter.itemCount}, RefreshState: $refresh")
+
       // Only update if state actually changed
       if (newIsLoading != isLoading || newIsError != isError || newIsEmpty != isEmpty) {
         isLoading = newIsLoading

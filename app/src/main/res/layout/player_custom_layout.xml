@@ -462,7 +462,7 @@
             android:scaleX="-1"
             android:src="@drawable/netflix_skip_forward"
             android:tintMode="src_in"
-            app:tint="@color/icon_tint"
+            app:tint="@android:color/white"
             tools:ignore="ContentDescription" />
         </FrameLayout>
 
@@ -528,7 +528,7 @@
             android:scaleType="fitCenter"
             android:src="@drawable/netflix_skip_forward"
             android:tintMode="src_in"
-            app:tint="@color/icon_tint"
+            app:tint="@android:color/white"
             tools:ignore="ContentDescription" />
         </FrameLayout>
       </androidx.constraintlayout.widget.ConstraintLayout>

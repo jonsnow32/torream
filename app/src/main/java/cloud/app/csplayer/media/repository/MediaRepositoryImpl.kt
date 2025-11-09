@@ -1,9 +1,13 @@
 package cloud.app.csplayer.media.repository
 
+import android.content.Context
 import android.media.MediaMetadata
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
+import cloud.app.csplayer.media.dataSource.MediaPermissionException
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSource
 import cloud.app.csplayer.media.entities.FolderEntity
 import cloud.app.csplayer.media.entities.MediaEntity
@@ -12,6 +16,7 @@ import cloud.app.csplayer.model.Folder
 import cloud.app.csplayer.model.Media
 import cloud.app.csplayer.model.MediaTypeFilter
 import cloud.app.csplayer.model.SyncState
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,6 +40,7 @@ class MediaRepositoryImpl @Inject constructor(
   private val folderDao: FolderDao,
   private val mediaStore: MediaStoreDataSource,
   private val scope: CoroutineScope,
+  @ApplicationContext private val context: Context
 ) : MediaRepository {
 
   private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
@@ -42,6 +48,30 @@ class MediaRepositoryImpl @Inject constructor(
 
   init {
     startAutoSync()
+  }
+
+  /**
+   * Check if required media permissions are granted
+   */
+  private fun hasMediaPermissions(): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      val hasVideoPermission = ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.READ_MEDIA_VIDEO
+      ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+      val hasAudioPermission = ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.READ_MEDIA_AUDIO
+      ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+      hasVideoPermission && hasAudioPermission
+    } else {
+      ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.READ_EXTERNAL_STORAGE
+      ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
   }
 
   override fun observeMedia(): Flow<List<Media>> {
@@ -353,7 +383,17 @@ class MediaRepositoryImpl @Inject constructor(
   }
 
   override suspend fun getAllMediaPaged(limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
-    return@withContext mediaDao.getAllPagedWithPlayback(limit, offset).map { it.toMediaDomain() }
+    val result = mediaDao.getAllPagedWithPlayback(limit, offset).map { it.toMediaDomain() }
+
+    Timber.d("getAllMediaPaged: Found ${result.size} media items (offset=$offset, limit=$limit)")
+
+    // If no data and no permission, throw exception to trigger error UI
+    if (result.isEmpty() && offset == 0 && !hasMediaPermissions()) {
+      Timber.w("getAllMediaPaged: No media in database and no permission - throwing exception")
+      throw MediaPermissionException("Media access permission is required to load media files")
+    }
+
+    return@withContext result
   }
 
   override suspend fun getAllMediaPagedFiltered(
@@ -388,11 +428,19 @@ class MediaRepositoryImpl @Inject constructor(
         folder.parentPath == "/storage/emulated/0"
       }.sortedBy { it.name.lowercase() }
 
+      Timber.d("getFoldersPaged: Found ${rootFolders.size} root folders (offset=$offset, limit=$limit)")
+
+      // If no data and no permission, throw exception to trigger error UI
+      if (rootFolders.isEmpty() && offset == 0 && !hasMediaPermissions()) {
+        Timber.w("getFoldersPaged: No folders in database and no permission - throwing exception")
+        throw MediaPermissionException("Media access permission is required to load folders")
+      }
+
       // Apply pagination
       val start = offset.coerceAtMost(rootFolders.size)
       val end = (offset + limit).coerceAtMost(rootFolders.size)
 
-      Timber.d("getFoldersPaged: Found ${rootFolders.size} root folders, returning ${end - start}")
+      Timber.d("getFoldersPaged: Returning ${end - start} folders")
       return@withContext rootFolders.subList(start, end)
     }
 
