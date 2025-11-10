@@ -63,11 +63,11 @@ class MainActivityViewModel @Inject constructor() : ViewModel() {
     fun Context.isRTL() =
       resources.configuration.layoutDirection == View.LAYOUT_DIRECTION_RTL
 
-    fun Fragment.applyContentRect(appBar: View? = null, content: View) {
+    fun Fragment.applyContentRect(appBar: View? = null, content: View?) {
       val viewModel by activityViewModels<MainActivityViewModel>()
       observe(viewModel.contentRect) {
         appBar?.setPadding(it.start, it.top, it.end, 0)
-        content.setPadding(it.start, if(appBar == null) it.top else 0, it.end, it.bottom)
+        content?.setPadding(it.start, if(appBar == null) it.top else 0, it.end, it.bottom)
       }
     }
 

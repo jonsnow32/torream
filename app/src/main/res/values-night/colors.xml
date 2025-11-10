@@ -57,4 +57,50 @@
 
   <!-- Icon color (Dark theme) -->
   <color name="icon_tint">#FFFFFF</color>
+
+  <!-- OneUI Theme Colors - Dark -->
+  <!-- Primary colors -->
+  <color name="oneui_primary">#4D9FFF</color>
+  <color name="oneui_primary_variant">#0078D4</color>
+  <color name="oneui_on_primary">#000000</color>
+
+  <!-- Secondary colors -->
+  <color name="oneui_secondary">#4D9FFF</color>
+  <color name="oneui_secondary_variant">#0078D4</color>
+  <color name="oneui_on_secondary">#000000</color>
+
+  <!-- Background colors -->
+  <color name="oneui_background">#000000</color>
+  <color name="oneui_surface">#1C1C1E</color>
+  <color name="oneui_on_background">#B0B0B0</color>
+  <color name="oneui_on_surface">#B0B0B0</color>
+
+  <!-- System bar colors -->
+  <color name="oneui_status_bar">#1C1C1E</color>
+  <color name="oneui_navigation_bar">#1C1C1E</color>
+
+  <!-- Other colors -->
+  <color name="oneui_search">#4D9FFF</color>
+  <color name="oneui_ongoing">#4D9FFF</color>
+  <color name="oneui_gray_background">#1C1C1E</color>
+  <color name="oneui_black_background">#000000</color>
+  <color name="oneui_icon_gray_background">#2C2C2E</color>
+  <color name="oneui_box_item_background">#1C1C1E</color>
+
+  <!-- Dialog colors - Dark -->
+  <color name="dialog_dark_primary">#BB86FC</color>
+  <color name="dialog_dark_on_surface">#FFFFFF</color>
+  <color name="dialog_dark_background">#1E1E1E</color>
+
+  <!-- Tab colors - Dark -->
+  <color name="tab_dark_indicator">#BB86FC</color>
+  <color name="tab_dark_text">#BBBBBB</color>
+  <color name="tab_dark_selected_text">#FFFFFF</color>
+
+  <!-- Chip colors -->
+  <color name="chip_filled_background">#BB86FC</color>
+  <color name="chip_filled_text">#000000</color>
+
+  <!-- Navigation colors -->
+  <color name="nav_indicator">#FFFFFF</color>
 </resources>

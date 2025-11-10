@@ -28,7 +28,7 @@ import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
-import cloud.app.csplayer.ui.feed.FeedFilterBottomSheet
+import cloud.app.csplayer.ui.feed.FeedFilterDialog
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.FastScrollerHelper
@@ -192,9 +192,9 @@ class FeedFragment : Fragment(), FeedClickListener {
     binding.toolbar.setOnMenuItemClickListener {
       when (it.itemId) {
         R.id.quickSettings -> {
-          FeedFilterBottomSheet.newInstance { config ->
+          FeedFilterDialog.newInstance { config ->
             applyFilterConfig(config)
-          }.show(parentFragmentManager, FeedFilterBottomSheet.TAG)
+          }.show(parentFragmentManager, FeedFilterDialog.TAG)
         }
       }
       true

@@ -3,24 +3,24 @@
   <!-- Night mode theme (Dark Theme) -->
   <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
     <!-- Primary colors - OneUI Blue -->
-    <item name="colorPrimary">#4D9FFF</item>
-    <item name="colorPrimaryVariant">#0078D4</item>
-    <item name="colorOnPrimary">#000000</item>
+    <item name="colorPrimary">@color/oneui_primary</item>
+    <item name="colorPrimaryVariant">@color/oneui_primary_variant</item>
+    <item name="colorOnPrimary">@color/oneui_on_primary</item>
 
     <!-- Secondary colors - OneUI Accent -->
-    <item name="colorSecondary">#4D9FFF</item>
-    <item name="colorSecondaryVariant">#0078D4</item>
-    <item name="colorOnSecondary">#000000</item>
+    <item name="colorSecondary">@color/oneui_secondary</item>
+    <item name="colorSecondaryVariant">@color/oneui_secondary_variant</item>
+    <item name="colorOnSecondary">@color/oneui_on_secondary</item>
 
     <!-- Background colors - OneUI Dark -->
-    <item name="android:colorBackground">#000000</item>
-    <item name="colorSurface">#1C1C1E</item>
-    <item name="colorOnBackground">#B0B0B0</item>
-    <item name="colorOnSurface">#B0B0B0</item>
+    <item name="android:colorBackground">@color/oneui_background</item>
+    <item name="colorSurface">@color/oneui_surface</item>
+    <item name="colorOnBackground">@color/oneui_on_background</item>
+    <item name="colorOnSurface">@color/oneui_on_surface</item>
 
     <!-- Status bar -->
-<!--    <item name="android:statusBarColor">?colorSurface</item>-->
-<!--    <item name="android:navigationBarColor">?colorSurface</item>-->
+<!--    <item name="android:statusBarColor">@color/oneui_status_bar</item>-->
+<!--    <item name="android:navigationBarColor">@color/oneui_navigation_bar</item>-->
 <!--    <item name="android:windowLightStatusBar">false</item>-->
 <!--    <item name="android:windowDrawsSystemBarBackgrounds">true</item>-->
 
@@ -36,12 +36,12 @@
     <item name="itemCoverSize3x">165dp</item>
 
     <!-- MainColors attributes - OneUI Dark Style -->
-    <item name="colorSearch">#4D9FFF</item>
-    <item name="colorOngoing">#4D9FFF</item>
-    <item name="primaryGrayBackground">#1C1C1E</item>
-    <item name="primaryBlackBackground">#000000</item>
-    <item name="iconGrayBackground">#2C2C2E</item>
-    <item name="boxItemBackground">#1C1C1E</item>
+    <item name="colorSearch">@color/oneui_search</item>
+    <item name="colorOngoing">@color/oneui_ongoing</item>
+    <item name="primaryGrayBackground">@color/oneui_gray_background</item>
+    <item name="primaryBlackBackground">@color/oneui_black_background</item>
+    <item name="iconGrayBackground">@color/oneui_icon_gray_background</item>
+    <item name="boxItemBackground">@color/oneui_box_item_background</item>
 
     <item name="android:divider">@color/transparent</item>
     <item name="divider">@color/transparent</item>

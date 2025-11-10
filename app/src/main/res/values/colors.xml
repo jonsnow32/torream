@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+  <color name="md_theme_primary">#3A608F</color>
+  <color name="md_theme_onPrimary">#FFFFFF</color>
+  <color name="md_theme_secondary">#545F71</color>
+  <color name="md_theme_onSecondaryContainer">#3C4758</color>
+  <color name="md_theme_background">#F8F9FF</color>
+  <color name="md_theme_onBackground">#191C20</color>
+  <color name="md_theme_surface">#F8F9FF</color>
+  <color name="md_theme_onSurface">#191C20</color>
+
   <!-- Primary colors -->
   <color name="colorPrimary">#BB86FC</color>
   <color name="colorPrimaryDark">#3700B3</color>
@@ -57,5 +67,51 @@
 
   <!-- Icon color (Light theme) -->
   <color name="icon_tint">#000000</color>
+
+  <!-- OneUI Theme Colors - Light -->
+  <!-- Primary colors -->
+  <color name="oneui_primary">#0078D4</color>
+  <color name="oneui_primary_variant">#005A9E</color>
+  <color name="oneui_on_primary">#FFFFFF</color>
+
+  <!-- Secondary colors -->
+  <color name="oneui_secondary">#8392A9</color>
+  <color name="oneui_secondary_variant">#005A9E</color>
+  <color name="oneui_on_secondary">#FFFFFF</color>
+
+  <!-- Background colors -->
+  <color name="oneui_background">#EEEEEE</color>
+  <color name="oneui_surface">#3700BCD4</color>
+  <color name="oneui_on_background">#1C1C1E</color>
+  <color name="oneui_on_surface">#1C1C1E</color>
+
+  <!-- System bar colors -->
+  <color name="oneui_status_bar">#80FFFFFF</color>
+  <color name="oneui_navigation_bar">#EEEEEE</color>
+
+  <!-- Other colors -->
+  <color name="oneui_search">#0078D4</color>
+  <color name="oneui_ongoing">#0078D4</color>
+  <color name="oneui_gray_background">#EEEEEE</color>
+  <color name="oneui_black_background">#F5F5F5</color>
+  <color name="oneui_icon_gray_background">#DCDCDC</color>
+  <color name="oneui_box_item_background">#EEEEEE</color>
+
+  <!-- Dialog colors - Light -->
+  <color name="dialog_light_primary">#0078D4</color>
+  <color name="dialog_light_on_surface">#666666</color>
+  <color name="dialog_light_background">#F5F5F5</color>
+
+  <!-- Tab colors - Light -->
+  <color name="tab_light_indicator">#0078D4</color>
+  <color name="tab_light_text">#999999</color>
+  <color name="tab_light_selected_text">#666666</color>
+
+  <!-- Chip colors -->
+  <color name="chip_filled_background">#BB86FC</color>
+  <color name="chip_filled_text">#000000</color>
+
+  <!-- Navigation colors -->
+  <color name="nav_indicator">#1C1C1C</color>
 </resources>
 

@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.DialogFragment
 import com.google.android.material.tabs.TabLayout
 import cloud.app.csplayer.databinding.BottomSheetFeedFilterBinding
 import cloud.app.csplayer.ui.dialog.DockingDialog
@@ -12,7 +11,7 @@ import cloud.app.csplayer.ui.dialog.DockingDialog
 /**
  * Bottom sheet dialog for feed filtering and display options
  */
-class FeedFilterBottomSheet : DockingDialog() {
+class FeedFilterDialog : DockingDialog() {
 
   private var _binding: BottomSheetFeedFilterBinding? = null
   private val binding get() = _binding!!
@@ -175,8 +174,8 @@ class FeedFilterBottomSheet : DockingDialog() {
   companion object {
     const val TAG = "FeedFilterBottomSheet"
 
-    fun newInstance(onApply: (FeedFilterConfig) -> Unit): FeedFilterBottomSheet {
-      return FeedFilterBottomSheet().apply {
+    fun newInstance(onApply: (FeedFilterConfig) -> Unit): FeedFilterDialog {
+      return FeedFilterDialog().apply {
         onApplyListener = onApply
       }
     }
