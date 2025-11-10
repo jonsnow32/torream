@@ -28,6 +28,8 @@ class FeedPagingSource(
   private val viewMode: FeedFilterConfig.ViewMode = FeedFilterConfig.ViewMode.GRID,
   private val groupMode: FeedFilterConfig.GroupMode = FeedFilterConfig.GroupMode.FOLDERS,
   private val mediaTypeFilter: MediaTypeFilter = MediaTypeFilter.ALL,
+  private val sortBy: FeedFilterConfig.SortBy = FeedFilterConfig.SortBy.DATE,
+  private val sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.DESCENDING,
   private val searchQuery: String? = null
 ) : PagingSource<Int, FeedData>() {
 
@@ -92,11 +94,11 @@ class FeedPagingSource(
     offset: Int,
     searchQuery: String
   ): List<FeedData> {
-    Timber.d("Searching MediaStore with query='$searchQuery', limit=$limit, offset=$offset")
+    Timber.d("Searching MediaStore with query='$searchQuery', limit=$limit, offset=$offset, sortBy=$sortBy, sortOrder=$sortOrder")
 
     // Search directly from MediaStore using the repository
     // Let exceptions propagate to outer catch block for proper error handling
-    val mediaList = repository.search(searchQuery, limit, offset)
+    val mediaList = repository.search(searchQuery, limit, offset, sortBy, sortOrder)
 
     Timber.d("Found ${mediaList.size} media items from MediaStore search")
 
@@ -126,9 +128,9 @@ class FeedPagingSource(
    * Load all folders from MediaRepository with pagination
    */
   private suspend fun loadAllFoldersPaged(limit: Int, offset: Int): List<FeedData> {
-    Timber.d("Loading folders with limit=$limit, offset=$offset, groupMode=$groupMode, mediaTypeFilter=$mediaTypeFilter")
+    Timber.d("Loading folders with limit=$limit, offset=$offset, groupMode=$groupMode, mediaTypeFilter=$mediaTypeFilter, sortBy=$sortBy, sortOrder=$sortOrder")
 
-    val folders = repository.getFoldersPaged(limit, offset)
+    val folders = repository.getFoldersPaged(limit, offset, sortBy, sortOrder)
 
     Timber.d("Found ${folders.size} folders")
 
@@ -158,14 +160,14 @@ class FeedPagingSource(
    * Does not show folders, only media files
    */
   private suspend fun loadAllMediaPaged(limit: Int, offset: Int): List<FeedData> {
-    Timber.d("Loading all media with limit=$limit, offset=$offset, mediaTypeFilter=$mediaTypeFilter")
+    Timber.d("Loading all media with limit=$limit, offset=$offset, mediaTypeFilter=$mediaTypeFilter, sortBy=$sortBy, sortOrder=$sortOrder")
 
     // Load media files with filtering
     // Let exceptions propagate to outer catch block
     val mediaList = if (mediaTypeFilter != MediaTypeFilter.ALL) {
-      repository.getAllMediaPagedFiltered(limit, offset, mediaTypeFilter)
+      repository.getAllMediaPagedFiltered(limit, offset, mediaTypeFilter, sortBy, sortOrder)
     } else {
-      repository.getAllMediaPaged(limit, offset)
+      repository.getAllMediaPaged(limit, offset, sortBy, sortOrder)
     }
 
     Timber.d("Loaded ${mediaList.size} media files (filter: $mediaTypeFilter)")
@@ -227,10 +229,10 @@ class FeedPagingSource(
     val adjustedOffset = maxOf(0, offset - if (offset == 0) 0 else 0) // Simple for now
     val mediaList = if (mediaTypeFilter != MediaTypeFilter.ALL) {
       // Use filtered query when a specific media type is selected
-      repository.getMediaByFolderPagedFiltered(folderPath, limit, adjustedOffset, mediaTypeFilter)
+      repository.getMediaByFolderPagedFiltered(folderPath, limit, adjustedOffset, mediaTypeFilter, sortBy, sortOrder)
     } else {
       // Use standard query for ALL to avoid unnecessary filtering
-      repository.getMediaByFolderPaged(folderPath, limit, adjustedOffset)
+      repository.getMediaByFolderPaged(folderPath, limit, adjustedOffset, sortBy, sortOrder)
     }
 
     Timber.d("Loaded ${mediaList.size} media files (filter: $mediaTypeFilter)")

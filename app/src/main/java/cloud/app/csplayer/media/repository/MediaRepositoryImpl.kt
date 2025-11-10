@@ -16,6 +16,7 @@ import cloud.app.csplayer.model.Folder
 import cloud.app.csplayer.model.Media
 import cloud.app.csplayer.model.MediaTypeFilter
 import cloud.app.csplayer.model.SyncState
+import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -360,20 +361,36 @@ class MediaRepositoryImpl @Inject constructor(
     return@withContext mediaDao.getByFolderWithPlayback(folderPath).map { it.toMediaDomain() }
   }
 
-  override suspend fun getMediaByFolderPaged(folderPath: String, limit: Int, offset: Int): List<Media> =
+  override suspend fun getMediaByFolderPaged(
+    folderPath: String,
+    limit: Int,
+    offset: Int,
+    sortBy: FeedFilterConfig.SortBy,
+    sortOrder: FeedFilterConfig.SortOrder
+  ): List<Media> =
     withContext(Dispatchers.IO) {
-      return@withContext mediaDao.getByFolderPagedWithPlayback(folderPath, limit, offset).map { it.toMediaDomain() }
+      // Load more items than needed to ensure correct pagination after sorting
+      val allMedia = mediaDao.getByFolderPagedWithPlayback(folderPath, limit * 10, 0).map { it.toMediaDomain() }
+      val sorted = sortMediaList(allMedia, sortBy, sortOrder)
+
+      // Apply pagination to sorted results
+      val start = offset.coerceAtMost(sorted.size)
+      val end = (offset + limit).coerceAtMost(sorted.size)
+
+      return@withContext if (start < sorted.size) sorted.subList(start, end) else emptyList()
     }
 
   override suspend fun getMediaByFolderPagedFiltered(
     folderPath: String,
     limit: Int,
     offset: Int,
-    mediaTypeFilter: MediaTypeFilter
+    mediaTypeFilter: MediaTypeFilter,
+    sortBy: FeedFilterConfig.SortBy,
+    sortOrder: FeedFilterConfig.SortOrder
   ): List<Media> = withContext(Dispatchers.IO) {
     // If ALL, use the non-filtered method for better performance
     if (mediaTypeFilter == MediaTypeFilter.ALL) {
-      return@withContext getMediaByFolderPaged(folderPath, limit, offset)
+      return@withContext getMediaByFolderPaged(folderPath, limit, offset, sortBy, sortOrder)
     }
 
     // Determine MIME type pattern based on filter
@@ -383,19 +400,43 @@ class MediaRepositoryImpl @Inject constructor(
       MediaTypeFilter.ALL -> "%"
     }
 
-    return@withContext mediaDao.getByFolderPagedFilteredWithPlayback(folderPath, mimeTypePattern, limit, offset).map { it.toMediaDomain() }
+    // Load more items than needed to ensure correct pagination after sorting
+    val allMedia = mediaDao.getByFolderPagedFilteredWithPlayback(folderPath, mimeTypePattern, limit * 10, 0).map { it.toMediaDomain() }
+    val sorted = sortMediaList(allMedia, sortBy, sortOrder)
+
+    // Apply pagination to sorted results
+    val start = offset.coerceAtMost(sorted.size)
+    val end = (offset + limit).coerceAtMost(sorted.size)
+
+    return@withContext if (start < sorted.size) sorted.subList(start, end) else emptyList()
   }
 
-  override suspend fun getAllMediaPaged(limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
-    val result = mediaDao.getAllPagedWithPlayback(limit, offset).map { it.toMediaDomain() }
+  override suspend fun getAllMediaPaged(
+    limit: Int,
+    offset: Int,
+    sortBy: FeedFilterConfig.SortBy,
+    sortOrder: FeedFilterConfig.SortOrder
+  ): List<Media> = withContext(Dispatchers.IO) {
+    // Load more items than needed to ensure correct pagination after sorting
+    val allMedia = mediaDao.getAllPagedWithPlayback(limit * 10, 0).map { it.toMediaDomain() }
 
-    Timber.d("getAllMediaPaged: Found ${result.size} media items (offset=$offset, limit=$limit)")
+    Timber.d("getAllMediaPaged: Found ${allMedia.size} media items before sorting")
 
     // If no data and no permission, throw exception to trigger error UI
-    if (result.isEmpty() && offset == 0 && !hasMediaPermissions()) {
+    if (allMedia.isEmpty() && offset == 0 && !hasMediaPermissions()) {
       Timber.w("getAllMediaPaged: No media in database and no permission - throwing exception")
       throw MediaPermissionException("Media access permission is required to load media files")
     }
+
+    val sorted = sortMediaList(allMedia, sortBy, sortOrder)
+
+    // Apply pagination to sorted results
+    val start = offset.coerceAtMost(sorted.size)
+    val end = (offset + limit).coerceAtMost(sorted.size)
+
+    val result = if (start < sorted.size) sorted.subList(start, end) else emptyList()
+
+    Timber.d("getAllMediaPaged: Returning ${result.size} media items (offset=$offset, limit=$limit)")
 
     return@withContext result
   }
@@ -403,11 +444,13 @@ class MediaRepositoryImpl @Inject constructor(
   override suspend fun getAllMediaPagedFiltered(
     limit: Int,
     offset: Int,
-    mediaTypeFilter: MediaTypeFilter
+    mediaTypeFilter: MediaTypeFilter,
+    sortBy: FeedFilterConfig.SortBy,
+    sortOrder: FeedFilterConfig.SortOrder
   ): List<Media> = withContext(Dispatchers.IO) {
     // If ALL, use the non-filtered method for better performance
     if (mediaTypeFilter == MediaTypeFilter.ALL) {
-      return@withContext getAllMediaPaged(limit, offset)
+      return@withContext getAllMediaPaged(limit, offset, sortBy, sortOrder)
     }
 
     // Determine MIME type pattern based on filter
@@ -417,10 +460,23 @@ class MediaRepositoryImpl @Inject constructor(
       MediaTypeFilter.ALL -> "%"
     }
 
-    return@withContext mediaDao.getAllPagedFilteredWithPlayback(mimeTypePattern, limit, offset).map { it.toMediaDomain() }
+    // Load more items than needed to ensure correct pagination after sorting
+    val allMedia = mediaDao.getAllPagedFilteredWithPlayback(mimeTypePattern, limit * 10, 0).map { it.toMediaDomain() }
+    val sorted = sortMediaList(allMedia, sortBy, sortOrder)
+
+    // Apply pagination to sorted results
+    val start = offset.coerceAtMost(sorted.size)
+    val end = (offset + limit).coerceAtMost(sorted.size)
+
+    return@withContext if (start < sorted.size) sorted.subList(start, end) else emptyList()
   }
 
-  override suspend fun getFoldersPaged(limit: Int, offset: Int): List<Folder> =
+  override suspend fun getFoldersPaged(
+    limit: Int,
+    offset: Int,
+    sortBy: FeedFilterConfig.SortBy,
+    sortOrder: FeedFilterConfig.SortOrder
+  ): List<Folder> =
     withContext(Dispatchers.IO) {
       // Get only root-level folders (folders with no parent or common root paths)
       val allFolders = folderDao.getAll().map { it.toFolderDomain() }
@@ -430,22 +486,24 @@ class MediaRepositoryImpl @Inject constructor(
         folder.parentPath == "/storage" ||
         folder.parentPath == "/storage/emulated" ||
         folder.parentPath == "/storage/emulated/0"
-      }.sortedBy { it.name.lowercase() }
+      }
 
-      Timber.d("getFoldersPaged: Found ${rootFolders.size} root folders (offset=$offset, limit=$limit)")
+      val sorted = sortFolderList(rootFolders, sortBy, sortOrder)
+
+      Timber.d("getFoldersPaged: Found ${sorted.size} root folders (offset=$offset, limit=$limit)")
 
       // If no data and no permission, throw exception to trigger error UI
-      if (rootFolders.isEmpty() && offset == 0 && !hasMediaPermissions()) {
+      if (sorted.isEmpty() && offset == 0 && !hasMediaPermissions()) {
         Timber.w("getFoldersPaged: No folders in database and no permission - throwing exception")
         throw MediaPermissionException("Media access permission is required to load folders")
       }
 
       // Apply pagination
-      val start = offset.coerceAtMost(rootFolders.size)
-      val end = (offset + limit).coerceAtMost(rootFolders.size)
+      val start = offset.coerceAtMost(sorted.size)
+      val end = (offset + limit).coerceAtMost(sorted.size)
 
       Timber.d("getFoldersPaged: Returning ${end - start} folders")
-      return@withContext rootFolders.subList(start, end)
+      return@withContext sorted.subList(start, end)
     }
 
   override suspend fun getSubfoldersPaged(parentPath: String, limit: Int, offset: Int): List<Folder> =
@@ -505,14 +563,28 @@ class MediaRepositoryImpl @Inject constructor(
     mediaDao.upsertAll(listOf(updated))
   }
 
-  override suspend fun search(query: String, limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
+  override suspend fun search(
+    query: String,
+    limit: Int,
+    offset: Int,
+    sortBy: FeedFilterConfig.SortBy,
+    sortOrder: FeedFilterConfig.SortOrder
+  ): List<Media> = withContext(Dispatchers.IO) {
     // Query MediaStore directly with pagination for real-time media search
     // This bypasses the database and queries MediaStore on-demand
     Timber.d("search: Querying MediaStore directly with query='$query', limit=$limit, offset=$offset")
 
     try {
       // Use the new queryMedia method with pagination support
-      val result = mediaStore.queryMedia(query, limit, offset)
+      val allMedia = mediaStore.queryMedia(query, limit * 10, 0)
+      val sorted = sortMediaList(allMedia, sortBy, sortOrder)
+
+      // Apply pagination to sorted results
+      val start = offset.coerceAtMost(sorted.size)
+      val end = (offset + limit).coerceAtMost(sorted.size)
+
+      val result = if (start < sorted.size) sorted.subList(start, end) else emptyList()
+
       Timber.d("search: Returning ${result.size} items from MediaStore")
 
       return@withContext result
@@ -524,6 +596,46 @@ class MediaRepositoryImpl @Inject constructor(
       emptyList()
     }
   }
+
+  // Sorting helpers
+  private fun sortMediaList(
+    media: List<Media>,
+    sortBy: FeedFilterConfig.SortBy,
+    sortOrder: FeedFilterConfig.SortOrder
+  ): List<Media> {
+    val comparator: Comparator<Media> = when (sortBy) {
+      FeedFilterConfig.SortBy.TITLE -> compareBy { it.name.lowercase() }
+      FeedFilterConfig.SortBy.DURATION -> compareBy { it.duration }
+      FeedFilterConfig.SortBy.DATE -> compareBy { it.dateModified }
+      FeedFilterConfig.SortBy.SIZE -> compareBy { it.size }
+      FeedFilterConfig.SortBy.LOCATION -> compareBy { it.path.lowercase() }
+    }
+
+    return when (sortOrder) {
+      FeedFilterConfig.SortOrder.ASCENDING -> media.sortedWith(comparator)
+      FeedFilterConfig.SortOrder.DESCENDING -> media.sortedWith(comparator.reversed())
+    }
+  }
+
+  private fun sortFolderList(
+    folders: List<Folder>,
+    sortBy: FeedFilterConfig.SortBy,
+    sortOrder: FeedFilterConfig.SortOrder
+  ): List<Folder> {
+    val comparator: Comparator<Folder> = when (sortBy) {
+      FeedFilterConfig.SortBy.TITLE -> compareBy { it.name.lowercase() }
+      FeedFilterConfig.SortBy.DATE -> compareBy { it.modified }
+      FeedFilterConfig.SortBy.LOCATION -> compareBy { it.path.lowercase() }
+      FeedFilterConfig.SortBy.DURATION -> compareBy { it.mediaCount } // Use media count for folders
+      FeedFilterConfig.SortBy.SIZE -> compareBy { it.mediaCount } // Use media count for folders
+    }
+
+    return when (sortOrder) {
+      FeedFilterConfig.SortOrder.ASCENDING -> folders.sortedWith(comparator)
+      FeedFilterConfig.SortOrder.DESCENDING -> folders.sortedWith(comparator.reversed())
+    }
+  }
+
   // Mapping helpers
   private fun MediaEntity.toMediaDomain(): Media {
     return Media(

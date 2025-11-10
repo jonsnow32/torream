@@ -41,7 +41,9 @@ private data class FeedDataParams(
   val groupMode: FeedFilterConfig.GroupMode,
   val mediaType: MediaTypeFilter,
   val searchQuery: String?,
-  val refresh: Int
+  val refresh: Int,
+  val sortBy: FeedFilterConfig.SortBy,
+  val sortOrder: FeedFilterConfig.SortOrder
 )
 
 @HiltViewModel
@@ -88,7 +90,7 @@ class FeedViewModel @Inject constructor(
     searchQuery,
     mediaPlaybackRepository.playbackUpdateTrigger
   ) { config, mediaType, query , refresh->
-    FeedDataParams(config.viewMode, config.groupMode, mediaType, query, refresh)
+    FeedDataParams(config.viewMode, config.groupMode, mediaType, query, refresh, config.sortBy, config.sortOrder)
   }.distinctUntilChanged().flatMapLatest { params ->
     Pager(
       config = PagingConfig(
@@ -103,6 +105,8 @@ class FeedViewModel @Inject constructor(
           params.viewMode,
           params.groupMode,
           params.mediaType,
+          params.sortBy,
+          params.sortOrder,
           params.searchQuery
         )
       }
