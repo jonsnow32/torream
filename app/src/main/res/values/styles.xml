@@ -129,6 +129,8 @@
   <!-- Color Picker View Style -->
   <style name="cpv_ColorPickerViewStyle">
     <item name="android:background">?attr/primaryGrayBackground</item>
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
   </style>
 
   <!-- Video Button Styles -->
