@@ -1,11 +1,7 @@
 package cloud.app.csplayer.ui.home
 
 import adapters.FeedAdapter
-import adapters.FeedAdapter.Companion.getFeedAdapter
-import android.Manifest
-import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.LayoutInflater
@@ -15,7 +11,6 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -40,7 +35,9 @@ import cloud.app.csplayer.utils.FastScrollerHelper
 import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.Utils.showToast
+import cloud.app.csplayer.utils.hasMediaPermissions
 import cloud.app.csplayer.utils.observe
+import cloud.app.csplayer.utils.requestMediaPermissions
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -57,13 +54,10 @@ class FeedFragment : Fragment(), FeedClickListener {
   @Inject
   lateinit var adManager: AdManager
 
-  // Keep reference to current Snackbar for sync state
   private var syncSnackbar: Snackbar? = null
-
 
   private lateinit var adapter: FeedAdapter
 
-  // Permission request launcher (multiple permissions)
   private val permissionLauncher = registerForActivityResult(
     ActivityResultContracts.RequestMultiplePermissions()
   ) { permissions ->
@@ -77,11 +71,7 @@ class FeedFragment : Fragment(), FeedClickListener {
       // Set flag to refresh adapter when sync completes
       waitingForSyncToRefresh = true
 
-      // Trigger MediaRepository sync to populate database
       viewModel.refreshMediaRepository()
-
-      // Note: adapter.refresh() will be called when syncState becomes Completed
-      // See syncState observer below
     } else {
       // Permissions denied - adapter will continue showing error state
       showToast(getString(R.string.permissions_denied))
@@ -90,33 +80,6 @@ class FeedFragment : Fragment(), FeedClickListener {
 
   // Flag to track if we should refresh adapter after sync completes
   private var waitingForSyncToRefresh = false
-
-  // Multiple permission request launcher (for sync errors - need both video and audio)
-  private val requestPermissionLauncher = registerForActivityResult(
-    ActivityResultContracts.RequestMultiplePermissions()
-  ) { permissions ->
-    val allGranted = permissions.values.all { it }
-    if (allGranted) {
-      // Permission granted, retry sync
-      showToast(getString(R.string.permissions_granted))
-      viewModel.refreshMediaRepository()
-      adapter.refresh()
-    } else {
-      // Permission denied
-      showToast(getString(R.string.permissions_denied))
-    }
-  }
-
-  private fun getRequiredPermissions(): Array<String> {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      arrayOf(
-        Manifest.permission.READ_MEDIA_VIDEO,
-        Manifest.permission.READ_MEDIA_AUDIO
-      )
-    } else {
-      arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-    }
-  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -137,7 +100,7 @@ class FeedFragment : Fragment(), FeedClickListener {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect()
+    applyContentRect(binding.appBar, binding.swipeRefresh)
     FastScrollerHelper.applyTo(binding.rvFeed)
 
     // Setup basic UI components (toolbar, search, etc.)
@@ -242,7 +205,12 @@ class FeedFragment : Fragment(), FeedClickListener {
    * Setup adapter and data loading
    */
   private fun setupAdapter() {
-    adapter = getFeedAdapter(viewModel, adManager)
+
+    adapter = FeedAdapter(this as FeedClickListener, adManager)
+    observe(viewModel.feedData) {
+      adapter.submitData(it)
+      binding.swipeRefresh.isRefreshing = false
+    }
 
     // Configure adapter with dynamic error handling
     val adapterWithStates = adapter.withLoadingStates(
@@ -250,8 +218,8 @@ class FeedFragment : Fragment(), FeedClickListener {
       buttonText = null
     ) {
       // Handle retry/permission request dynamically
-      if (!hasMediaPermissions()) {
-        requestMediaPermissions()
+      if (!requireContext().hasMediaPermissions()) {
+        requireContext().requestMediaPermissions(permissionLauncher)
       } else {
         adapter.refresh()
       }
@@ -262,7 +230,7 @@ class FeedFragment : Fragment(), FeedClickListener {
       val errorState = loadStates.refresh as? androidx.paging.LoadState.Error
       if (errorState != null) {
         // Check if it's a permission error
-        if (!hasMediaPermissions()) {
+        if (!requireContext().hasMediaPermissions()) {
           adapterWithStates.updateErrorMessage(
             message = getString(R.string.permission_required_message),
             buttonText = getString(R.string.grant_permission)
@@ -280,7 +248,7 @@ class FeedFragment : Fragment(), FeedClickListener {
     configureGridLayout(binding.rvFeed, adapterWithStates)
 
     // If no permission at startup, force show error state by clearing data first
-    if (!hasMediaPermissions()) {
+    if (!requireContext().hasMediaPermissions()) {
       Timber.d("No permission detected - forcing error state display")
       // Trigger refresh which will call PagingSource that should throw exception
       viewLifecycleOwner.lifecycleScope.launch {
@@ -295,11 +263,6 @@ class FeedFragment : Fragment(), FeedClickListener {
     binding.swipeRefresh.setOnRefreshListener {
       // Refresh data when user pulls down
       adapter.refresh()
-    }
-
-    // Observe loading states to hide refresh indicator
-    observe(viewModel.feedData) {
-      binding.swipeRefresh.isRefreshing = false
     }
 
     observe(viewModel.syncState) { state ->
@@ -527,55 +490,6 @@ class FeedFragment : Fragment(), FeedClickListener {
       activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
     }
   }
-
-
-  /**
-   * Check if app has required media permissions
-   */
-  private fun hasMediaPermissions(): Boolean {
-    val context = requireContext()
-
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      // Android 13+ (API 33+) - Need READ_MEDIA_VIDEO and READ_MEDIA_AUDIO
-      val hasVideoPermission = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.READ_MEDIA_VIDEO
-      ) == PackageManager.PERMISSION_GRANTED
-
-      val hasAudioPermission = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.READ_MEDIA_AUDIO
-      ) == PackageManager.PERMISSION_GRANTED
-
-      hasVideoPermission && hasAudioPermission
-    } else {
-      // Android 12 and below - Need READ_EXTERNAL_STORAGE
-      ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.READ_EXTERNAL_STORAGE
-      ) == PackageManager.PERMISSION_GRANTED
-    }
-  }
-
-  /**
-   * Request required media permissions
-   */
-  private fun requestMediaPermissions() {
-    val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      // Android 13+ (API 33+)
-      arrayOf(
-        Manifest.permission.READ_MEDIA_VIDEO,
-        Manifest.permission.READ_MEDIA_AUDIO
-      )
-    } else {
-      // Android 12 and below
-      arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-    }
-
-    permissionLauncher.launch(permissions)
-  }
-
-
 
   /**
    * Find the subtitle TextView in Toolbar to apply custom styling

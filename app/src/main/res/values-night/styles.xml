@@ -19,10 +19,10 @@
     <item name="colorOnSurface">#B0B0B0</item>
 
     <!-- Status bar -->
-    <item name="android:statusBarColor">?colorSurface</item>
-    <item name="android:navigationBarColor">#000000</item>
-    <item name="android:windowLightStatusBar">false</item>
-
+<!--    <item name="android:statusBarColor">?colorSurface</item>-->
+<!--    <item name="android:navigationBarColor">?colorSurface</item>-->
+<!--    <item name="android:windowLightStatusBar">false</item>-->
+<!--    <item name="android:windowDrawsSystemBarBackgrounds">true</item>-->
 
     <!-- Dialog theme -->
     <item name="alertDialogTheme">@style/Theme.AlertDialog.Dark</item>
@@ -52,5 +52,11 @@
 
     <!-- preferences -->
     <item name="preferenceTheme">@style/CustomPreferenceThemeOverlay</item>
+
+    <item name="materialButtonStyle">@style/AppButtonStyle</item>
+    <item name="materialButtonOutlinedStyle">@style/AppOutlinedButtonStyle</item>
+
+
+    <item name="collapsingToolbarLayoutStyle">@style/CollapsingBar</item>
   </style>
 </resources>

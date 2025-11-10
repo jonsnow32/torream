@@ -11,6 +11,7 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import cloud.app.csplayer.model.Media
+import cloud.app.csplayer.utils.hasMediaPermissions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -25,31 +26,6 @@ class MediaStoreDataSourceImpl @Inject constructor(
   @param:ApplicationContext private val context: Context
 ) : MediaStoreDataSource {
 
-  /**
-   * Check if required media permissions are granted
-   */
-  private fun hasMediaPermissions(): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      // Android 13+ (API 33+)
-      val hasVideoPermission = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.READ_MEDIA_VIDEO
-      ) == PackageManager.PERMISSION_GRANTED
-
-      val hasAudioPermission = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.READ_MEDIA_AUDIO
-      ) == PackageManager.PERMISSION_GRANTED
-
-      hasVideoPermission && hasAudioPermission
-    } else {
-      // Android 12 and below
-      ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.READ_EXTERNAL_STORAGE
-      ) == PackageManager.PERMISSION_GRANTED
-    }
-  }
 
   override fun observeMediaChanges(): Flow<Unit> = callbackFlow {
     val observer = object : ContentObserver(null) {
@@ -80,7 +56,7 @@ class MediaStoreDataSourceImpl @Inject constructor(
 
   override suspend fun queryMedia(query: String?, limit: Int, offset: Int): List<Media> = withContext(Dispatchers.IO) {
     // Check permissions before querying
-    if (!hasMediaPermissions()) {
+    if (!context.hasMediaPermissions()) {
       timber.log.Timber.w("Media access permission not granted - throwing exception")
       throw MediaPermissionException()
     }
@@ -343,7 +319,7 @@ class MediaStoreDataSourceImpl @Inject constructor(
 
   override suspend fun queryAllMedia(query: String?): List<Media> = withContext(Dispatchers.IO) {
     // Check permissions before querying
-    if (!hasMediaPermissions()) {
+    if (!context.hasMediaPermissions()) {
       timber.log.Timber.w("Media access permission not granted - throwing exception")
       throw MediaPermissionException()
     }

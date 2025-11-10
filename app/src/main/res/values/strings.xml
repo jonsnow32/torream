@@ -266,6 +266,9 @@
   <string name="backup_failed_error_format">Error backing up %s</string>
   <string name="search">Search</string>
   <string name="library">Library</string>
+  <string name="downloads">Downloads</string>
+  <string name="favorites">Favorites</string>
+  <string name="playlists">Playlists</string>
   <string name="category_account">Accounts and Security</string>
   <string name="category_updates">Updates and Backup</string>
   <string name="settings_info">Info</string>
@@ -902,4 +905,5 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="streaming">Streaming</string>
   <string name="reset_btn">Reset</string>
   <string name="background_audio">Background audio</string>
+  <string name="support_url_hint">[http,https,magnet,torrent]</string>
 </resources>

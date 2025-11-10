@@ -6,17 +6,20 @@
   android:layout_height="match_parent">
 
   <com.google.android.material.appbar.AppBarLayout
+    android:id="@+id/appBar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?colorSurface">
+    android:clipToPadding="false">
 
     <androidx.appcompat.widget.Toolbar
       android:id="@+id/toolbar"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:background="?colorSurface"
       app:layout_scrollFlags="scroll|enterAlways"
       app:menu="@menu/feed_menu"
-      app:title="@string/app_name"/>
+      android:clipToPadding="false"
+      app:title="@string/app_name" />
 
   </com.google.android.material.appbar.AppBarLayout>
 

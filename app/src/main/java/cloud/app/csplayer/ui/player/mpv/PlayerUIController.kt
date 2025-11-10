@@ -167,7 +167,7 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
   /**
    * Set video title
    */
-  fun setTitle(title: String) {
+  fun setTitle(title: String?) {
     binding.playerVideoTitle.text = title
   }
 
@@ -180,6 +180,13 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
     } else {
       title
     }
+  }
+
+  /**
+   * Set video resolution
+   */
+  fun setResolution(resolution: String) {
+    binding.playerVideoTitleRez?.text = resolution
   }
 
   /**

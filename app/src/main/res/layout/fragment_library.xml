@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent">
 
   <com.google.android.material.appbar.AppBarLayout
+    android:id="@+id/appBar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -12,24 +14,55 @@
       android:id="@+id/toolbar"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      app:title="Library"
-      app:titleTextColor="@android:color/white" />
+      app:layout_scrollFlags="scroll|enterAlways"
+      app:title="Library" />
 
     <com.google.android.material.tabs.TabLayout
       android:id="@+id/tabLayout"
+      style="@style/Widget.MaterialComponents.TabLayout.Colored"
       android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:background="@color/transparent"
-      app:tabGravity="fill"
-      app:tabMode="fixed" />
+      android:layout_height="40dp"
+      android:layout_gravity="bottom"
+      android:background="?colorSurface"
+      android:focusable="true"
+      android:paddingHorizontal="5dp"
+      app:layout_scrollFlags="noScroll"
+      app:tabGravity="center"
+      app:tabIndicator="@drawable/indicator_background"
+      app:tabIndicatorColor="@color/text_secondary"
+      app:tabIndicatorGravity="center"
+      app:tabIndicatorHeight="30dp"
+      app:tabMode="scrollable"
+      app:tabTextAppearance="@style/TabNoCaps"
+      app:tabTextColor="@color/text_secondary" />
 
   </com.google.android.material.appbar.AppBarLayout>
 
-  <androidx.viewpager2.widget.ViewPager2
-    android:id="@+id/viewPager"
+  <View
+    android:id="@+id/appBarOutline"
+    style="@style/AppBarOutline"
+    app:layout_anchor="@id/toolbar"
+    app:layout_anchorGravity="bottom" />
+
+  <!-- Main Content -->
+  <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+    <androidx.recyclerview.widget.RecyclerView
+      android:id="@+id/rvLibrary"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:clipToPadding="false"
+      android:nestedScrollingEnabled="true"
+      android:paddingHorizontal="8dp"
+      android:paddingTop="8dp"
+      android:scrollbars="vertical"
+      tools:listitem="@layout/item_video" />
+  </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

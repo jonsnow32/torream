@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="?attr/colorSurfaceContainer"
+  android:orientation="vertical">
+
+  <TextView
+    android:id="@+id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_rowWeight="1"
+    android:layout_marginTop="20dp"
+    android:layout_marginBottom="10dp"
+    android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+    android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+    android:textSize="18sp"
+    tools:text="Test" />
+
+  <View
+    style="@style/AppBarOutline"
+    android:layout_width="match_parent"
+    android:layout_height="1dp"
+    android:background="@color/divider_color" />
+
+  <com.google.android.material.textfield.TextInputLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp">
+
+    <com.google.android.material.textfield.TextInputEditText
+      android:id="@+id/urlInput"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:drawablePadding="10dp"
+      android:hint="@string/support_url_hint"
+      android:imeOptions="actionDone"
+      android:inputType="text"
+      android:padding="10dp" />
+  </com.google.android.material.textfield.TextInputLayout>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:layout_marginTop="8dp"
+    android:gravity="bottom|end"
+    android:orientation="horizontal">
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/streamingBtt"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center_vertical|end"
+      android:text="@string/stream" />
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/downloadBtt"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center_vertical|end"
+      android:text="@string/download" />
+  </LinearLayout>
+</LinearLayout>

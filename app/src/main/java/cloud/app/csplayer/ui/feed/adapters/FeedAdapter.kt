@@ -25,6 +25,8 @@ import cloud.app.csplayer.ui.feed.viewholders.TorrentDownloadViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolder
+import cloud.app.csplayer.ui.library.LibraryFragment
+import cloud.app.csplayer.ui.library.LibraryViewModel
 import cloud.app.csplayer.utils.observe
 
 
@@ -169,17 +171,4 @@ class FeedAdapter(
     )
   }
 
-  companion object {
-
-    fun Fragment.getFeedAdapter(
-      viewModel: FeedViewModel,
-      adManager: AdManager? = null
-    ): FeedAdapter {
-      val adapter = FeedAdapter(this as FeedClickListener, adManager)
-      viewLifecycleOwner.observe(viewModel.feedData) {
-        adapter.submitData(it)
-      }
-      return adapter
-    }
-  }
 }

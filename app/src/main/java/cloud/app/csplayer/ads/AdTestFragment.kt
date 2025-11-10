@@ -40,7 +40,7 @@ class AdTestFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect()
+    applyContentRect(null, binding.root)
     setupBannerAd()
     setupClickListeners()
     startStatusUpdates()

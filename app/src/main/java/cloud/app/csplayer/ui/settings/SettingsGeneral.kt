@@ -8,14 +8,17 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
+import androidx.core.view.isGone
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.R
-import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.app
+import cloud.app.csplayer.network.initClient
+import cloud.app.csplayer.ui.dialog.SelectionDialog
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getPref
-import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setUpToolbar
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
@@ -26,11 +29,6 @@ import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.isLayout
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import androidx.core.content.edit
-import androidx.core.view.isGone
-import cloud.app.csplayer.BuildConfig
-import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
-import cloud.app.csplayer.ui.dialog.SelectionDialog
 
 // Change local language settings in the app.
 fun getCurrentLocale(context: Context): String {
@@ -114,9 +112,8 @@ class SettingsGeneral : PreferenceFragmentCompat() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect()
+
     setUpToolbar(R.string.category_general)
-    setPaddingBottom()
     setToolBarScrollFlags()
   }
 

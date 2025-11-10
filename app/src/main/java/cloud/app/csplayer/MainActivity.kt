@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.Color.TRANSPARENT
 import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
@@ -18,6 +19,8 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
@@ -65,6 +68,7 @@ import cloud.app.csplayer.datastore.Serializer
 import cloud.app.csplayer.model.PlaybackData.Companion.KEY_PLAYBACK_JSON_URI
 import cloud.app.csplayer.utils.UIHelper.getResourceColor
 import cloud.app.csplayer.utils.UIHelper.isLandscape
+import cloud.app.csplayer.utils.UIHelper.isNightMode
 import cloud.app.csplayer.utils.isLayout
 import kotlinx.serialization.serializer
 
@@ -166,10 +170,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     super.onCreate(savedInstanceState)
 
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      window.attributes.layoutInDisplayCutoutMode =
-        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-    }
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+//      window.attributes.layoutInDisplayCutoutMode =
+//        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+//    }
 
     // Move heavy I/O operations to background thread to avoid ANR
     ioSafe {
@@ -190,13 +194,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     }
     setContentView(binding.root)
 
-    // Use AndroidX EdgeToEdge helper which handles decor fitting and system bar styling.
-    try {
-      // Use WindowCompat to disable fitting system windows so the app can draw edge-to-edge.
-      WindowCompat.setDecorFitsSystemWindows(window, false)
-    } catch (e: Exception) {
-      logError(e)
-    }
+    enableEdgeToEdge(
+      SystemBarStyle.auto(TRANSPARENT, TRANSPARENT),
+      if (isNightMode()) SystemBarStyle.dark(TRANSPARENT)
+      else SystemBarStyle.light(TRANSPARENT, TRANSPARENT)
+    )
+
     val navHostFragment =
       supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
     val navController = navHostFragment.navController
@@ -243,6 +246,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
       viewmodel.setNavSafeRect(safeRect)
     }
+
     ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
       viewmodel.setSystemSafeRect(this, insets)
       val cutout = insets.displayCutout

@@ -214,6 +214,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private var playbackInitialized = false
 
+  // Video resolution tracking
+  private var videoWidth: Int = 0
+  private var videoHeight: Int = 0
+
   /**
    * Check if ready to initialize playback and determine mode (single vs playlist)
    * Called when allLinks or isSameEpisode changes
@@ -1946,6 +1950,16 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           value.toInt()
         )
       }
+
+      "video-params/w" -> {
+        videoWidth = value.toInt()
+        updateVideoResolution()
+      }
+
+      "video-params/h" -> {
+        videoHeight = value.toInt()
+        updateVideoResolution()
+      }
     }
   }
 
@@ -1965,6 +1979,17 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     // Note: do NOT add other update functions here just because this is called every second.
     // Use property observation instead.
     //updateStats()
+  }
+
+  /**
+   * Update video resolution display
+   */
+  private fun updateVideoResolution() {
+    if (videoWidth > 0 && videoHeight > 0) {
+      val resolutionText = "${videoWidth}x${videoHeight}"
+      uiController.setResolution(resolutionText)
+      Timber.tag(TAG).d("Video resolution: $resolutionText")
+    }
   }
 
   private fun eventPropertyUi(property: String, value: Double) {
@@ -2028,24 +2053,25 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
 
   private fun updateMetadataDisplay() {
-    playerBinding?.playerVideoTitleRez?.text = psc.meta.formatTitle()
+    uiController.setTitle(psc.meta.formatTitle())
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireActivity())
     val limitTitle =
       settingsManager.getInt(requireActivity().getString(R.string.prefer_limit_title_key), 0)
-    currentSelectedLink?.url?.let { playerVideoTitle ->
-      //Hide title, if set in setting
-      if (limitTitle <= 0) {
-        playerBinding?.playerVideoTitle?.text = playerVideoTitle
-      } else {
-        //Truncate video title if it exceeds limit
-        val differenceInLength = playerVideoTitle.length - limitTitle
-        val margin = 3 //If the difference is smaller than or equal to this value, ignore it
-        if (limitTitle > 0 && differenceInLength > margin) {
-          playerBinding?.playerVideoTitle?.text =
-            playerVideoTitle.substring(0, limitTitle - 1) + "..."
-        }
-      }
-    }
+//    currentSelectedLink?.url?.let { playerVideoTitle ->
+//      //Hide title, if set in setting
+//      if (limitTitle <= 0) {
+//        uiController.setTitle(playerVideoTitle)
+//      } else {
+//        //Truncate video title if it exceeds limit
+//        val differenceInLength = playerVideoTitle.length - limitTitle
+//        val margin = 3 //If the difference is smaller than or equal to this value, ignore it
+//        if (differenceInLength > margin) {
+//          uiController.setTitle(
+//            playerVideoTitle.take(limitTitle - 1) + "..."
+//          )
+//        }
+//      }
+//    }
   }
 
 //  private fun playNext() {

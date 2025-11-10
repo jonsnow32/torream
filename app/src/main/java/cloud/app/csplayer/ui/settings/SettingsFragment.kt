@@ -25,6 +25,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.VideoLink
+import cloud.app.csplayer.ui.dialog.UrlInputDialog
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
@@ -59,15 +60,6 @@ class SettingsFragment : Fragment() {
       }
     }
 
-    /**
-     * On TV you cannot properly scroll to the bottom of settings, this fixes that.
-     * */
-    fun PreferenceFragmentCompat.setPaddingBottom() {
-      if (isTvOrEmulator()) {
-        listView?.setPadding(0, 0, 0, 100.toPx)
-      }
-    }
-
     fun PreferenceFragmentCompat.setToolBarScrollFlags() {
       if (isTvOrEmulator()) {
         val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.general_toolbar)
@@ -88,22 +80,8 @@ class SettingsFragment : Fragment() {
       }
     }
 
-    fun Fragment?.setUpToolbar(title: String) {
-      if (this == null) return
-      val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.general_toolbar) ?: return
 
-      settingsToolbar.apply {
-        setTitle(title)
-        if (isTvOrEmulator()) {
-          setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
-          setNavigationOnClickListener {
-            activity?.onBackPressedDispatcher?.onBackPressed()
-          }
-        }
-      }
-    }
-
-    fun Fragment?.setUpToolbar(@StringRes title: Int) {
+    fun PreferenceFragmentCompat?.setUpToolbar(@StringRes title: Int) {
       if (this == null) return
       val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.general_toolbar) ?: return
       val settingsAppBar = view?.findViewById<AppBarLayout>(R.id.general_appbar) ?: return
@@ -116,6 +94,8 @@ class SettingsFragment : Fragment() {
           activity?.onBackPressedDispatcher?.onBackPressed()
         }
       }
+
+      applyContentRect(settingsAppBar, listView)
     }
 
     fun getFolderSize(dir: File): Long {
@@ -151,8 +131,10 @@ class SettingsFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect()
+
     binding?.apply {
+      applyContentRect(null,root)
+
       listOf(
         settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
         settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
@@ -175,8 +157,8 @@ class SettingsFragment : Fragment() {
       }
 
       urlBtn.setOnClickListener {
-        var text =
-          if (BuildConfig.DEBUG) "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" else "";
+//        var text = if (BuildConfig.DEBUG) "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" else "";
+        var text = if (BuildConfig.DEBUG) "magnet:?xt=urn:btih:53A4A411DECDAF7E1BE919607B7A4187987BF0BB" else "";
 
         (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
           0
@@ -185,30 +167,7 @@ class SettingsFragment : Fragment() {
             text = copy;
         }
 
-//        activity?.showNginxTextInputDialog("Your Link", text, 16, {
-//        }, { url ->
-//          // Create PlaybackData for URL playback
-//          val playbackData = PlaybackData(
-//            title = "Network Stream",
-//            videoLinks = listOf(
-//              VideoLink(
-//                url = url,
-//                name = "Network Stream",
-//                headers = emptyMap(),
-//                position = 0L,
-//                subtitles = emptyList(),
-//              )
-//            ),
-//            subtitles = emptyList(),
-//            videoStartIndex = 0,
-//            subtitleStartIndex = 0,
-//            isSameEpisode = true,
-//            hasAd = false
-//          )
-//
-//          val bundle = PlaybackDataHelper.createBundle(playbackData)
-//          activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
-//        });
+        UrlInputDialog.newInstance(text).show(parentFragmentManager)
       }
 
       openLocal.setOnClickListener {

@@ -11,7 +11,6 @@ import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.LogcatBinding
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getPref
-import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setUpToolbar
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
@@ -31,9 +30,7 @@ class SettingsUpdates : PreferenceFragmentCompat() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect()
     setUpToolbar(R.string.category_updates)
-    setPaddingBottom()
     setToolBarScrollFlags()
   }
 

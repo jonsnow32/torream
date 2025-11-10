@@ -3,28 +3,24 @@ package cloud.app.csplayer.ui.settings
 import android.os.Bundle
 import android.text.format.Formatter.formatShortFileSize
 import android.view.View
+import androidx.core.content.edit
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.ui.dialog.SelectionDialog
-import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getFolderSize
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getPref
-import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setUpToolbar
 import cloud.app.csplayer.ui.subtitles.ChromecastSubtitlesFragment
+import cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
 import cloud.app.csplayer.utils.Utils.logError
-import androidx.core.content.edit
-import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 
 class SettingsPlayer : PreferenceFragmentCompat() {
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect()
     setUpToolbar(R.string.category_player)
-    setPaddingBottom()
     setToolBarScrollFlags()
   }
 

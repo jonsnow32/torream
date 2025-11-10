@@ -1,6 +1,5 @@
 package cloud.app.csplayer.ui.dialog
 
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,15 +10,14 @@ import android.widget.LinearLayout
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import cloud.app.csplayer.R
-import cloud.app.csplayer.databinding.SelectionDialogBinding
+import cloud.app.csplayer.databinding.DialogSelectionBinding
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
-
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class SelectionDialog : DockingDialog() {
-  private var binding by autoCleared<SelectionDialogBinding>()
+  private var binding by autoCleared<DialogSelectionBinding>()
   private val args by lazy { requireArguments() }
   private val items by lazy { args.getStringArrayList(ARG_ITEMS) ?: emptyList() }
   private val selectedIndex by lazy { args.getIntegerArrayList(ARG_SELECTED_INDEX) ?: emptyList() }
@@ -85,7 +83,7 @@ class SelectionDialog : DockingDialog() {
   override fun onCreateView(
     inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
   ): View {
-    binding = SelectionDialogBinding.inflate(inflater, container, false)
+    binding = DialogSelectionBinding.inflate(inflater, container, false)
     return binding.root
   }
 

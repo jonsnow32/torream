@@ -31,7 +31,6 @@ import com.google.android.gms.cast.TextTrackStyle
 import com.google.android.gms.cast.TextTrackStyle.*
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
 import cloud.app.csplayer.ui.dialog.SelectionDialog
-import cloud.app.csplayer.ui.subtitles.SubtitlesFragment.Companion.getCurrentSavedStyle
 import cloud.app.csplayer.utils.Utils
 
 const val CHROME_SUBTITLE_KEY = "chome_subtitle_settings"

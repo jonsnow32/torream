@@ -355,6 +355,8 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
       Property("speed", MPV_FORMAT_STRING),
       Property("track-list/count", MPV_FORMAT_INT64),
       Property("video-params/aspect", MPV_FORMAT_DOUBLE),
+      Property("video-params/w", MPV_FORMAT_INT64),
+      Property("video-params/h", MPV_FORMAT_INT64),
       Property("video-params/rotate", MPV_FORMAT_DOUBLE),
       Property("playlist-pos", MPV_FORMAT_INT64),
       Property("playlist-count", MPV_FORMAT_INT64),

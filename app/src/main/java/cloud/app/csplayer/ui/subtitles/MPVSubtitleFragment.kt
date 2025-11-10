@@ -31,6 +31,7 @@ import cloud.app.csplayer.model.SaveCaptionStyle
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialog
 import cloud.app.csplayer.ui.dialog.SelectionDialog
 import cloud.app.csplayer.ui.player.mpv.MPVLib
+import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.DataStore.getKey
 import cloud.app.csplayer.utils.DataStore.setKey
 import cloud.app.csplayer.utils.Event
@@ -346,11 +347,11 @@ class MPVSubtitleFragment : Fragment() {
         }
       } ?: state.typeface?.let { ResourcesCompat.getFont(this, it) } ?: Typeface.SANS_SERIF
     )
-    binding?.subtitleText?.setStyle(captionStyle)
+    binding.subtitleText?.setStyle(captionStyle)
     val text = getString(R.string.subtitles_example_text)
     val fixedText = if (state.upperCase) text.uppercase() else text
     state.fixedTextSize?.let {
-      binding?.subtitleText?.setCues(
+      binding.subtitleText?.setCues(
         listOf(
           Cue.Builder()
             .setTextSize(
@@ -363,7 +364,7 @@ class MPVSubtitleFragment : Fragment() {
       )
     }
 
-    binding?.applyBtt?.callOnClick()
+    binding.applyBtt?.callOnClick()
   }
 
   private fun getColor(id: Int): Int {
@@ -379,12 +380,8 @@ class MPVSubtitleFragment : Fragment() {
     return if (color == Color.TRANSPARENT) Color.BLACK else color
   }
 
-  override fun onDestroyView() {
-    binding = null
-    super.onDestroyView()
-  }
 
-  var binding: FragmentSubtitleSettingsBinding? = null
+  var binding by autoCleared<FragmentSubtitleSettingsBinding>()
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
@@ -405,11 +402,11 @@ class MPVSubtitleFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect()
+    applyContentRect(binding.subtitleSettingsAppbar, binding.subtitleSettingScrollView)
     hide = arguments?.getBoolean("hide") ?: true
     GlobalEvent.onColorSelectedEvent += ::onColorSelected
     GlobalEvent.onDialogDismissedEvent += ::onDialogDismissed
-    binding?.subsImportText?.text = getString(R.string.subs_import_text).format(
+    binding.subsImportText.text = getString(R.string.subs_import_text).format(
       context?.filesDir?.absolutePath.toString() + "/fonts"
     )
 
@@ -450,7 +447,7 @@ class MPVSubtitleFragment : Fragment() {
       }
     }
 
-    binding?.apply {
+    binding.apply {
       subsTextColor.setup(0)
       subsOutlineColor.setup(1)
       subsBackgroundColor.setup(2)
