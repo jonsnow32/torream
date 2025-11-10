@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
@@ -109,6 +111,23 @@ val appLanguages = arrayListOf(
 ).sortedBy { it.second.lowercase() } //ye, we go alphabetical, so ppl don't put their lang on top
 
 class SettingsGeneral : PreferenceFragmentCompat() {
+
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
+  ): View {
+    // Inflate custom layout with toolbar for PreferenceFragment
+    val view = inflater.inflate(R.layout.settings_title_top, container, false)
+    val listContainer = view.findViewById<ViewGroup>(android.R.id.list_container)
+
+    // Let PreferenceFragmentCompat inflate its content into the list_container
+    val preferenceView = super.onCreateView(inflater, listContainer, savedInstanceState)
+    listContainer.removeAllViews()
+    listContainer.addView(preferenceView)
+
+    return view
+  }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)

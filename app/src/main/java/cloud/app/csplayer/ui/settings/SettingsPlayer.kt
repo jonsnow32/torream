@@ -2,7 +2,9 @@ package cloud.app.csplayer.ui.settings
 
 import android.os.Bundle
 import android.text.format.Formatter.formatShortFileSize
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.content.edit
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -18,6 +20,20 @@ import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
 import cloud.app.csplayer.utils.Utils.logError
 
 class SettingsPlayer : PreferenceFragmentCompat() {
+
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
+  ): View {
+    val view = inflater.inflate(R.layout.settings_title_top, container, false)
+    val listContainer = view.findViewById<ViewGroup>(android.R.id.list_container)
+    val preferenceView = super.onCreateView(inflater, listContainer, savedInstanceState)
+    listContainer.removeAllViews()
+    listContainer.addView(preferenceView)
+    return view
+  }
+
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
     setUpToolbar(R.string.category_player)

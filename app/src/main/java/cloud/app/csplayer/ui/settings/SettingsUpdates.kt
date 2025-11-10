@@ -1,15 +1,19 @@
 package cloud.app.csplayer.ui.settings
 
-import android.os.Bundle
-import android.view.View
-import android.widget.Toast
 import android.content.Intent
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.net.toUri
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.LogcatBinding
+import cloud.app.csplayer.ui.dialog.SelectionDialog
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getPref
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setUpToolbar
@@ -21,12 +25,22 @@ import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.txt
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import androidx.core.net.toUri
-import cloud.app.csplayer.ui.dialog.SelectionDialog
 import androidx.core.content.edit
-import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 
 class SettingsUpdates : PreferenceFragmentCompat() {
+
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
+  ): View {
+    val view = inflater.inflate(R.layout.settings_title_top, container, false)
+    val listContainer = view.findViewById<ViewGroup>(android.R.id.list_container)
+    val preferenceView = super.onCreateView(inflater, listContainer, savedInstanceState)
+    listContainer.removeAllViews()
+    listContainer.addView(preferenceView)
+    return view
+  }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)

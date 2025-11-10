@@ -257,7 +257,6 @@
   </style>
 
   <style name="CustomPreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
-    <item name="android:layout">@layout/settings_title_top</item>
     <item name="preferenceStyle">@style/CustomPreferenceStyle</item>
     <item name="switchPreferenceStyle">@style/CustomSwitchPreferenceStyle</item>
     <item name="seekBarPreferenceStyle">@style/CustomSeekBarPreferenceStyle</item>
