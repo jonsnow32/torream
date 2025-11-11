@@ -1,5 +1,6 @@
 package cloud.app.csplayer.ui.feed
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,11 +8,17 @@ import android.view.ViewGroup
 import com.google.android.material.tabs.TabLayout
 import cloud.app.csplayer.databinding.BottomSheetFeedFilterBinding
 import cloud.app.csplayer.ui.dialog.DockingDialog
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * Bottom sheet dialog for feed filtering and display options
  */
+@AndroidEntryPoint
 class FeedFilterDialog : DockingDialog() {
+
+  @Inject
+  lateinit var sharedPreferences: SharedPreferences
 
   private var _binding: BottomSheetFeedFilterBinding? = null
   private val binding get() = _binding!!
@@ -32,7 +39,7 @@ class FeedFilterDialog : DockingDialog() {
     super.onViewCreated(view, savedInstanceState)
 
     // Load current config
-    currentConfig = FeedFilterConfig.load(requireContext())
+    currentConfig = FeedFilterConfig.load(sharedPreferences)
 
     setupGroupModeTab()
     setupViewModeTab()
@@ -159,7 +166,7 @@ class FeedFilterDialog : DockingDialog() {
 
     binding.applyButton.setOnClickListener {
       // Save config
-      FeedFilterConfig.save(requireContext(), currentConfig)
+      FeedFilterConfig.save(sharedPreferences, currentConfig)
       // Notify listener
       onApplyListener?.invoke(currentConfig)
       dismiss()

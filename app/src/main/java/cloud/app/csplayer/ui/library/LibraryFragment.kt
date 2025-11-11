@@ -112,7 +112,7 @@ class LibraryFragment : Fragment(), FeedClickListener {
   }
 
   private fun setupAdapter() {
-    adapter = FeedAdapter(this as FeedClickListener, adManager)
+    adapter = FeedAdapter(this as FeedClickListener, adManager, viewModel.filterConfig.value)
 
     // Observe feed data
     observe(viewModel.feedData) {

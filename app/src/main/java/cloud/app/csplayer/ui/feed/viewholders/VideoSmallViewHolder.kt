@@ -11,21 +11,38 @@ import cloud.app.csplayer.utils.formatFileSize
 import cloud.app.csplayer.utils.loadThumbnail
 
 class VideoSmallViewHolder(
-  val parent: ViewGroup,
+  parent: ViewGroup,
   val clickListener: FeedClickListener,
-  val binding: ItemVideoSmallBinding = ItemVideoSmallBinding.inflate(
+  private val filterConfig: cloud.app.csplayer.ui.feed.FeedFilterConfig? = null
+) : FeedViewHolder<FeedData.MediaItem>(
+  ItemVideoSmallBinding.inflate(
     LayoutInflater.from(parent.context), parent, false
-  )
-) : FeedViewHolder<FeedData.MediaItem>(binding.root) {
+  ).root
+) {
+  private val binding: ItemVideoSmallBinding = ItemVideoSmallBinding.bind(itemView)
   override fun bind(feed: FeedData.MediaItem) {
     binding.title.text = feed.title
-    binding.tvDuration.text = feed.media.duration.formatDuration()
 
-    // Load thumbnail asynchronously
-    binding.imgCover.loadThumbnail(feed.media.uri)
+    // Show/hide duration based on filterConfig
+    if (filterConfig?.showDuration == true) {
+      binding.tvDuration.text = feed.media.duration.formatDuration()
+      binding.tvDuration.visibility = android.view.View.VISIBLE
+    } else {
+      binding.tvDuration.visibility = android.view.View.GONE
+    }
 
-// Update playback progress
-    updatePlaybackProgress(feed.media.duration, feed.media.position)
+    // Show/hide thumbnail
+    if (filterConfig?.showThumbnail == true) {
+      binding.imgCover.loadThumbnail(feed.media.uri)
+      binding.imgCover.visibility = android.view.View.VISIBLE
+    }
+
+    // Update playback progress
+    if (filterConfig?.showProgress == true) {
+      updatePlaybackProgress(feed.media.duration, feed.media.position)
+    } else {
+      binding.progressPlayback.visibility = android.view.View.GONE
+    }
 
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)

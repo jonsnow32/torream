@@ -12,19 +12,47 @@ import cloud.app.csplayer.utils.formatFileSize
 import cloud.app.csplayer.utils.loadThumbnail
 
 class AudioViewHolder(
-  val parent: ViewGroup,
+  parent: ViewGroup,
   val clickListener: FeedClickListener,
-  val binding: ItemAudioBinding = ItemAudioBinding.inflate(
+  private val filterConfig: cloud.app.csplayer.ui.feed.FeedFilterConfig? = null
+) : FeedViewHolder<FeedData.MediaItem>(
+  ItemAudioBinding.inflate(
     LayoutInflater.from(parent.context), parent, false
-  )
-) : FeedViewHolder<FeedData.MediaItem>(binding.root) {
+  ).root
+) {
+  private val binding: ItemAudioBinding = ItemAudioBinding.bind(itemView)
   override fun bind(feed: FeedData.MediaItem) {
     binding.title.text = feed.title
-    binding.subtitle.text = feed.media.size.formatFileSize()
-    binding.tvDuration.text = feed.media.duration.formatDuration()
-    binding.path.text = feed.media.path
+
+    // Show/hide size based on filterConfig
+    if (filterConfig?.showSize == true) {
+      binding.subtitle.text = feed.media.size.formatFileSize()
+      binding.subtitle.visibility = android.view.View.VISIBLE
+    } else {
+      binding.subtitle.visibility = android.view.View.GONE
+    }
+
+    // Show/hide duration based on filterConfig
+    if (filterConfig?.showDuration == true) {
+      binding.tvDuration.text = feed.media.duration.formatDuration()
+      binding.tvDuration.visibility = android.view.View.VISIBLE
+    }
+
+    // Show/hide path based on filterConfig
+    if (filterConfig?.showPath == true) {
+      binding.path.text = feed.media.path
+      binding.path.visibility = android.view.View.VISIBLE
+    } else {
+      binding.path.visibility = android.view.View.GONE
+    }
+
     // Load album art/thumbnail asynchronously
-    binding.imgCover.setImageResource(R.drawable.outline_music_note_24)
+    if (filterConfig?.showThumbnail == true) {
+      binding.imgCover.setImageResource(R.drawable.outline_music_note_24)
+      binding.imgCover.visibility = android.view.View.VISIBLE
+    } else {
+      binding.imgCover.visibility = android.view.View.GONE
+    }
 
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)

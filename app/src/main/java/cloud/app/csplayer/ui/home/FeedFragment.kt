@@ -1,6 +1,7 @@
 package cloud.app.csplayer.ui.home
 
 import adapters.FeedAdapter
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Bundle
 import android.text.TextUtils
@@ -28,12 +29,13 @@ import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.feed.FeedClickListener
 import cloud.app.csplayer.ui.feed.FeedData
-import cloud.app.csplayer.ui.feed.FeedFilterDialog
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
+import cloud.app.csplayer.ui.feed.FeedFilterDialog
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.FastScrollerHelper
 import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
+import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hasMediaPermissions
 import cloud.app.csplayer.utils.observe
@@ -43,6 +45,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+import kotlin.math.max
 
 
 @AndroidEntryPoint
@@ -54,6 +57,8 @@ class FeedFragment : Fragment(), FeedClickListener {
   @Inject
   lateinit var adManager: AdManager
 
+  @Inject
+  lateinit var sharedPreferences: SharedPreferences
   private var syncSnackbar: Snackbar? = null
 
   private lateinit var adapter: FeedAdapter
@@ -100,7 +105,7 @@ class FeedFragment : Fragment(), FeedClickListener {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect(binding.appBar, binding.swipeRefresh)
+    applyContentRect(binding.appBar, binding.swipeRefresh, binding.appBarOutline)
     FastScrollerHelper.applyTo(binding.rvFeed)
 
     // Setup basic UI components (toolbar, search, etc.)
@@ -206,7 +211,15 @@ class FeedFragment : Fragment(), FeedClickListener {
    */
   private fun setupAdapter() {
 
-    adapter = FeedAdapter(this as FeedClickListener, adManager)
+    adapter = FeedAdapter(this as FeedClickListener, adManager, viewModel.filterConfig.value)
+
+    // Observe filterConfig changes and update adapter
+    observe(viewModel.filterConfig) { config ->
+      adapter.updateFilterConfig(config)
+      // Refresh to rebind all items with new visibility settings
+      adapter.notifyDataSetChanged()
+    }
+
     observe(viewModel.feedData) {
       adapter.submitData(it)
       binding.swipeRefresh.isRefreshing = false
@@ -515,7 +528,7 @@ class FeedFragment : Fragment(), FeedClickListener {
     viewModel.filterConfig.value = config
 
     // Save the config to persist across app restarts
-    FeedFilterConfig.Companion.save(requireContext(), config)
+    FeedFilterConfig.save(sharedPreferences, config)
 
     // Refresh the adapter to apply changes
     adapter.refresh()

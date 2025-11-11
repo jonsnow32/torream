@@ -41,7 +41,6 @@
       android:summary="@string/picture_in_picture_des"
       android:title="@string/picture_in_picture"
       app:defaultValue="true"
-      app:isPreferenceVisible="false"
       app:key="@string/pip_enabled_key" />
     <SwitchPreferenceCompat
       android:icon="@drawable/ic_baseline_aspect_ratio_24"

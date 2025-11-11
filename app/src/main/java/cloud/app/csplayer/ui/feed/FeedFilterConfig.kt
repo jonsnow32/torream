@@ -1,6 +1,7 @@
 package cloud.app.csplayer.ui.feed
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import cloud.app.csplayer.utils.PREFERENCES_NAME
 
@@ -92,9 +93,7 @@ data class FeedFilterConfig(
         private const val KEY_SORT_ORDER_SIZE = "feed_filter_sort_order_size"
         private const val KEY_SORT_ORDER_LOCATION = "feed_filter_sort_order_location"
 
-        fun load(context: Context): FeedFilterConfig {
-            val prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-
+        fun load(prefs: SharedPreferences): FeedFilterConfig {
             // Load sort order for each SortBy
             val sortOrderMap = mapOf(
                 SortBy.TITLE to SortOrder.fromValue(
@@ -129,8 +128,7 @@ data class FeedFilterConfig(
             )
         }
 
-        fun save(context: Context, config: FeedFilterConfig) {
-            val prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+        fun save(prefs: SharedPreferences, config: FeedFilterConfig) {
             prefs.edit {
                 putString(KEY_VIEW_MODE, config.viewMode.value)
                 putString(KEY_GROUP_MODE, config.groupMode.value)

@@ -51,7 +51,8 @@ private data class FeedDataParams(
 class FeedViewModel @Inject constructor(
   @param:ApplicationContext private val context: Context,
   private val mediaRepository: MediaRepository,
-  private val mediaPlaybackRepository: MediaPlaybackRepository
+  private val mediaPlaybackRepository: MediaPlaybackRepository,
+  private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
   // Title - shows app name by default, or folder name when browsing
@@ -60,12 +61,8 @@ class FeedViewModel @Inject constructor(
   // Root folder path - if set, only show files from this folder
   private var rootFolderPath: String? = null
 
-  // SharedPreferences for storing settings
-  private val sharedPreferences: SharedPreferences =
-    context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-
   // Feed filter configuration state - single source of truth
-  val filterConfig = MutableStateFlow(FeedFilterConfig.Companion.load(context))
+  val filterConfig = MutableStateFlow(FeedFilterConfig.load(sharedPreferences))
 
   // Derived properties for convenience
   val viewMode: Flow<FeedFilterConfig.ViewMode> = filterConfig.map { config ->

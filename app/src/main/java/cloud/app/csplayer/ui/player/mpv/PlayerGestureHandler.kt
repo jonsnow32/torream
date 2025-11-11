@@ -71,7 +71,8 @@ class PlayerGestureHandler(
   private val onDoubleTapForward: () -> Unit,
   private val onSingleTap: () -> Unit,
   private val onTogglePlayPause: () -> Unit,
-  private val hideUIForBrightness: () -> Unit
+  private val hideUIForBrightness: () -> Unit,
+  private val onTouchWhenLocked: () -> Unit
 ) {
 
   // ========== Touch State Management ==========
@@ -335,6 +336,7 @@ class PlayerGestureHandler(
 
     if (isLocked()) {
       currentClickCount = 0
+      onTouchWhenLocked()
       return
     }
 

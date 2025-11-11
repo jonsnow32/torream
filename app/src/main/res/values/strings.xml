@@ -906,4 +906,5 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="reset_btn">Reset</string>
   <string name="background_audio">Background audio</string>
   <string name="support_url_hint">[http,https,magnet,torrent]</string>
+  <string name="logo">Logo</string>
 </resources>

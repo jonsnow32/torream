@@ -2,6 +2,7 @@ package cloud.app.csplayer.ui.player
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -148,6 +149,9 @@ data class PlaylistState(
 class MPVFragment : Fragment(), MPVLib.EventObserver {
   @Inject
   lateinit var mediaPlaybackDao: MediaPlaybackRepository
+
+  @Inject
+  lateinit var sharedPreferences: SharedPreferences
 
   private var player: MPVView? = null
   private val viewModel by viewModels<PlayerViewModel>()
@@ -667,7 +671,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       // Initialize gesture handler with all required callbacks
 
       // Initialize UI controller
-      uiController = PlayerUIController(binding)
+      uiController = PlayerUIController(binding, sharedPreferences)
 
       // Initialize audio manager
       playerAudioManager = PlayerAudioManager(
@@ -774,9 +778,11 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         },
         hideUIForBrightness = {
           uiController.hide()
+        },
+        onTouchWhenLocked = {
+          uiController.toggleControlsWhenLocked()
         }
       )
-
     }
   }
 

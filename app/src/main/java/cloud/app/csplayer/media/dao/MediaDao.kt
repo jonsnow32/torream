@@ -68,6 +68,16 @@ interface MediaDao {
   suspend fun deleteByUris(uris: List<String>)
 
   @Transaction
+  @Query("""
+    SELECT m.* FROM media m
+    INNER JOIN media_playback mp ON m.uri = mp.media_uri
+    WHERE mp.is_finished = 0
+    ORDER BY mp.last_played_at DESC
+    LIMIT :limit OFFSET :offset
+  """)
+  suspend fun getRecentlyPlayedWithPlayback(limit: Int, offset: Int): List<MediaWithPlayback>
+
+  @Transaction
   suspend fun transaction(block: suspend () -> Unit) {
     block()
   }

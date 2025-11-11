@@ -16,7 +16,6 @@
     <item name="colorOnBackground">@color/md_theme_onBackground</item>
     <item name="colorSurface">@color/md_theme_surface</item>
     <item name="colorOnSurface">@color/md_theme_onSurface</item>
-
     <!-- Status bar -->
 <!--    <item name="android:statusBarColor">@color/oneui_status_bar</item>-->
 <!--    <item name="android:navigationBarColor">@color/oneui_navigation_bar</item>-->
@@ -304,7 +303,7 @@
   <style name="AppButtonStyle" parent="Widget.Material3.Button">
     <item name="android:background">@drawable/button_background</item>
     <item name="android:foreground">?attr/selectableItemBackground</item>
-    <item name="android:textColor">?attr/colorOnPrimary</item>
+    <item name="android:textColor">@color/white</item>
     <item name="android:textStyle">bold</item>
     <item name="android:textSize">15sp</item>
     <item name="android:letterSpacing">0.01</item>

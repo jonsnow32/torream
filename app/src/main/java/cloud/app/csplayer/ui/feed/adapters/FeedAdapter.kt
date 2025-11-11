@@ -32,10 +32,15 @@ import cloud.app.csplayer.utils.observe
 
 class FeedAdapter(
   private val clickListener: FeedClickListener,
-  private val adManager: AdManager? = null
+  private val adManager: AdManager? = null,
+  private var filterConfig: cloud.app.csplayer.ui.feed.FeedFilterConfig? = null
 ) : PagingDataAdapter<FeedData, FeedViewHolder<*>>(DiffCallback), GridAdapter {
 
   private val viewPool = RecyclerView.RecycledViewPool()
+
+  fun updateFilterConfig(config: cloud.app.csplayer.ui.feed.FeedFilterConfig) {
+    filterConfig = config
+  }
 
   object DiffCallback : DiffUtil.ItemCallback<FeedData>() {
     override fun areItemsTheSame(oldItem: FeedData, newItem: FeedData): Boolean {
@@ -91,12 +96,12 @@ class FeedAdapter(
     return when (type) {
       FeedData.Type.HorizontalList -> HorizontalListViewHolder(parent, clickListener, viewPool)
       FeedData.Type.Ad -> AdViewHolder(parent, adManager = adManager)
-      FeedData.Type.Video -> VideoViewHolder(parent, clickListener)
-      FeedData.Type.Audio -> AudioViewHolder(parent, clickListener)
+      FeedData.Type.Video -> VideoViewHolder(parent, clickListener, filterConfig)
+      FeedData.Type.Audio -> AudioViewHolder(parent, clickListener, filterConfig)
       FeedData.Type.Folder -> FolderViewHolder(parent, clickListener)
       FeedData.Type.PlayList -> TODO()
-      FeedData.Type.VideoSmall -> VideoSmallViewHolder(parent, clickListener)
-      FeedData.Type.AudioSmall -> AudioSmallViewHolder(parent, clickListener)
+      FeedData.Type.VideoSmall -> VideoSmallViewHolder(parent, clickListener, filterConfig)
+      FeedData.Type.AudioSmall -> AudioSmallViewHolder(parent, clickListener, filterConfig)
       FeedData.Type.FolderSmall -> FolderSmallViewHolder(parent, clickListener)
       FeedData.Type.PlayListSmall -> TODO()
       FeedData.Type.HTTPDownload -> HttpDownloadViewHolder(parent, clickListener)

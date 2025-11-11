@@ -1,6 +1,7 @@
 package cloud.app.csplayer.ui.player.mpv
 
 import android.animation.ObjectAnimator
+import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -25,7 +26,10 @@ import timber.log.Timber
  * - Gesture detection (handled by PlayerGestureHandler)
  * - Dialogs (handled by PlayerDialogManager)
  */
-class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
+class PlayerUIController(
+  private val binding: PlayerCustomLayoutBinding,
+  private val sharedPreferences: SharedPreferences
+) {
 
   // ========== UI State ==========
 
@@ -58,11 +62,24 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
     updateLockIcon()
   }
 
-  // ========== Public API ==========
+  private fun updateVisibilityControlBtt() {
+    val context = binding.root.context ?: return;
+    val pipEnable =
+      sharedPreferences.getBoolean(context.getString(R.string.pip_enabled_key), true)
 
-  /**
-   * Toggle controls visibility
-   */
+    val resizeEnable =
+      sharedPreferences.getBoolean(context.getString(R.string.player_resize_enabled_key), true)
+    val speedEnable =
+      sharedPreferences.getBoolean(context.getString(R.string.playback_speed_enabled_key), true)
+    val rotateEnable =
+      sharedPreferences.getBoolean(context.getString(R.string.rotate_video_key), true)
+    binding.playerResizeBtt.isGone = !resizeEnable
+    binding.playerOptionPip.isGone = !pipEnable
+    binding.playerRotateBtt.visibility = if (speedEnable) View.VISIBLE else View.INVISIBLE
+    binding.playerSpeedBtt.isGone = !speedEnable
+  }
+
+  // ========== Public API ==========
   fun toggleControls() {
     isShowing = !isShowing
     applyUIState()
@@ -70,6 +87,28 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
     // Schedule auto-hide if controls are now showing
     if (isShowing && !isLocked) {
       scheduleAutoHide()
+    }
+  }
+
+  private val autoHideLockHandler = Handler(Looper.getMainLooper())
+  private val autoHideLockRunnable = Runnable {
+    binding.playerLock.animateSlideDown()
+    isShowing = false
+  }
+
+  fun toggleControlsWhenLocked() {
+    if (!isLocked) return
+
+    val isLockShowing =
+      binding.playerLock.isVisible && !binding.playerLock.isGone && (binding.playerLock.translationY == 0.0f)
+
+    if (isLockShowing) {
+      binding.playerLock.animateSlideDown()
+      isShowing = false
+    } else {
+      binding.playerLock.animateToVisible()
+      isShowing = true
+      autoHideLockHandler.postDelayed(autoHideLockRunnable, AUTO_HIDE_DELAY_MS)
     }
   }
 
@@ -99,8 +138,10 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
    */
   fun toggleLock() {
     isLocked = !isLocked
+    autoHideLockHandler.removeCallbacks(autoHideLockRunnable)
     updateLockIcon()
     applyUIState()
+    scheduleAutoHide()
   }
 
   /**
@@ -150,6 +191,7 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
       scheduleAutoHide()
     }
   }
+
   /**
    * Update lock icon based on current state
    */
@@ -186,7 +228,7 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
    * Set video resolution
    */
   fun setResolution(resolution: String) {
-    binding.playerVideoTitleRez?.text = resolution
+    binding.playerVideoTitleRez.text = resolution
   }
 
   /**
@@ -320,12 +362,12 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
    */
   private fun applyUIState() {
     if (isLocked) {
-      // LOCKED STATE: Only lock button visible
       animateLocked()
     } else {
       // UNLOCKED STATE: Show/hide based on isShowing
       if (isShowing) {
         animateShow()
+
       } else {
         animateHide()
       }
@@ -357,6 +399,10 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
         extraControls.isGone = true
       }
     }, ANIMATION_DURATION)
+
+    binding.root.postDelayed({
+      binding.playerLock.animateSlideDown()
+    }, AUTO_HIDE_DELAY_MS)
   }
 
   /**
@@ -364,6 +410,9 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
    */
   private fun animateShow() {
     binding.apply {
+
+      updateVisibilityControlBtt()
+
       playerLock.isGone = false
       playerTopHolder.isGone = false
       extraControls.isGone = false
@@ -378,7 +427,6 @@ class PlayerUIController(private val binding: PlayerCustomLayoutBinding) {
       playerCenterMenu.animateFadeIn()
       playerVideoBar.animateToVisible()
     }
-
   }
 
   /**

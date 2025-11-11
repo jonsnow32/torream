@@ -17,6 +17,7 @@ import androidx.annotation.StringRes
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import cloud.app.csplayer.BuildConfig
@@ -26,6 +27,7 @@ import cloud.app.csplayer.databinding.FragmentSettingsBinding
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.dialog.UrlInputDialog
+import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
@@ -47,6 +49,137 @@ import java.util.Locale
 import java.util.TimeZone
 
 class SettingsFragment : Fragment() {
+
+  private var binding by autoCleared<FragmentSettingsBinding>()
+
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?,
+  ): View {
+    val localBinding = FragmentSettingsBinding.inflate(inflater, container, false)
+    binding = localBinding
+    return localBinding.root
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+
+    binding.apply {
+      applyContentRect(null,root)
+
+      listOf(
+        settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
+        settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
+        settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
+      ).forEach { (view, navigationId) ->
+        view.apply {
+          setOnClickListener {
+            activity?.navigate(navigationId, Bundle())
+          }
+          if (context?.isLayout(LayoutMode.Tv.id) == true) {
+            isFocusable = true
+            isFocusableInTouchMode = true
+          }
+        }
+      }
+
+      // Default focus on TV
+      if (context?.isLayout(LayoutMode.Tv.id) == true) {
+        settingsGeneral.requestFocus()
+      }
+
+      urlBtn.setOnClickListener {
+//        var text = if (BuildConfig.DEBUG) "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" else "";
+        var text = if (BuildConfig.DEBUG) "magnet:?xt=urn:btih:53A4A411DECDAF7E1BE919607B7A4187987BF0BB" else "";
+
+        (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
+          0
+        )?.text?.toString()?.let { copy ->
+          if (copy.isNotEmpty() && copy.contains("http"))
+            text = copy;
+        }
+
+        UrlInputDialog.newInstance(text).show(parentFragmentManager)
+      }
+
+      openLocal.setOnClickListener {
+        openLocalVideo(videoResultLauncher)
+//        activity?.navigate(R.id.feedFragment)
+      }
+    }
+    val appVersion = BuildConfig.VERSION_NAME
+    val commitInfo = getString(R.string.commit_hash)
+    val buildTimestamp = SimpleDateFormat.getDateTimeInstance(
+      DateFormat.LONG, DateFormat.LONG,
+      Locale.getDefault()
+    ).apply {
+      timeZone = TimeZone.getTimeZone("UTC")
+    }.format(Date(BuildConfig.BUILD_DATE)).replace("UTC", "")
+    binding.versionInfo.text = "v${BuildConfig.VERSION_NAME}"
+    binding.buildDate.text = buildTimestamp
+    binding.appVersionInfo.setOnLongClickListener {
+      clipboardHelper(txt(R.string.extension_version), "v$appVersion $commitInfo $buildTimestamp")
+      true
+    }
+
+
+  }
+
+  private fun openLocalVideo(videoResultLauncher: ActivityResultLauncher<Intent>) {
+    val intent = Intent().apply {
+      action = Intent.ACTION_GET_CONTENT
+      type = "video/*"
+      addCategory(Intent.CATEGORY_OPENABLE)
+      addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // Grant temporary read permission
+    }
+
+    // For Android versions before API 19, use Intent.ACTION_PICK
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+      intent.action = Intent.ACTION_PICK
+      intent.data = MediaStore.Video.Media.INTERNAL_CONTENT_URI
+    }
+
+    // Launch the intent to open the file chooser
+    normalSafeApiCall {
+      videoResultLauncher.launch(
+        Intent.createChooser(
+          intent,
+          getString(R.string.open_local_video)
+        )
+      )
+    }
+  }
+
+  private val videoResultLauncher = registerForActivityResult(
+    ActivityResultContracts.StartActivityForResult()
+  ) { result ->
+    if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+    val selectedVideoUri = result.data?.data ?: return@registerForActivityResult
+
+    // Create PlaybackData for local video file
+    val playbackData = PlaybackData(
+      title = "Local Video",
+      videoLinks = listOf(
+        VideoLink(
+          url = selectedVideoUri.toString(),
+          name = "Local Video",
+          headers = emptyMap(),
+          position = 0L,
+          subtitles = emptyList()
+        )
+      ),
+      subtitles = emptyList(),
+      videoStartIndex = 0,
+      subtitleStartIndex = 0,
+      isSameEpisode = true,
+      hasAd = false
+    )
+
+    val bundle = PlaybackDataHelper.createBundle(playbackData)
+    activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
+  }
+
   companion object {
 
     fun PreferenceFragmentCompat?.getPref(id: Int): Preference? {
@@ -111,139 +244,5 @@ class SettingsFragment : Fragment() {
 
       return size
     }
-  }
-
-  override fun onDestroyView() {
-    binding = null
-    super.onDestroyView()
-  }
-
-  var binding: FragmentSettingsBinding? = null
-  override fun onCreateView(
-    inflater: LayoutInflater,
-    container: ViewGroup?,
-    savedInstanceState: Bundle?,
-  ): View {
-    val localBinding = FragmentSettingsBinding.inflate(inflater, container, false)
-    binding = localBinding
-    return localBinding.root
-  }
-
-  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    super.onViewCreated(view, savedInstanceState)
-
-    binding?.apply {
-      applyContentRect(null,root)
-
-      listOf(
-        settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
-        settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
-        settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
-      ).forEach { (view, navigationId) ->
-        view.apply {
-          setOnClickListener {
-            activity?.navigate(navigationId, Bundle())
-          }
-          if (context?.isLayout(LayoutMode.Tv.id) == true) {
-            isFocusable = true
-            isFocusableInTouchMode = true
-          }
-        }
-      }
-
-      // Default focus on TV
-      if (context?.isLayout(LayoutMode.Tv.id) == true) {
-        settingsGeneral.requestFocus()
-      }
-
-      urlBtn.setOnClickListener {
-//        var text = if (BuildConfig.DEBUG) "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" else "";
-        var text = if (BuildConfig.DEBUG) "magnet:?xt=urn:btih:53A4A411DECDAF7E1BE919607B7A4187987BF0BB" else "";
-
-        (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
-          0
-        )?.text?.toString()?.let { copy ->
-          if (copy.isNotEmpty() && copy.contains("http"))
-            text = copy;
-        }
-
-        UrlInputDialog.newInstance(text).show(parentFragmentManager)
-      }
-
-      openLocal.setOnClickListener {
-        openLocalVideo(videoResultLauncher)
-//        activity?.navigate(R.id.feedFragment)
-      }
-    }
-    val appVersion = BuildConfig.VERSION_NAME
-    val commitInfo = getString(R.string.commit_hash)
-    val buildTimestamp = SimpleDateFormat.getDateTimeInstance(
-      DateFormat.LONG, DateFormat.LONG,
-      Locale.getDefault()
-    ).apply {
-      timeZone = TimeZone.getTimeZone("UTC")
-    }.format(Date(BuildConfig.BUILD_DATE)).replace("UTC", "")
-    binding?.versionInfo?.text = "v${BuildConfig.VERSION_NAME}"
-    binding?.buildDate?.text = buildTimestamp
-    binding?.appVersionInfo?.setOnLongClickListener {
-      clipboardHelper(txt(R.string.extension_version), "v$appVersion $commitInfo $buildTimestamp")
-      true
-    }
-
-
-  }
-
-  private fun openLocalVideo(videoResultLauncher: ActivityResultLauncher<Intent>) {
-    val intent = Intent().apply {
-      action = Intent.ACTION_GET_CONTENT
-      type = "video/*"
-      addCategory(Intent.CATEGORY_OPENABLE)
-      addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // Grant temporary read permission
-    }
-
-    // For Android versions before API 19, use Intent.ACTION_PICK
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-      intent.action = Intent.ACTION_PICK
-      intent.data = MediaStore.Video.Media.INTERNAL_CONTENT_URI
-    }
-
-    // Launch the intent to open the file chooser
-    normalSafeApiCall {
-      videoResultLauncher.launch(
-        Intent.createChooser(
-          intent,
-          getString(R.string.open_local_video)
-        )
-      )
-    }
-  }
-
-  private val videoResultLauncher = registerForActivityResult(
-    ActivityResultContracts.StartActivityForResult()
-  ) { result ->
-    if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
-    val selectedVideoUri = result?.data?.data ?: return@registerForActivityResult
-
-    // Create PlaybackData for local video file
-    val playbackData = PlaybackData(
-      title = "Local Video",
-      videoLinks = listOf(
-        VideoLink(
-          url = selectedVideoUri.toString(),
-          name = "Local Video",
-          headers = emptyMap(),
-          position = 0L,
-          subtitles = emptyList()
-        )
-      ),
-      subtitles = emptyList(),
-      videoStartIndex = 0,
-      subtitleStartIndex = 0,
-      isSameEpisode = true,
-      hasAd = false
-    )
-
-    val bundle = PlaybackDataHelper.createBundle(playbackData)
-    activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
   }
 }

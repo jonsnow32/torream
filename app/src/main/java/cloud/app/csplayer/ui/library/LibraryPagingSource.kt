@@ -2,12 +2,10 @@ package cloud.app.csplayer.ui.library
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import cloud.app.csplayer.media.repository.MediaPlaybackRepository
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.media.repository.TorrentRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
 /**
@@ -23,7 +21,6 @@ enum class LibrarySection {
 
 class LibraryPagingSource(
   private val repository: MediaRepository,
-  private val playbackRepository: MediaPlaybackRepository,
   private val torrentRepository: TorrentRepository,
   private val section: LibrarySection
 ) : PagingSource<Int, FeedData>() {
@@ -106,48 +103,30 @@ class LibraryPagingSource(
 
   /**
    * Load playback history (recently played media)
+   * Optimized: Uses single JOIN query to fetch media with playback info in one go
    */
   private suspend fun loadHistory(limit: Int, offset: Int): List<FeedData> {
     Timber.d("Loading history with limit=$limit, offset=$offset")
 
-    // Get recently played items from playback repository
-    val recentlyPlayed = playbackRepository.getRecentlyPlayed(limit + offset).first()
+    try {
+      // Get recently played media with playback info in a single JOIN query
+      val recentlyPlayedMedia = repository.getRecentlyPlayed(limit, offset)
 
-    Timber.d("Found ${recentlyPlayed.size} history items")
+      Timber.d("Successfully loaded ${recentlyPlayedMedia.size} history items")
 
-    // Apply pagination manually
-    val paginatedPlaybacks = recentlyPlayed
-      .drop(offset)
-      .take(limit)
-
-    // Get corresponding media items
-    val mediaItems = mutableListOf<FeedData>()
-    for (playback in paginatedPlaybacks) {
-      try {
-        // Try to get media from repository
-        val allMedia = repository.observeMedia().first()
-        val media = allMedia.find { it.uri == playback.mediaUri }
-
-        if (media != null) {
-          val mediaType = determineMediaType(media.mimeType)
-          mediaItems.add(
-            FeedData.MediaItem(
-              id = media.uri,
-              title = media.name,
-              type = mediaType,
-              media = media
-            )
-          )
-        } else {
-          Timber.w("Media not found for history item: ${playback.mediaUri}")
-        }
-      } catch (e: Exception) {
-        Timber.e(e, "Error loading media for history item: ${playback.mediaUri}")
+      // Convert to FeedData
+      return recentlyPlayedMedia.map { media ->
+        FeedData.MediaItem(
+          id = media.uri,
+          title = media.name,
+          type = determineMediaType(media.mimeType),
+          media = media
+        ) as FeedData
       }
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading history")
+      return emptyList()
     }
-
-    Timber.d("Successfully loaded ${mediaItems.size} history items")
-    return mediaItems
   }
 
   /**

@@ -60,4 +60,5 @@ interface MediaRepository {
     sortBy: FeedFilterConfig.SortBy = FeedFilterConfig.SortBy.DATE,
     sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.DESCENDING
   ): List<Media>
+  suspend fun getRecentlyPlayed(limit: Int, offset: Int): List<Media>
 }

@@ -597,6 +597,19 @@ class MediaRepositoryImpl @Inject constructor(
     }
   }
 
+  override suspend fun getRecentlyPlayed(limit: Int, offset: Int): List<Media> =
+    withContext(Dispatchers.IO) {
+      Timber.d("getRecentlyPlayed: limit=$limit, offset=$offset")
+
+      // Use DAO query that JOINs media and playback tables in a single query
+      val mediaWithPlayback = mediaDao.getRecentlyPlayedWithPlayback(limit, offset)
+
+      Timber.d("getRecentlyPlayed: Found ${mediaWithPlayback.size} recently played items")
+
+      // Convert to Media domain models
+      return@withContext mediaWithPlayback.map { it.toMediaDomain() }
+    }
+
   // Sorting helpers
   private fun sortMediaList(
     media: List<Media>,
