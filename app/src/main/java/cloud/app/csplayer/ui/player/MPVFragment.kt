@@ -28,6 +28,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
 import androidx.appcompat.app.AppCompatActivity.RESULT_OK
 import androidx.core.view.WindowCompat
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -488,6 +489,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         var resume = false
         exoProgress.addOnScrubListener(object : PreviewBar.OnScrubListener {
           override fun onScrubStart(previewBar: PreviewBar?) {
+            exoProgress.isPreviewEnabled = false;
             resume = player?.paused == false
             if (resume) player?.paused = true
             uiController.resetAutoHideTimer()
@@ -498,6 +500,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
             progress: Int,
             fromUser: Boolean
           ) {
+            playerBinding?.exoPosition?.text =
+              MPVUtils.prettyTime(previewBar?.progress?.toLong() ?: 0L)
+            val diff = psc.durationSec - (previewBar?.progress?.toLong() ?: 0L)
+            playerBinding?.exoDuration?.text = if (diff <= 0)
+              "-00:00"
+            else
+              MPVUtils.prettyTime(-diff, true)
           }
 
           override fun onScrubStop(previewBar: PreviewBar?) {
@@ -507,7 +516,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           }
         })
 
-
+        exoProgress.attachPreviewView(previewFrameLayout)
+        exoProgress.setPreviewLoader { currentPosition, max ->
+          val bitmap = player?.getPreview(currentPosition.toFloat().div(max.toFloat()))
+          previewImageView.isGone = bitmap == null
+          previewImageView.setImageBitmap(bitmap)
+          uiController.resetAutoHideTimer()
+        }
       }
     } catch (e: Exception) {
       logError(e)
@@ -1899,7 +1914,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private fun eventPropertyUi(property: String, value: Long) {
     if (!activityIsForeground) return
     when (property) {
-      "time-pos" -> updatePlaybackPos(value.toInt())
+      "time-pos" -> updatePlaybackPos(value)
       "playlist-pos" -> {
         val newIndex = value.toInt()
         if (newIndex >= 0 && playlistState?.currentIndex != newIndex) {
@@ -1907,6 +1922,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           updatePlaylistUI()
 
           // Update current media URI in mediaManager for state tracking
+          // This will also update the original path for thumbnail extraction
           playlistState?.items?.getOrNull(newIndex)?.let { item ->
             mediaManager.updateCurrentMediaUri(item.filename)
           }
@@ -1950,6 +1966,11 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
 
       "end_file_reason" -> {
+        Timber.i("Playback ended, reason: $value")
+        uiController.show(false)
+        Timber.i("Playback psc.duration: ${psc.durationSec}")
+        updatePlaybackPos(psc.durationSec)
+
         finishWithResult(
           if (playbackHasStarted) RESULT_OK else RESULT_CANCELED,
           true,
@@ -1969,7 +1990,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
-  private fun updatePlaybackPos(position: Int) {
+  private fun updatePlaybackPos(position: Long) {
     playerBinding?.exoPosition?.text = MPVUtils.prettyTime(position.toLong())
     val diff = psc.durationSec - position
     playerBinding?.exoDuration?.text = if (diff <= 0)
@@ -2131,7 +2152,6 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     } catch (e: Exception) {
       false
     }
-
     when (endFileReason) {
       MPVLib.mpvEndFileReason.MPV_END_FILE_REASON_EOF -> {
         // Priority 1: Check if in playlist mode and auto-advance

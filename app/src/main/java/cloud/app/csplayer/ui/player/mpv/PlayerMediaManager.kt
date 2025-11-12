@@ -65,14 +65,32 @@ class PlayerMediaManager(
     if (finalStartPosition > 0) {
       Timber.tag(TAG).d("Starting playback at position: ${finalStartPosition}ms")
     }
-
+    configureMpvForCleanSeek()
     pushOption("force-media-title", title ?: link.name)
     pushOption("start", "${finalStartPosition / 1000}")
 
     val uri = url.toUri()
+    player?.setOriginalMediaPath(url)
     val resolvedPath = resolveUri(uri)
-
     player?.playFile(resolvedPath, headers)
+  }
+
+  private fun configureMpvForCleanSeek() {
+    // Seek chính xác và tránh render frame lỗi khi seek
+    pushOption("hr-seek", "yes")
+    pushOption("hr-seek-framedrop", "no")
+
+    // Hữu ích với HLS/DASH
+    pushOption("cache", "yes")
+    pushOption("demuxer-seekable-cache", "yes")
+
+    // Làm mượt đồng bộ khung hình (tùy thiết bị)
+    pushOption("video-sync", "display-resample")
+
+    // Scaler sắc nét hơn khi có scale (tùy GPU/thiết bị)
+    pushOption("scale", "spline36")
+    pushOption("cscale", "spline36")
+    pushOption("dscale", "spline36")
   }
 
   fun loadPlaylist(

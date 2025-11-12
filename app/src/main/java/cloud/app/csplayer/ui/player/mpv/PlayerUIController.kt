@@ -115,10 +115,10 @@ class PlayerUIController(
   /**
    * Show controls
    */
-  fun show() {
+  fun show(autoHide: Boolean = true) {
     isShowing = true
     applyUIState()
-    scheduleAutoHide()
+    if(autoHide) scheduleAutoHide()
   }
 
 

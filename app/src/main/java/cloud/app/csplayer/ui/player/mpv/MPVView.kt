@@ -1,7 +1,8 @@
 package cloud.app.csplayer.ui.player.mpv
 
-import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.preference.PreferenceManager
@@ -10,7 +11,6 @@ import android.view.InputDevice
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.MotionEvent
-import android.view.SurfaceHolder
 import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import cloud.app.csplayer.R
@@ -26,6 +26,7 @@ import cloud.app.csplayer.model.SaveCaptionStyle
 import timber.log.Timber
 import java.io.File
 import kotlin.reflect.KProperty
+import androidx.core.net.toUri
 
 class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attrs) {
 
@@ -168,6 +169,7 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
   /**
    * Apply subtitle style from SaveCaptionStyle object
    */
+  @androidx.annotation.OptIn(UnstableApi::class)
   private fun applySubtitleStyle(style: SaveCaptionStyle) {
     // Apply colors
     MPVLib.setOptionString("sub-color", colorToMpvHex(style.foregroundColor))
@@ -505,11 +507,42 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     get() = MPVLib.getPropertyBoolean("pause")
     set(paused) = MPVLib.setPropertyBoolean("pause", paused!!)
 
+  private var pendingResumeRunnable: Runnable? = null
   var timePos: Double?
     get() = MPVLib.getPropertyDouble("time-pos/full")
     set(progress) {
-      if (progress != null && progress >= 0.0) {
+      val seekSafeImplement = true
+      if(seekSafeImplement) {
+        if (progress == null || progress < 0.0) return
+        if (!MPVLib.isInitialized()) return
+
+        val wasPlaying = paused == false
+
+        // Prevent dropping frames right after seek
+        MPVLib.command(arrayOf("set", "hr-seek-framedrop", "no"))
+
+        // Pause to hide potentially corrupt intermediate frames
+        paused = true
+
+        // Perform the actual seek
         MPVLib.setPropertyDouble("time-pos", progress)
+
+        // Cancel any previous pending resume
+        pendingResumeRunnable?.let { removeCallbacks(it) }
+
+        if (wasPlaying) {
+          val resume = Runnable {
+            // Resume only if still paused (avoid race when user manually pauses)
+            if (paused == true) paused = false
+          }
+          pendingResumeRunnable = resume
+          // Small delay allows decoder to stabilize on keyframe
+          postDelayed(resume, 200)
+        }
+      } else {
+        if (progress != null && progress >= 0.0) {
+          MPVLib.setPropertyDouble("time-pos", progress)
+        }
       }
     }
 
@@ -616,7 +649,6 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
   // Helper function to change subtitle font size from SP to pixels
   fun setSubtitleFontSizeFromSp(sp: Float) {
     if (!MPVLib.isInitialized()) return
-
     runCatching {
       val px = android.util.TypedValue.applyDimension(
         android.util.TypedValue.COMPLEX_UNIT_SP,
@@ -626,6 +658,52 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
       MPVLib.command(arrayOf("set", "sub-font-size", px.toString()))
     }
   }
+  /// Kotlin
+// In `MPVView.kt`
+  // Optimized preview system
+  private val previewCache = object : android.util.LruCache<String, Bitmap>(128) {
+    override fun sizeOf(key: String, bitmap: Bitmap): Int = bitmap.byteCount / 1024
+  }
+  private val pathCache = object : android.util.LruCache<String, String>(32) {}
+
+  @Volatile private var originalMediaPath: String? = null
+  @Volatile private var resolvedRealPath: String? = null
+  @Volatile private var lastResolvedSource: String? = null
+
+  private val thumbnailExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+  private val thumbnailHandler = android.os.Handler(android.os.Looper.getMainLooper())
+  @Volatile private var pendingThumbnailTask: java.util.concurrent.Future<*>? = null
+
+  /**
+   * Set the original media path before MPV converts it to fd:// or other protocols.
+   * This is used for thumbnail extraction.
+   */
+  fun setOriginalMediaPath(path: String?) {
+    originalMediaPath = path
+    if (path != lastResolvedSource) {
+      resolvedRealPath = null
+      lastResolvedSource = null
+    }
+  }
+
+  fun clearPreviewCache() {
+    previewCache.evictAll()
+    pathCache.evictAll()
+    resolvedRealPath = null
+    lastResolvedSource = null
+    pendingThumbnailTask?.cancel(true)
+  }
+
+  fun getPreview(fraction: Float): Bitmap? {
+    return null
+  }
+
+  fun onThumbnailCleanup() {
+    pendingThumbnailTask?.cancel(true)
+    thumbnailExecutor.shutdown()
+    clearPreviewCache()
+  }
+
 
   companion object {
     private const val TAG = "mpv"

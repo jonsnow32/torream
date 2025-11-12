@@ -52,6 +52,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
     postInitOptions()
     MPVLib.setOptionString("force-window", "no")
     MPVLib.setOptionString("idle", "yes")
+    MPVLib.setPropertyString("keep-open", "yes")
     holder.addCallback(this)
 
     mpvLogObserver = MPVLib.LogObserver { prefix, level, text ->
@@ -111,6 +112,7 @@ abstract class BaseMPVView(context: Context, attrs: AttributeSet) : SurfaceView(
 
     return additionHeaders ?: emptyMap()
   }
+
 
   fun playFile(filePath: String, headers: Map<String, String>?) {
     this.filePath = filePath.replace("https:///", "https://").replace("http:///", "http://")
