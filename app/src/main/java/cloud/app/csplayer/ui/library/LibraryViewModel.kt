@@ -8,8 +8,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.media.repository.MediaRepository
-import cloud.app.csplayer.media.repository.TorrentRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,8 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
   @param:ApplicationContext private val context: Context,
-  val torrentRepository: TorrentRepository,
   val mediaRepository: MediaRepository,
+  val downloadRepository: DownloadRepository,
   val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
@@ -44,7 +44,7 @@ class LibraryViewModel @Inject constructor(
         pagingSourceFactory = {
           LibraryPagingSource(
             repository = mediaRepository,
-            torrentRepository = torrentRepository,
+            downloadRepository = downloadRepository,
             section = section
           )
         }

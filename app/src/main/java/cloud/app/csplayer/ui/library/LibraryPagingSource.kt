@@ -2,10 +2,15 @@ package cloud.app.csplayer.ui.library
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import cloud.app.csplayer.download.DownloadRepository
+import cloud.app.csplayer.download.DownloadType
+import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.media.repository.MediaRepository
-import cloud.app.csplayer.media.repository.TorrentRepository
 import cloud.app.csplayer.ui.feed.FeedData
+import cloud.app.csplayer.model.TorrentState
+import cloud.app.csplayer.model.TorrentDownloadStatus
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
 /**
@@ -21,7 +26,7 @@ enum class LibrarySection {
 
 class LibraryPagingSource(
   private val repository: MediaRepository,
-  private val torrentRepository: TorrentRepository,
+  private val downloadRepository: DownloadRepository,
   private val section: LibrarySection
 ) : PagingSource<Int, FeedData>() {
 
@@ -63,27 +68,88 @@ class LibraryPagingSource(
    * Load downloads (torrent downloads)
    */
   private suspend fun loadDownloads(limit: Int, offset: Int): List<FeedData> {
-    Timber.d("Loading downloads with limit=$limit, offset=$offset")
+    Timber.d("Loading downloads with limit=$limit, offset=$offset using downloadRepository")
 
-    // Get all torrents (active downloads)
-    val torrents = torrentRepository.getAllTorrents()
-
-    Timber.d("Found ${torrents.size} torrents")
-
-    // Convert to FeedData and apply pagination manually since repository doesn't support it
-    return torrents
-      .drop(offset)
-      .take(limit)
-      .map { torrent ->
-        FeedData.TorrentDownloadItem(
-          id = torrent.infoHash,
-          title = torrent.name,
-          torrentState = torrent
-        ) as FeedData
+    return try {
+      // Get snapshot of all tasks and current states
+      val allTasks = downloadRepository.loadAllTask()
+      val allStates = try {
+        downloadRepository.observeAllStates().first()
+      } catch (e: Exception) {
+        emptyList()
       }
-      .also {
-        Timber.d("Successfully loaded ${it.size} download items")
+
+      val stateById = allStates.associateBy { it.task.id }
+
+      // sort newest first
+      val sorted = allTasks.sortedByDescending { it.createdAt }
+
+      // apply pagination
+      val start = offset.coerceAtMost(sorted.size)
+      val end = (offset + limit).coerceAtMost(sorted.size)
+      if (start >= end) return emptyList()
+
+      val page = sorted.subList(start, end)
+
+      // map to FeedData
+      val items = page.map { task ->
+        when (task.type) {
+          DownloadType.HTTP -> {
+            val state = stateById[task.id]
+            val progress = state?.progress ?: 0
+            val isPaused = state?.status == DownloadStatus.PAUSED
+            val fileName = task.targetPath.substringAfterLast('/', task.source.substringAfterLast('/'))
+
+            FeedData.HttpDownloadItem(
+              id = task.id,
+              title = fileName,
+              downloadId = task.createdAt,
+              fileName = fileName,
+              progress = progress,
+              isPaused = isPaused
+            ) as FeedData
+          }
+
+          DownloadType.TORRENT -> {
+            val state = stateById[task.id]
+
+            val status = when (state?.status) {
+              DownloadStatus.DOWNLOADING -> TorrentDownloadStatus.DOWNLOADING
+              DownloadStatus.PAUSED -> TorrentDownloadStatus.PAUSED
+              DownloadStatus.SEEDING -> TorrentDownloadStatus.SEEDING
+              DownloadStatus.FINISHED -> TorrentDownloadStatus.FINISHED
+              else -> TorrentDownloadStatus.ERROR
+            }
+
+            val ts = TorrentState(
+              infoHash = task.source,
+              name = state?.task?.source ?: task.source,
+              status = status,
+              progress = (state?.progress ?: 0).toFloat(),
+              downloadSpeed = state?.downloadSpeedBytesPerSec ?: 0L,
+              uploadSpeed = 0L,
+              totalSize = task.totalBytes,
+              downloadedSize = state?.downloadedBytes ?: 0L,
+              numPeers = 0,
+              numSeeds = 0,
+              error = state?.error
+            )
+
+            FeedData.TorrentDownloadItem(
+              id = task.id,
+              title = ts.name.ifBlank { task.id },
+              torrentState = ts
+            ) as FeedData
+          }
+        }
       }
+
+      Timber.d("Loaded ${items.size} download items from downloadRepository")
+      items
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading downloads from downloadRepository")
+      emptyList()
+    }
   }
 
   /**
@@ -155,4 +221,3 @@ class LibraryPagingSource(
     }
   }
 }
-

@@ -76,7 +76,7 @@
       tools:ignore="ForegroundServicePermission" />
 
     <service
-      android:name=".torrent.TorrentService"
+      android:name=".download.DownloadService"
       android:foregroundServiceType="dataSync"
       android:exported="false"
       tools:ignore="ForegroundServicePermission" />

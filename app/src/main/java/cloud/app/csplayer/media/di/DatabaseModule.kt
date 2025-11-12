@@ -3,11 +3,11 @@ package cloud.app.csplayer.media.di
 import android.content.Context
 import androidx.room.Room
 import cloud.app.csplayer.BuildConfig
+import cloud.app.csplayer.media.dao.DownloadDao
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
 import cloud.app.csplayer.media.dao.MediaPlaybackDao
 import cloud.app.csplayer.media.db.MediaDatabase
-import cloud.app.csplayer.media.dao.TorrentDao
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSource
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSourceImpl
 import cloud.app.csplayer.media.repository.MediaRepository
@@ -58,9 +58,10 @@ object DatabaseModule {
 
   @Provides
   @Singleton
-  fun provideTorrentDao(database: MediaDatabase): TorrentDao {
-    return database.torrentDao()
+  fun provideDownloadDao(database: MediaDatabase): DownloadDao {
+    return database.downloadDao()
   }
+
 
   @Provides
   @Singleton
