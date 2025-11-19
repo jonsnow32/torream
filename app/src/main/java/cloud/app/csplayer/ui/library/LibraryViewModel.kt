@@ -1,29 +1,30 @@
 package cloud.app.csplayer.ui.library
 
-import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.map
 import androidx.paging.cachedIn
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
 
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
-  @param:ApplicationContext private val context: Context,
   val mediaRepository: MediaRepository,
   val downloadRepository: DownloadRepository,
   val sharedPreferences: SharedPreferences
@@ -32,9 +33,16 @@ class LibraryViewModel @Inject constructor(
   val filterConfig = MutableStateFlow(FeedFilterConfig.load(sharedPreferences))
 
   val section = MutableStateFlow(LibrarySection.HISTORY)
+  // Trigger to force recreate Pager / PagingSource when necessary (e.g. after delete)
+  private val refreshTrigger = MutableStateFlow(0)
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  val feedData: Flow<PagingData<FeedData>> = section
+  fun invalidatePaging() {
+    refreshTrigger.value = refreshTrigger.value + 1
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+  // Create a Pager per section, then combine emitted PagingData with the live download states
+  val feedData: Flow<PagingData<FeedData>> = combine(section, refreshTrigger) { sec, _ -> sec }
     .flatMapLatest { section ->
       Pager(
         config = PagingConfig(
@@ -48,8 +56,54 @@ class LibraryViewModel @Inject constructor(
             section = section
           )
         }
-      ).flow.cachedIn(viewModelScope)
+      ).flow
     }
+    // Cache the paging flow so it can be safely reused by multiple collectors
+    .cachedIn(viewModelScope)
+    .let { basePagingFlow ->
+      // state flow of download states mapped by id
+      val statesFlow = downloadRepository.observeAllStates().map { list -> list.associateBy { it.task.id } }
 
+      // Combine latest PagingData with latest download states and map items accordingly
+      combine(basePagingFlow, statesFlow) { pagingData, stateById ->
+        pagingData.map { feed ->
+          when (feed) {
+            is FeedData.HttpDownloadItem -> {
+              val ds = stateById[feed.id]
+              if (ds != null) {
+                feed.copy(
+                  progress = ds.progress,
+                  isPaused = ds.status == cloud.app.csplayer.download.DownloadStatus.PAUSED
+                )
+              } else feed
+            }
+
+            is FeedData.TorrentDownloadItem -> {
+              val ds = stateById[feed.id]
+              if (ds != null) {
+                val status = when (ds.status) {
+                  cloud.app.csplayer.download.DownloadStatus.DOWNLOADING -> cloud.app.csplayer.model.TorrentDownloadStatus.DOWNLOADING
+                  cloud.app.csplayer.download.DownloadStatus.PAUSED -> cloud.app.csplayer.model.TorrentDownloadStatus.PAUSED
+                  cloud.app.csplayer.download.DownloadStatus.SEEDING -> cloud.app.csplayer.model.TorrentDownloadStatus.SEEDING
+                  cloud.app.csplayer.download.DownloadStatus.FINISHED -> cloud.app.csplayer.model.TorrentDownloadStatus.FINISHED
+                  else -> cloud.app.csplayer.model.TorrentDownloadStatus.ERROR
+                }
+
+                val updated = feed.torrentState.copy(
+                  status = status,
+                  progress = (ds.progress).toFloat(),
+                  downloadSpeed = ds.downloadSpeedBytesPerSec,
+                  downloadedSize = ds.downloadedBytes,
+                  error = ds.error
+                )
+                feed.copy(torrentState = updated)
+              } else feed
+            }
+
+            else -> feed
+          }
+        }
+      }
+    }
+    .cachedIn(viewModelScope)
 }
-

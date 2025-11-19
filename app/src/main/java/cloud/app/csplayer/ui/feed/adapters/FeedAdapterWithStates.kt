@@ -1,6 +1,5 @@
 package cloud.app.csplayer.ui.feed.adapters
 
-import adapters.FeedAdapter
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView

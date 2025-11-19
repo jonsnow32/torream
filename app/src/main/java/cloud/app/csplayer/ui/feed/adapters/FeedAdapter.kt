@@ -1,39 +1,32 @@
-package adapters
+package cloud.app.csplayer.ui.feed.adapters
 
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.ads.AdManager
+import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.ui.adapter.GridAdapter
-import cloud.app.csplayer.ui.feed.FeedClickListener
+import cloud.app.csplayer.ui.feed.FeedAction
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
-import cloud.app.csplayer.ui.home.FeedViewModel
-import cloud.app.csplayer.ui.feed.adapters.EmptyAdapter
-import cloud.app.csplayer.ui.feed.adapters.ErrorAdapter
-import cloud.app.csplayer.ui.feed.adapters.FeedAdapterWithStates
-import cloud.app.csplayer.ui.feed.adapters.LoadingAdapter
+import cloud.app.csplayer.ui.feed.viewholders.AdViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.AudioViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.FolderViewHolder
-import cloud.app.csplayer.ui.feed.viewholders.AdViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.HttpDownloadViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.TorrentDownloadViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolder
-import cloud.app.csplayer.ui.library.LibraryFragment
-import cloud.app.csplayer.ui.library.LibraryViewModel
-import cloud.app.csplayer.utils.observe
 
 
 class FeedAdapter(
-  private val clickListener: FeedClickListener,
+  private val clickListener: FeedAction,
   private val adManager: AdManager? = null,
-  private var filterConfig: cloud.app.csplayer.ui.feed.FeedFilterConfig? = null
+  private var filterConfig: cloud.app.csplayer.ui.feed.FeedFilterConfig? = null,
+  private val downloadRepository: DownloadRepository
 ) : PagingDataAdapter<FeedData, FeedViewHolder<*>>(DiffCallback), GridAdapter {
 
   private val viewPool = RecyclerView.RecycledViewPool()
@@ -63,6 +56,17 @@ class FeedAdapter(
         oldItem is FeedData.FolderItem && newItem is FeedData.FolderItem -> {
           oldItem.title == newItem.title &&
             oldItem.folder.mediaCount == newItem.folder.mediaCount
+        }
+        oldItem is FeedData.HttpDownloadItem && newItem is FeedData.HttpDownloadItem -> {
+          // Rebind when progress or pause state or filename changes
+          oldItem.title == newItem.title &&
+            oldItem.fileName == newItem.fileName &&
+            oldItem.progress == newItem.progress &&
+            oldItem.isPaused == newItem.isPaused
+        }
+        oldItem is FeedData.TorrentDownloadItem && newItem is FeedData.TorrentDownloadItem -> {
+          // TorrentState is a data class — equality covers all relevant fields
+          oldItem.title == newItem.title && oldItem.torrentState == newItem.torrentState
         }
         else -> true // For other types, assume same if IDs match
       }
@@ -104,8 +108,8 @@ class FeedAdapter(
       FeedData.Type.AudioSmall -> AudioSmallViewHolder(parent, clickListener, filterConfig)
       FeedData.Type.FolderSmall -> FolderSmallViewHolder(parent, clickListener)
       FeedData.Type.PlayListSmall -> TODO()
-      FeedData.Type.HTTPDownload -> HttpDownloadViewHolder(parent, clickListener)
-      FeedData.Type.TorrentDownload -> TorrentDownloadViewHolder(parent, clickListener)
+      FeedData.Type.HTTPDownload -> HttpDownloadViewHolder(parent, clickListener, downloadRepository)
+      FeedData.Type.TorrentDownload -> TorrentDownloadViewHolder(parent, clickListener, downloadRepository)
     }
   }
 
@@ -118,14 +122,14 @@ class FeedAdapter(
     when (holder) {
       is HorizontalListViewHolder -> if (feed is FeedData.HorizontalList) holder.bind(feed)
       is AdViewHolder -> if (feed is FeedData.AdItem) holder.bind(feed)
+      is HttpDownloadViewHolder -> if (feed is FeedData.HttpDownloadItem) holder.bind(feed)
+      is TorrentDownloadViewHolder -> if (feed is FeedData.TorrentDownloadItem) holder.bind(feed)
       is VideoViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is VideoSmallViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is AudioViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is AudioSmallViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is FolderViewHolder,
       is FolderSmallViewHolder -> if (feed is FeedData.FolderItem) holder.bind(feed)
-      is HttpDownloadViewHolder -> if (feed is FeedData.HttpDownloadItem) holder.bind(feed)
-      is TorrentDownloadViewHolder -> if (feed is FeedData.TorrentDownloadItem) holder.bind(feed)
       else -> {}
     }
   }
@@ -135,6 +139,8 @@ class FeedAdapter(
     // Clean up ad resources when ViewHolder is recycled
     when (holder) {
       is AdViewHolder -> holder.onRecycled()
+      is HttpDownloadViewHolder -> holder.onRecycled()
+      is TorrentDownloadViewHolder -> holder.onRecycled()
     }
   }
 

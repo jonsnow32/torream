@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.databinding.ItemShelfListsAudioThreeBinding
 import cloud.app.csplayer.databinding.ItemShelfListsVideoTwoBinding
-import cloud.app.csplayer.ui.feed.FeedClickListener
+import cloud.app.csplayer.ui.feed.FeedAction
 
 sealed class ShelfViewHolder<T : ShelfItem>(itemView: View) :
   RecyclerView.ViewHolder(itemView) {
@@ -14,7 +14,7 @@ sealed class ShelfViewHolder<T : ShelfItem>(itemView: View) :
 
   class ThreeAudioViewHolder(
     parent: ViewGroup,
-    val clickListener: FeedClickListener,
+    val clickListener: FeedAction,
     val binding: ItemShelfListsAudioThreeBinding = ItemShelfListsAudioThreeBinding.inflate(
       LayoutInflater.from(parent.context), parent, false
     )
@@ -28,7 +28,7 @@ sealed class ShelfViewHolder<T : ShelfItem>(itemView: View) :
 
   class TwoVideoViewHolder(
     parent: ViewGroup,
-    val clickListener: FeedClickListener,
+    val clickListener: FeedAction,
     val binding: ItemShelfListsVideoTwoBinding = ItemShelfListsVideoTwoBinding.inflate(
       LayoutInflater.from(parent.context), parent, false
     )

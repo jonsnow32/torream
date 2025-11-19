@@ -4,14 +4,14 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.ItemAudioSmallBinding
-import cloud.app.csplayer.ui.feed.FeedClickListener
+import cloud.app.csplayer.ui.feed.FeedAction
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
 import cloud.app.csplayer.utils.formatDuration
 
 class AudioSmallViewHolder(
   parent: ViewGroup,
-  val clickListener: FeedClickListener,
+  val clickListener: FeedAction,
   private val filterConfig: cloud.app.csplayer.ui.feed.FeedFilterConfig? = null
 ) : FeedViewHolder<FeedData.MediaItem>(
   ItemAudioSmallBinding.inflate(
@@ -37,6 +37,10 @@ class AudioSmallViewHolder(
 
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)
+    }
+    binding.root.setOnLongClickListener {
+      clickListener.onItemLongClick(feed)
+      true
     }
   }
 }

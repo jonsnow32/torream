@@ -322,6 +322,9 @@
   <string name="pause">Pause</string>
   <string name="pause_resume">Pause/Resume</string>
   <string name="start">Start</string>
+  <!-- Progress formats -->
+  <string name="download_progress_compact" formatted="true">%1$d%% • %2$s</string>
+  <string name="torrent_progress_with_peers" formatted="true">%1$d%% • %2$s • %3$d seeds, %4$d peers</string>
   <string name="test_failed">Failed</string>
   <string name="test_passed">Passed</string>
   <string name="resume">Resume</string>
@@ -907,4 +910,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="background_audio">Background audio</string>
   <string name="support_url_hint">[http,https,magnet,torrent]</string>
   <string name="logo">Logo</string>
+    <string name="paused">Paused</string>
+  <string name="seeding">Seeding</string>
+  <string name="finished">Finished</string>
+  <string name="download_resumed">Resume</string>
 </resources>

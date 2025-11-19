@@ -1,6 +1,5 @@
 package cloud.app.csplayer.ui.home
 
-import adapters.FeedAdapter
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Bundle
@@ -27,10 +26,11 @@ import cloud.app.csplayer.model.SyncState
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
-import cloud.app.csplayer.ui.feed.FeedClickListener
+import cloud.app.csplayer.ui.feed.FeedAction
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import cloud.app.csplayer.ui.feed.FeedFilterDialog
+import cloud.app.csplayer.ui.feed.adapters.FeedAdapter
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.FastScrollerHelper
 import cloud.app.csplayer.utils.PlaybackDataHelper
@@ -46,10 +46,12 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.math.max
+import cloud.app.csplayer.download.http.HttpDownloadManager
+import cloud.app.csplayer.download.torrent.TorrentDownloadManager
 
 
 @AndroidEntryPoint
-class FeedFragment : Fragment(), FeedClickListener {
+class FeedFragment : Fragment() {
   private var binding by autoCleared<FragmentFeedBinding>()
   private val viewModel: FeedViewModel by viewModels()
   private val mainViewModel: MainActivityViewModel by activityViewModels()
@@ -58,7 +60,18 @@ class FeedFragment : Fragment(), FeedClickListener {
   lateinit var adManager: AdManager
 
   @Inject
+  lateinit var downloadRepository: cloud.app.csplayer.download.DownloadRepository
+
+  @Inject
   lateinit var sharedPreferences: SharedPreferences
+
+  // Inject concrete managers so we can pass into FeedAction
+  @Inject
+  lateinit var httpDownloadManager: HttpDownloadManager
+
+  @Inject
+  lateinit var torrentDownloadManager: TorrentDownloadManager
+
   private var syncSnackbar: Snackbar? = null
 
   private lateinit var adapter: FeedAdapter
@@ -211,7 +224,7 @@ class FeedFragment : Fragment(), FeedClickListener {
    */
   private fun setupAdapter() {
 
-    adapter = FeedAdapter(this as FeedClickListener, adManager, viewModel.filterConfig.value)
+    adapter = FeedAdapter(FeedAction(this, downloadRepository, httpDownloadManager, torrentDownloadManager), adManager, viewModel.filterConfig.value, downloadRepository)
 
     // Observe filterConfig changes and update adapter
     observe(viewModel.filterConfig) { config ->
@@ -359,151 +372,6 @@ class FeedFragment : Fragment(), FeedClickListener {
 
   }
 
-  override fun onItemClick(item: FeedData) {
-    //open item based on its type
-    when (item) {
-      is FeedData.FolderItem -> {
-        // Navigate into folder using Navigation Component
-        val bundle = Bundle().apply {
-          putString("root_folder_path", item.folder.path)
-        }
-
-        // Use Navigation Component to navigate with automatic backstack management
-        // R.id will be generated after build, fallback to dynamic navigation
-        try {
-          findNavController().navigate(R.id.action_feedFragment_self, bundle)
-        } catch (e: Exception) {
-          // Fallback if action ID not generated yet
-          findNavController().navigate(R.id.feedFragment, bundle)
-        }
-      }
-
-      is FeedData.MediaItem -> {
-        playMediaItem(item)
-        // Play video with auto-next enabled for continuous playback through feed
-        //playVideosWithAutoNext(item)
-      }
-
-      is FeedData.AdItem -> {
-        // TODO: Handle ad click
-        showToast("Ad clicked: ${item.title}")
-      }
-
-      is FeedData.HorizontalList -> {
-        // Horizontal lists don't have individual click action
-        // Items inside the list have their own click handlers
-      }
-
-      is FeedData.HttpDownloadItem -> TODO()
-      is FeedData.TorrentDownloadItem -> TODO()
-    }
-  }
-
-  /**
-   * Play videos with auto-next feature enabled.
-   * Builds a list of video links from feed and enables automatic playback of next video on EOF.
-   * Note: This uses app-level episode navigation (isSameEpisode = false), not MPV playlist mode.
-   */
-
-  private fun playVideosWithAutoNext(clickedItem: FeedData.MediaItem) {
-    // Launch coroutine to collect current feed data
-    viewLifecycleOwner.lifecycleScope.launch {
-      try {
-        // Get current snapshot of feed data from adapter
-        val snapshot = adapter.snapshot()
-
-        // Extract all media items (filter out folders, ads, and horizontal lists)
-        val allMediaItems = snapshot.items.filterIsInstance<FeedData.MediaItem>()
-
-        if (allMediaItems.isEmpty()) {
-          // Fallback to single file if no media items found
-          playMediaItem(clickedItem)
-          return@launch
-        }
-
-        // Find the index of clicked item
-        val clickedIndex = allMediaItems.indexOfFirst {
-          it.media.uri == clickedItem.media.uri
-        }.coerceAtLeast(0)
-
-
-        // Convert media items to VideoLink objects
-        // For the clicked item, apply saved playback state
-        val videoLinks = allMediaItems.mapIndexed { index, mediaItem ->
-          VideoLink(
-            url = mediaItem.media.uri,
-            name = mediaItem.title,
-            headers = emptyMap(),
-            subtitles = emptyList(),
-            width = mediaItem.media.width,
-            height = mediaItem.media.height,
-          )
-        }
-
-        // Create PlaybackData object
-        // isSameEpisode = false: These are DIFFERENT videos (not same content with different quality)
-        // When isSameEpisode = false + multiple videoLinks, MPVFragment will automatically:
-        //   1. Load ALL videos into MPV playlist (isPlaylistMode = true)
-        //   2. Enable MPV-level auto-navigation between videos
-        //   3. User can skip/navigate through playlist seamlessly
-        val playbackData = PlaybackData(
-          title = clickedItem.title,
-          videoLinks = videoLinks,
-          subtitles = emptyList(), // Local files typically don't have embedded subtitle data here
-          videoStartIndex = clickedIndex,
-          subtitleStartIndex = 0,
-          isSameEpisode = false, // Different videos → will trigger MPV playlist mode
-          hasAd = false
-        )
-
-        // Navigate to MPV player with PlaybackData
-        val bundle = PlaybackDataHelper.createBundle(playbackData)
-        activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
-
-        showToast("Playing ${clickedIndex + 1} of ${allMediaItems.size}")
-
-      } catch (e: Exception) {
-        // Fallback to single file on error
-        Timber.e(e, "Error building playlist, falling back to single file")
-        playMediaItem(clickedItem)
-      }
-    }
-  }
-
-  /**
-   * Play single media item (fallback)
-   */
-  private fun playMediaItem(item: FeedData.MediaItem) {
-    viewLifecycleOwner.lifecycleScope.launch {
-
-      // Create VideoLink and apply playback state
-      val videoLink = VideoLink(
-        url = item.media.uri,
-        name = item.title,
-        headers = emptyMap(),
-        subtitles = emptyList(),
-        position = item.media.position,
-        width = item.media.width,
-        height = item.media.height
-      )
-
-      // Create PlaybackData for single file
-      val playbackData = PlaybackData(
-        title = item.title,
-        videoLinks = listOf(videoLink),
-        subtitles = emptyList(),
-        videoStartIndex = 0,
-        subtitleStartIndex = 0,
-        isSameEpisode = true,
-        hasAd = false
-      )
-
-      // Navigate to MPV player with PlaybackData
-      val bundle = PlaybackDataHelper.createBundle(playbackData)
-      activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
-    }
-  }
-
   /**
    * Find the subtitle TextView in Toolbar to apply custom styling
    */
@@ -565,6 +433,23 @@ class FeedFragment : Fragment(), FeedClickListener {
           putString(ARG_ROOT_FOLDER_PATH, rootFolderPath)
         }
       }
+    }
+  }
+
+  // Allow external callers (e.g. FeedAction) to request adapter refresh
+  fun refreshAdapter() {
+    try {
+      Timber.d("FeedFragment.refreshAdapter called - submitting empty PagingData and refreshing")
+      viewLifecycleOwner.lifecycleScope.launch {
+        try {
+          adapter.submitData(androidx.paging.PagingData.empty())
+          adapter.refresh()
+        } catch (t: Throwable) {
+          Timber.w(t, "Failed to submit empty PagingData in refreshAdapter")
+        }
+      }
+    } catch (_: Exception) {
+      // best-effort, ignore if adapter not initialized
     }
   }
 }

@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import cloud.app.csplayer.databinding.ItemShelfListBinding
-import cloud.app.csplayer.ui.feed.FeedClickListener
+import cloud.app.csplayer.ui.feed.FeedAction
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfItem
@@ -14,7 +14,7 @@ import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfViewHolder
 
 class HorizontalListViewHolder(
   parent: ViewGroup,
-  private val clickListener: FeedClickListener,
+  private val clickListener: FeedAction,
   private val pool: RecyclerView.RecycledViewPool,
   private val binding: ItemShelfListBinding = ItemShelfListBinding.inflate(LayoutInflater.from(parent.context), parent, false)
 ) : FeedViewHolder<FeedData.HorizontalList>(binding.root) {
@@ -31,7 +31,7 @@ class HorizontalListViewHolder(
 
   }
 
-  class Adapter(val listener: FeedClickListener): ListAdapter<ShelfItem, ShelfViewHolder<*>>(DiffCallback) {
+  class Adapter(val listener: FeedAction): ListAdapter<ShelfItem, ShelfViewHolder<*>>(DiffCallback) {
     object DiffCallback : DiffUtil.ItemCallback<ShelfItem>() {
       override fun areItemsTheSame(oldItem: ShelfItem, newItem: ShelfItem): Boolean {
         return oldItem.id == newItem.id

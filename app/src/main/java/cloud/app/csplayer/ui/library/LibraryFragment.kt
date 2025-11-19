@@ -1,21 +1,26 @@
 package cloud.app.csplayer.ui.library
 
-import adapters.FeedAdapter
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 import cloud.app.csplayer.R
 import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.databinding.FragmentLibraryBinding
+import cloud.app.csplayer.download.DownloadRepository
+import cloud.app.csplayer.download.http.HttpDownloadManager
+import cloud.app.csplayer.download.torrent.TorrentDownloadManager
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
-import cloud.app.csplayer.ui.feed.FeedClickListener
+import cloud.app.csplayer.ui.feed.FeedAction
 import cloud.app.csplayer.ui.feed.FeedData
+import cloud.app.csplayer.ui.feed.adapters.FeedAdapter
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.FastScrollerHelper
 import cloud.app.csplayer.utils.PlaybackDataHelper
@@ -24,6 +29,8 @@ import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.paging.PagingData
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -35,12 +42,22 @@ import javax.inject.Inject
  * - Playlists: User-created playlists
  */
 @AndroidEntryPoint
-class LibraryFragment : Fragment(), FeedClickListener {
+class LibraryFragment : Fragment() {
   private var binding by autoCleared<FragmentLibraryBinding>()
   private val viewModel: LibraryViewModel by viewModels()
 
   @Inject
   lateinit var adManager: AdManager
+
+  @Inject
+  lateinit var downloadRepository: DownloadRepository
+
+  // Inject managers
+  @Inject
+  lateinit var httpDownloadManager: HttpDownloadManager
+
+  @Inject
+  lateinit var torrentDownloadManager: TorrentDownloadManager
 
   private lateinit var adapter: FeedAdapter
 
@@ -112,7 +129,7 @@ class LibraryFragment : Fragment(), FeedClickListener {
   }
 
   private fun setupAdapter() {
-    adapter = FeedAdapter(this as FeedClickListener, adManager, viewModel.filterConfig.value)
+    adapter = FeedAdapter(FeedAction(this, downloadRepository, httpDownloadManager, torrentDownloadManager), adManager, viewModel.filterConfig.value, downloadRepository)
 
     // Observe feed data
     observe(viewModel.feedData) {
@@ -131,77 +148,33 @@ class LibraryFragment : Fragment(), FeedClickListener {
     // Configure grid layout
     configureGridLayout(binding.rvLibrary, adapterWithStates)
   }
-
-  // FeedClickListener implementation
-  override fun onItemClick(item: FeedData) {
-    when (item) {
-      is FeedData.MediaItem -> {
-        Timber.d("Media clicked: ${item.media.name}")
-
-        // Create PlaybackData from Media
-        val playbackData = PlaybackData(
-          title = item.media.name,
-          videoLinks = listOf(
-            cloud.app.csplayer.model.VideoLink(
-              url = item.media.uri,
-              name = item.media.name,
-              headers = emptyMap(),
-              subtitles = emptyList(),
-              width = item.media.width,
-              height = item.media.height
-            )
-          ),
-          subtitles = emptyList(),
-          videoStartIndex = 0,
-          subtitleStartIndex = 0,
-          isSameEpisode = false,
-          hasAd = false
-        )
-
-        // Navigate to player using Activity.navigate
-        val bundle = PlaybackDataHelper.createBundle(playbackData)
-        activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
-      }
-
-      is FeedData.FolderItem -> {
-        Timber.d("Folder clicked: ${item.folder.name}")
-
-        // Navigate to FeedFragment with folder path
-        val bundle = Bundle().apply {
-          putString("root_folder_path", item.folder.path)
-        }
-        findNavController().navigate(R.id.feedFragment, bundle)
-      }
-
-      is FeedData.TorrentDownloadItem -> {
-        Timber.d("Torrent download clicked: ${item.torrentState.name}")
-
-        // Show torrent details or open torrent manager
-        showToast("Torrent: ${item.torrentState.name} - ${item.torrentState.progress}%")
-
-        // TODO: Navigate to torrent details screen
-      }
-
-      is FeedData.HttpDownloadItem -> {
-        Timber.d("HTTP download clicked: ${item.fileName}")
-        showToast("HTTP download: ${item.fileName}")
-
-        // TODO: Navigate to download manager
-      }
-
-      is FeedData.AdItem -> {
-        Timber.d("Ad clicked: ${item.title}")
-        // TODO: Handle ad click
-      }
-
-      is FeedData.HorizontalList -> {
-        // Horizontal lists don't have individual click action
-      }
-    }
-  }
-
   companion object {
     const val TAG = "LibraryFragment"
   }
-}
 
+  // Allow external callers (e.g. FeedAction) to request adapter refresh
+  fun refreshAdapter() {
+    try {
+      Timber.d("LibraryFragment.refreshAdapter called - submitting empty PagingData and refreshing")
+      viewLifecycleOwner.lifecycleScope.launch {
+        try {
+          adapter.submitData(androidx.paging.PagingData.empty())
+          adapter.refresh()
+        } catch (t: Throwable) {
+          Timber.w(t, "Failed to submit empty PagingData in LibraryFragment.refreshAdapter")
+        }
+      }
+    } catch (_: Exception) {
+      // best-effort, ignore if adapter not initialized
+    }
+  }
+
+  // Allow external callers to invalidate PagingSource via ViewModel
+  fun invalidatePaging() {
+    try {
+      viewModel.invalidatePaging()
+    } catch (_: Exception) {
+      // ignore
+    }
+  }
+}

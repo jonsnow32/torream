@@ -23,6 +23,8 @@ import cloud.app.csplayer.download.DownloadTask
 import cloud.app.csplayer.download.DownloadType
 import cloud.app.csplayer.download.http.HttpDownloadManager
 import cloud.app.csplayer.download.torrent.TorrentDownloadManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class UrlInputDialog : DockingDialog() {
@@ -56,67 +58,65 @@ class UrlInputDialog : DockingDialog() {
         return@setOnClickListener
       }
 
-      // Check if it's a magnet link or torrent file
-      if (inputUrl.startsWith("magnet:")) {
-        // Add magnet link as download via TorrentDownloadManager
-        val id = UUID.randomUUID().toString()
-        val saveDir = requireContext().getExternalFilesDir("torrents")?.absolutePath
-          ?: requireContext().filesDir.absolutePath
-        val task = DownloadTask(
-          id = id,
-          type = DownloadType.TORRENT,
-          source = inputUrl,
-          targetPath = saveDir
-        )
-        lifecycleScope.launch {
-          torrentDownloadManager.enqueue(task)
-          torrentDownloadManager.start(id)
+      // generate id and capture context on main thread
+      val id = UUID.randomUUID().toString()
+      val ctx = requireContext()
+
+      lifecycleScope.launch {
+        // perform filesystem access and download operations on IO dispatcher
+        val (taskType, saveDir) = withContext(Dispatchers.IO) {
+          when {
+            inputUrl.startsWith("magnet:") -> {
+              DownloadType.TORRENT to (ctx.getExternalFilesDir("torrents")?.absolutePath
+                ?: ctx.filesDir.absolutePath)
+            }
+            inputUrl.endsWith(".torrent") -> {
+              DownloadType.TORRENT to (ctx.getExternalFilesDir("torrents")?.absolutePath
+                ?: ctx.filesDir.absolutePath)
+            }
+            inputUrl.startsWith("http") -> {
+              DownloadType.HTTP to (ctx.getExternalFilesDir("http")?.absolutePath
+                ?: ctx.filesDir.absolutePath)
+            }
+            else -> null to null
+          }
         }
 
-      } else if (inputUrl.endsWith(".torrent")) {
-        // Add torrent file as download via TorrentDownloadManager
-        val id = UUID.randomUUID().toString()
-        val saveDir = requireContext().getExternalFilesDir("torrents")?.absolutePath
-          ?: requireContext().filesDir.absolutePath
-        val task = DownloadTask(
-          id = id,
-          type = DownloadType.TORRENT,
-          source = inputUrl,
-          targetPath = saveDir
-        )
-        lifecycleScope.launch {
-          torrentDownloadManager.enqueue(task)
-          torrentDownloadManager.start(id)
+        if (taskType == null || saveDir == null) {
+          // unsupported type - update UI on main thread
+          withContext(Dispatchers.Main) {
+            binding.urlInput.error = "Only magnet links and .torrent files are supported for downloads"
+          }
+          return@launch
         }
 
-      } else if(inputUrl.startsWith("http")){
-        val id = UUID.randomUUID().toString()
-        val saveDir = requireContext().getExternalFilesDir("http")?.absolutePath
-          ?: requireContext().filesDir.absolutePath
         val task = DownloadTask(
           id = id,
-          type = DownloadType.HTTP,
+          type = taskType,
           source = inputUrl,
           targetPath = saveDir
         )
-        lifecycleScope.launch {
-          httpDownloadManager.enqueue(task)
-          httpDownloadManager.start(id)
+
+        // enqueue and start on IO (manager implementations may perform IO)
+        withContext(Dispatchers.IO) {
+          if (taskType == DownloadType.TORRENT) {
+            torrentDownloadManager.enqueue(task)
+            torrentDownloadManager.start(id)
+          } else {
+            httpDownloadManager.enqueue(task)
+            httpDownloadManager.start(id)
+          }
+        }
+
+        // navigate and dismiss on Main
+        withContext(Dispatchers.Main) {
+          val bundle = bundleOf("section" to LibrarySection.DOWNLOADS.ordinal)
+          activity?.navigate(R.id.navigation_libraryFragment, bundle)
+          dialog?.dismissSafe(activity)
         }
       }
-      else {
-        // For regular URLs, we could potentially add them as a download
-        // For now, show a message that only torrents/magnets are supported
-        binding.urlInput.error = "Only magnet links and .torrent files are supported for downloads"
-        return@setOnClickListener
-      }
-
-      // Navigate to library with downloads tab selected
-      val bundle = bundleOf("section" to LibrarySection.DOWNLOADS.ordinal)
-      activity?.navigate(R.id.navigation_libraryFragment, bundle)
-
-      dialog?.dismissSafe(activity)
     }
+
     binding.streamingBtt.setOnClickListener {
       // Create PlaybackData for URL playback
       val playbackData = PlaybackData(
