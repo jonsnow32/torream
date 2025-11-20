@@ -5,6 +5,7 @@ enum class DownloadStatus {
   DOWNLOADING,
   PAUSED,
   FINISHED,
+  COMPLETED, // Alias for FINISHED, used by workers
   SEEDING,
   FAILED,
   CANCELED

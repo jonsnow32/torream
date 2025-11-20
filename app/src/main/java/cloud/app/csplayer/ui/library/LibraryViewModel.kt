@@ -9,7 +9,9 @@ import androidx.paging.PagingData
 import androidx.paging.map
 import androidx.paging.cachedIn
 import cloud.app.csplayer.download.DownloadRepository
+import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.media.repository.MediaRepository
+import cloud.app.csplayer.model.TorrentDownloadStatus
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
+import timber.log.Timber
 import javax.inject.Inject
 
 
@@ -33,11 +36,12 @@ class LibraryViewModel @Inject constructor(
   val filterConfig = MutableStateFlow(FeedFilterConfig.load(sharedPreferences))
 
   val section = MutableStateFlow(LibrarySection.HISTORY)
+
   // Trigger to force recreate Pager / PagingSource when necessary (e.g. after delete)
   private val refreshTrigger = MutableStateFlow(0)
 
   fun invalidatePaging() {
-    refreshTrigger.value = refreshTrigger.value + 1
+    refreshTrigger.value += 1
   }
 
   @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
@@ -62,7 +66,8 @@ class LibraryViewModel @Inject constructor(
     .cachedIn(viewModelScope)
     .let { basePagingFlow ->
       // state flow of download states mapped by id
-      val statesFlow = downloadRepository.observeAllStates().map { list -> list.associateBy { it.task.id } }
+      val statesFlow =
+        downloadRepository.observeAllStates().map { list -> list.associateBy { it.task.id } }
 
       // Combine latest PagingData with latest download states and map items accordingly
       combine(basePagingFlow, statesFlow) { pagingData, stateById ->
@@ -71,9 +76,13 @@ class LibraryViewModel @Inject constructor(
             is FeedData.HttpDownloadItem -> {
               val ds = stateById[feed.id]
               if (ds != null) {
+                // Use title from task if available, otherwise fallback to parsing path
+                val fileName = ds.task.title ?: ds.task.targetPath.substringAfterLast('/', ds.task.source.substringAfterLast('/'))
                 feed.copy(
+                  title = fileName,
+                  fileName = fileName,
                   progress = ds.progress,
-                  isPaused = ds.status == cloud.app.csplayer.download.DownloadStatus.PAUSED
+                  status = ds.status
                 )
               } else feed
             }
@@ -82,21 +91,32 @@ class LibraryViewModel @Inject constructor(
               val ds = stateById[feed.id]
               if (ds != null) {
                 val status = when (ds.status) {
-                  cloud.app.csplayer.download.DownloadStatus.DOWNLOADING -> cloud.app.csplayer.model.TorrentDownloadStatus.DOWNLOADING
-                  cloud.app.csplayer.download.DownloadStatus.PAUSED -> cloud.app.csplayer.model.TorrentDownloadStatus.PAUSED
-                  cloud.app.csplayer.download.DownloadStatus.SEEDING -> cloud.app.csplayer.model.TorrentDownloadStatus.SEEDING
-                  cloud.app.csplayer.download.DownloadStatus.FINISHED -> cloud.app.csplayer.model.TorrentDownloadStatus.FINISHED
-                  else -> cloud.app.csplayer.model.TorrentDownloadStatus.ERROR
-                }
+                  DownloadStatus.QUEUED,
+                  DownloadStatus.DOWNLOADING -> TorrentDownloadStatus.DOWNLOADING
 
+                  DownloadStatus.PAUSED -> TorrentDownloadStatus.PAUSED
+                  DownloadStatus.SEEDING -> TorrentDownloadStatus.SEEDING
+                  DownloadStatus.FINISHED -> TorrentDownloadStatus.FINISHED
+                  DownloadStatus.COMPLETED -> TorrentDownloadStatus.FINISHED
+                  DownloadStatus.FAILED,
+                  DownloadStatus.CANCELED -> TorrentDownloadStatus.ERROR
+                }
+                Timber.i("progress for torrent ${feed.id} is ${ds.progress}")
+                // Use title from task if available (set by worker), otherwise fallback to parsing
+                val torrentName = ds.task.title ?: ds.task.targetPath.substringAfterLast('/', ds.task.source)
                 val updated = feed.torrentState.copy(
+                  name = torrentName,
                   status = status,
-                  progress = (ds.progress).toFloat(),
+                  progress = ds.progress / 100f, // Convert from percentage (0-100) to fraction (0.0-1.0)
                   downloadSpeed = ds.downloadSpeedBytesPerSec,
                   downloadedSize = ds.downloadedBytes,
                   error = ds.error
                 )
-                feed.copy(torrentState = updated)
+
+                feed.copy(
+                  title = torrentName,
+                  torrentState = updated
+                )
               } else feed
             }
 

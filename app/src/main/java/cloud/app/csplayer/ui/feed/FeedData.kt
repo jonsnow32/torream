@@ -1,5 +1,6 @@
 package cloud.app.csplayer.ui.feed
 
+import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.model.Folder
 import cloud.app.csplayer.model.Media
 import cloud.app.csplayer.model.TorrentState
@@ -84,7 +85,7 @@ sealed class FeedData {
     val downloadId: Long,
     val fileName: String,
     val progress: Int, // 0-100
-    val isPaused: Boolean,
+    val status : DownloadStatus
   ) : FeedData() {
     override var type: Type = Type.HTTPDownload
   }

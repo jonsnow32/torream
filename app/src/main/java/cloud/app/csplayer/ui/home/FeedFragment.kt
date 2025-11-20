@@ -46,8 +46,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.math.max
-import cloud.app.csplayer.download.http.HttpDownloadManager
-import cloud.app.csplayer.download.torrent.TorrentDownloadManager
+import cloud.app.csplayer.download.DownloadCoordinator
 
 
 @AndroidEntryPoint
@@ -65,12 +64,8 @@ class FeedFragment : Fragment() {
   @Inject
   lateinit var sharedPreferences: SharedPreferences
 
-  // Inject concrete managers so we can pass into FeedAction
   @Inject
-  lateinit var httpDownloadManager: HttpDownloadManager
-
-  @Inject
-  lateinit var torrentDownloadManager: TorrentDownloadManager
+  lateinit var downloadCoordinator: DownloadCoordinator
 
   private var syncSnackbar: Snackbar? = null
 
@@ -224,7 +219,7 @@ class FeedFragment : Fragment() {
    */
   private fun setupAdapter() {
 
-    adapter = FeedAdapter(FeedAction(this, downloadRepository, httpDownloadManager, torrentDownloadManager), adManager, viewModel.filterConfig.value, downloadRepository)
+    adapter = FeedAdapter(FeedAction(this, downloadRepository, downloadCoordinator), adManager, viewModel.filterConfig.value, downloadRepository)
 
     // Observe filterConfig changes and update adapter
     observe(viewModel.filterConfig) { config ->

@@ -139,6 +139,11 @@ dependencies {
   implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
   implementation("androidx.documentfile:documentfile:1.1.0")
 
+  // WorkManager for background downloads
+  implementation("androidx.work:work-runtime-ktx:2.10.0")
+  implementation("androidx.hilt:hilt-work:1.2.0")
+  ksp("androidx.hilt:hilt-compiler:1.2.0")
+
   // Coil - Image loading library (optimized for video thumbnails)
   implementation("io.coil-kt:coil:2.7.0")
   implementation("io.coil-kt:coil-video:2.7.0")

@@ -3,6 +3,8 @@ package cloud.app.csplayer
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
+import androidx.work.Configuration
+import androidx.hilt.work.HiltWorkerFactory
 import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.ads.AdPreloadManager
 import coil.ImageLoader
@@ -17,12 +19,20 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltAndroidApp
-class CSApplication : Application(), ImageLoaderFactory {
+class CSApplication : Application(), ImageLoaderFactory, Configuration.Provider {
   @Inject
   lateinit var adManager: AdManager
 
   @Inject
   lateinit var adPreloadManager: AdPreloadManager
+
+  @Inject
+  lateinit var workerFactory: HiltWorkerFactory
+
+  override val workManagerConfiguration: Configuration
+    get() = Configuration.Builder()
+      .setWorkerFactory(workerFactory)
+      .build()
 
   private val scope = MainScope() + CoroutineName("Application")
 

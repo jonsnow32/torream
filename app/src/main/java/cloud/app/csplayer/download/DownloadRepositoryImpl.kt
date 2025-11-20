@@ -37,6 +37,7 @@ class DownloadRepositoryImpl @Inject constructor(
         type = DownloadType.TORRENT,
         source = e.infoHash,
         targetPath = e.savePath,
+        title = e.name, // Load title from database
         totalBytes = e.totalSize,
         createdAt = e.dateAdded
       )
@@ -49,10 +50,10 @@ class DownloadRepositoryImpl @Inject constructor(
   override suspend fun insertTask(task: DownloadTask, initialStatus: DownloadStatus) {
     when (task.type) {
       DownloadType.TORRENT -> {
-        // insert a TorrentEntity if it doesn't exist
+        // insert a TorrentEntity - use task.id as infoHash for lookup
         val entity = TorrentEntity(
-          infoHash = task.source,
-          name = task.source,
+          infoHash = task.id, // Use task.id (extracted hash) not task.source (full magnet)
+          name = task.source, // Use full source as display name
           magnetUri = if (task.source.startsWith("magnet:")) task.source else null,
           torrentFilePath = if (task.source.endsWith(".torrent")) task.source else null,
           savePath = task.targetPath,
@@ -112,7 +113,7 @@ class DownloadRepositoryImpl @Inject constructor(
     when (state.task.type) {
       DownloadType.TORRENT -> {
         // update torrent progress/status by replacing the entity via insertTorrent (REPLACE)
-        val infoHash = state.task.source
+        val infoHash = state.task.id // Use task.id for lookup, not task.source
         try {
           val current = try {
             downloadDao.getTorrentByIdFlow(infoHash).first()
@@ -121,8 +122,8 @@ class DownloadRepositoryImpl @Inject constructor(
           }
 
           val updated = (current ?: TorrentEntity(
-            infoHash = infoHash,
-            name = state.task.source,
+            infoHash = infoHash, // Use task.id
+            name = state.task.source, // Display name from source
             magnetUri = if (state.task.source.startsWith("magnet:")) state.task.source else null,
             torrentFilePath = if (state.task.source.endsWith(".torrent")) state.task.source else null,
             savePath = state.task.targetPath,
@@ -140,7 +141,8 @@ class DownloadRepositoryImpl @Inject constructor(
             isAutoManaged = true
           )).copy(
             // copy over fields from current or state
-            name = current?.name ?: state.task.source,
+            // Use task.title if available (set by worker), otherwise keep current name or use source
+            name = state.task.title ?: current?.name ?: state.task.source,
             savePath = current?.savePath ?: state.task.targetPath,
             status = state.status.name,
             progress = state.progress.toFloat(),
@@ -166,6 +168,8 @@ class DownloadRepositoryImpl @Inject constructor(
         httpMutex.withLock {
           val byKey = httpStates.value
           val key = state.task.source
+          // The state parameter already contains updated task with title from Worker
+          // Just store it directly
           httpStates.value = byKey + (key to state)
         }
       }
@@ -190,10 +194,11 @@ class DownloadRepositoryImpl @Inject constructor(
   // mapping helper
   private fun torrentEntityToDownloadState(e: TorrentEntity): DownloadState {
     val task = DownloadTask(
-      id = e.infoHash,
+      id = e.infoHash, // ID is the infoHash (or hashCode)
       type = DownloadType.TORRENT,
-      source = e.infoHash,
+      source = e.magnetUri ?: e.torrentFilePath ?: e.name, // Source is the actual magnet/file
       targetPath = e.savePath,
+      title = e.name, // Title is the torrent name
       totalBytes = e.totalSize,
       createdAt = e.dateAdded
     )

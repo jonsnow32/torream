@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import cloud.app.csplayer.R
@@ -17,12 +18,10 @@ import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.UIHelper.navigate
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.util.UUID
 import javax.inject.Inject
+import cloud.app.csplayer.download.DownloadCoordinator
 import cloud.app.csplayer.download.DownloadTask
 import cloud.app.csplayer.download.DownloadType
-import cloud.app.csplayer.download.http.HttpDownloadManager
-import cloud.app.csplayer.download.torrent.TorrentDownloadManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -33,10 +32,7 @@ class UrlInputDialog : DockingDialog() {
   val url: String by lazy { args.getString("url", null) }
 
   @Inject
-  lateinit var torrentDownloadManager: TorrentDownloadManager
-
-  @Inject
-  lateinit var httpDownloadManager: HttpDownloadManager
+  lateinit var downloadCoordinator: DownloadCoordinator
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -58,12 +54,10 @@ class UrlInputDialog : DockingDialog() {
         return@setOnClickListener
       }
 
-      // generate id and capture context on main thread
-      val id = UUID.randomUUID().toString()
       val ctx = requireContext()
 
       lifecycleScope.launch {
-        // perform filesystem access and download operations on IO dispatcher
+        // Determine type and save dir on IO (quick)
         val (taskType, saveDir) = withContext(Dispatchers.IO) {
           when {
             inputUrl.startsWith("magnet:") -> {
@@ -83,37 +77,67 @@ class UrlInputDialog : DockingDialog() {
         }
 
         if (taskType == null || saveDir == null) {
-          // unsupported type - update UI on main thread
-          withContext(Dispatchers.Main) {
-            binding.urlInput.error = "Only magnet links and .torrent files are supported for downloads"
-          }
+          binding.urlInput.error = "Unsupported URL format"
           return@launch
         }
 
-        val task = DownloadTask(
-          id = id,
-          type = taskType,
-          source = inputUrl,
-          targetPath = saveDir
-        )
-
-        // enqueue and start on IO (manager implementations may perform IO)
-        withContext(Dispatchers.IO) {
-          if (taskType == DownloadType.TORRENT) {
-            torrentDownloadManager.enqueue(task)
-            torrentDownloadManager.start(id)
-          } else {
-            httpDownloadManager.enqueue(task)
-            httpDownloadManager.start(id)
+        // Use a stable task ID based on the URL
+        // For magnet links, we could extract info hash, but using a hash of the full URL is simpler and avoids edge cases
+        val taskId = when (taskType) {
+          DownloadType.TORRENT -> {
+            if (inputUrl.startsWith("magnet:", ignoreCase = true)) {
+              // For magnet links, try to extract info hash for better readability
+              try {
+                val uri = inputUrl.toUri()
+                val xtParam = uri.getQueryParameters("xt").firstOrNull()
+                if (xtParam != null && xtParam.startsWith("urn:btih:", ignoreCase = true)) {
+                  // Use the info hash as task ID (normalized to uppercase)
+                  xtParam.substring(9).uppercase()
+                } else {
+                  // Fallback to a hash of the magnet URL
+                  "magnet_${inputUrl.hashCode().toString().replace("-", "n")}"
+                }
+              } catch (_: Exception) {
+                "magnet_${inputUrl.hashCode().toString().replace("-", "n")}"
+              }
+            } else {
+              // For .torrent files, use the filename or URL
+              inputUrl.substringAfterLast("/").removeSuffix(".torrent").ifBlank {
+                "torrent_${inputUrl.hashCode().toString().replace("-", "n")}"
+              }
+            }
+          }
+          DownloadType.HTTP -> {
+            // For HTTP, use filename or URL hash
+            inputUrl.substringAfterLast("/").ifBlank {
+              "http_${inputUrl.hashCode().toString().replace("-", "n")}"
+            }
           }
         }
 
-        // navigate and dismiss on Main
-        withContext(Dispatchers.Main) {
-          val bundle = bundleOf("section" to LibrarySection.DOWNLOADS.ordinal)
-          activity?.navigate(R.id.navigation_libraryFragment, bundle)
-          dialog?.dismissSafe(activity)
+        val task = DownloadTask(
+          id = taskId,
+          type = taskType,
+          source = inputUrl, // Always use full URL/magnet as source
+          targetPath = saveDir
+        )
+
+        // Start download using coordinator (WorkManager will persist it)
+        withContext(Dispatchers.IO) {
+          try {
+            downloadCoordinator.startDownload(task)
+          } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+              binding.urlInput.error = "Failed to start download: ${e.message}"
+            }
+            return@withContext
+          }
         }
+
+        // Navigate to downloads section
+        val bundle = bundleOf("section" to LibrarySection.DOWNLOADS.ordinal)
+        activity?.navigate(R.id.navigation_libraryFragment, bundle)
+        dialog?.dismissSafe(activity)
       }
     }
 

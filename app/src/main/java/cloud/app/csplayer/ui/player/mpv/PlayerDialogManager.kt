@@ -192,7 +192,7 @@ class PlayerDialogManager(
     SelectionDialog.single(
       currentSubtitleTracks.map { it.name } + listOf<String>("Load from file", "Load from network"),
       subtitleIndex,
-      fragment.getString(R.string.video_tracks),
+      fragment.getString(R.string.subtitle),
       true
     ).show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {

@@ -14,8 +14,7 @@ import cloud.app.csplayer.R
 import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.databinding.FragmentLibraryBinding
 import cloud.app.csplayer.download.DownloadRepository
-import cloud.app.csplayer.download.http.HttpDownloadManager
-import cloud.app.csplayer.download.torrent.TorrentDownloadManager
+import cloud.app.csplayer.download.DownloadCoordinator
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.feed.FeedAction
@@ -52,12 +51,8 @@ class LibraryFragment : Fragment() {
   @Inject
   lateinit var downloadRepository: DownloadRepository
 
-  // Inject managers
   @Inject
-  lateinit var httpDownloadManager: HttpDownloadManager
-
-  @Inject
-  lateinit var torrentDownloadManager: TorrentDownloadManager
+  lateinit var downloadCoordinator: DownloadCoordinator
 
   private lateinit var adapter: FeedAdapter
 
@@ -129,7 +124,7 @@ class LibraryFragment : Fragment() {
   }
 
   private fun setupAdapter() {
-    adapter = FeedAdapter(FeedAction(this, downloadRepository, httpDownloadManager, torrentDownloadManager), adManager, viewModel.filterConfig.value, downloadRepository)
+    adapter = FeedAdapter(FeedAction(this, downloadRepository, downloadCoordinator), adManager, viewModel.filterConfig.value, downloadRepository)
 
     // Observe feed data
     observe(viewModel.feedData) {

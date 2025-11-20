@@ -97,7 +97,6 @@ class LibraryPagingSource(
           DownloadType.HTTP -> {
             val state = stateById[task.id]
             val progress = state?.progress ?: 0
-            val isPaused = state?.status == DownloadStatus.PAUSED
             val fileName = task.targetPath.substringAfterLast('/', task.source.substringAfterLast('/'))
 
             FeedData.HttpDownloadItem(
@@ -106,7 +105,7 @@ class LibraryPagingSource(
               downloadId = task.createdAt,
               fileName = fileName,
               progress = progress,
-              isPaused = isPaused
+              status = state?.status ?: DownloadStatus.QUEUED
             ) as FeedData
           }
 

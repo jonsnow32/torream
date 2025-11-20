@@ -62,7 +62,7 @@ class FeedAdapter(
           oldItem.title == newItem.title &&
             oldItem.fileName == newItem.fileName &&
             oldItem.progress == newItem.progress &&
-            oldItem.isPaused == newItem.isPaused
+            oldItem.status == newItem.status
         }
         oldItem is FeedData.TorrentDownloadItem && newItem is FeedData.TorrentDownloadItem -> {
           // TorrentState is a data class — equality covers all relevant fields
@@ -139,8 +139,6 @@ class FeedAdapter(
     // Clean up ad resources when ViewHolder is recycled
     when (holder) {
       is AdViewHolder -> holder.onRecycled()
-      is HttpDownloadViewHolder -> holder.onRecycled()
-      is TorrentDownloadViewHolder -> holder.onRecycled()
     }
   }
 
