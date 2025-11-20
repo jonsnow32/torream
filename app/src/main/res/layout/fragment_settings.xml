@@ -121,14 +121,25 @@
           android:layout_height="wrap_content"
           android:background="@drawable/preference_focused"
           android:drawableEnd="@drawable/ic_keyboard_arrow_right"
-          android:nextFocusUp="@id/app_version_info"
-          android:nextFocusDown="@id/app_version_info"
+          android:nextFocusUp="@id/settings_player"
+          android:nextFocusDown="@id/settings_download"
           android:paddingVertical="8dp"
           android:paddingStart="20dp"
           android:text="@string/category_updates"
           android:textSize="18sp" />
 
-
+        <TextView
+          android:id="@+id/settings_download"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:background="@drawable/preference_focused"
+          android:drawableEnd="@drawable/ic_keyboard_arrow_right"
+          android:nextFocusUp="@id/settings_updates"
+          android:nextFocusDown="@id/app_version_info"
+          android:paddingVertical="8dp"
+          android:paddingStart="20dp"
+          android:text="@string/download"
+          android:textSize="18sp" />
       </LinearLayout>
 
       <LinearLayout

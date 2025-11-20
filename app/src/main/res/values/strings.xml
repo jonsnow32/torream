@@ -48,6 +48,13 @@
   <string name="jsdelivr_proxy_key" translatable="false">jsdelivr_proxy_key</string>
   <string name="download_path_key" translatable="false">download_path_key</string>
   <string name="app_name_download_path" translatable="false">HexaPlayer</string>
+  <string name="download_over_wifi_key" translatable="false">download_over_wifi_key</string>
+  <string name="download_over_metered_key" translatable="false">download_over_metered_key</string>
+  <string name="download_notification_key" translatable="false">download_notification_key</string>
+  <string name="download_auto_retry_key" translatable="false">download_auto_retry_key</string>
+  <string name="download_concurrent_limit_key" translatable="false">download_concurrent_limit_key</string>
+  <string name="download_torrent_port_key" translatable="false">download_torrent_port_key</string>
+  <string name="download_max_speed_key" translatable="false">download_max_speed_key</string>
   <string name="app_name" translatable="false">HexaPlayer</string>
   <string name="app_layout_key" translatable="false">app_layout_key</string>
   <string name="primary_color_key" translatable="false">primary_color_key</string>
@@ -430,6 +437,22 @@
   <string name="remove_site_pref">Remove site</string>
   <string name="add_site_summary">Add a clone of an existing site, with a different URL</string>
   <string name="download_path_pref">Download path</string>
+  <string name="download_over_wifi">Download over WiFi only</string>
+  <string name="download_over_wifi_summary">Only download when connected to WiFi</string>
+  <string name="download_over_metered">Allow metered connections</string>
+  <string name="download_over_metered_summary">Allow downloads over mobile data (may incur charges)</string>
+  <string name="download_notification">Show download notifications</string>
+  <string name="download_notification_summary">Display notifications for download progress and completion</string>
+  <string name="download_auto_retry">Auto-retry failed downloads</string>
+  <string name="download_auto_retry_summary">Automatically retry downloads that fail</string>
+  <string name="download_concurrent_limit">Concurrent downloads</string>
+  <string name="download_concurrent_limit_summary">Maximum number of simultaneous downloads</string>
+  <string name="download_torrent_port">Torrent port</string>
+  <string name="download_torrent_port_summary">Port for torrent connections (default: 6881)</string>
+  <string name="download_max_speed">Maximum download speed</string>
+  <string name="download_max_speed_summary">Limit download speed (0 = unlimited)</string>
+  <string name="download_delete_completed">Delete completed downloads</string>
+  <string name="download_delete_completed_summary">Remove downloaded files from the list when complete</string>
   <string name="nginx_url_pref">NGINX server URL</string>
   <string name="display_subbed_dubbed_settings">Display Dubbed/Subbed Anime</string>
   <string name="resize_fit">Fit to screen</string>
@@ -470,6 +493,10 @@
   <string name="pref_category_defaults">Defaults</string>
   <string name="pref_category_looks">Looks</string>
   <string name="pref_category_ui_features">Features</string>
+  <string name="pref_category_download_general">General</string>
+  <string name="pref_category_download_network">Network</string>
+  <string name="pref_category_download_torrent">Torrent Settings</string>
+  <string name="pref_category_download_notifications">Notifications</string>
   <string name="category_general">General</string>
   <string name="random_button_settings">Random Button</string>
   <string name="random_button_settings_desc">Show random button on Homepage and Library</string>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto">
+
+  <PreferenceCategory android:title="@string/pref_category_download_general">
+
+    <Preference
+      android:icon="@drawable/ic_download"
+      android:key="@string/download_path_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/download_path_pref" />
+
+    <Preference
+      android:icon="@drawable/ic_battery"
+      android:key="@string/battery_optimisation_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/battery_dialog_title" />
+
+  </PreferenceCategory>
+
+  <PreferenceCategory android:title="@string/pref_category_download_network">
+
+    <SwitchPreferenceCompat
+      android:icon="@drawable/ic_baseline_data_usage_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/download_over_wifi_summary"
+      android:title="@string/download_over_wifi"
+      app:defaultValue="false"
+      app:key="@string/download_over_wifi_key" />
+
+    <SwitchPreferenceCompat
+      android:icon="@drawable/ic_baseline_data_usage_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/download_over_metered_summary"
+      android:title="@string/download_over_metered"
+      app:defaultValue="true"
+      app:key="@string/download_over_metered_key" />
+
+    <Preference
+      android:icon="@drawable/ic_baseline_speed_24"
+      android:key="@string/download_max_speed_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/download_max_speed_summary"
+      android:title="@string/download_max_speed" />
+
+    <Preference
+      android:icon="@drawable/ic_download"
+      android:key="@string/download_concurrent_limit_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/download_concurrent_limit_summary"
+      android:title="@string/download_concurrent_limit" />
+
+  </PreferenceCategory>
+
+  <PreferenceCategory android:title="@string/pref_category_download_torrent">
+
+    <Preference
+      android:icon="@drawable/ic_baseline_dns_24"
+      android:key="@string/download_torrent_port_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/download_torrent_port_summary"
+      android:title="@string/download_torrent_port" />
+
+  </PreferenceCategory>
+
+  <PreferenceCategory android:title="@string/pref_category_download_notifications">
+
+    <SwitchPreferenceCompat
+      android:icon="@drawable/ic_baseline_notifications_active_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/download_notification_summary"
+      android:title="@string/download_notification"
+      app:defaultValue="true"
+      app:key="@string/download_notification_key" />
+
+    <SwitchPreferenceCompat
+      android:icon="@drawable/ic_baseline_system_update_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/download_auto_retry_summary"
+      android:title="@string/download_auto_retry"
+      app:defaultValue="true"
+      app:key="@string/download_auto_retry_key" />
+
+  </PreferenceCategory>
+
+</PreferenceScreen>

@@ -29,7 +29,8 @@ import kotlin.math.roundToInt
 class TorrentDownloadWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
-  private val repo: DownloadRepository
+  private val repo: DownloadRepository,
+  private val mediaStore: cloud.app.csplayer.media.dataSource.MediaStoreDataSource
 ) : CoroutineWorker(context, params) {
 
   companion object {
@@ -339,6 +340,30 @@ class TorrentDownloadWorker @AssistedInject constructor(
               completedAt = System.currentTimeMillis()
             )
           )
+
+          // Scan all video files in torrent directory into MediaStore
+          try {
+            val videoFiles = saveDir.walkTopDown()
+              .filter { it.isFile }
+              .filter { file ->
+                val extension = file.extension.lowercase()
+                extension in listOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp")
+              }
+              .toList()
+
+            Timber.d("Torrent download: Found ${videoFiles.size} video files to scan")
+            videoFiles.forEach { videoFile ->
+              try {
+                mediaStore.scanMedia(videoFile.absolutePath)
+                Timber.d("Torrent download: Scanned file into MediaStore: ${videoFile.absolutePath}")
+              } catch (e: Exception) {
+                Timber.w(e, "Torrent download: Failed to scan file: ${videoFile.absolutePath}")
+              }
+            }
+          } catch (e: Exception) {
+            Timber.w(e, "Torrent download: Failed to scan files into MediaStore")
+          }
+
           Timber.i("Torrent download completed: $taskId")
           return@withContext Result.success()
         }

@@ -66,12 +66,13 @@ class SettingsFragment : Fragment() {
     super.onViewCreated(view, savedInstanceState)
 
     binding.apply {
-      applyContentRect(null,root)
+      applyContentRect(null, root)
 
       listOf(
         settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
         settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
         settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
+        settingsDownload to R.id.action_navigation_global_to_navigation_settings_download,
       ).forEach { (view, navigationId) ->
         view.apply {
           setOnClickListener {
@@ -90,18 +91,20 @@ class SettingsFragment : Fragment() {
       }
 
       urlBtn.setOnClickListener {
-        // Big Buck Bunny - Well-seeded Creative Commons movie
-        // If you need HTTP test: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-//        var text = "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337"
-        var text = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+
+        val list = listOf(
+          "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+        )
+        var text = list.random()
 
         // Optionally read from clipboard
-//        (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
-//          0
-//        )?.text?.toString()?.let { copy ->
-//          if (copy.isNotEmpty() && (copy.contains("http") || copy.contains("magnet")))
-//            text = copy
-//        }
+        (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
+          0
+        )?.text?.toString()?.let { copy ->
+          if (copy.isNotEmpty() && (copy.contains("http") || copy.contains("magnet")))
+            text = copy
+        }
 
         UrlInputDialog.newInstance(text).show(parentFragmentManager)
       }

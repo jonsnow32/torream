@@ -27,7 +27,8 @@ import java.net.URL
 class HttpDownloadWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
-  private val repo: DownloadRepository
+  private val repo: DownloadRepository,
+  private val mediaStore: cloud.app.csplayer.media.dataSource.MediaStoreDataSource
 ) : CoroutineWorker(context, params) {
 
   companion object {
@@ -228,6 +229,15 @@ class HttpDownloadWorker @AssistedInject constructor(
             completedAt = System.currentTimeMillis()
           )
         )
+
+        // Scan file into MediaStore so it becomes visible in media library
+        try {
+          mediaStore.scanMedia(finalTargetFile.absolutePath)
+          Timber.d("HTTP download: Scanned file into MediaStore: ${finalTargetFile.absolutePath}")
+        } catch (e: Exception) {
+          Timber.w(e, "HTTP download: Failed to scan file into MediaStore")
+        }
+
         Timber.i("HTTP download completed: $taskId, saved to ${finalTargetFile.absolutePath}")
         return@withContext Result.success()
       } else {

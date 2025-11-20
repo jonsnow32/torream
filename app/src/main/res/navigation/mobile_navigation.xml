@@ -69,6 +69,14 @@
     app:popExitAnim="@anim/exit_anim" />
 
   <action
+    android:id="@+id/action_navigation_global_to_navigation_settings_download"
+    app:destination="@id/settingsDownload"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
+  <action
     android:id="@+id/action_navigation_global_to_navigation_settings_general"
     app:destination="@id/navigation_settings_general"
     app:enterAnim="@anim/enter_anim"
@@ -206,4 +214,8 @@
       android:defaultValue="-1"
       app:argType="integer" />
   </fragment>
+  <fragment
+    android:id="@+id/settingsDownload"
+    android:name="cloud.app.csplayer.ui.settings.SettingsDownload"
+    android:label="SettingsDownload" />
 </navigation>
