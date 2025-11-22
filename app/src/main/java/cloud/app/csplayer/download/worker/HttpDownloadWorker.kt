@@ -8,8 +8,10 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import cloud.app.csplayer.download.DownloadCoordinator
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadStatus
+import cloud.app.csplayer.utils.KUniFile
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -17,9 +19,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.io.File
-import java.io.FileOutputStream
+import androidx.core.net.toUri
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -28,7 +30,8 @@ class HttpDownloadWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val repo: DownloadRepository,
-  private val mediaStore: cloud.app.csplayer.media.dataSource.MediaStoreDataSource
+  private val mediaStore: cloud.app.csplayer.media.dataSource.MediaStoreDataSource,
+  private val coordinator: DownloadCoordinator
 ) : CoroutineWorker(context, params) {
 
   companion object {
@@ -55,15 +58,81 @@ class HttpDownloadWorker @AssistedInject constructor(
 
     var connection: HttpURLConnection? = null
     var input: InputStream? = null
-    var out: FileOutputStream? = null
+    var out: OutputStream? = null
     var currentState = state // Declare here so it's accessible in catch block
 
     try {
-      val targetFile = File(task.targetPath)
-      val tempFile = File(task.targetPath + ".part")
-      tempFile.parentFile?.mkdirs()
+      val targetPath = task.targetPath
+      val isSafUri = targetPath.startsWith("content://")
 
-      val existingBytes = if (tempFile.exists()) tempFile.length() else 0L
+      val targetFile = KUniFile.fromUri(context, targetPath.toUri())
+
+      if (targetFile == null) {
+        val err = "Failed to create KUniFile from: $targetPath"
+        Timber.e(err)
+        repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+        return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+      }
+
+      // For SAF URIs that are directories, create the actual file first
+      val actualTargetFile = if (targetFile.isDirectory) {
+        val filename = task.source.substringAfterLast("/").substringBefore("?")
+          .takeIf { it.isNotBlank() } ?: "download_${System.currentTimeMillis()}.mp4"
+        val finalFileName = filename.ifBlank { taskId }
+
+        // Create file in directory
+        targetFile.createFile(finalFileName, "application/octet-stream")
+          ?: kotlin.run {
+            val err = "Failed to create file in directory: $targetPath"
+            Timber.e(err)
+            repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+            return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+          }
+      } else {
+        targetFile
+      }
+
+      // For SAF URIs, write directly to the file without temp file
+      // For traditional paths, use temp file for safety
+      val (downloadFile, tempPath) = if (isSafUri) {
+        Pair(actualTargetFile, actualTargetFile.uri.toString())
+      } else {
+        val tempPath = "$targetPath.part"
+        val tempFileUri = tempPath.toUri()
+        val tempKuniFile = KUniFile.fromUri(context, tempFileUri)
+          ?: kotlin.run {
+            val err = "Failed to create KUniFile for temp file: $tempPath"
+            Timber.e(err)
+            repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+            return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+          }
+
+        // Ensure temp file exists
+        if (!tempKuniFile.exists()) {
+          try {
+            val parentFile = KUniFile.fromUri(context, targetPath.toUri())
+            if (parentFile != null && parentFile.isDirectory) {
+              val created = parentFile.createFile("http.part", "application/octet-stream")
+              if (created == null) {
+                val err = "Failed to create temp file in directory: $tempPath"
+                Timber.e(err)
+                repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+                return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+              }
+              Pair(created, created.uri.toString())
+            } else {
+              Pair(tempKuniFile, tempPath)
+            }
+          } catch (e: Exception) {
+            Timber.e(e, "Error creating temp file")
+            Pair(tempKuniFile, tempPath)
+          }
+        } else {
+          Pair(tempKuniFile, tempPath)
+        }
+      }
+
+      val existingBytes = if (downloadFile?.exists() == true) downloadFile.length() else 0L
 
       val url = URL(task.source)
       connection = (url.openConnection() as HttpURLConnection).apply {
@@ -103,7 +172,25 @@ class HttpDownloadWorker @AssistedInject constructor(
       repo.updateState(currentState)
 
       input = connection.inputStream
-      out = FileOutputStream(tempFile, true)
+      out = try {
+        // Ensure download file actually exists before opening output stream
+        if (downloadFile == null || !downloadFile.exists()) {
+          Timber.e("Download file does not exist: $tempPath, exists=${downloadFile?.exists()}")
+          null
+        } else {
+          downloadFile.openOutputStream(append = existingBytes > 0)
+        }
+      } catch (e: Exception) {
+        Timber.e(e, "Failed to open output stream for download file")
+        null
+      }
+
+      if (out == null) {
+        val err = "Failed to open output stream for: $tempPath"
+        Timber.e(err)
+        repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
+        return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+      }
 
       val buffer = ByteArray(8 * 1024)
       var downloaded = 0L
@@ -168,54 +255,63 @@ class HttpDownloadWorker @AssistedInject constructor(
 
       connection.disconnect()
 
-      Timber.d("Download completed, moving temp file to target: ${tempFile.absolutePath} -> ${targetFile.absolutePath}")
+      Timber.d("Download completed for: $targetPath")
 
-      // Ensure target file path is valid (not a directory)
-      val finalTargetFile = if (targetFile.isDirectory || task.targetPath.endsWith("/")) {
-        // Extract filename from URL
-        val filename = task.source.substringAfterLast("/").substringBefore("?")
-        File(targetFile, filename.ifBlank { taskId })
-      } else {
-        targetFile
-      }
-
-      // Ensure parent directory exists
-      finalTargetFile.parentFile?.mkdirs()
-
-      // Delete existing target file if it exists
-      if (finalTargetFile.exists()) {
-        Timber.d("Target file already exists, deleting: ${finalTargetFile.absolutePath}")
-        finalTargetFile.delete()
-      }
-
-      // Try to move temp file to final location
+      // For SAF URIs, the file was written directly; for traditional paths, move temp to final
       var success = false
+
       try {
-        // First try rename (fast)
-        success = tempFile.renameTo(finalTargetFile)
-        if (success) {
-          Timber.d("Successfully renamed temp file")
+        if (!isSafUri) {
+          // Traditional file path - move temp file to final location
+          Timber.d("Moving temp file to target: $tempPath -> $targetPath")
+
+          val tempFileUri = tempPath.toUri()
+          val tempKuniFile = KUniFile.fromUri(context, tempFileUri)
+
+          if (tempKuniFile != null && tempKuniFile.exists()) {
+            // Delete target if it exists
+            if (actualTargetFile.exists()) {
+              actualTargetFile.delete()
+            }
+
+            // Copy content from temp to final
+            val inputStream = tempKuniFile.openInputStream()
+            val outputStream = actualTargetFile.openOutputStream(append = false)
+
+            inputStream.use { inStream ->
+              outputStream.use { outStream ->
+                inStream.copyTo(outStream)
+              }
+            }
+
+            // Delete temp file
+            tempKuniFile.delete()
+            success = actualTargetFile.exists()
+            if (success) {
+              Timber.d("Successfully moved file to $targetPath")
+            }
+          } else {
+            Timber.w("Temp file does not exist: $tempPath")
+          }
         } else {
-          // Rename failed, try copy + delete (slower but more reliable)
-          Timber.w("Rename failed, falling back to copy+delete")
-          tempFile.copyTo(finalTargetFile, overwrite = true)
-          tempFile.delete()
-          success = finalTargetFile.exists()
+          // For SAF URIs, file was written directly
+          success = actualTargetFile.exists()
           if (success) {
-            Timber.d("Successfully copied temp file and deleted original")
+            Timber.d("File successfully written to SAF URI")
           }
         }
       } catch (e: Exception) {
-        Timber.e(e, "Exception during file move")
+        Timber.e(e, "Exception during file finalization")
         success = false
       }
 
-      if (success && finalTargetFile.exists()) {
-        val finalSize = finalTargetFile.length()
+      if (success && actualTargetFile.exists()) {
+        val finalSize = actualTargetFile.length()
+        val finalTargetPath = actualTargetFile.uri.toString()
         Timber.d("Final file size: $finalSize bytes")
 
         // Update task with downloaded file path (currentState already has title)
-        val updatedTask = currentState.task.copy(downloadedFilePath = finalTargetFile.absolutePath)
+        val updatedTask = currentState.task.copy(downloadedFilePath = finalTargetPath)
 
         repo.updateState(
           currentState.copy(
@@ -230,21 +326,41 @@ class HttpDownloadWorker @AssistedInject constructor(
           )
         )
 
-        // Scan file into MediaStore so it becomes visible in media library
+        // Scan file into MediaStore if it's a traditional file path (not SAF URI)
         try {
-          mediaStore.scanMedia(finalTargetFile.absolutePath)
-          Timber.d("HTTP download: Scanned file into MediaStore: ${finalTargetFile.absolutePath}")
+          if (!isSafUri) {
+            mediaStore.scanMedia(finalTargetPath)
+            Timber.d("HTTP download: Scanned file into MediaStore: $finalTargetPath")
+          } else {
+            Timber.d("HTTP download: Completed on SAF URI (skip MediaStore scan): $finalTargetPath")
+          }
         } catch (e: Exception) {
           Timber.w(e, "HTTP download: Failed to scan file into MediaStore")
         }
 
-        Timber.i("HTTP download completed: $taskId, saved to ${finalTargetFile.absolutePath}")
+        Timber.i("HTTP download completed: $taskId, saved to ${actualTargetFile.uri}")
+
+        // Process any queued downloads now that this one is complete
+        try {
+          coordinator.processQueuedDownloads()
+        } catch (e: Exception) {
+          Timber.w(e, "Failed to process queued downloads after completion")
+        }
+
         return@withContext Result.success()
       } else {
-        val err = "Failed to move temp file to final location. Temp: ${tempFile.absolutePath} (exists: ${tempFile.exists()}), Target: ${finalTargetFile.absolutePath} (exists: ${finalTargetFile.exists()})"
+        val err = "Failed to finalize download. Target exists: ${actualTargetFile.exists()}"
         Timber.e(err)
         // Use currentState which already has title
         repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
+
+        // Process any queued downloads even on failure
+        try {
+          coordinator.processQueuedDownloads()
+        } catch (_: Exception) {
+          Timber.w("Failed to process queued downloads after failure")
+        }
+
         return@withContext Result.failure(workDataOf(KEY_ERROR to err))
       }
 
@@ -253,6 +369,14 @@ class HttpDownloadWorker @AssistedInject constructor(
       val err = e.message ?: "Unknown error"
       // Use currentState which may have title if error happened after filename extraction
       repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
+
+      // Process any queued downloads even on failure
+      try {
+        coordinator.processQueuedDownloads()
+      } catch (_: Exception) {
+        Timber.w("Failed to process queued downloads after failure")
+      }
+
       return@withContext Result.failure(workDataOf(KEY_ERROR to err))
     } finally {
       // Cleanup - only if not already closed
@@ -306,7 +430,7 @@ class HttpDownloadWorker @AssistedInject constructor(
         // Decode URL encoding if present
         return try {
           java.net.URLDecoder.decode(filename, "UTF-8")
-        } catch (e: Exception) {
+        } catch (_: Exception) {
           filename
         }
       }

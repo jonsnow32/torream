@@ -720,12 +720,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="no">No</string>
   <string name="ok">OK</string>
   <string name="battery_dialog_title">Disable Battery optimization</string>
-  <string name="battery_dialog_message">To ensure uninterrupted downloads and notifications for subscribed
-        TV shows, HexaPlayer needs permission to run in background. By pressing "OK", you\'ll be directed to App info.
-        There, scroll to 𝘼𝙥𝙥 𝙗𝙖𝙩𝙩𝙚𝙧𝙮 𝙪𝙨𝙖𝙜𝙚 and set battery usage to 𝙐𝙣𝙧𝙚𝙨𝙩𝙧𝙞𝙘𝙩𝙚𝙙. Please note, this permission
-        does not mean CS3 will drain your battery. It will only operate in the background when necessary, such as
-        when receiving notifications or downloading videos from official extensions. If you choose to cancel,
-        you can adjust this setting later in 𝙂𝙚𝙣𝙚𝙧𝙖𝙡 𝙎𝙚𝙩𝙩𝙞𝙣𝙜𝙨.</string>
+  <string name="battery_dialog_message">To ensure uninterrupted downloads and background tasks, HexaPlayer needs permission to run without battery restrictions.\n\nBy pressing "Open Settings", you\'ll be directed to battery optimization settings. Please select "Don\'t optimize" or "Unrestricted" for this app.\n\nNote: This permission does not mean HexaPlayer will drain your battery. It will only run in the background when necessary, such as when downloading files or receiving notifications.\n\nYou can adjust this setting anytime in Download Settings.</string>
   <string name="battery_optimisation_key" translatable="false">battery_optimisation</string>
   <string name="app_unrestricted_toast">App battery usage is already set to unrestricted</string>
   <string name="app_info_intent_error">Unable to open HexaPlayer\'s App info.</string>

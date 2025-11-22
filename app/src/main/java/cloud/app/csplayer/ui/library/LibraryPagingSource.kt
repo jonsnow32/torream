@@ -3,12 +3,11 @@ package cloud.app.csplayer.ui.library
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import cloud.app.csplayer.download.DownloadRepository
+import cloud.app.csplayer.download.DownloadState
 import cloud.app.csplayer.download.DownloadType
 import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.ui.feed.FeedData
-import cloud.app.csplayer.model.TorrentState
-import cloud.app.csplayer.model.TorrentDownloadStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
@@ -75,7 +74,7 @@ class LibraryPagingSource(
       val allTasks = downloadRepository.loadAllTask()
       val allStates = try {
         downloadRepository.observeAllStates().first()
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         emptyList()
       }
 
@@ -111,34 +110,25 @@ class LibraryPagingSource(
 
           DownloadType.TORRENT -> {
             val state = stateById[task.id]
+            val title = state?.task?.title ?: task.source.substringAfterLast('/')
 
-            val status = when (state?.status) {
-              DownloadStatus.DOWNLOADING -> TorrentDownloadStatus.DOWNLOADING
-              DownloadStatus.PAUSED -> TorrentDownloadStatus.PAUSED
-              DownloadStatus.SEEDING -> TorrentDownloadStatus.SEEDING
-              DownloadStatus.FINISHED -> TorrentDownloadStatus.FINISHED
-              else -> TorrentDownloadStatus.ERROR
+            if (state != null) {
+              FeedData.TorrentDownloadItem(
+                id = task.id,
+                title = title,
+                downloadState = state
+              ) as FeedData
+            } else {
+              // Fallback if state is not found
+              FeedData.TorrentDownloadItem(
+                id = task.id,
+                title = title,
+                downloadState = DownloadState(
+                  task = task,
+                  status = DownloadStatus.QUEUED
+                )
+              ) as FeedData
             }
-
-            val ts = TorrentState(
-              infoHash = task.source,
-              name = state?.task?.source ?: task.source,
-              status = status,
-              progress = (state?.progress ?: 0).toFloat(),
-              downloadSpeed = state?.downloadSpeedBytesPerSec ?: 0L,
-              uploadSpeed = 0L,
-              totalSize = task.totalBytes,
-              downloadedSize = state?.downloadedBytes ?: 0L,
-              numPeers = 0,
-              numSeeds = 0,
-              error = state?.error
-            )
-
-            FeedData.TorrentDownloadItem(
-              id = task.id,
-              title = ts.name.ifBlank { task.id },
-              torrentState = ts
-            ) as FeedData
           }
         }
       }

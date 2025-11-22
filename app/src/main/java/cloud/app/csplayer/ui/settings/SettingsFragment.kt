@@ -93,10 +93,29 @@ class SettingsFragment : Fragment() {
       urlBtn.setOnClickListener {
 
         val list = listOf(
+          // Magnet Links
           "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+          "magnet:?xt=urn:btih:08ada5c11c42e4a0c83cc8521d04e6723d12fa27&dn=Sintel",
+          "magnet:?xt=urn:btih:7c3fcd16e27e49e243ec97465ea1b19e5bbd73d2&dn=Big+Buck+Bunny",
+
+          // HTTP Video Links - Short Duration
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMolecules.mp4",
+          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+
+          // Public Domain/Creative Commons
+          "https://archive.org/download/BigBuckBunny_124/Content/Big_Buck_Bunny_1080_10s_30MB.mp4",
+
+          // More Magnet Links (Various Torrents)
+          "magnet:?xt=urn:btih:6a9759bffd5c0af65319979fb7832189f4f3c35d&dn=Tears+of+Steel&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce",
+          "magnet:?xt=urn:btih:1e8fbd02b98722a0b3192873f5e322b945d12157&dn=Blender+Foundation&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80%2Fannounce"
         )
-        var text = list.random()
+        var text = "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c"//list.random()
 
         // Optionally read from clipboard
         (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(

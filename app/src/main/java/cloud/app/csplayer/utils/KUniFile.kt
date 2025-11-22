@@ -10,9 +10,11 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import androidx.documentfile.provider.DocumentFile
+import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import androidx.core.net.toUri
@@ -448,14 +450,27 @@ abstract class KUniFile(val context: Context) {
       }
 
       override fun openInputStream(): InputStream {
-        if (!isFile) throw IllegalStateException("Cannot open input stream for a directory: $relativePath")
-        return resolver.openInputStream(uri)!!
+        if (!isFile) throw IllegalStateException("Cannot open input stream for a directory: $uri")
+        return context.contentResolver.openInputStream(uri)!!
       }
 
       override fun openOutputStream(append: Boolean): OutputStream {
-        if (isDirectory) throw IllegalStateException("Cannot open output stream for a directory: $relativePath")
-        if (!exists()) throw IllegalStateException("File does not exist yet. Call createFile() first: $relativePath")
-        return resolver.openOutputStream(uri, if (append) "wa" else "w")!!
+        if (isDirectory) throw IllegalStateException("Cannot open output stream for a directory: $uri")
+        // For files that don't exist yet, try to create them first
+        if (!exists()) {
+          Timber.w("File does not exist, attempting to create it: $uri")
+          // If we can't open the file, it may not have been properly created
+          // In this case, we need to handle it differently
+          try {
+            // Try to open anyway - ContentResolver may auto-create
+            return context.contentResolver.openOutputStream(uri, if (append) "wa" else "w")
+              ?: throw IOException("Could not open output stream for $uri")
+          } catch (e: Exception) {
+            Timber.e(e, "Failed to open output stream, file may not exist")
+            throw IOException("Cannot open output stream for: $uri", e)
+          }
+        }
+        return context.contentResolver.openOutputStream(uri, if (append) "wa" else "w")!!
       }
     }
 

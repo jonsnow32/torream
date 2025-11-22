@@ -23,6 +23,7 @@
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" /> <!-- some dependency needs this -->
   <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /> <!-- Used for player vertical slide -->
   <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Used for torrent downloads -->
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" /> <!-- Used for background downloads -->
 <!--  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /> &lt;!&ndash; Used for app update &ndash;&gt;-->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Used for app notifications on Android 13+ -->
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- Used for update service -->

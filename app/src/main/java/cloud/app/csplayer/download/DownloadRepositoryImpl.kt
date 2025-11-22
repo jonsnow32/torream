@@ -109,7 +109,8 @@ class DownloadRepositoryImpl @Inject constructor(
     }
   }
 
-  override suspend fun updateState(state: DownloadState) {
+  override suspend fun
+    updateState(state: DownloadState) {
     when (state.task.type) {
       DownloadType.TORRENT -> {
         // update torrent progress/status by replacing the entity via insertTorrent (REPLACE)
@@ -133,8 +134,8 @@ class DownloadRepositoryImpl @Inject constructor(
             uploadSpeed = 0L,
             totalSize = state.task.totalBytes,
             downloadedSize = state.downloadedBytes,
-            numPeers = 0,
-            numSeeds = 0,
+            numPeers = state.numPeers,
+            numSeeds = state.numSeeds,
             error = state.error,
             dateAdded = state.task.createdAt,
             dateCompleted = if (state.status == DownloadStatus.FINISHED) System.currentTimeMillis() else null,
@@ -150,8 +151,8 @@ class DownloadRepositoryImpl @Inject constructor(
             uploadSpeed = current?.uploadSpeed ?: 0L,
             totalSize = if (state.task.totalBytes > 0) state.task.totalBytes else current?.totalSize ?: 0L,
             downloadedSize = state.downloadedBytes,
-            numPeers = current?.numPeers ?: 0,
-            numSeeds = current?.numSeeds ?: 0,
+            numPeers = state.numPeers,
+            numSeeds = state.numSeeds,
             error = state.error,
             dateAdded = current?.dateAdded ?: state.task.createdAt,
             dateCompleted = if (state.status == DownloadStatus.FINISHED) System.currentTimeMillis() else current?.dateCompleted,
@@ -213,6 +214,8 @@ class DownloadRepositoryImpl @Inject constructor(
       downloadedBytes = e.downloadedSize,
       progress = (e.progress.coerceIn(0f, 100f)).toInt(),
       downloadSpeedBytesPerSec = e.downloadSpeed,
+      numSeeds = e.numSeeds,
+      numPeers = e.numPeers,
       error = e.error
     )
   }

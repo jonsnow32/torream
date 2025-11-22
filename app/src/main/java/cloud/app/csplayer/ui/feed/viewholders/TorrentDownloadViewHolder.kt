@@ -4,10 +4,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.ItemTorrentDownloadBinding
-import cloud.app.csplayer.model.TorrentDownloadStatus
+import cloud.app.csplayer.download.DownloadRepository
+import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
-import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.ui.feed.FeedAction
 
 class TorrentDownloadViewHolder(
@@ -20,12 +20,12 @@ class TorrentDownloadViewHolder(
 ) : FeedViewHolder<FeedData.TorrentDownloadItem>(binding.root) {
 
   override fun bind(feed: FeedData.TorrentDownloadItem) {
-    // Bind data from feed (already updated by ViewModel)
+    // Bind data from feed (already updated by LibraryViewModel which observes DownloadState)
     binding.title.text = feed.title
-    binding.txtTorrentName.text = feed.torrentState.name
+    binding.txtTorrentName.text = feed.downloadState.task.title ?: feed.downloadState.task.source
 
-    val progressInt = (feed.torrentState.progress * 100f).toInt().coerceIn(0, 100)
-    updateUI(progressInt, feed.torrentState.status, feed.torrentState.numSeeds, feed.torrentState.numPeers)
+    val progress = feed.downloadState.progress.coerceIn(0, 100)
+    updateUI(progress, feed.downloadState.status, feed.downloadState.numSeeds, feed.downloadState.numPeers)
 
     // Click listeners
     binding.root.setOnClickListener {
@@ -40,14 +40,14 @@ class TorrentDownloadViewHolder(
     }
   }
 
-  private fun updateUI(progress: Int, status: TorrentDownloadStatus, seeds: Int, peers: Int) {
+  private fun updateUI(progress: Int, status: DownloadStatus, seeds: Int, peers: Int) {
     binding.progressBar.progress = progress
 
     val statusText = when (status) {
-      TorrentDownloadStatus.PAUSED -> parent.context.getString(R.string.paused)
-      TorrentDownloadStatus.SEEDING -> parent.context.getString(R.string.seeding)
-      TorrentDownloadStatus.FINISHED -> parent.context.getString(R.string.finished)
-      TorrentDownloadStatus.ERROR -> parent.context.getString(R.string.error)
+      DownloadStatus.PAUSED -> parent.context.getString(R.string.paused)
+      DownloadStatus.SEEDING -> parent.context.getString(R.string.seeding)
+      DownloadStatus.FINISHED, DownloadStatus.COMPLETED -> parent.context.getString(R.string.finished)
+      DownloadStatus.FAILED -> parent.context.getString(R.string.error)
       else -> parent.context.getString(R.string.downloading)
     }
 
@@ -59,13 +59,13 @@ class TorrentDownloadViewHolder(
       peers
     )
 
-    val actionIcon = if (status == TorrentDownloadStatus.PAUSED) {
+    val actionIcon = if (status == DownloadStatus.PAUSED) {
       android.R.drawable.ic_media_play
     } else {
       android.R.drawable.ic_media_pause
     }
     binding.btnAction.setImageResource(actionIcon)
-    binding.btnAction.contentDescription = if (status == TorrentDownloadStatus.PAUSED) {
+    binding.btnAction.contentDescription = if (status == DownloadStatus.PAUSED) {
       parent.context.getString(R.string.resume)
     } else {
       parent.context.getString(R.string.pause)

@@ -1,6 +1,7 @@
 package cloud.app.csplayer.download
 
 import android.content.Context
+import androidx.preference.PreferenceManager
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -8,6 +9,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import cloud.app.csplayer.R
 import cloud.app.csplayer.download.worker.HttpDownloadWorker
 import cloud.app.csplayer.download.worker.TorrentDownloadWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,6 +35,7 @@ class DownloadCoordinator @Inject constructor(
   /**
    * Enqueue and start a download task.
    * This will persist the task and schedule a Worker to handle it.
+   * Respects the concurrent download limit setting.
    */
   suspend fun startDownload(task: DownloadTask) {
     Timber.d("startDownload: taskId=${task.id}, type=${task.type}, source=${task.source}")
@@ -51,6 +54,26 @@ class DownloadCoordinator @Inject constructor(
     if (isRunning) {
       Timber.w("Download already running for taskId=${task.id}, skipping")
       return
+    }
+
+    // Get concurrent download limit from settings
+    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+    val concurrentLimit = prefs.getInt(context.getString(R.string.download_concurrent_limit_key), 3)
+
+    // Check current active downloads if limit is set
+    if (concurrentLimit > 0) {
+      val activeDownloads = getActiveDownloadCount()
+      if (activeDownloads >= concurrentLimit) {
+        Timber.d("Concurrent download limit ($concurrentLimit) reached. Active: $activeDownloads. Queuing task ${task.id}")
+        // Keep in QUEUED status so it will be picked up when a download finishes
+        val existingState = repo.observeState(task.id).firstOrNull()
+        if (existingState != null) {
+          repo.updateState(existingState.copy(status = DownloadStatus.QUEUED, error = null))
+        } else {
+          repo.insertTask(task, DownloadStatus.QUEUED)
+        }
+        return
+      }
     }
 
     // Insert or update task in repository
@@ -226,6 +249,59 @@ class DownloadCoordinator @Inject constructor(
   fun getWorkInfo(taskId: String): Flow<WorkInfo?> {
     return workManager.getWorkInfosForUniqueWorkFlow("download_$taskId")
       .map { list -> list.firstOrNull() }
+  }
+
+  /**
+   * Get count of currently active (running or enqueued) downloads.
+   */
+  private fun getActiveDownloadCount(): Int {
+    return try {
+      val allWork = workManager.getWorkInfosByTag(DOWNLOAD_WORK_TAG).get()
+      val activeCount = allWork.count { workInfo ->
+        workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED
+      }
+      Timber.d("Active downloads: $activeCount")
+      activeCount
+    } catch (e: Exception) {
+      Timber.w("Failed to get active download count: ${e.message}")
+      0
+    }
+  }
+
+  /**
+   * Process queued downloads when a download completes.
+   * This is called after a download finishes to start the next queued download if below limit.
+   */
+  suspend fun processQueuedDownloads() {
+    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+    val concurrentLimit = prefs.getInt(context.getString(R.string.download_concurrent_limit_key), 3)
+
+    // Only process if limit is enabled
+    if (concurrentLimit <= 0) return
+
+    try {
+      val activeDownloads = getActiveDownloadCount()
+      if (activeDownloads >= concurrentLimit) {
+        Timber.d("Concurrent limit still reached. Active: $activeDownloads, Limit: $concurrentLimit")
+        return
+      }
+
+      // Get all queued downloads from repository
+      val allStates = repo.observeAllStates().firstOrNull() ?: emptyList()
+      val queuedDownloads = allStates.filter { it.status == DownloadStatus.QUEUED }
+
+      if (queuedDownloads.isEmpty()) {
+        Timber.d("No queued downloads to process")
+        return
+      }
+
+      // Start the first queued download (FIFO)
+      val nextDownload = queuedDownloads.first()
+      Timber.d("Starting next queued download: ${nextDownload.task.id}")
+      startDownload(nextDownload.task)
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to process queued downloads")
+    }
   }
 
   companion object {

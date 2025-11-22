@@ -1,9 +1,9 @@
 package cloud.app.csplayer.ui.feed
 
 import cloud.app.csplayer.download.DownloadStatus
+import cloud.app.csplayer.download.DownloadState
 import cloud.app.csplayer.model.Folder
 import cloud.app.csplayer.model.Media
-import cloud.app.csplayer.model.TorrentState
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.shelf.ShelfItem
 
 /**
@@ -93,7 +93,7 @@ sealed class FeedData {
   data class TorrentDownloadItem(
     override val id: String,
     override val title: String,
-    val torrentState: TorrentState
+    val downloadState: DownloadState
   ) : FeedData() {
     override var type: Type = Type.TorrentDownload
   }

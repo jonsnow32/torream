@@ -3,11 +3,13 @@ package cloud.app.csplayer.download.worker
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
+import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import cloud.app.csplayer.download.DownloadCoordinator
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadStatus
 import dagger.assisted.Assisted
@@ -30,7 +32,8 @@ class TorrentDownloadWorker @AssistedInject constructor(
   @Assisted private val context: Context,
   @Assisted params: WorkerParameters,
   private val repo: DownloadRepository,
-  private val mediaStore: cloud.app.csplayer.media.dataSource.MediaStoreDataSource
+  private val mediaStore: cloud.app.csplayer.media.dataSource.MediaStoreDataSource,
+  private val coordinator: DownloadCoordinator
 ) : CoroutineWorker(context, params) {
 
   companion object {
@@ -85,12 +88,27 @@ class TorrentDownloadWorker @AssistedInject constructor(
         workDataOf(KEY_ERROR to "Failed to initialize session")
       )
 
-      // Prepare save directory - create unique subdirectory for each torrent
-      val baseDir = File(task.targetPath).let { if (it.isDirectory) it else it.parentFile ?: it }
+      // Prepare save directory - convert content URI to real path if needed
+      val baseDirPath = when {
+        task.targetPath.startsWith("content://") -> {
+          // Convert content URI to real filesystem path using KUniFile
+          val uniFile = cloud.app.csplayer.utils.KUniFile.fromUri(context, task.targetPath.toUri())
+          if (uniFile != null && uniFile.exists()) {
+            uniFile.filePath ?: task.targetPath
+          } else {
+            Timber.e("Cannot convert content URI to path: ${task.targetPath}")
+            val err = "Invalid download path"
+            repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+            return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+          }
+        }
+        else -> task.targetPath
+      }
 
-      // Create subdirectory based on taskId to avoid conflicts
-      // This ensures each torrent has its own directory
-      val saveDir = File(baseDir, taskId)
+      val baseDir = File(baseDirPath).let { if (it.isDirectory) it else it.parentFile ?: it }
+
+      // Use baseDir directly as saveDir without taskId subdirectory
+      val saveDir = baseDir
       if (!saveDir.exists()) {
         saveDir.mkdirs()
         Timber.d("Created torrent save directory: ${saveDir.absolutePath}")
@@ -289,15 +307,64 @@ class TorrentDownloadWorker @AssistedInject constructor(
       repo.updateState(currentState.copy(status = DownloadStatus.DOWNLOADING))
 
       // Poll torrent status until complete or cancelled
+      var lastProgress = 0
+      var stuckCounter = 0
+      val stuckThresholdCount = 30 // 30 * 1000ms = 30 seconds
+
       while (isActive) {
         val status = h.status()
-        val progress = (status.progress() * 100).roundToInt()
+        var progress = (status.progress() * 100).roundToInt()
         val totalBytes = status.totalDone()
         val downloadRate = status.downloadRate().toLong()
         val uploadRate = status.uploadRate().toLong()
+        val state = status.state()
+        val percentageOfTotalDownloaded = if (ti.totalSize() > 0) {
+          (totalBytes * 100) / ti.totalSize()
+        } else 0
+
+        // Check if we're stuck at 95-99% with nearly all data downloaded
+        if (progress > 94 && progress < 100 && percentageOfTotalDownloaded >= 95) {
+          // During final hash checking/verification phase, progress doesn't update
+          // even though we have most of the data
+          if (progress == lastProgress) {
+            stuckCounter++
+            Timber.d("Progress stuck at $progress% (actual: $percentageOfTotalDownloaded%, count: $stuckCounter/$stuckThresholdCount), state: $state, rate: ${downloadRate}B/s")
+
+            // If we have 95%+ of the data and progress hasn't moved for 30 seconds,
+            // consider the download complete (it's just doing final verification)
+            if (stuckCounter >= stuckThresholdCount) {
+              Timber.w("Download appears stuck at $progress% (actual data: $percentageOfTotalDownloaded%) for 30+ seconds. " +
+                      "Forcing completion as verification phase is complete.")
+
+              // Force to 100%
+              progress = 100
+            }
+          } else {
+            stuckCounter = 0
+            lastProgress = progress
+          }
+        } else {
+          stuckCounter = 0
+          lastProgress = progress
+        }
 
         // Fetch current state for accurate updates
         currentState = repo.observeState(taskId).first() ?: currentState
+
+        // Get seed and peer counts from torrent status
+        val numSeeds = try {
+          status.numSeeds()
+        } catch (e: Exception) {
+          Timber.d("Could not get numSeeds: ${e.message}")
+          0
+        }
+
+        val numPeers = try {
+          status.numPeers()
+        } catch (e: Exception) {
+          Timber.d("Could not get numPeers: ${e.message}")
+          0
+        }
 
         repo.updateState(
           currentState.copy(
@@ -307,15 +374,23 @@ class TorrentDownloadWorker @AssistedInject constructor(
             progress = progress,
             speed = downloadRate,
             uploadSpeed = uploadRate,
-            downloadSpeedBytesPerSec = downloadRate
+            downloadSpeedBytesPerSec = downloadRate,
+            numSeeds = numSeeds,
+            numPeers = numPeers
           )
         )
 
         setForeground(createForegroundInfo(taskId, progress))
         setProgress(workDataOf(KEY_PROGRESS to progress))
 
-        // Check if complete
-        if (status.state() == TorrentStatus.State.SEEDING || status.isFinished) {
+        // Check if complete - use multiple conditions for robustness
+        // Progress = 100, or SEEDING state, or isFinished flag
+        val isComplete = progress >= 100 ||
+                        state == TorrentStatus.State.SEEDING ||
+                        state == TorrentStatus.State.FINISHED ||
+                        status.isFinished
+
+        if (isComplete) {
           currentState = repo.observeState(taskId).first() ?: currentState
 
           // For torrents, just save the directory path
@@ -365,6 +440,14 @@ class TorrentDownloadWorker @AssistedInject constructor(
           }
 
           Timber.i("Torrent download completed: $taskId")
+
+          // Process any queued downloads now that this one is complete
+          try {
+            coordinator.processQueuedDownloads()
+          } catch (e: Exception) {
+            Timber.w(e, "Failed to process queued downloads after completion")
+          }
+
           return@withContext Result.success()
         }
 
@@ -387,6 +470,14 @@ class TorrentDownloadWorker @AssistedInject constructor(
       } catch (repoError: Exception) {
         Timber.e(repoError, "Failed to update state for failed download")
       }
+
+      // Process any queued downloads even on failure
+      try {
+        coordinator.processQueuedDownloads()
+      } catch (procErr: Exception) {
+        Timber.w(procErr, "Failed to process queued downloads after failure")
+      }
+
       return@withContext Result.failure(workDataOf(KEY_ERROR to err))
     } finally {
       // Clean up

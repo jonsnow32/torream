@@ -65,8 +65,8 @@ class FeedAdapter(
             oldItem.status == newItem.status
         }
         oldItem is FeedData.TorrentDownloadItem && newItem is FeedData.TorrentDownloadItem -> {
-          // TorrentState is a data class — equality covers all relevant fields
-          oldItem.title == newItem.title && oldItem.torrentState == newItem.torrentState
+          // DownloadState is a data class — equality covers all relevant fields
+          oldItem.title == newItem.title && oldItem.downloadState == newItem.downloadState
         }
         else -> true // For other types, assume same if IDs match
       }

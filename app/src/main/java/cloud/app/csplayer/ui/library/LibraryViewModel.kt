@@ -11,7 +11,6 @@ import androidx.paging.cachedIn
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.media.repository.MediaRepository
-import cloud.app.csplayer.model.TorrentDownloadStatus
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -90,32 +89,9 @@ class LibraryViewModel @Inject constructor(
             is FeedData.TorrentDownloadItem -> {
               val ds = stateById[feed.id]
               if (ds != null) {
-                val status = when (ds.status) {
-                  DownloadStatus.QUEUED,
-                  DownloadStatus.DOWNLOADING -> TorrentDownloadStatus.DOWNLOADING
-
-                  DownloadStatus.PAUSED -> TorrentDownloadStatus.PAUSED
-                  DownloadStatus.SEEDING -> TorrentDownloadStatus.SEEDING
-                  DownloadStatus.FINISHED -> TorrentDownloadStatus.FINISHED
-                  DownloadStatus.COMPLETED -> TorrentDownloadStatus.FINISHED
-                  DownloadStatus.FAILED,
-                  DownloadStatus.CANCELED -> TorrentDownloadStatus.ERROR
-                }
-                Timber.i("progress for torrent ${feed.id} is ${ds.progress}")
-                // Use title from task if available (set by worker), otherwise fallback to parsing
-                val torrentName = ds.task.title ?: ds.task.targetPath.substringAfterLast('/', ds.task.source)
-                val updated = feed.torrentState.copy(
-                  name = torrentName,
-                  status = status,
-                  progress = ds.progress / 100f, // Convert from percentage (0-100) to fraction (0.0-1.0)
-                  downloadSpeed = ds.downloadSpeedBytesPerSec,
-                  downloadedSize = ds.downloadedBytes,
-                  error = ds.error
-                )
-
                 feed.copy(
-                  title = torrentName,
-                  torrentState = updated
+                  title = ds.task.title ?: ds.task.source.substringAfterLast('/'),
+                  downloadState = ds
                 )
               } else feed
             }

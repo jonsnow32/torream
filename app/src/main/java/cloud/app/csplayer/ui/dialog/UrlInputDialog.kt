@@ -1,14 +1,20 @@
 package cloud.app.csplayer.ui.dialog
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.DialogUrlInputBinding
+import cloud.app.csplayer.download.DownloadCoordinator
+import cloud.app.csplayer.download.DownloadTask
+import cloud.app.csplayer.download.DownloadType
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.library.LibrarySection
@@ -17,13 +23,10 @@ import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
 import cloud.app.csplayer.utils.UIHelper.navigate
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import javax.inject.Inject
-import cloud.app.csplayer.download.DownloadCoordinator
-import cloud.app.csplayer.download.DownloadTask
-import cloud.app.csplayer.download.DownloadType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class UrlInputDialog : DockingDialog() {
@@ -59,18 +62,44 @@ class UrlInputDialog : DockingDialog() {
       lifecycleScope.launch {
         // Determine type and save dir on IO (quick)
         val (taskType, saveDir) = withContext(Dispatchers.IO) {
+          // Get user-configured download path from settings
+          val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+          val downloadPathUri = prefs.getString(ctx.getString(R.string.download_path_key), null)
+
+          // Function to get the appropriate download directory
+          fun getDownloadDir(subfolder: String): String {
+            return if (!downloadPathUri.isNullOrEmpty()) {
+              try {
+                // User has configured a custom path
+                val uri = downloadPathUri.toUri()
+                val docFile = DocumentFile.fromTreeUri(ctx, uri)
+                if (docFile != null && docFile.exists() && docFile.canWrite()) {
+                  // Create subfolder if needed
+                  val subDir = docFile.findFile(subfolder) ?: docFile.createDirectory(subfolder)
+                  subDir?.uri?.toString() ?: downloadPathUri
+                } else {
+                  // Fallback if can't access custom path
+                  ctx.getExternalFilesDir(subfolder)?.absolutePath ?: ctx.filesDir.absolutePath
+                }
+              } catch (_: Exception) {
+                // Fallback on error
+                ctx.getExternalFilesDir(subfolder)?.absolutePath ?: ctx.filesDir.absolutePath
+              }
+            } else {
+              // No custom path configured, use default
+              ctx.getExternalFilesDir(subfolder)?.absolutePath ?: ctx.filesDir.absolutePath
+            }
+          }
+
           when {
             inputUrl.startsWith("magnet:") -> {
-              DownloadType.TORRENT to (ctx.getExternalFilesDir("torrents")?.absolutePath
-                ?: ctx.filesDir.absolutePath)
+              DownloadType.TORRENT to getDownloadDir("torrents")
             }
             inputUrl.endsWith(".torrent") -> {
-              DownloadType.TORRENT to (ctx.getExternalFilesDir("torrents")?.absolutePath
-                ?: ctx.filesDir.absolutePath)
+              DownloadType.TORRENT to getDownloadDir("torrents")
             }
             inputUrl.startsWith("http") -> {
-              DownloadType.HTTP to (ctx.getExternalFilesDir("http")?.absolutePath
-                ?: ctx.filesDir.absolutePath)
+              DownloadType.HTTP to getDownloadDir("http")
             }
             else -> null to null
           }
