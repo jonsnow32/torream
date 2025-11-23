@@ -56,7 +56,7 @@ class SettingsDownload : PreferenceFragmentCompat() {
           .edit { putString(getString(R.string.download_path_pref), it) }
       }
 
-      Toast.makeText(context, "Download path updated", Toast.LENGTH_SHORT).show()
+      Toast.makeText(context, "Download path updated to ${KUniFile.fromUri(context, uri)?.name}", Toast.LENGTH_SHORT).show()
     }
 
   // Battery optimization request launcher
@@ -133,6 +133,17 @@ class SettingsDownload : PreferenceFragmentCompat() {
       true
     }
 
+    // WiFi-only download
+    getPref(R.string.download_over_wifi_key)?.setOnPreferenceChangeListener { _, newValue ->
+      val isWifiOnly = newValue as Boolean
+      if (isWifiOnly) {
+        Toast.makeText(context, "Downloads limited to WiFi networks only", Toast.LENGTH_SHORT).show()
+      } else {
+        Toast.makeText(context, "Downloads allowed on any network", Toast.LENGTH_SHORT).show()
+      }
+      true
+    }
+
     // Download speed limit
     getPref(R.string.download_max_speed_key)?.setOnPreferenceClickListener {
       val options = arrayOf("Unlimited", "1 MB/s", "2 MB/s", "5 MB/s", "10 MB/s", "20 MB/s")
@@ -181,7 +192,7 @@ class SettingsDownload : PreferenceFragmentCompat() {
       return
     }
 
-    AlertDialog.Builder(context)
+    AlertDialog.Builder(context, R.style.BaseMaterialDialogTheme)
       .setTitle(R.string.battery_dialog_title)
       .setMessage(R.string.battery_dialog_message)
       .setPositiveButton("Open Settings") { _, _ ->

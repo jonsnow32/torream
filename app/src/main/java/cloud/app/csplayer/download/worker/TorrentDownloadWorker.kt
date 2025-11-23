@@ -27,6 +27,13 @@ import timber.log.Timber
 import java.io.File
 import kotlin.math.roundToInt
 
+// Wrapper for TorrentInfo result to avoid generic Result type issues
+private data class TorrentMetadataResult(
+  val isSuccess: Boolean = false,
+  val torrentInfo: TorrentInfo? = null,
+  val errorResult: androidx.work.ListenableWorker.Result? = null
+)
+
 @HiltWorker
 class TorrentDownloadWorker @AssistedInject constructor(
   @Assisted private val context: Context,
@@ -102,6 +109,7 @@ class TorrentDownloadWorker @AssistedInject constructor(
             return@withContext Result.failure(workDataOf(KEY_ERROR to err))
           }
         }
+
         else -> task.targetPath
       }
 
@@ -117,132 +125,11 @@ class TorrentDownloadWorker @AssistedInject constructor(
       // Add torrent to session
       val ti = when {
         task.source.startsWith("magnet:", ignoreCase = true) -> {
-          // Fetch metadata for magnet link
-          Timber.d("Starting magnet metadata fetch for taskId=$taskId")
-          repo.updateState(state.copy(status = DownloadStatus.QUEUED, error = null))
-
-          val tmp = File(saveDir, "magnet_tmp_${taskId}").apply {
-            if (exists()) {
-              deleteRecursively() // Clean up any stale temp files
-            }
-            mkdirs()
+          val result = fetchMagnetMetadata(s, taskId, task.source, saveDir, state)
+          if (!result.isSuccess) {
+            return@withContext result.errorResult ?: Result.failure(workDataOf(KEY_ERROR to "Unknown error"))
           }
-          Timber.d("Temp directory created: ${tmp.absolutePath}")
-
-          var meta: ByteArray? = null
-          // Use more attempts with shorter timeouts to stay within WorkManager's limits
-          // and give DHT more time to bootstrap between attempts
-          val maxAttempts = 6
-          val perAttemptTimeoutSeconds = 10 // Shorter per-attempt timeout
-
-          repo.updateState(
-            state.copy(
-              status = DownloadStatus.QUEUED,
-              error = "Connecting to DHT network and finding peers..."
-            )
-          )
-
-          // Optimized DHT bootstrap - wait smartly
-          var dhtNodes = 0L
-          var bootstrapWaitTime = 0L
-          val maxBootstrapWait = 10000L // Max 10s instead of 15s
-
-          while (dhtNodes == 0L && bootstrapWaitTime < maxBootstrapWait && isActive) {
-            delay(1000L)
-            bootstrapWaitTime += 1000L
-
-            try {
-              dhtNodes = s.stats().dhtNodes()
-              if (dhtNodes > 0L) {
-                Timber.i("DHT connected: $dhtNodes nodes (waited ${bootstrapWaitTime}ms)")
-                break
-              }
-            } catch (e: Exception) {
-              Timber.w("DHT stats error: ${e.message}")
-            }
-          }
-
-          if (!isActive) {
-            Timber.d("Worker cancelled during DHT bootstrap")
-            return@withContext Result.retry()
-          }
-
-          // Final DHT check
-          try {
-            val stats = s.stats()
-            val dhtNodes = stats.dhtNodes()
-            Timber.d("DHT Status before metadata fetch: $dhtNodes nodes connected")
-
-            if (dhtNodes == 0L) {
-              Timber.w("DHT failed to connect to any nodes - may have network issues")
-              repo.updateState(
-                state.copy(
-                  status = DownloadStatus.QUEUED,
-                  error = "Warning: DHT not connected. Trying trackers..."
-                )
-              )
-            }
-          } catch (e: Exception) {
-            Timber.w("Could not get DHT stats: ${e.message}")
-          }
-
-          for (attempt in 1..maxAttempts) {
-            if (!isActive) {
-              Timber.d("Worker cancelled during magnet fetch attempt $attempt")
-              return@withContext Result.retry()
-            }
-
-            try {
-              Timber.d("Magnet fetch attempt $attempt/$maxAttempts (timeout: ${perAttemptTimeoutSeconds}s)")
-
-              repo.updateState(
-                state.copy(
-                  status = DownloadStatus.QUEUED,
-                  error = "Fetching metadata from peers (attempt $attempt/$maxAttempts)..."
-                )
-              )
-
-              meta = s.fetchMagnet(task.source, perAttemptTimeoutSeconds, tmp)
-
-              if (meta != null) {
-                Timber.i("Magnet metadata fetched successfully on attempt $attempt (${meta.size} bytes)")
-                break
-              }
-              Timber.w("Magnet fetch attempt $attempt returned null metadata (no peers responded)")
-            } catch (t: Throwable) {
-              Timber.w("Magnet fetch attempt $attempt failed: ${t.javaClass.simpleName} - ${t.message}")
-            }
-
-            // Wait before retry with shorter delays to stay within time budget
-            if (attempt < maxAttempts) {
-              val delayMs = 2000L // Fixed 2s delay between attempts
-              Timber.d("Waiting ${delayMs}ms before retry")
-
-              if (!isActive) {
-                Timber.d("Worker cancelled during retry wait")
-                return@withContext Result.retry()
-              }
-
-              delay(delayMs)
-            }
-          }
-
-          if (meta == null) {
-            val err = "Unable to download torrent metadata. This magnet link may be dead (no peers found) or your network may be blocking torrent connections. Try a different magnet link or check your network settings."
-            Timber.e("Magnet fetch failed for taskId=$taskId after $maxAttempts attempts")
-            repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
-            return@withContext Result.failure(workDataOf(KEY_ERROR to err))
-          }
-
-          // Clean up temp directory after successful fetch
-          try {
-            tmp.deleteRecursively()
-          } catch (e: Exception) {
-            Timber.w("Failed to clean up temp directory: ${e.message}")
-          }
-
-          Timber.d("Decoding magnet metadata (${meta.size} bytes)")
-          TorrentInfo.bdecode(meta)
+          result.torrentInfo ?: return@withContext Result.failure(workDataOf(KEY_ERROR to "Failed to decode metadata"))
         }
 
         task.source.endsWith(".torrent", ignoreCase = true) -> {
@@ -256,7 +143,6 @@ class TorrentDownloadWorker @AssistedInject constructor(
         }
 
         else -> {
-          // Assume it's an info hash
           val err = "Bare info-hash not directly supported, use magnet link"
           repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
           return@withContext Result.failure(workDataOf(KEY_ERROR to err))
@@ -307,154 +193,9 @@ class TorrentDownloadWorker @AssistedInject constructor(
       repo.updateState(currentState.copy(status = DownloadStatus.DOWNLOADING))
 
       // Poll torrent status until complete or cancelled
-      var lastProgress = 0
-      var stuckCounter = 0
-      val stuckThresholdCount = 30 // 30 * 1000ms = 30 seconds
-
-      while (isActive) {
-        val status = h.status()
-        var progress = (status.progress() * 100).roundToInt()
-        val totalBytes = status.totalDone()
-        val downloadRate = status.downloadRate().toLong()
-        val uploadRate = status.uploadRate().toLong()
-        val state = status.state()
-        val percentageOfTotalDownloaded = if (ti.totalSize() > 0) {
-          (totalBytes * 100) / ti.totalSize()
-        } else 0
-
-        // Check if we're stuck at 95-99% with nearly all data downloaded
-        if (progress > 94 && progress < 100 && percentageOfTotalDownloaded >= 95) {
-          // During final hash checking/verification phase, progress doesn't update
-          // even though we have most of the data
-          if (progress == lastProgress) {
-            stuckCounter++
-            Timber.d("Progress stuck at $progress% (actual: $percentageOfTotalDownloaded%, count: $stuckCounter/$stuckThresholdCount), state: $state, rate: ${downloadRate}B/s")
-
-            // If we have 95%+ of the data and progress hasn't moved for 30 seconds,
-            // consider the download complete (it's just doing final verification)
-            if (stuckCounter >= stuckThresholdCount) {
-              Timber.w("Download appears stuck at $progress% (actual data: $percentageOfTotalDownloaded%) for 30+ seconds. " +
-                      "Forcing completion as verification phase is complete.")
-
-              // Force to 100%
-              progress = 100
-            }
-          } else {
-            stuckCounter = 0
-            lastProgress = progress
-          }
-        } else {
-          stuckCounter = 0
-          lastProgress = progress
-        }
-
-        // Fetch current state for accurate updates
-        currentState = repo.observeState(taskId).first() ?: currentState
-
-        // Get seed and peer counts from torrent status
-        val numSeeds = try {
-          status.numSeeds()
-        } catch (e: Exception) {
-          Timber.d("Could not get numSeeds: ${e.message}")
-          0
-        }
-
-        val numPeers = try {
-          status.numPeers()
-        } catch (e: Exception) {
-          Timber.d("Could not get numPeers: ${e.message}")
-          0
-        }
-
-        repo.updateState(
-          currentState.copy(
-            status = DownloadStatus.DOWNLOADING,
-            downloadedBytes = totalBytes,
-            totalBytes = ti.totalSize(),
-            progress = progress,
-            speed = downloadRate,
-            uploadSpeed = uploadRate,
-            downloadSpeedBytesPerSec = downloadRate,
-            numSeeds = numSeeds,
-            numPeers = numPeers
-          )
-        )
-
-        setForeground(createForegroundInfo(taskId, progress))
-        setProgress(workDataOf(KEY_PROGRESS to progress))
-
-        // Check if complete - use multiple conditions for robustness
-        // Progress = 100, or SEEDING state, or isFinished flag
-        val isComplete = progress >= 100 ||
-                        state == TorrentStatus.State.SEEDING ||
-                        state == TorrentStatus.State.FINISHED ||
-                        status.isFinished
-
-        if (isComplete) {
-          currentState = repo.observeState(taskId).first() ?: currentState
-
-          // For torrents, just save the directory path
-          // The play logic will search for video files in this directory
-          val downloadedFilePath = saveDir.absolutePath
-
-          Timber.i("Torrent completed, saved to directory: $downloadedFilePath")
-
-          // Update task with downloaded directory path
-          val updatedTaskWithFile = currentState.task.copy(downloadedFilePath = downloadedFilePath)
-
-          repo.updateState(
-            currentState.copy(
-              task = updatedTaskWithFile,
-              status = DownloadStatus.COMPLETED,
-              downloadedBytes = ti.totalSize(),
-              totalBytes = ti.totalSize(),
-              progress = 100,
-              speed = 0L,
-              uploadSpeed = uploadRate,
-              downloadSpeedBytesPerSec = 0L,
-              completedAt = System.currentTimeMillis()
-            )
-          )
-
-          // Scan all video files in torrent directory into MediaStore
-          try {
-            val videoFiles = saveDir.walkTopDown()
-              .filter { it.isFile }
-              .filter { file ->
-                val extension = file.extension.lowercase()
-                extension in listOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp")
-              }
-              .toList()
-
-            Timber.d("Torrent download: Found ${videoFiles.size} video files to scan")
-            videoFiles.forEach { videoFile ->
-              try {
-                mediaStore.scanMedia(videoFile.absolutePath)
-                Timber.d("Torrent download: Scanned file into MediaStore: ${videoFile.absolutePath}")
-              } catch (e: Exception) {
-                Timber.w(e, "Torrent download: Failed to scan file: ${videoFile.absolutePath}")
-              }
-            }
-          } catch (e: Exception) {
-            Timber.w(e, "Torrent download: Failed to scan files into MediaStore")
-          }
-
-          Timber.i("Torrent download completed: $taskId")
-
-          // Process any queued downloads now that this one is complete
-          try {
-            coordinator.processQueuedDownloads()
-          } catch (e: Exception) {
-            Timber.w(e, "Failed to process queued downloads after completion")
-          }
-
-          return@withContext Result.success()
-        }
-
-        // Check for errors - libtorrent4j doesn't have hasError() method
-        // We'll rely on exceptions and state checks instead
-
-        delay(POLL_INTERVAL_MS)
+      val result = pollDownloadProgress(h, ti, taskId, torrentName, saveDir, currentState)
+      if (result != Result.success()) {
+        return@withContext result
       }
 
       // Worker was cancelled - fetch current state
@@ -463,6 +204,22 @@ class TorrentDownloadWorker @AssistedInject constructor(
       return@withContext Result.retry()
 
     } catch (e: Exception) {
+      // Check if this is a cancellation (expected when user pauses)
+      if (e is kotlinx.coroutines.CancellationException || !isActive) {
+        Timber.d("Download cancelled for taskId=$taskId")
+        // Keep the status as PAUSED, don't mark as FAILED
+        try {
+          val currentState = repo.observeState(taskId).first() ?: state
+          if (currentState.status != DownloadStatus.PAUSED) {
+            repo.updateState(currentState.copy(status = DownloadStatus.PAUSED, error = null))
+          }
+        } catch (repoError: Exception) {
+          Timber.e(repoError, "Failed to update state for cancelled download")
+        }
+        return@withContext Result.retry()
+      }
+
+      // Real error - not a cancellation
       val err = e.message ?: "Unknown error"
       Timber.e(e, "Torrent download failed for taskId=$taskId - Error: $err")
       try {
@@ -494,12 +251,17 @@ class TorrentDownloadWorker @AssistedInject constructor(
     }
   }
 
-  private fun createForegroundInfo(taskId: String, progress: Int): ForegroundInfo {
+  private fun createForegroundInfo(
+    taskId: String,
+    progress: Int,
+    fileName: String? = null
+  ): ForegroundInfo {
     val notification = DownloadNotificationHelper.createDownloadNotification(
       context = context,
       taskId = taskId,
       progress = progress,
-      isHttp = false
+      isHttp = false,
+      fileName
     )
 
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -512,5 +274,329 @@ class TorrentDownloadWorker @AssistedInject constructor(
       ForegroundInfo(NOTIFICATION_ID, notification)
     }
   }
+
+  private suspend fun fetchMagnetMetadata(
+    session: SessionManager,
+    taskId: String,
+    magnetUri: String,
+    saveDir: File,
+    state: cloud.app.csplayer.download.DownloadState
+  ): TorrentMetadataResult = withContext(Dispatchers.IO) {
+    Timber.d("Starting magnet metadata fetch for taskId=$taskId")
+    repo.updateState(state.copy(status = DownloadStatus.QUEUED, error = null))
+
+    val tmp = File(saveDir, "magnet_tmp_${taskId}").apply {
+      if (exists()) {
+        deleteRecursively()
+      }
+      mkdirs()
+    }
+    Timber.d("Temp directory created: ${tmp.absolutePath}")
+
+    var meta: ByteArray? = null
+    val maxAttempts = 6
+    val perAttemptTimeoutSeconds = 10
+
+    repo.updateState(
+      state.copy(
+        status = DownloadStatus.QUEUED,
+        error = "Connecting to DHT network and finding peers..."
+      )
+    )
+
+    // Optimized DHT bootstrap
+    var dhtNodes = 0L
+    var bootstrapWaitTime = 0L
+    val maxBootstrapWait = 10000L
+
+    while (dhtNodes == 0L && bootstrapWaitTime < maxBootstrapWait && isActive) {
+      delay(1000L)
+      bootstrapWaitTime += 1000L
+
+      try {
+        dhtNodes = session.stats().dhtNodes()
+        if (dhtNodes > 0L) {
+          Timber.i("DHT connected: $dhtNodes nodes (waited ${bootstrapWaitTime}ms)")
+          break
+        }
+      } catch (e: Exception) {
+        Timber.w("DHT stats error: ${e.message}")
+      }
+    }
+
+    if (!isActive) {
+      Timber.d("Worker cancelled during DHT bootstrap")
+      return@withContext TorrentMetadataResult(
+        errorResult = Result.retry()
+      )
+    }
+
+    // Final DHT check
+    try {
+      val stats = session.stats()
+      val dhtNodeCount = stats.dhtNodes()
+      Timber.d("DHT Status before metadata fetch: $dhtNodeCount nodes connected")
+
+      if (dhtNodeCount == 0L) {
+        Timber.w("DHT failed to connect to any nodes - may have network issues")
+        repo.updateState(
+          state.copy(
+            status = DownloadStatus.QUEUED,
+            error = "Warning: DHT not connected. Trying trackers..."
+          )
+        )
+      }
+    } catch (e: Exception) {
+      Timber.w("Could not get DHT stats: ${e.message}")
+    }
+
+    for (attempt in 1..maxAttempts) {
+      if (!isActive) {
+        Timber.d("Worker cancelled during magnet fetch attempt $attempt")
+        return@withContext TorrentMetadataResult(
+          errorResult = Result.retry()
+        )
+      }
+
+      try {
+        Timber.d("Magnet fetch attempt $attempt/$maxAttempts (timeout: ${perAttemptTimeoutSeconds}s)")
+
+        repo.updateState(
+          state.copy(
+            status = DownloadStatus.QUEUED,
+            error = "Fetching metadata from peers (attempt $attempt/$maxAttempts)..."
+          )
+        )
+
+        meta = session.fetchMagnet(magnetUri, perAttemptTimeoutSeconds, tmp)
+
+        if (meta != null) {
+          Timber.i("Magnet metadata fetched successfully on attempt $attempt (${meta.size} bytes)")
+          break
+        }
+        Timber.w("Magnet fetch attempt $attempt returned null metadata (no peers responded)")
+      } catch (t: Throwable) {
+        Timber.w("Magnet fetch attempt $attempt failed: ${t.javaClass.simpleName} - ${t.message}")
+      }
+
+      if (attempt < maxAttempts) {
+        val delayMs = 2000L
+        Timber.d("Waiting ${delayMs}ms before retry")
+
+        if (!isActive) {
+          Timber.d("Worker cancelled during retry wait")
+          return@withContext TorrentMetadataResult(
+            errorResult = Result.retry()
+          )
+        }
+
+        delay(delayMs)
+      }
+    }
+
+    if (meta == null) {
+      val err =
+        "Unable to download torrent metadata. This magnet link may be dead (no peers found) or your network may be blocking torrent connections. Try a different magnet link or check your network settings."
+      Timber.e("Magnet fetch failed for taskId=$taskId after $maxAttempts attempts")
+      repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+      return@withContext TorrentMetadataResult(
+        errorResult = Result.failure(workDataOf(KEY_ERROR to err))
+      )
+    }
+
+    try {
+      tmp.deleteRecursively()
+    } catch (e: Exception) {
+      Timber.w("Failed to clean up temp directory: ${e.message}")
+    }
+
+    Timber.d("Decoding magnet metadata (${meta.size} bytes)")
+    try {
+      val torrentInfo = TorrentInfo.bdecode(meta)
+      TorrentMetadataResult(
+        isSuccess = true,
+        torrentInfo = torrentInfo
+      )
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to decode magnet metadata")
+      TorrentMetadataResult(
+        errorResult = Result.failure(workDataOf(KEY_ERROR to "Failed to decode metadata"))
+      )
+    }
+  }
+
+  private suspend fun pollDownloadProgress(
+    handle: TorrentHandle,
+    torrentInfo: TorrentInfo,
+    taskId: String,
+    torrentName: String,
+    saveDir: File,
+    initialState: cloud.app.csplayer.download.DownloadState
+  ): Result = withContext(Dispatchers.IO) {
+    var lastProgress = 0
+    var stuckCounter = 0
+    val stuckThresholdCount = 30
+    var currentState = initialState
+
+    while (isActive) {
+      val status = handle.status()
+      var progress = (status.progress() * 100).roundToInt()
+      val totalBytes = status.totalDone()
+      val downloadRate = status.downloadRate().toLong()
+      val uploadRate = status.uploadRate().toLong()
+      val torrentState = status.state()
+      val percentageOfTotalDownloaded = if (torrentInfo.totalSize() > 0) {
+        (totalBytes * 100) / torrentInfo.totalSize()
+      } else 0
+
+      if (progress > 94 && progress < 100 && percentageOfTotalDownloaded >= 95) {
+        if (progress == lastProgress) {
+          stuckCounter++
+          Timber.d("Progress stuck at $progress% (actual: $percentageOfTotalDownloaded%, count: $stuckCounter/$stuckThresholdCount), state: $torrentState, rate: ${downloadRate}B/s")
+
+          if (stuckCounter >= stuckThresholdCount) {
+            Timber.w(
+              "Download appears stuck at $progress% (actual data: $percentageOfTotalDownloaded%) for 30+ seconds. " +
+                "Forcing completion as verification phase is complete."
+            )
+            progress = 100
+          }
+        } else {
+          stuckCounter = 0
+          lastProgress = progress
+        }
+      } else {
+        stuckCounter = 0
+        lastProgress = progress
+      }
+
+      currentState = repo.observeState(taskId).first() ?: currentState
+
+      val numSeeds = try {
+        status.numSeeds()
+      } catch (e: Exception) {
+        Timber.d("Could not get numSeeds: ${e.message}")
+        0
+      }
+
+      val numPeers = try {
+        status.numPeers()
+      } catch (e: Exception) {
+        Timber.d("Could not get numPeers: ${e.message}")
+        0
+      }
+
+      repo.updateState(
+        currentState.copy(
+          status = DownloadStatus.DOWNLOADING,
+          downloadedBytes = totalBytes,
+          totalBytes = torrentInfo.totalSize(),
+          progress = progress,
+          speed = downloadRate,
+          uploadSpeed = uploadRate,
+          downloadSpeedBytesPerSec = downloadRate,
+          numSeeds = numSeeds,
+          numPeers = numPeers
+        )
+      )
+
+      setForeground(createForegroundInfo(taskId, progress, torrentName))
+      setProgress(workDataOf(KEY_PROGRESS to progress))
+
+      val isComplete = progress >= 100 ||
+        torrentState == TorrentStatus.State.SEEDING ||
+        torrentState == TorrentStatus.State.FINISHED ||
+        status.isFinished
+
+      if (isComplete) {
+        val result = handleDownloadCompletion(
+          taskId,
+          saveDir,
+          torrentInfo,
+          uploadRate,
+          currentState
+        )
+        return@withContext if (result) Result.success() else Result.retry()
+      }
+
+      delay(POLL_INTERVAL_MS)
+    }
+
+    currentState = repo.observeState(taskId).first() ?: currentState
+    repo.updateState(currentState.copy(status = DownloadStatus.PAUSED))
+    Result.retry()
+  }
+
+  private suspend fun handleDownloadCompletion(
+    taskId: String,
+    saveDir: File,
+    torrentInfo: TorrentInfo,
+    uploadRate: Long,
+    currentState: cloud.app.csplayer.download.DownloadState
+  ): Boolean = withContext(Dispatchers.IO) {
+    val torrentRootName = torrentInfo.name()
+    val downloadedFilePath = File(saveDir, torrentRootName).absolutePath
+
+    Timber.i("Torrent completed, saved to directory: $downloadedFilePath")
+
+    val updatedTaskWithFile = currentState.task.copy(downloadedFilePath = downloadedFilePath)
+
+    repo.updateState(
+      currentState.copy(
+        task = updatedTaskWithFile,
+        status = DownloadStatus.COMPLETED,
+        downloadedBytes = torrentInfo.totalSize(),
+        totalBytes = torrentInfo.totalSize(),
+        progress = 100,
+        speed = 0L,
+        uploadSpeed = uploadRate,
+        downloadSpeedBytesPerSec = 0L,
+        completedAt = System.currentTimeMillis()
+      )
+    )
+
+    scanVideoFilesIntoMediaStore(downloadedFilePath)
+
+    Timber.i("Torrent download completed: $taskId")
+
+    try {
+      coordinator.processQueuedDownloads()
+    } catch (e: Exception) {
+      Timber.w(e, "Failed to process queued downloads after completion")
+    }
+
+    true
+  }
+
+  private suspend fun scanVideoFilesIntoMediaStore(downloadedFilePath: String) {
+    try {
+      val torrentDir = File(downloadedFilePath)
+      val videoFiles = if (torrentDir.exists() && torrentDir.isDirectory) {
+        torrentDir.walkTopDown()
+          .filter { it.isFile }
+          .filter { file ->
+            val extension = file.extension.lowercase()
+            extension in listOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp")
+          }
+          .toList()
+      } else {
+        Timber.w("Torrent directory does not exist: $downloadedFilePath")
+        emptyList()
+      }
+
+      Timber.d("Torrent download: Found ${videoFiles.size} video files to scan")
+      videoFiles.forEach { videoFile ->
+        try {
+          mediaStore.scanMedia(videoFile.absolutePath)
+          Timber.d("Torrent download: Scanned file into MediaStore: ${videoFile.absolutePath}")
+        } catch (e: Exception) {
+          Timber.w(e, "Torrent download: Failed to scan file: ${videoFile.absolutePath}")
+        }
+      }
+    } catch (e: Exception) {
+      Timber.w(e, "Torrent download: Failed to scan files into MediaStore")
+    }
+  }
+
 }
 

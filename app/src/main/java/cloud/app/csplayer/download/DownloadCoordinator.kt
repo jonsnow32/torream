@@ -40,7 +40,7 @@ class DownloadCoordinator @Inject constructor(
   suspend fun startDownload(task: DownloadTask) {
     Timber.d("startDownload: taskId=${task.id}, type=${task.type}, source=${task.source}")
 
-    // Check if download is already running
+    // Check if download is already running (ignore CANCELLED state)
     val existingWork = try {
       workManager.getWorkInfosForUniqueWork("download_${task.id}").get()
     } catch (e: Exception) {
@@ -48,7 +48,8 @@ class DownloadCoordinator @Inject constructor(
     }
 
     val isRunning = existingWork.any { workInfo ->
-      workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED
+      (workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED) &&
+        workInfo.state != WorkInfo.State.CANCELLED
     }
 
     if (isRunning) {
@@ -95,7 +96,7 @@ class DownloadCoordinator @Inject constructor(
           .setInputData(workDataOf(HttpDownloadWorker.KEY_TASK_ID to task.id))
           .setConstraints(
             Constraints.Builder()
-              .setRequiredNetworkType(NetworkType.CONNECTED)
+              .setRequiredNetworkType(getRequiredNetworkType(context))
               .build()
           )
           .addTag(DOWNLOAD_WORK_TAG)
@@ -108,7 +109,7 @@ class DownloadCoordinator @Inject constructor(
           .setInputData(workDataOf(TorrentDownloadWorker.KEY_TASK_ID to task.id))
           .setConstraints(
             Constraints.Builder()
-              .setRequiredNetworkType(NetworkType.CONNECTED)
+              .setRequiredNetworkType(getRequiredNetworkType(context))
               .build()
           )
           .addTag(DOWNLOAD_WORK_TAG)
@@ -136,13 +137,12 @@ class DownloadCoordinator @Inject constructor(
 
     // Cancel the worker
     workManager.cancelUniqueWork("download_$taskId")
+    workManager.cancelAllWorkByTag(taskId)
 
     // Update status in repository
-    repo.observeState(taskId).map { it }.collect { currentState ->
-      currentState?.let {
-        repo.updateState(it.copy(status = DownloadStatus.PAUSED))
-      }
-      return@collect
+    val currentState = repo.observeState(taskId).firstOrNull()
+    currentState?.let {
+      repo.updateState(it.copy(status = DownloadStatus.PAUSED))
     }
   }
 
@@ -153,14 +153,24 @@ class DownloadCoordinator @Inject constructor(
     Timber.d("resumeDownload: taskId=$taskId")
 
     // Get task from repository
-    repo.observeState(taskId).map { it }.collect { currentState ->
-      currentState?.let { state ->
-        if (state.status == DownloadStatus.PAUSED) {
-          // Re-enqueue the download
-          startDownload(state.task)
+    val currentState = repo.observeState(taskId).firstOrNull()
+    currentState?.let { state ->
+      if (state.status == DownloadStatus.PAUSED) {
+        // Clear any existing work that was cancelled
+        try {
+          workManager.cancelUniqueWork("download_$taskId")
+          workManager.cancelAllWorkByTag(taskId)
+          Timber.d("Cleared previous work for taskId=$taskId before resume")
+        } catch (e: Exception) {
+          Timber.w(e, "Failed to clear previous work")
         }
+
+        // Small delay to ensure WorkManager has time to process cancellation
+        kotlinx.coroutines.delay(100L)
+
+        // Re-enqueue the download
+        startDownload(state.task)
       }
-      return@collect
     }
   }
 
@@ -301,6 +311,24 @@ class DownloadCoordinator @Inject constructor(
       startDownload(nextDownload.task)
     } catch (e: Exception) {
       Timber.e(e, "Failed to process queued downloads")
+    }
+  }
+
+  /**
+   * Get the required network type based on user preferences.
+   * Returns UNMETERED (WiFi only) if download_over_wifi_key is enabled,
+   * otherwise returns CONNECTED (any network).
+   */
+  private fun getRequiredNetworkType(context: Context): NetworkType {
+    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+    val isWifiOnly = prefs.getBoolean(context.getString(R.string.download_over_wifi_key), false)
+
+    return if (isWifiOnly) {
+      Timber.d("Download network constraint: WiFi only")
+      NetworkType.UNMETERED  // WiFi (unmetered) networks only
+    } else {
+      Timber.d("Download network constraint: Any network")
+      NetworkType.CONNECTED  // Any network (WiFi or metered)
     }
   }
 

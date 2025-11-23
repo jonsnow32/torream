@@ -365,6 +365,21 @@ class HttpDownloadWorker @AssistedInject constructor(
       }
 
     } catch (e: Exception) {
+      // Check if this is a cancellation (expected when user pauses)
+      if (e is kotlinx.coroutines.CancellationException || !isActive) {
+        Timber.d("HTTP download cancelled for taskId=$taskId")
+        // Keep the status as PAUSED, don't mark as FAILED
+        try {
+          if (currentState.status != DownloadStatus.PAUSED) {
+            repo.updateState(currentState.copy(status = DownloadStatus.PAUSED, error = null))
+          }
+        } catch (repoError: Exception) {
+          Timber.e(repoError, "Failed to update state for cancelled download")
+        }
+        return@withContext Result.retry()
+      }
+
+      // Real error - not a cancellation
       Timber.e(e, "HTTP download failed for taskId=$taskId")
       val err = e.message ?: "Unknown error"
       // Use currentState which may have title if error happened after filename extraction

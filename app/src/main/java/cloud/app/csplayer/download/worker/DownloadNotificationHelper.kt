@@ -19,12 +19,13 @@ object DownloadNotificationHelper {
     context: Context,
     taskId: String,
     progress: Int,
-    isHttp: Boolean
+    isHttp: Boolean,
+    fileName: String? = null
   ): Notification {
     createNotificationChannel(context)
 
     val type = if (isHttp) "HTTP" else "Torrent"
-    val title = "$type Download"
+    val title = fileName ?: "$type Download"
     val contentText = if (progress > 0) {
       "Downloading... $progress%"
     } else {

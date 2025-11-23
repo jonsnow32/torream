@@ -115,7 +115,7 @@ class SettingsFragment : Fragment() {
           "magnet:?xt=urn:btih:6a9759bffd5c0af65319979fb7832189f4f3c35d&dn=Tears+of+Steel&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce",
           "magnet:?xt=urn:btih:1e8fbd02b98722a0b3192873f5e322b945d12157&dn=Blender+Foundation&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80%2Fannounce"
         )
-        var text = "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c"//list.random()
+        var text = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"//list.random()
 
         // Optionally read from clipboard
         (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(

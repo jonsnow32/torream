@@ -9,6 +9,7 @@ import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
 import cloud.app.csplayer.ui.feed.FeedAction
+import cloud.app.csplayer.utils.loadThumbnail
 
 class TorrentDownloadViewHolder(
   val parent: ViewGroup,
@@ -25,7 +26,7 @@ class TorrentDownloadViewHolder(
     binding.txtTorrentName.text = feed.downloadState.task.title ?: feed.downloadState.task.source
 
     val progress = feed.downloadState.progress.coerceIn(0, 100)
-    updateUI(progress, feed.downloadState.status, feed.downloadState.numSeeds, feed.downloadState.numPeers)
+    updateUI(feed, progress, feed.downloadState.status, feed.downloadState.numSeeds, feed.downloadState.numPeers)
 
     // Click listeners
     binding.root.setOnClickListener {
@@ -40,13 +41,19 @@ class TorrentDownloadViewHolder(
     }
   }
 
-  private fun updateUI(progress: Int, status: DownloadStatus, seeds: Int, peers: Int) {
+  private fun updateUI(feed: FeedData.TorrentDownloadItem, progress: Int, status: DownloadStatus, seeds: Int, peers: Int) {
     binding.progressBar.progress = progress
 
     val statusText = when (status) {
       DownloadStatus.PAUSED -> parent.context.getString(R.string.paused)
       DownloadStatus.SEEDING -> parent.context.getString(R.string.seeding)
-      DownloadStatus.FINISHED, DownloadStatus.COMPLETED -> parent.context.getString(R.string.finished)
+      DownloadStatus.FINISHED, DownloadStatus.COMPLETED -> {
+        // Load thumbnail from downloaded file
+        feed.downloadState.task.downloadedFilePath?.let { filePath ->
+          binding.iconTorrent.loadThumbnail(filePath)
+        }
+        parent.context.getString(R.string.finished)
+      }
       DownloadStatus.FAILED -> parent.context.getString(R.string.error)
       else -> parent.context.getString(R.string.downloading)
     }
