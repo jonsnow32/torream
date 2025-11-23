@@ -322,6 +322,7 @@ class DownloadCoordinator @Inject constructor(
   private fun getRequiredNetworkType(context: Context): NetworkType {
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
     val isWifiOnly = prefs.getBoolean(context.getString(R.string.download_over_wifi_key), false)
+    //val isWifiOnly = prefs.getBoolean(context.getString(R.string.download_over_metered_key), false)
 
     return if (isWifiOnly) {
       Timber.d("Download network constraint: WiFi only")

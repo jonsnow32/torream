@@ -256,7 +256,7 @@ class SettingsDownload : PreferenceFragmentCompat() {
       setPadding(64, 32, 64, 32)
     }
 
-    AlertDialog.Builder(context)
+    AlertDialog.Builder(context, R.style.BaseMaterialDialogTheme)
       .setTitle(R.string.download_torrent_port)
       .setMessage("Default port: 6881\nValid range: 1024-65535")
       .setView(editText)
