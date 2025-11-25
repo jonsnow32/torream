@@ -73,12 +73,17 @@ class TorrentDownloadViewHolder(
       peers
     ) + " • ${formatSpeed(speed)} • $sizeText"
 
-    val actionIcon = if (status == DownloadStatus.PAUSED) {
-      android.R.drawable.ic_media_play
-    } else {
-      android.R.drawable.ic_media_pause
+    // Update PieFetchButton state and progress
+    val buttonState = when (status) {
+      DownloadStatus.PAUSED -> cloud.app.csplayer.ui.download.PieFetchButton.State.PAUSED
+      DownloadStatus.DOWNLOADING -> cloud.app.csplayer.ui.download.PieFetchButton.State.DOWNLOADING
+      DownloadStatus.FINISHED, DownloadStatus.COMPLETED -> cloud.app.csplayer.ui.download.PieFetchButton.State.COMPLETED
+      DownloadStatus.FAILED -> cloud.app.csplayer.ui.download.PieFetchButton.State.ERROR
+      else -> cloud.app.csplayer.ui.download.PieFetchButton.State.IDLE
     }
-    binding.btnAction.setImageResource(actionIcon)
+
+    binding.btnAction.setState(buttonState)
+    binding.btnAction.setProgress(progress.toFloat())
     binding.btnAction.contentDescription = if (status == DownloadStatus.PAUSED) {
       parent.context.getString(R.string.resume)
     } else {

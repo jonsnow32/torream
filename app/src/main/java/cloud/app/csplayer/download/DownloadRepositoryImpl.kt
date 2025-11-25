@@ -14,17 +14,27 @@ class DownloadRepositoryImpl @Inject constructor(
   private val downloadDao: DownloadDao
 ) : DownloadRepository {
 
-  // In-memory store for HTTP tasks (keyed by url)
-  private val httpMutex = Mutex()
-  private val httpStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
-
   override suspend fun loadAllTask(): List<DownloadTask> {
-    // Snapshot HTTP tasks under mutex for consistency
-    val httpTasks: List<DownloadTask> = httpMutex.withLock {
-      httpStates.value.values.map { it.task }
+    // Load HTTP tasks from database
+    val httpEntities: List<cloud.app.csplayer.media.entities.HttpEntity> = try {
+      downloadDao.getAllHttpFlow().first()
+    } catch (e: Exception) {
+      emptyList()
     }
 
-    // Snapshot torrent entities from DB (use first() to get current value of Flow)
+    val httpTasks = httpEntities.map { e ->
+      DownloadTask(
+        id = e.url, // URL as unique ID for HTTP downloads
+        type = DownloadType.HTTP,
+        source = e.url,
+        targetPath = e.targetPath,
+        title = e.url.substringAfterLast("/").substringBefore("?"), // Extract filename from URL
+        totalBytes = e.totalBytes,
+        createdAt = e.createdAt
+      )
+    }
+
+    // Load torrent entities from database
     val torrentEntities: List<TorrentEntity> = try {
       downloadDao.getAllTorrentFlow().first()
     } catch (e: Exception) {
@@ -43,7 +53,7 @@ class DownloadRepositoryImpl @Inject constructor(
       )
     }
 
-    // Merge and sort by createdAt (earliest first). If you prefer newest first, reverse the sort.
+    // Merge and sort by createdAt (earliest first)
     return (httpTasks + torrentTasks).sortedBy { it.createdAt }
   }
 
@@ -74,43 +84,52 @@ class DownloadRepositoryImpl @Inject constructor(
       }
 
       DownloadType.HTTP -> {
-        httpMutex.withLock {
-          val state = DownloadState(
-            task = task,
-            status = initialStatus,
-            downloadedBytes = 0L,
-            progress = 0,
-            speed = 0L,
-            error = null
-          )
-          httpStates.value += (task.source to state)
-        }
+        // Persist HTTP downloads to database
+        val entity = cloud.app.csplayer.media.entities.HttpEntity(
+          url = task.source,
+          targetPath = task.targetPath,
+          tempPath = null,
+          totalBytes = task.totalBytes,
+          downloadedBytes = 0L,
+          progress = 0,
+          acceptRanges = false,
+          etag = null,
+          lastModified = null,
+          status = initialStatus.name,
+          error = null,
+          createdAt = task.createdAt,
+          updatedAt = System.currentTimeMillis()
+        )
+        downloadDao.insertHttp(entity)
       }
     }
   }
 
   override fun observeState(taskId: String): Flow<DownloadState?> {
-    // taskId corresponds to task.id which for torrent we expect equals infoHash, for http we used source url as key
-    val httpFlow: Flow<DownloadState?> = httpStates.map { map -> map.values.find { s -> s.task.id == taskId } }
-    val torrentFlow: Flow<DownloadState?> =
-      downloadDao.getTorrentByIdFlow(taskId).map { it?.let { e -> torrentEntityToDownloadState(e) } }
+    // taskId corresponds to task.id which for torrent equals infoHash, for http equals URL
+    val httpFlow: Flow<DownloadState?> = downloadDao.getHttpByUrlFlow(taskId)
+      .map { it?.let { e -> httpEntityToDownloadState(e) } }
+
+    val torrentFlow: Flow<DownloadState?> = downloadDao.getTorrentByIdFlow(taskId)
+      .map { it?.let { e -> torrentEntityToDownloadState(e) } }
 
     return combine(httpFlow, torrentFlow) { h: DownloadState?, t: DownloadState? -> h ?: t }
       .distinctUntilChanged()
   }
 
   override fun observeAllStates(): Flow<List<DownloadState>> {
-    val httpListFlow: Flow<List<DownloadState>> = httpStates.map { it.values.toList() }
-    val torrentListFlow: Flow<List<DownloadState>> =
-      downloadDao.getAllTorrentFlow().map { list -> list.map { e -> torrentEntityToDownloadState(e) } }
+    val httpListFlow: Flow<List<DownloadState>> = downloadDao.getAllHttpFlow()
+      .map { list -> list.map { e -> httpEntityToDownloadState(e) } }
+
+    val torrentListFlow: Flow<List<DownloadState>> = downloadDao.getAllTorrentFlow()
+      .map { list -> list.map { e -> torrentEntityToDownloadState(e) } }
 
     return combine(httpListFlow, torrentListFlow) { http: List<DownloadState>, torrents: List<DownloadState> ->
       (http + torrents).sortedBy { it.task.createdAt }
     }
   }
 
-  override suspend fun
-    updateState(state: DownloadState) {
+  override suspend fun updateState(state: DownloadState) {
     when (state.task.type) {
       DownloadType.TORRENT -> {
         // update torrent progress/status by replacing the entity via insertTorrent (REPLACE)
@@ -166,33 +185,89 @@ class DownloadRepositoryImpl @Inject constructor(
       }
 
       DownloadType.HTTP -> {
-        httpMutex.withLock {
-          val byKey = httpStates.value
-          val key = state.task.source
-          // The state parameter already contains updated task with title from Worker
-          // Just store it directly
-          httpStates.value = byKey + (key to state)
+        // Persist HTTP download state to database
+        try {
+          val url = state.task.source
+          val current = try {
+            downloadDao.getHttpByUrlFlow(url).first()
+          } catch (_: Exception) {
+            null
+          }
+
+          val updated = (current ?: cloud.app.csplayer.media.entities.HttpEntity(
+            url = url,
+            targetPath = state.task.targetPath,
+            tempPath = null,
+            totalBytes = state.task.totalBytes,
+            downloadedBytes = state.downloadedBytes,
+            progress = state.progress,
+            acceptRanges = false,
+            etag = null,
+            lastModified = null,
+            status = state.status.name,
+            error = state.error,
+            createdAt = state.task.createdAt,
+            updatedAt = System.currentTimeMillis()
+          )).copy(
+            targetPath = state.task.targetPath,
+            totalBytes = if (state.task.totalBytes > 0) state.task.totalBytes else current?.totalBytes ?: 0L,
+            downloadedBytes = state.downloadedBytes,
+            progress = state.progress,
+            status = state.status.name,
+            error = state.error,
+            updatedAt = System.currentTimeMillis()
+          )
+
+          downloadDao.insertHttp(updated)
+        } catch (_: Exception) {
+          // best-effort
         }
       }
     }
   }
 
   override suspend fun deleteTask(taskId: String) {
-    // try delete http by matching id or url
-    httpMutex.withLock {
-      val remaining = httpStates.value.filterValues { it.task.id != taskId }
-      httpStates.value = remaining
+    // Try to delete HTTP download by URL (taskId for HTTP is the URL)
+    try {
+      downloadDao.deleteHttpById(taskId)
+    } catch (_: Exception) {
+      // ignore if not found
     }
 
-    // remove torrent if exists
+    // Try to delete torrent by infoHash
     try {
       downloadDao.deleteTorrentById(taskId)
     } catch (_: Exception) {
-      // ignore
+      // ignore if not found
     }
   }
 
-  // mapping helper
+  // mapping helpers
+  private fun httpEntityToDownloadState(e: cloud.app.csplayer.media.entities.HttpEntity): DownloadState {
+    val task = DownloadTask(
+      id = e.url, // ID is the URL for HTTP downloads
+      type = DownloadType.HTTP,
+      source = e.url,
+      targetPath = e.targetPath,
+      title = e.url.substringAfterLast("/").substringBefore("?"), // Extract filename from URL
+      totalBytes = e.totalBytes,
+      createdAt = e.createdAt
+    )
+    val status = try {
+      DownloadStatus.valueOf(e.status)
+    } catch (_: Throwable) {
+      DownloadStatus.FAILED
+    }
+    return DownloadState(
+      task = task,
+      status = status,
+      downloadedBytes = e.downloadedBytes,
+      progress = e.progress.coerceIn(0, 100),
+      speed = 0L, // Speed is not stored in HttpEntity, will be updated by worker
+      error = e.error
+    )
+  }
+
   private fun torrentEntityToDownloadState(e: TorrentEntity): DownloadState {
     val task = DownloadTask(
       id = e.infoHash, // ID is the infoHash (or hashCode)

@@ -111,16 +111,13 @@
 
     </LinearLayout>
 
-    <!-- Action Button -->
-    <ImageButton
+    <!-- Action Button with Progress -->
+    <cloud.app.csplayer.ui.download.PieFetchButton
         android:id="@+id/btnAction"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginStart="8dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/pause_resume"
-        android:src="@android:drawable/ic_media_pause"
-        android:tint="?attr/colorSecondary" />
+        android:contentDescription="@string/pause_resume" />
 
 </LinearLayout>
 

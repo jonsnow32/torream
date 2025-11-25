@@ -66,14 +66,27 @@ class TorrentDownloadWorker @AssistedInject constructor(
 
     setForeground(createForegroundInfo(taskId, 0))
 
-    val state = repo.observeState(taskId).first()
+    // Retry logic to wait for task to be available in database
+    // This handles timing issues where worker starts before database write is committed
+    var state: cloud.app.csplayer.download.DownloadState? = null
+    var retries = 0
+    while (state == null && retries < 20) {
+      state = repo.observeState(taskId).first()
+      if (state == null) {
+        Timber.w("Task not yet in database, retry ${retries + 1}/20 for taskId=$taskId")
+        delay(100L)
+        retries++
+      }
+    }
+
     if (state == null) {
-      val error = "Task not found in repository for taskId=$taskId"
+      val error = "Task not found in database after ${retries} retries: $taskId"
       Timber.e("TorrentDownloadWorker: $error")
       return@withContext Result.failure(workDataOf(KEY_ERROR to error))
     }
+
     val task = state.task
-    Timber.d("TorrentDownloadWorker: Found task - id=${task.id}, type=${task.type}")
+    Timber.d("TorrentDownloadWorker: ✓ Task loaded from database - id=${task.id}, type=${task.type}")
     Timber.d("  source=${task.source}")
     Timber.d("  targetPath=${task.targetPath}")
 

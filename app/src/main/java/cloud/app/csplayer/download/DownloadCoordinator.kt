@@ -99,6 +99,31 @@ class DownloadCoordinator @Inject constructor(
       Timber.d("Inserted new task into repository with id=${task.id}")
     }
 
+    // Ensure database write is committed before starting worker
+    // Verify task exists in database
+    var retries = 0
+    while (retries < 10) {
+      val verifyState = repo.observeState(task.id).firstOrNull()
+      if (verifyState != null) {
+        Timber.d("✓ Task verified in database: ${task.id}")
+        break
+      }
+      Timber.w("Task not yet in database, retry ${retries + 1}/10")
+      kotlinx.coroutines.delay(50L)
+      retries++
+    }
+
+    if (retries >= 10) {
+      Timber.e("Failed to verify task in database after 10 retries: ${task.id}")
+      // Try to insert again
+      try {
+        repo.insertTask(task, DownloadStatus.QUEUED)
+        kotlinx.coroutines.delay(100L)
+      } catch (e: Exception) {
+        Timber.e(e, "Failed to insert task on retry")
+      }
+    }
+
     // Create work request based on type
     val workRequest = when (task.type) {
       DownloadType.HTTP -> {

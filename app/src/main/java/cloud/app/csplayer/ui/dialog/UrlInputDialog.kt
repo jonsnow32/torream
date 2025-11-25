@@ -182,10 +182,9 @@ class UrlInputDialog : DockingDialog() {
             }
           }
           DownloadType.HTTP -> {
-            // For HTTP, use filename or URL hash
-            inputUrl.substringAfterLast("/").ifBlank {
-              "http_${inputUrl.hashCode().toString().replace("-", "n")}"
-            }
+            // For HTTP, use URL as ID (matches database primary key)
+            // This ensures task.id matches the URL used as primary key in HttpEntity table
+            inputUrl
           }
         }
 

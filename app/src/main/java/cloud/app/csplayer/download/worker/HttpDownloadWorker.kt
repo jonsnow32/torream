@@ -20,6 +20,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import androidx.core.net.toUri
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -52,15 +53,33 @@ class HttpDownloadWorker @AssistedInject constructor(
     // Set as foreground to ensure long-running download
     setForeground(createForegroundInfo(taskId, 0))
 
-    val state = repo.observeState(taskId).first() ?: return@withContext Result.failure(
-      workDataOf(KEY_ERROR to "Task not found")
-    )
-    val task = state.task
+    // Retry logic to wait for task to be available in database
+    // This handles timing issues where worker starts before database write is committed
+    var initialState: cloud.app.csplayer.download.DownloadState? = null
+    var retries = 0
+    while (initialState == null && retries < 20) {
+      initialState = repo.observeState(taskId).first()
+      if (initialState == null) {
+        Timber.w("Task not yet in database, retry ${retries + 1}/20 for taskId=$taskId")
+        delay(100L)
+        retries++
+      }
+    }
+
+    if (initialState == null) {
+      val err = "Task not found in database after ${retries} retries: $taskId"
+      Timber.e(err)
+      return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+    }
+
+    Timber.d("✓ Task loaded from database: $taskId")
+    val task = initialState.task
 
     var connection: HttpURLConnection? = null
     var input: InputStream? = null
     var out: OutputStream? = null
-    var currentState = state // Declare here so it's accessible in catch block
+    // Use non-null assertion since we've verified initialState is not null above
+    var currentState: cloud.app.csplayer.download.DownloadState = initialState
 
     try {
       // targetPath should be an absolute file path (e.g., /storage/emulated/0/Movies)
@@ -78,7 +97,7 @@ class HttpDownloadWorker @AssistedInject constructor(
       if (targetFile == null) {
         val err = "Failed to create KUniFile from: $targetPath"
         Timber.e(err)
-        repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+        repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
         return@withContext Result.failure(workDataOf(KEY_ERROR to err))
       }
 
@@ -111,7 +130,7 @@ class HttpDownloadWorker @AssistedInject constructor(
               ?: kotlin.run {
                 val err = "Failed to create file in directory: $targetPath"
                 Timber.e(err)
-                repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+                repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
                 return@withContext Result.failure(workDataOf(KEY_ERROR to err))
               }
           }
@@ -121,7 +140,7 @@ class HttpDownloadWorker @AssistedInject constructor(
             ?: kotlin.run {
               val err = "Failed to create file in directory: $targetPath"
               Timber.e(err)
-              repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+              repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
               return@withContext Result.failure(workDataOf(KEY_ERROR to err))
             }
         }
@@ -142,7 +161,7 @@ class HttpDownloadWorker @AssistedInject constructor(
         if (parentDir == null) {
           val err = "Parent directory is null for: ${file.absolutePath}"
           Timber.e(err)
-          repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+          repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
           return@withContext Result.failure(workDataOf(KEY_ERROR to err))
         }
 
@@ -152,7 +171,7 @@ class HttpDownloadWorker @AssistedInject constructor(
           val err = "No write permission for directory: ${parentDir.absolutePath}\n" +
             "Please select a different download location in Settings or use default app storage."
           Timber.e(err)
-          repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+          repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
           return@withContext Result.failure(workDataOf(KEY_ERROR to err))
         }
 
@@ -171,7 +190,7 @@ class HttpDownloadWorker @AssistedInject constructor(
               "This usually means the app doesn't have write permission to this location.\n" +
               "Please select a different download location in Settings."
             Timber.e(err)
-            repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+            repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
             return@withContext Result.failure(workDataOf(KEY_ERROR to err))
           }
         }
@@ -180,7 +199,7 @@ class HttpDownloadWorker @AssistedInject constructor(
         if (tempKuniFile == null) {
           val err = "Failed to create KUniFile for temp file: $tempFilePath"
           Timber.e(err)
-          repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+          repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
           return@withContext Result.failure(workDataOf(KEY_ERROR to err))
         }
 
@@ -215,7 +234,7 @@ class HttpDownloadWorker @AssistedInject constructor(
 
         // Mark as completed
         repo.updateState(
-          state.copy(
+          currentState.copy(
             task = updatedTask,
             status = DownloadStatus.COMPLETED,
             downloadedBytes = existingBytes,
@@ -248,7 +267,7 @@ class HttpDownloadWorker @AssistedInject constructor(
 
       if (responseCode in 400..599) {
         val err = "HTTP error $responseCode"
-        repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+        repo.updateState(currentState.copy(status = DownloadStatus.FAILED, error = err))
         return@withContext Result.failure(workDataOf(KEY_ERROR to err))
       }
 
@@ -257,7 +276,7 @@ class HttpDownloadWorker @AssistedInject constructor(
 
       // Update task with filename and use this updated state going forward
       val updatedTask = task.copy(title = fileName)
-      currentState = state.copy(task = updatedTask)
+      currentState = currentState.copy(task = updatedTask)
 
       val contentLengthHeaderStr = connection.getHeaderField("Content-Length")
       val contentLengthHeader = contentLengthHeaderStr?.toLongOrNull() ?: -1L
@@ -277,7 +296,7 @@ class HttpDownloadWorker @AssistedInject constructor(
 
         // Mark as completed
         repo.updateState(
-          state.copy(
+          currentState.copy(
             task = updatedTaskWithPath,
             status = DownloadStatus.COMPLETED,
             downloadedBytes = existingBytes,
