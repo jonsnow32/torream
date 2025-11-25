@@ -75,7 +75,6 @@ class LibraryFragment : Fragment() {
       }
     }
 
-
     setupUI()
     setupAdapter()
   }

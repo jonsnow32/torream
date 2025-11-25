@@ -95,10 +95,12 @@ class TorrentDownloadWorker @AssistedInject constructor(
         workDataOf(KEY_ERROR to "Failed to initialize session")
       )
 
-      // Prepare save directory - convert content URI to real path if needed
+      // Prepare save directory
+      // targetPath should be an absolute file path, but handle content URIs for backward compatibility
       val baseDirPath = when {
         task.targetPath.startsWith("content://") -> {
-          // Convert content URI to real filesystem path using KUniFile
+          // Convert content URI to real filesystem path using KUniFile (for old downloads)
+          Timber.w("Converting content URI to file path (backward compatibility): ${task.targetPath}")
           val uniFile = cloud.app.csplayer.utils.KUniFile.fromUri(context, task.targetPath.toUri())
           if (uniFile != null && uniFile.exists()) {
             uniFile.filePath ?: task.targetPath
@@ -113,14 +115,23 @@ class TorrentDownloadWorker @AssistedInject constructor(
         else -> task.targetPath
       }
 
-      val baseDir = File(baseDirPath).let { if (it.isDirectory) it else it.parentFile ?: it }
+      // Use KUniFile for directory operations
+      val baseDirFile = File(baseDirPath)
+      val baseDir = if (baseDirFile.isDirectory) baseDirFile else (baseDirFile.parentFile ?: baseDirFile)
 
-      // Use baseDir directly as saveDir without taskId subdirectory
-      val saveDir = baseDir
-      if (!saveDir.exists()) {
-        saveDir.mkdirs()
-        Timber.d("Created torrent save directory: ${saveDir.absolutePath}")
+      // Create KUniFile for directory checks and creation
+      val baseDirKuni = cloud.app.csplayer.utils.KUniFile.fromFile(context, baseDir)
+      if (baseDirKuni != null && !baseDirKuni.exists()) {
+        baseDirKuni.createDirectory(baseDir.name)
+        Timber.d("Created torrent save directory via KUniFile: ${baseDir.absolutePath}")
+      } else if (!baseDir.exists()) {
+        // Fallback to File if KUniFile fails
+        baseDir.mkdirs()
+        Timber.d("Created torrent save directory via File: ${baseDir.absolutePath}")
       }
+
+      // Use baseDir directly as saveDir (libtorrent requires File object)
+      val saveDir = baseDir
 
       // Add torrent to session
       val ti = when {
@@ -133,17 +144,21 @@ class TorrentDownloadWorker @AssistedInject constructor(
         }
 
         task.source.endsWith(".torrent", ignoreCase = true) -> {
-          val torrentFile = File(task.source)
-          if (!torrentFile.exists()) {
+          // Check file existence using KUniFile first
+          val torrentKuniFile = cloud.app.csplayer.utils.KUniFile.fromFile(context, File(task.source))
+          if (torrentKuniFile == null || !torrentKuniFile.exists()) {
             val err = "Torrent file not found: ${task.source}"
+            Timber.e(err)
             repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
             return@withContext Result.failure(workDataOf(KEY_ERROR to err))
           }
-          TorrentInfo(torrentFile)
+          // TorrentInfo requires File object (libtorrent API)
+          TorrentInfo(File(task.source))
         }
 
         else -> {
           val err = "Bare info-hash not directly supported, use magnet link"
+          Timber.e(err)
           repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
           return@withContext Result.failure(workDataOf(KEY_ERROR to err))
         }
@@ -285,12 +300,29 @@ class TorrentDownloadWorker @AssistedInject constructor(
     Timber.d("Starting magnet metadata fetch for taskId=$taskId")
     repo.updateState(state.copy(status = DownloadStatus.QUEUED, error = null))
 
-    val tmp = File(saveDir, "magnet_tmp_${taskId}").apply {
-      if (exists()) {
-        deleteRecursively()
-      }
-      mkdirs()
+    // Create temp directory for magnet metadata
+    val tmpFile = File(saveDir, "magnet_tmp_${taskId}")
+    val tmpKuni = cloud.app.csplayer.utils.KUniFile.fromFile(context, tmpFile)
+
+    // Clean up existing temp directory if it exists
+    if (tmpKuni != null && tmpKuni.exists()) {
+      // Use KUniFile to delete recursively
+      tmpKuni.delete()
+      Timber.d("Deleted existing temp directory via KUniFile")
+    } else if (tmpFile.exists()) {
+      // Fallback to File if KUniFile fails
+      tmpFile.deleteRecursively()
+      Timber.d("Deleted existing temp directory via File")
     }
+
+    // Create new temp directory
+    if (tmpKuni != null) {
+      tmpKuni.createDirectory(tmpFile.name) ?: tmpFile.mkdirs()
+    } else {
+      tmpFile.mkdirs()
+    }
+
+    val tmp = tmpFile // Keep File reference for libtorrent API
     Timber.d("Temp directory created: ${tmp.absolutePath}")
 
     var meta: ByteArray? = null
@@ -568,32 +600,66 @@ class TorrentDownloadWorker @AssistedInject constructor(
 
   private suspend fun scanVideoFilesIntoMediaStore(downloadedFilePath: String) {
     try {
-      val torrentDir = File(downloadedFilePath)
-      val videoFiles = if (torrentDir.exists() && torrentDir.isDirectory) {
-        torrentDir.walkTopDown()
-          .filter { it.isFile }
-          .filter { file ->
-            val extension = file.extension.lowercase()
-            extension in listOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp")
-          }
-          .toList()
+      // Use KUniFile for directory operations
+      val torrentDirKuni = cloud.app.csplayer.utils.KUniFile.fromFile(context, File(downloadedFilePath))
+
+      val videoFiles = if (torrentDirKuni != null && torrentDirKuni.exists() && torrentDirKuni.isDirectory) {
+        // Use KUniFile to list files
+        findVideoFilesRecursively(torrentDirKuni)
       } else {
-        Timber.w("Torrent directory does not exist: $downloadedFilePath")
+        Timber.w("Torrent directory does not exist or is not accessible: $downloadedFilePath")
         emptyList()
       }
 
       Timber.d("Torrent download: Found ${videoFiles.size} video files to scan")
-      videoFiles.forEach { videoFile ->
+      videoFiles.forEach { videoFilePath ->
         try {
-          mediaStore.scanMedia(videoFile.absolutePath)
-          Timber.d("Torrent download: Scanned file into MediaStore: ${videoFile.absolutePath}")
+          mediaStore.scanMedia(videoFilePath)
+          Timber.d("Torrent download: Scanned file into MediaStore: $videoFilePath")
         } catch (e: Exception) {
-          Timber.w(e, "Torrent download: Failed to scan file: ${videoFile.absolutePath}")
+          Timber.w(e, "Torrent download: Failed to scan file: $videoFilePath")
         }
       }
     } catch (e: Exception) {
       Timber.w(e, "Torrent download: Failed to scan files into MediaStore")
     }
+  }
+
+  /**
+   * Recursively find video files in a directory using KUniFile
+   */
+  private fun findVideoFilesRecursively(directory: cloud.app.csplayer.utils.KUniFile): List<String> {
+    val videoExtensions = setOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp")
+    val result = mutableListOf<String>()
+
+    fun scan(dir: cloud.app.csplayer.utils.KUniFile) {
+      try {
+        dir.listFiles()?.forEach { file ->
+          if (file.isDirectory) {
+            // Recursively scan subdirectories
+            scan(file)
+          } else {
+            // Check if it's a video file
+            val fileName = file.name ?: ""
+            val extension = fileName.substringAfterLast('.', "").lowercase()
+            if (extension in videoExtensions) {
+              // Get file path for MediaStore scanning
+              val filePath = file.filePath
+              if (filePath != null) {
+                result.add(filePath)
+              } else {
+                Timber.w("Cannot get file path for: ${file.uri}")
+              }
+            }
+          }
+        }
+      } catch (e: Exception) {
+        Timber.w(e, "Error scanning directory: ${dir.uri}")
+      }
+    }
+
+    scan(directory)
+    return result
   }
 
 }

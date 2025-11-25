@@ -95,13 +95,26 @@ class SettingsDownload : PreferenceFragmentCompat() {
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
     // Download path picker
-    getPref(R.string.download_path_key)?.setOnPreferenceClickListener {
-      try {
-        pathPicker.launch(null)
-      } catch (e: Exception) {
-        Toast.makeText(context, "Failed to open file picker: ${e.message}", Toast.LENGTH_LONG).show()
+    getPref(R.string.download_path_key)?.apply {
+      // Set initial summary to show current download path
+      val downloadPathUri = settingsManager.getString(getString(R.string.download_path_key), null)
+      summary = if (!downloadPathUri.isNullOrEmpty()) {
+        // Show custom path
+        val uri = Uri.parse(downloadPathUri)
+        KUniFile.fromUri(requireContext(), uri)?.name ?: downloadPathUri
+      } else {
+        // Show default public Download folder
+        "/Download (default)"
       }
-      true
+
+      setOnPreferenceClickListener {
+        try {
+          pathPicker.launch(null)
+        } catch (e: Exception) {
+          Toast.makeText(context, "Failed to open file picker: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+        true
+      }
     }
 
     // Battery optimization

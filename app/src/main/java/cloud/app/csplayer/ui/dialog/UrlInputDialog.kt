@@ -70,36 +70,81 @@ class UrlInputDialog : DockingDialog() {
           fun getDownloadDir(subfolder: String): String {
             return if (!downloadPathUri.isNullOrEmpty()) {
               try {
-                // User has configured a custom path
+                // User has configured a custom path via SAF
                 val uri = downloadPathUri.toUri()
                 val docFile = DocumentFile.fromTreeUri(ctx, uri)
                 if (docFile != null && docFile.exists() && docFile.canWrite()) {
                   // Create subfolder if needed
                   val subDir = docFile.findFile(subfolder) ?: docFile.createDirectory(subfolder)
-                  subDir?.uri?.toString() ?: downloadPathUri
+                  if (subDir != null) {
+                    // For SAF URIs, check if we can convert to file path
+                    val uniFile = cloud.app.csplayer.utils.KUniFile.fromUri(ctx, subDir.uri)
+                    val filePath = uniFile?.filePath
+
+                    // Only use file path if we can actually write to it (app-specific storage)
+                    // For shared storage (e.g., /storage/emulated/0/Movies), keep SAF URI
+                    if (filePath != null && filePath.startsWith(ctx.getExternalFilesDir(null)?.absolutePath ?: "/data")) {
+                      // App-specific storage - safe to use file path
+                      filePath
+                    } else {
+                      // Shared storage or unknown - keep SAF URI for proper permission handling
+                      subDir.uri.toString()
+                    }
+                  } else {
+                    downloadPathUri
+                  }
                 } else {
-                  // Fallback if can't access custom path
+                  // Fallback if can't access custom path - use public Download folder
+                  val publicDownload = android.os.Environment.getExternalStoragePublicDirectory(
+                    android.os.Environment.DIRECTORY_DOWNLOADS
+                  )
+                  val downloadSubfolder = java.io.File(publicDownload, subfolder)
+                  if (!downloadSubfolder.exists()) {
+                    downloadSubfolder.mkdirs()
+                  }
+                  downloadSubfolder.absolutePath
+                }
+              } catch (e: Exception) {
+                // Fallback on error - use public Download folder
+                try {
+                  val publicDownload = android.os.Environment.getExternalStoragePublicDirectory(
+                    android.os.Environment.DIRECTORY_DOWNLOADS
+                  )
+                  val downloadSubfolder = java.io.File(publicDownload, subfolder)
+                  if (!downloadSubfolder.exists()) {
+                    downloadSubfolder.mkdirs()
+                  }
+                  downloadSubfolder.absolutePath
+                } catch (_: Exception) {
+                  // Last resort: app-specific storage
                   ctx.getExternalFilesDir(subfolder)?.absolutePath ?: ctx.filesDir.absolutePath
                 }
-              } catch (_: Exception) {
-                // Fallback on error
-                ctx.getExternalFilesDir(subfolder)?.absolutePath ?: ctx.filesDir.absolutePath
               }
             } else {
-              // No custom path configured, use default
-              ctx.getExternalFilesDir(subfolder)?.absolutePath ?: ctx.filesDir.absolutePath
+              // No custom path configured, use public Download folder as default
+              val publicDownload = android.os.Environment.getExternalStoragePublicDirectory(
+                android.os.Environment.DIRECTORY_DOWNLOADS
+              )
+              val downloadSubfolder = java.io.File(publicDownload, subfolder)
+
+              // Create subfolder if it doesn't exist
+              if (!downloadSubfolder.exists()) {
+                downloadSubfolder.mkdirs()
+              }
+
+              downloadSubfolder.absolutePath
             }
           }
-
+          val appName = ctx.getString(R.string.app_name).replace(" ", "_")
           when {
             inputUrl.startsWith("magnet:") -> {
-              DownloadType.TORRENT to getDownloadDir("torrents")
+              DownloadType.TORRENT to getDownloadDir(appName)
             }
             inputUrl.endsWith(".torrent") -> {
-              DownloadType.TORRENT to getDownloadDir("torrents")
+              DownloadType.TORRENT to getDownloadDir(appName)
             }
             inputUrl.startsWith("http") -> {
-              DownloadType.HTTP to getDownloadDir("http")
+              DownloadType.HTTP to getDownloadDir(appName)
             }
             else -> null to null
           }
