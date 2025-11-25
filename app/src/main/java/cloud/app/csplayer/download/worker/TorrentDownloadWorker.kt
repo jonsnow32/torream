@@ -222,14 +222,9 @@ class TorrentDownloadWorker @AssistedInject constructor(
 
       // Poll torrent status until complete or cancelled
       val result = pollDownloadProgress(h, ti, taskId, torrentName, saveDir, currentState)
-      if (result != Result.success()) {
-        return@withContext result
-      }
 
-      // Worker was cancelled - fetch current state
-      currentState = repo.observeState(taskId).first() ?: currentState
-      repo.updateState(currentState.copy(status = DownloadStatus.PAUSED))
-      return@withContext Result.retry()
+      // Return result directly - don't override status after successful completion
+      return@withContext result
 
     } catch (e: Exception) {
       // Check if this is a cancellation (expected when user pauses)
@@ -579,11 +574,34 @@ class TorrentDownloadWorker @AssistedInject constructor(
     currentState: cloud.app.csplayer.download.DownloadState
   ): Boolean = withContext(Dispatchers.IO) {
     val torrentRootName = torrentInfo.name()
-    val downloadedFilePath = File(saveDir, torrentRootName).absolutePath
+    val torrentDirectory = File(saveDir, torrentRootName).absolutePath
 
-    Timber.i("Torrent completed, saved to directory: $downloadedFilePath")
+    Timber.i("Torrent completed, saved to directory: $torrentDirectory")
 
-    val updatedTaskWithFile = currentState.task.copy(downloadedFilePath = downloadedFilePath)
+    // Find the largest video file in the torrent for thumbnail
+    val torrentDirKuni = cloud.app.csplayer.utils.KUniFile.fromFile(context, File(torrentDirectory))
+    val videoFiles = if (torrentDirKuni != null && torrentDirKuni.exists()) {
+      findVideoFilesRecursively(torrentDirKuni)
+    } else {
+      emptyList()
+    }
+
+    // Use the largest video file as the main file for thumbnail
+    val mainVideoFilePath = if (videoFiles.isNotEmpty()) {
+      videoFiles.maxByOrNull { filePath ->
+        try {
+          File(filePath).length()
+        } catch (e: Exception) {
+          0L
+        }
+      } ?: torrentDirectory
+    } else {
+      torrentDirectory
+    }
+
+    Timber.d("Main video file for torrent: $mainVideoFilePath")
+
+    val updatedTaskWithFile = currentState.task.copy(downloadedFilePath = mainVideoFilePath)
 
     repo.updateState(
       currentState.copy(
@@ -598,7 +616,7 @@ class TorrentDownloadWorker @AssistedInject constructor(
       )
     )
 
-    scanVideoFilesIntoMediaStore(downloadedFilePath)
+    scanVideoFilesIntoMediaStore(torrentDirectory)
 
     Timber.i("Torrent download completed: $taskId")
 
