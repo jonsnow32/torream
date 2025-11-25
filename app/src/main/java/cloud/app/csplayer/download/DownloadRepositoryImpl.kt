@@ -80,7 +80,7 @@ class DownloadRepositoryImpl @Inject constructor(
             status = initialStatus,
             downloadedBytes = 0L,
             progress = 0,
-            downloadSpeedBytesPerSec = 0L,
+            speed = 0L,
             error = null
           )
           httpStates.value += (task.source to state)
@@ -130,7 +130,7 @@ class DownloadRepositoryImpl @Inject constructor(
             savePath = state.task.targetPath,
             status = state.status.name,
             progress = state.progress.toFloat(),
-            downloadSpeed = state.downloadSpeedBytesPerSec,
+            downloadSpeed = state.speed,
             uploadSpeed = 0L,
             totalSize = state.task.totalBytes,
             downloadedSize = state.downloadedBytes,
@@ -147,7 +147,7 @@ class DownloadRepositoryImpl @Inject constructor(
             savePath = current?.savePath ?: state.task.targetPath,
             status = state.status.name,
             progress = state.progress.toFloat(),
-            downloadSpeed = state.downloadSpeedBytesPerSec,
+            downloadSpeed = state.speed,
             uploadSpeed = current?.uploadSpeed ?: 0L,
             totalSize = if (state.task.totalBytes > 0) state.task.totalBytes else current?.totalSize ?: 0L,
             downloadedSize = state.downloadedBytes,
@@ -213,7 +213,7 @@ class DownloadRepositoryImpl @Inject constructor(
       status = status,
       downloadedBytes = e.downloadedSize,
       progress = (e.progress.coerceIn(0f, 100f)).toInt(),
-      downloadSpeedBytesPerSec = e.downloadSpeed,
+      speed = e.downloadSpeed,
       numSeeds = e.numSeeds,
       numPeers = e.numPeers,
       error = e.error

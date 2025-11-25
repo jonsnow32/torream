@@ -15,20 +15,15 @@ import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.databinding.FragmentLibraryBinding
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadCoordinator
-import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.feed.FeedAction
-import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.adapters.FeedAdapter
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.FastScrollerHelper
-import cloud.app.csplayer.utils.PlaybackDataHelper
-import cloud.app.csplayer.utils.UIHelper.navigate
-import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.observe
 import com.google.android.material.tabs.TabLayout
+import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.paging.PagingData
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -54,6 +49,9 @@ class LibraryFragment : Fragment() {
   @Inject
   lateinit var downloadCoordinator: DownloadCoordinator
 
+  @Inject
+  lateinit var playlistRepository: cloud.app.csplayer.media.repository.PlaylistRepository
+
   private lateinit var adapter: FeedAdapter
 
   override fun onCreateView(
@@ -77,6 +75,7 @@ class LibraryFragment : Fragment() {
       }
     }
 
+
     setupUI()
     setupAdapter()
   }
@@ -88,12 +87,24 @@ class LibraryFragment : Fragment() {
       findNavController().navigateUp()
     }
 
+    // Handle menu item clicks
+    binding.toolbar.setOnMenuItemClickListener { menuItem ->
+      when (menuItem.itemId) {
+        R.id.createPlaylist -> {
+          showCreatePlaylistDialog()
+          true
+        }
+        else -> false
+      }
+    }
+
     binding.swipeRefresh.setOnRefreshListener {
       // Refresh data when user pulls down
       adapter.refresh()
     }
     // Setup tabs for different library sections
     setupTabs()
+
   }
 
   private fun setupTabs() {
@@ -115,6 +126,7 @@ class LibraryFragment : Fragment() {
           2 -> viewModel.section.value = LibrarySection.HISTORY
           3 -> viewModel.section.value = LibrarySection.PLAYLISTS
         }
+//        binding.createPlaylistFab.isVisible = tab?.position == 3
         Timber.d("Tab selected: ${viewModel.section.value}")
       }
 
@@ -124,7 +136,12 @@ class LibraryFragment : Fragment() {
   }
 
   private fun setupAdapter() {
-    adapter = FeedAdapter(FeedAction(this, downloadRepository, downloadCoordinator), adManager, viewModel.filterConfig.value, downloadRepository)
+    adapter = FeedAdapter(
+      FeedAction(this, downloadRepository, downloadCoordinator),
+      adManager,
+      viewModel.filterConfig.value,
+      downloadRepository
+    )
 
     // Observe feed data
     observe(viewModel.feedData) {
@@ -143,6 +160,28 @@ class LibraryFragment : Fragment() {
     // Configure grid layout
     configureGridLayout(binding.rvLibrary, adapterWithStates)
   }
+
+  private fun showCreatePlaylistDialog() {
+    val dialog = CreatePlaylistDialog { name, description ->
+      // Create playlist
+      viewLifecycleOwner.lifecycleScope.launch {
+        try {
+          val playlistId = playlistRepository.createPlaylist(name, description)
+          Timber.d("Playlist created with id: $playlistId")
+          Toast.makeText(requireContext(), getString(R.string.playlist_created, name), Toast.LENGTH_SHORT).show()
+          // Refresh if we're on the playlists tab
+          if (viewModel.section.value == LibrarySection.PLAYLISTS) {
+            adapter.refresh()
+          }
+        } catch (e: Exception) {
+          Timber.e(e, "Failed to create playlist")
+          Toast.makeText(requireContext(), getString(R.string.failed_to_create_playlist), Toast.LENGTH_SHORT).show()
+        }
+      }
+    }
+    dialog.show(childFragmentManager, CreatePlaylistDialog.TAG)
+  }
+
   companion object {
     const val TAG = "LibraryFragment"
   }

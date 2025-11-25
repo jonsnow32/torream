@@ -104,7 +104,11 @@ class LibraryPagingSource(
               downloadId = task.createdAt,
               fileName = fileName,
               progress = progress,
-              status = state?.status ?: DownloadStatus.QUEUED
+              status = state?.status ?: DownloadStatus.QUEUED,
+              speed = state?.speed ?: 0,
+              downloadedBytes = state?.downloadedBytes ?: 0,
+              totalBytes = state?.totalBytes ?: 0,
+              savePath = task.targetPath
             ) as FeedData
           }
 

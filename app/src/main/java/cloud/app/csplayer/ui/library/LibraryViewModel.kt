@@ -6,10 +6,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import androidx.paging.map
 import androidx.paging.cachedIn
+import androidx.paging.map
 import cloud.app.csplayer.download.DownloadRepository
-import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
@@ -17,11 +16,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.MutableStateFlow
-import timber.log.Timber
 import javax.inject.Inject
 
 
@@ -81,7 +79,10 @@ class LibraryViewModel @Inject constructor(
                   title = fileName,
                   fileName = fileName,
                   progress = ds.progress,
-                  status = ds.status
+                  status = ds.status,
+                  speed = ds.speed,
+                  downloadedBytes = ds.downloadedBytes,
+                  totalBytes = ds.totalBytes
                 )
               } else feed
             }

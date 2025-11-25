@@ -8,7 +8,6 @@ data class DownloadState(
   val progress: Int = 0, // 0..100
   val speed: Long = 0, // Download speed in bytes per second
   val uploadSpeed: Long = 0, // Upload speed for torrents
-  val downloadSpeedBytesPerSec: Long = 0, // Deprecated, use 'speed' instead
   val numSeeds: Int = 0, // Number of seeds (for torrents)
   val numPeers: Int = 0, // Number of peers (for torrents)
   val completedAt: Long? = null,

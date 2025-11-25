@@ -14,6 +14,7 @@ object DownloadNotificationHelper {
 
   private const val CHANNEL_ID = "download_channel"
   private const val CHANNEL_NAME = "Downloads"
+  const val ACTION_OPEN_DOWNLOADS = "cloud.app.csplayer.OPEN_DOWNLOADS"
 
   fun createDownloadNotification(
     context: Context,
@@ -32,8 +33,12 @@ object DownloadNotificationHelper {
       "Starting download..."
     }
 
-    // Create intent to open app when tapped (you can customize this)
-    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+    // Create intent to open Downloads screen in Library
+    val intent = Intent(context, Class.forName("cloud.app.csplayer.MainActivity")).apply {
+      action = ACTION_OPEN_DOWNLOADS
+      flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    }
+
     val pendingIntent = PendingIntent.getActivity(
       context,
       0,

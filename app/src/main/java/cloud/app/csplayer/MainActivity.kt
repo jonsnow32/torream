@@ -358,10 +358,26 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   }
 
   fun handleAppIntent(intent: Intent?) {
-    if (intent == null || intent.action != Intent.ACTION_VIEW) return
+    if (intent == null) return
 
     val navBuilder = NavOptions.Builder()
     val navOptions: NavOptions = navBuilder.setPopUpTo(R.id.mobile_navigation, true, true).build()
+
+    // Handle download notification click - navigate to Downloads section in Library
+    if (intent.action == "cloud.app.csplayer.OPEN_DOWNLOADS") {
+      try {
+        val bundle = Bundle().apply {
+          putInt("section", 0) // 0 = DOWNLOADS section in LibrarySection enum
+        }
+        navigate(R.id.navigation_libraryFragment, bundle, navOptions)
+        return
+      } catch (e: Exception) {
+        Timber.e(e, "Failed to navigate to Downloads section")
+      }
+    }
+
+    // Handle ACTION_VIEW for PlaybackData
+    if (intent.action != Intent.ACTION_VIEW) return
 
     // Try to get PlaybackData from URI (inter-app communication via FileProvider)
     val jsonUri = intent.data

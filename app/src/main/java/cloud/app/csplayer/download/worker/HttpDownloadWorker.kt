@@ -219,8 +219,7 @@ class HttpDownloadWorker @AssistedInject constructor(
             downloadedBytes = currentTotal,
             totalBytes = if (totalBytes > 0) totalBytes else currentTotal,
             progress = progress,
-            speed = speed,
-            downloadSpeedBytesPerSec = speed
+            speed = speed
           )
 
           // Update repository
@@ -321,7 +320,6 @@ class HttpDownloadWorker @AssistedInject constructor(
             totalBytes = finalSize,
             progress = 100,
             speed = 0L,
-            downloadSpeedBytesPerSec = 0L,
             completedAt = System.currentTimeMillis()
           )
         )

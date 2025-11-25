@@ -494,7 +494,6 @@ class TorrentDownloadWorker @AssistedInject constructor(
           progress = progress,
           speed = downloadRate,
           uploadSpeed = uploadRate,
-          downloadSpeedBytesPerSec = downloadRate,
           numSeeds = numSeeds,
           numPeers = numPeers
         )
@@ -550,7 +549,6 @@ class TorrentDownloadWorker @AssistedInject constructor(
         progress = 100,
         speed = 0L,
         uploadSpeed = uploadRate,
-        downloadSpeedBytesPerSec = 0L,
         completedAt = System.currentTimeMillis()
       )
     )

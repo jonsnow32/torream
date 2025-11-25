@@ -19,6 +19,8 @@ import cloud.app.csplayer.ui.feed.viewholders.HttpDownloadViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.TorrentDownloadViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.VideoViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.PlaylistViewHolder
+import cloud.app.csplayer.ui.feed.viewholders.PlaylistSmallViewHolder
 import cloud.app.csplayer.ui.feed.viewholders.horizontal.HorizontalListViewHolder
 
 
@@ -68,6 +70,11 @@ class FeedAdapter(
           // DownloadState is a data class — equality covers all relevant fields
           oldItem.title == newItem.title && oldItem.downloadState == newItem.downloadState
         }
+        oldItem is FeedData.PlaylistItem && newItem is FeedData.PlaylistItem -> {
+          oldItem.title == newItem.title &&
+            oldItem.itemCount == newItem.itemCount &&
+            oldItem.description == newItem.description
+        }
         else -> true // For other types, assume same if IDs match
       }
     }
@@ -89,7 +96,7 @@ class FeedAdapter(
       FeedData.Type.VideoSmall -> 2
       FeedData.Type.AudioSmall -> 2
       FeedData.Type.FolderSmall -> 2
-      FeedData.Type.PlayListSmall -> TODO()
+      FeedData.Type.PlayListSmall -> 2
     }
 
   override fun onCreateViewHolder(
@@ -103,11 +110,11 @@ class FeedAdapter(
       FeedData.Type.Video -> VideoViewHolder(parent, clickListener, filterConfig)
       FeedData.Type.Audio -> AudioViewHolder(parent, clickListener, filterConfig)
       FeedData.Type.Folder -> FolderViewHolder(parent, clickListener)
-      FeedData.Type.PlayList -> TODO()
+      FeedData.Type.PlayList -> PlaylistViewHolder(parent, clickListener)
       FeedData.Type.VideoSmall -> VideoSmallViewHolder(parent, clickListener, filterConfig)
       FeedData.Type.AudioSmall -> AudioSmallViewHolder(parent, clickListener, filterConfig)
       FeedData.Type.FolderSmall -> FolderSmallViewHolder(parent, clickListener)
-      FeedData.Type.PlayListSmall -> TODO()
+      FeedData.Type.PlayListSmall -> PlaylistSmallViewHolder(parent, clickListener)
       FeedData.Type.HTTPDownload -> HttpDownloadViewHolder(parent, clickListener, downloadRepository)
       FeedData.Type.TorrentDownload -> TorrentDownloadViewHolder(parent, clickListener, downloadRepository)
     }
@@ -130,6 +137,8 @@ class FeedAdapter(
       is AudioSmallViewHolder -> if (feed is FeedData.MediaItem) holder.bind(feed)
       is FolderViewHolder,
       is FolderSmallViewHolder -> if (feed is FeedData.FolderItem) holder.bind(feed)
+      is PlaylistViewHolder,
+      is PlaylistSmallViewHolder -> if (feed is FeedData.PlaylistItem) holder.bind(feed)
       else -> {}
     }
   }

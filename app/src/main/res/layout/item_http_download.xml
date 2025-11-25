@@ -1,88 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    style="@style/MediaItem"
-    android:layout_width="match_parent"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  style="@style/MediaItem"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:layout_marginVertical="8dp"
+  android:gravity="center_vertical"
+  android:orientation="horizontal"
+  android:padding="12dp">
+
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="?attr/itemCoverSize2x"
     android:layout_height="wrap_content"
-    android:gravity="center_vertical"
-    android:layout_marginVertical="8dp"
-    android:orientation="horizontal"
-    android:padding="12dp">
+    android:layout_marginEnd="12dp">
 
-    <!-- Download Icon -->
     <ImageView
-        android:id="@+id/iconDownload"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="12dp"
-        android:importantForAccessibility="no"
-        android:src="@android:drawable/stat_sys_download"
-        android:tint="?attr/colorPrimary" />
+      android:id="@+id/thumbnail"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      android:importantForAccessibility="no"
+      android:src="@drawable/ic_download"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintDimensionRatio="16:9"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      />
 
-    <!-- Content -->
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+    <!-- Duration overlay -->
+    <TextView
+      android:id="@+id/tvDuration"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_margin="6dp"
+      android:background="@drawable/duration_background"
+      android:importantForAccessibility="no"
+      android:paddingHorizontal="6dp"
+      android:paddingVertical="2dp"
+      android:text="@string/duration_placeholder"
+      android:visibility="gone"
+      android:textColor="@color/white"
+      android:textSize="12sp"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Title -->
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            tools:text="Sample Download File.mp4" />
+    <ProgressBar
+      android:id="@+id/progressPlayback"
+      style="?android:attr/progressBarStyleHorizontal"
+      android:layout_width="0dp"
+      android:layout_height="6dp"
+      android:max="100"
+      android:progress="0"
+      android:progressTint="?attr/colorPrimary"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+  </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- File Name -->
-        <TextView
-            android:id="@+id/txtFileName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:ellipsize="middle"
-            android:maxLines="1"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp"
-            tools:text="/storage/emulated/0/Download/file.mp4" />
 
-        <!-- Progress Bar -->
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progressBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:indicatorColor="?attr/colorPrimary"
-            app:trackColor="?attr/colorSurfaceVariant"
-            tools:progress="65" />
+  <!-- Content -->
+  <LinearLayout
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:orientation="vertical">
 
-        <!-- Progress Text -->
-        <TextView
-            android:id="@+id/txtProgress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp"
-            tools:text="65% • Paused" />
+    <!-- Title -->
+    <TextView
+      android:id="@+id/title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:maxLines="2"
+      android:textColor="?attr/colorOnSurface"
+      android:textSize="16sp"
+      android:textStyle="bold"
+      tools:text="Sample Download File.mp4" />
 
-    </LinearLayout>
+<!--    &lt;!&ndash; File Name &ndash;&gt;-->
+<!--    <TextView-->
+<!--      android:id="@+id/txtSavePath"-->
+<!--      android:layout_width="match_parent"-->
+<!--      android:layout_height="wrap_content"-->
+<!--      android:layout_marginTop="4dp"-->
+<!--      android:ellipsize="middle"-->
+<!--      android:maxLines="1"-->
+<!--      android:textColor="?attr/colorOnSurfaceVariant"-->
+<!--      android:textSize="12sp"-->
+<!--      android:visibility="gone"-->
+<!--      tools:text="/storage/emulated/0/Download/file.mp4" />-->
 
-    <!-- Action Button -->
-    <ImageButton
-        android:id="@+id/btnAction"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="8dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/pause_resume"
-        android:src="@android:drawable/ic_media_pause"
-        android:tint="?attr/colorPrimary" />
+    <!-- Progress Bar -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+      android:id="@+id/progressBar"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      app:indicatorColor="?attr/colorPrimary"
+      app:trackColor="?attr/colorSurfaceVariant"
+      android:visibility="gone"
+      tools:progress="65" />
+
+    <!-- Progress Text -->
+    <TextView
+      android:id="@+id/txtProgress"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="4dp"
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="12sp"
+      tools:text="65% • Paused" />
+
+  </LinearLayout>
+
+  <!-- Action Button -->
+  <cloud.app.csplayer.ui.download.PieFetchButton
+    android:id="@+id/btnAction"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:layout_marginStart="8dp"
+    android:contentDescription="@string/pause_resume" />
 
 </LinearLayout>
 

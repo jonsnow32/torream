@@ -936,4 +936,16 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="seeding">Seeding</string>
   <string name="finished">Finished</string>
   <string name="download_resumed">Resume</string>
+  <string name="add_playlist">Create playlist</string>
+  <string name="playlist_name">Playlist name</string>
+  <string name="playlist_name_required">Playlist name is required</string>
+  <string name="playlist_created">Playlist "%s" created</string>
+  <string name="failed_to_create_playlist">Failed to create playlist</string>
+  <string name="create">Create</string>
+
+  <plurals name="playlist_items">
+    <item quantity="zero">No items</item>
+    <item quantity="one">%d item</item>
+    <item quantity="other">%d items</item>
+  </plurals>
 </resources>

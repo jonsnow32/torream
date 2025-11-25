@@ -70,6 +70,12 @@ class FeedAction(
         // Items inside the list have their own click handlers
       }
 
+      is FeedData.PlaylistItem -> {
+        // TODO: Navigate to playlist details screen
+        // For now, show a toast
+        showToast("Playlist: ${item.title} (${item.itemCount} items)")
+      }
+
       is FeedData.HttpDownloadItem,
       is FeedData.TorrentDownloadItem -> {
         //show torrent option dialog play/pause/cancel

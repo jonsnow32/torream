@@ -9,6 +9,7 @@ import cloud.app.csplayer.ui.feed.FeedViewHolder
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.ui.feed.FeedAction
+import cloud.app.csplayer.utils.loadThumbnail
 
 class HttpDownloadViewHolder(
   val parent: ViewGroup,
@@ -22,8 +23,10 @@ class HttpDownloadViewHolder(
   override fun bind(feed: FeedData.HttpDownloadItem) {
     // Bind data from feed (already updated by ViewModel)
     binding.title.text = feed.title
-    binding.txtFileName.text = feed.fileName
-    updateUI(feed.progress, feed.status)
+
+    updateUI(
+      feed
+    )
 
     // Click listeners
     binding.root.setOnClickListener {
@@ -38,15 +41,19 @@ class HttpDownloadViewHolder(
     }
   }
 
-  private fun updateUI(progress: Int, status: DownloadStatus) {
-    val p = progress.coerceIn(0, 100)
+  private fun updateUI(feed: FeedData.HttpDownloadItem) {
+    val p = feed.progress.coerceIn(0, 100)
     binding.progressBar.progress = p
 
-
-    val statusText = when (status) {
+    val statusText = when (feed.status) {
       DownloadStatus.PAUSED -> parent.context.getString(R.string.paused)
       DownloadStatus.COMPLETED,
-      DownloadStatus.FINISHED -> parent.context.getString(R.string.finished)
+      DownloadStatus.FINISHED -> {
+        feed.savePath?.let { filePath ->
+          binding.thumbnail.loadThumbnail("$filePath/${feed.fileName}")
+        }
+        parent.context.getString(R.string.finished)
+      }
 
       DownloadStatus.FAILED -> parent.context.getString(R.string.error)
       DownloadStatus.QUEUED,
@@ -56,23 +63,66 @@ class HttpDownloadViewHolder(
       DownloadStatus.CANCELED -> parent.context.getString(R.string.cancel)
     }
 
+    // Build progress text with size info
+    val sizeText = formatFileSize(feed.downloadedBytes)
 
+//    binding.txtSavePath.text = formatFileSize(totalBytes)
+//    binding.txtSavePath.visibility = if (totalBytes > 0) ViewGroup.VISIBLE else ViewGroup.GONE
+    val speedText = formatSpeed(feed.speed)
     binding.txtProgress.text = parent.context.getString(
       R.string.download_progress_compact,
       p,
       statusText
-    )
+    ) + " • $speedText • $sizeText"
 
-    val actionIcon = if (status == DownloadStatus.PAUSED) {
-      android.R.drawable.ic_media_play
-    } else {
-      android.R.drawable.ic_media_pause
+    // Update PieFetchButton state and progress
+    when (feed.status) {
+      DownloadStatus.DOWNLOADING,
+      DownloadStatus.QUEUED,
+      DownloadStatus.SEEDING -> {
+        binding.btnAction.setDownloading(p.toFloat())
+        binding.btnAction.contentDescription = parent.context.getString(R.string.pause)
+      }
+
+      DownloadStatus.PAUSED -> {
+        binding.btnAction.setPaused()
+        binding.btnAction.contentDescription = parent.context.getString(R.string.resume)
+      }
+
+      DownloadStatus.COMPLETED,
+      DownloadStatus.FINISHED -> {
+        binding.btnAction.setCompleted()
+        binding.btnAction.contentDescription = parent.context.getString(R.string.finished)
+      }
+
+      DownloadStatus.FAILED -> {
+        binding.btnAction.setError()
+        binding.btnAction.contentDescription = parent.context.getString(R.string.error)
+      }
+
+      DownloadStatus.CANCELED -> {
+        binding.btnAction.setIdle()
+        binding.btnAction.contentDescription = parent.context.getString(R.string.cancel)
+      }
     }
-    binding.btnAction.setImageResource(actionIcon)
-    binding.btnAction.contentDescription = if (status == DownloadStatus.PAUSED) {
-      parent.context.getString(R.string.resume)
-    } else {
-      parent.context.getString(R.string.pause)
+  }
+
+  private fun formatSpeed(bytesPerSecond: Long): String {
+    return when {
+      bytesPerSecond <= 0 -> "0 B/s"
+      bytesPerSecond < 1024 -> "$bytesPerSecond B/s"
+      bytesPerSecond < 1024 * 1024 -> "${bytesPerSecond / 1024} KB/s"
+      else -> "${String.format("%.1f", bytesPerSecond / (1024.0 * 1024.0))} MB/s"
+    }
+  }
+
+  private fun formatFileSize(bytes: Long): String {
+    return when {
+      bytes <= 0 -> "0 B"
+      bytes < 1024 -> "$bytes B"
+      bytes < 1024 * 1024 -> "${String.format("%.1f", bytes / 1024.0)} KB"
+      bytes < 1024 * 1024 * 1024 -> "${String.format("%.1f", bytes / (1024.0 * 1024.0))} MB"
+      else -> "${String.format("%.2f", bytes / (1024.0 * 1024.0 * 1024.0))} GB"
     }
   }
 }

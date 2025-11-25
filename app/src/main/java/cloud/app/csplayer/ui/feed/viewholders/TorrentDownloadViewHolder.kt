@@ -23,10 +23,10 @@ class TorrentDownloadViewHolder(
   override fun bind(feed: FeedData.TorrentDownloadItem) {
     // Bind data from feed (already updated by LibraryViewModel which observes DownloadState)
     binding.title.text = feed.title
-    binding.txtTorrentName.text = feed.downloadState.task.title ?: feed.downloadState.task.source
+
 
     val progress = feed.downloadState.progress.coerceIn(0, 100)
-    updateUI(feed, progress, feed.downloadState.status, feed.downloadState.numSeeds, feed.downloadState.numPeers)
+    updateUI(feed, progress, feed.downloadState.status, feed.downloadState.numSeeds, feed.downloadState.numPeers, feed.downloadState.speed)
 
     // Click listeners
     binding.root.setOnClickListener {
@@ -41,7 +41,7 @@ class TorrentDownloadViewHolder(
     }
   }
 
-  private fun updateUI(feed: FeedData.TorrentDownloadItem, progress: Int, status: DownloadStatus, seeds: Int, peers: Int) {
+  private fun updateUI(feed: FeedData.TorrentDownloadItem, progress: Int, status: DownloadStatus, seeds: Int, peers: Int, speed: Long) {
     binding.progressBar.progress = progress
 
     val statusText = when (status) {
@@ -50,12 +50,19 @@ class TorrentDownloadViewHolder(
       DownloadStatus.FINISHED, DownloadStatus.COMPLETED -> {
         // Load thumbnail from downloaded file
         feed.downloadState.task.downloadedFilePath?.let { filePath ->
-          binding.iconTorrent.loadThumbnail(filePath)
+          binding.thumbnail.loadThumbnail(filePath)
         }
         parent.context.getString(R.string.finished)
       }
       DownloadStatus.FAILED -> parent.context.getString(R.string.error)
       else -> parent.context.getString(R.string.downloading)
+    }
+
+    // Build progress text with size info
+    val sizeText = if (feed.downloadState.totalBytes > 0) {
+      "${formatFileSize(feed.downloadState.downloadedBytes)} / ${formatFileSize(feed.downloadState.totalBytes)}"
+    } else {
+      formatFileSize(feed.downloadState.downloadedBytes)
     }
 
     binding.txtProgress.text = parent.context.getString(
@@ -64,7 +71,7 @@ class TorrentDownloadViewHolder(
       statusText,
       seeds,
       peers
-    )
+    ) + " • ${formatSpeed(speed)} • $sizeText"
 
     val actionIcon = if (status == DownloadStatus.PAUSED) {
       android.R.drawable.ic_media_play
@@ -76,6 +83,25 @@ class TorrentDownloadViewHolder(
       parent.context.getString(R.string.resume)
     } else {
       parent.context.getString(R.string.pause)
+    }
+  }
+
+  private fun formatSpeed(bytesPerSecond: Long): String {
+    return when {
+      bytesPerSecond <= 0 -> "0 B/s"
+      bytesPerSecond < 1024 -> "$bytesPerSecond B/s"
+      bytesPerSecond < 1024 * 1024 -> "${bytesPerSecond / 1024} KB/s"
+      else -> "${String.format("%.1f", bytesPerSecond / (1024.0 * 1024.0))} MB/s"
+    }
+  }
+
+  private fun formatFileSize(bytes: Long): String {
+    return when {
+      bytes <= 0 -> "0 B"
+      bytes < 1024 -> "$bytes B"
+      bytes < 1024 * 1024 -> "${String.format("%.1f", bytes / 1024.0)} KB"
+      bytes < 1024 * 1024 * 1024 -> "${String.format("%.1f", bytes / (1024.0 * 1024.0))} MB"
+      else -> "${String.format("%.2f", bytes / (1024.0 * 1024.0 * 1024.0))} GB"
     }
   }
 }

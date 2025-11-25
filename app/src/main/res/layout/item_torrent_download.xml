@@ -27,7 +27,7 @@
     android:layout_marginEnd="12dp">
 
     <ImageView
-      android:id="@+id/iconTorrent"
+      android:id="@+id/thumbnail"
       android:layout_width="0dp"
       android:layout_height="0dp"
       android:importantForAccessibility="no"
@@ -88,18 +88,6 @@
             android:textSize="16sp"
             android:textStyle="bold"
             tools:text="Sample Torrent Name" />
-
-        <!-- Torrent Name -->
-        <TextView
-            android:id="@+id/txtTorrentName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp"
-            tools:text="torrent_file_name.torrent" />
 
         <!-- Progress Bar -->
         <com.google.android.material.progressindicator.LinearProgressIndicator

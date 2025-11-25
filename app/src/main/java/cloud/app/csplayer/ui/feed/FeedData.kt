@@ -85,7 +85,11 @@ sealed class FeedData {
     val downloadId: Long,
     val fileName: String,
     val progress: Int, // 0-100
-    val status : DownloadStatus
+    val status : DownloadStatus,
+    val speed: Long = 0, // Download speed in bytes per second
+    val downloadedBytes: Long = 0,
+    val totalBytes: Long = 0,
+    val savePath: String? = null
   ) : FeedData() {
     override var type: Type = Type.HTTPDownload
   }
@@ -96,5 +100,23 @@ sealed class FeedData {
     val downloadState: DownloadState
   ) : FeedData() {
     override var type: Type = Type.TorrentDownload
+  }
+
+  data class PlaylistItem(
+    override val id: String,
+    override val title: String,
+    override var type: Type = Type.PlayList,
+    val description: String? = null,
+    val itemCount: Int = 0,
+    val thumbnailPath: String? = null,
+    val createdAt: Long = 0,
+    val updatedAt: Long = 0
+  ) : FeedData() {
+
+    init {
+      require(type == Type.PlayList || type == Type.PlayListSmall) {
+        "PlaylistItem.type must be PlayList or PlayListSmall, but was $type"
+      }
+    }
   }
 }

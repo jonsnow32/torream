@@ -40,20 +40,30 @@ class DownloadCoordinator @Inject constructor(
   suspend fun startDownload(task: DownloadTask) {
     Timber.d("startDownload: taskId=${task.id}, type=${task.type}, source=${task.source}")
 
-    // Check if download is already running (ignore CANCELLED state)
+    // Always cancel any existing work first to ensure clean slate
+    // This handles case where work is left in ENQUEUED/CANCELLED state from previous delete
+    try {
+      workManager.cancelUniqueWork("download_${task.id}")
+      Timber.d("Cancelled any existing work for taskId=${task.id}")
+      // Small delay to ensure WorkManager processes cancellation
+      kotlinx.coroutines.delay(50L)
+    } catch (e: Exception) {
+      Timber.w(e, "Failed to cancel existing work")
+    }
+
+    // Check if download is actually running (RUNNING state only, not ENQUEUED)
     val existingWork = try {
       workManager.getWorkInfosForUniqueWork("download_${task.id}").get()
     } catch (e: Exception) {
       emptyList()
     }
 
-    val isRunning = existingWork.any { workInfo ->
-      (workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED) &&
-        workInfo.state != WorkInfo.State.CANCELLED
+    val isCurrentlyRunning = existingWork.any { workInfo ->
+      workInfo.state == WorkInfo.State.RUNNING
     }
 
-    if (isRunning) {
-      Timber.w("Download already running for taskId=${task.id}, skipping")
+    if (isCurrentlyRunning) {
+      Timber.w("Download currently RUNNING for taskId=${task.id}, skipping")
       return
     }
 
@@ -184,11 +194,23 @@ class DownloadCoordinator @Inject constructor(
     // Get task info before deletion for cleanup
     val state = repo.observeState(taskId).map { it }.firstOrNull()
 
-    // Cancel worker first
-    workManager.cancelUniqueWork("download_$taskId")
+    // Cancel worker first - use multiple strategies to ensure complete cleanup
+    try {
+      workManager.cancelUniqueWork("download_$taskId")
+      Timber.d("Cancelled unique work for taskId=$taskId")
+    } catch (e: Exception) {
+      Timber.w(e, "Failed to cancel unique work")
+    }
 
-    // Also cancel by tag to ensure complete cleanup
-    workManager.cancelAllWorkByTag(taskId)
+    try {
+      workManager.cancelAllWorkByTag(taskId)
+      Timber.d("Cancelled all work by tag for taskId=$taskId")
+    } catch (e: Exception) {
+      Timber.w(e, "Failed to cancel work by tag")
+    }
+
+    // Small delay to ensure WorkManager processes cancellation
+    kotlinx.coroutines.delay(100L)
 
     // Cleanup downloaded files if exists
     state?.let { downloadState ->

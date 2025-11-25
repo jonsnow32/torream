@@ -7,6 +7,7 @@ import cloud.app.csplayer.media.dao.DownloadDao
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
 import cloud.app.csplayer.media.dao.MediaPlaybackDao
+import cloud.app.csplayer.media.dao.PlaylistDao
 import cloud.app.csplayer.media.db.MediaDatabase
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSource
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSourceImpl
@@ -62,6 +63,11 @@ object DatabaseModule {
     return database.downloadDao()
   }
 
+  @Provides
+  @Singleton
+  fun providePlaylistDao(database: MediaDatabase): PlaylistDao {
+    return database.playlistDao()
+  }
 
   @Provides
   @Singleton
