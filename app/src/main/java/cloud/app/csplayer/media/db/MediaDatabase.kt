@@ -5,6 +5,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import cloud.app.csplayer.media.converters.Converters
 import cloud.app.csplayer.media.dao.DownloadDao
+import cloud.app.csplayer.media.dao.FavoriteDao
+import cloud.app.csplayer.media.dao.FavoriteEntity
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
 import cloud.app.csplayer.media.dao.MediaPlaybackDao
@@ -25,9 +27,10 @@ import cloud.app.csplayer.media.entities.PlaylistItemEntity
     TorrentEntity::class,
     HttpEntity::class,
     PlaylistEntity::class,
-    PlaylistItemEntity::class
+    PlaylistItemEntity::class,
+    FavoriteEntity::class
   ],
-  version = 7,
+  version = 8,
   exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -37,5 +40,6 @@ abstract class MediaDatabase : RoomDatabase() {
   abstract fun mediaPlaybackDao(): MediaPlaybackDao
   abstract fun downloadDao(): DownloadDao
   abstract fun playlistDao(): PlaylistDao
+  abstract fun favoriteDao(): FavoriteDao
 }
 

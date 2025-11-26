@@ -52,6 +52,9 @@ class LibraryFragment : Fragment() {
   @Inject
   lateinit var playlistRepository: cloud.app.csplayer.media.repository.PlaylistRepository
 
+  @Inject
+  lateinit var favoriteRepository: cloud.app.csplayer.favorites.FavoriteRepository
+
   private lateinit var adapter: FeedAdapter
 
   override fun onCreateView(
@@ -136,7 +139,7 @@ class LibraryFragment : Fragment() {
 
   private fun setupAdapter() {
     adapter = FeedAdapter(
-      FeedAction(this, downloadRepository, downloadCoordinator),
+      FeedAction(this, downloadRepository, downloadCoordinator, favoriteRepository),
       adManager,
       viewModel.filterConfig.value,
       downloadRepository

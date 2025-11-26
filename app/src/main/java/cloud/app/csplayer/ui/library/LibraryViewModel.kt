@@ -27,6 +27,7 @@ import javax.inject.Inject
 class LibraryViewModel @Inject constructor(
   val mediaRepository: MediaRepository,
   val downloadRepository: DownloadRepository,
+  val favoriteRepository: cloud.app.csplayer.favorites.FavoriteRepository,
   val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
@@ -54,6 +55,7 @@ class LibraryViewModel @Inject constructor(
           LibraryPagingSource(
             repository = mediaRepository,
             downloadRepository = downloadRepository,
+            favoriteRepository = favoriteRepository,
             section = section
           )
         }

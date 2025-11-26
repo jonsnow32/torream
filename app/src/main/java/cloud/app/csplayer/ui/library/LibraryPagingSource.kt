@@ -26,6 +26,7 @@ enum class LibrarySection {
 class LibraryPagingSource(
   private val repository: MediaRepository,
   private val downloadRepository: DownloadRepository,
+  private val favoriteRepository: cloud.app.csplayer.favorites.FavoriteRepository,
   private val section: LibrarySection
 ) : PagingSource<Int, FeedData>() {
 
@@ -152,18 +153,117 @@ class LibraryPagingSource(
   }
 
   /**
-   * Load favorite media items
-   * Note: Currently the Media entity has isFavorite field but no DAO query for it.
-   * This is a placeholder that returns empty list until DAO is updated.
+   * Load favorite items from FavoriteRepository
    */
-  private fun loadFavorites(limit: Int, offset: Int): List<FeedData> {
+  private suspend fun loadFavorites(limit: Int, offset: Int): List<FeedData> {
     Timber.d("Loading favorites with limit=$limit, offset=$offset")
 
-    // TODO: Add DAO query for favorites when implemented
-    // For now, return empty list
-    Timber.w("Favorites query not yet implemented in MediaDao")
+    return try {
+      // Get all favorites from repository
+      val allFavorites = favoriteRepository.observeAllFavorites().first()
 
-    return emptyList()
+      Timber.d("Loaded ${allFavorites.size} total favorites from repository")
+
+      // Apply pagination
+      val start = offset.coerceAtMost(allFavorites.size)
+      val end = (offset + limit).coerceAtMost(allFavorites.size)
+
+      if (start >= end) {
+        Timber.d("No favorites in this page (start=$start, end=$end)")
+        return emptyList()
+      }
+
+      val pageFavorites = allFavorites.subList(start, end)
+
+      // Convert to FeedData based on type
+      val feedItems = pageFavorites.mapNotNull { favorite ->
+        when (favorite.type) {
+          "media" -> {
+            // Create MediaItem from favorite info
+            try {
+              val uri = favorite.uri ?: return@mapNotNull null
+
+              // Create minimal Media object from favorite data
+              val media = cloud.app.csplayer.model.Media(
+                id = uri.hashCode().toLong(), // Generate ID from URI hash
+                uri = uri,
+                path = uri,
+                name = favorite.title,
+                size = 0L, // Unknown, will be loaded when played
+                duration = 0L, // Unknown
+                width = 0,
+                height = 0,
+                dateModified = favorite.addedAt, // Use favorite added timestamp
+                mimeType = "video/*", // Default to video
+                position = 0L
+              )
+
+              FeedData.MediaItem(
+                id = uri,
+                title = favorite.title,
+                type = FeedData.Type.Video, // Default to video type
+                media = media
+              ) as FeedData
+            } catch (e: Exception) {
+              Timber.e(e, "Error creating media item for favorite: ${favorite.id}")
+              null
+            }
+          }
+
+          "download_http" -> {
+            // Load HTTP download state
+            try {
+              val state = downloadRepository.observeState(favorite.id).first()
+              if (state != null) {
+                FeedData.HttpDownloadItem(
+                  id = favorite.id,
+                  title = favorite.title,
+                  downloadState = state
+                ) as FeedData
+              } else {
+                Timber.w("Download state not found for favorite: ${favorite.id}")
+                null
+              }
+            } catch (e: Exception) {
+              Timber.e(e, "Error loading HTTP download for favorite: ${favorite.id}")
+              null
+            }
+          }
+
+          "download_torrent" -> {
+            // Load torrent download state
+            try {
+              val state = downloadRepository.observeState(favorite.id).first()
+              if (state != null) {
+                FeedData.TorrentDownloadItem(
+                  id = favorite.id,
+                  title = favorite.title,
+                  downloadState = state
+                ) as FeedData
+              } else {
+                Timber.w("Download state not found for favorite: ${favorite.id}")
+                null
+              }
+            } catch (e: Exception) {
+              Timber.e(e, "Error loading torrent download for favorite: ${favorite.id}")
+              null
+            }
+          }
+
+          else -> {
+            Timber.w("Unknown favorite type: ${favorite.type}")
+            null
+          }
+        }
+      }
+
+      Timber.d("Converted ${feedItems.size} favorites to FeedData items")
+      feedItems
+
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading favorites")
+      emptyList()
+    }
   }
 
   /**

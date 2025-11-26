@@ -23,7 +23,8 @@ import cloud.app.csplayer.download.DownloadStatus
 class FeedAction(
   val fragment: Fragment,
   private val downloadRepository: DownloadRepository,
-  private val downloadCoordinator: DownloadCoordinator
+  private val downloadCoordinator: DownloadCoordinator,
+  private val favoriteRepository: cloud.app.csplayer.favorites.FavoriteRepository
 ) {
 
   companion object {
@@ -159,12 +160,139 @@ class FeedAction(
 
   fun onItemLongClick(item: FeedData) {
     when (item) {
+      is FeedData.MediaItem -> {
+        fragment.lifecycleScope.launch {
+          // Check if already favorited
+          val isFav = favoriteRepository.isFavorite(item.media.uri)
+          val favoriteText = if (isFav) "⭐ Remove from favorites" else "☆ Add to favorites"
+
+          val listOption = listOf("Play", favoriteText, "Details", "Delete from library")
+
+          withContext(Dispatchers.Main) {
+            SelectionDialog.single(listOption, -1, item.media.name, false).show(
+              fragment.parentFragmentManager
+            ) { bundle ->
+              bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+                when (listOption[index]) {
+                  "Play" -> {
+                    playMediaItem(item)
+                  }
+                  favoriteText -> {
+                    fragment.lifecycleScope.launch {
+                      try {
+                        val favorite = cloud.app.csplayer.media.dao.FavoriteEntity(
+                          id = item.media.uri,
+                          type = "media",
+                          title = item.title,
+                          uri = item.media.uri,
+                          thumbnailPath = null
+                        )
+                        val added = favoriteRepository.toggleFavorite(favorite)
+                        showToast(if (added) "Added to favorites ⭐" else "Removed from favorites")
+                      } catch (e: Exception) {
+                        Timber.e(e, "Error toggling favorite")
+                        showToast("Failed to update favorite")
+                      }
+                    }
+                  }
+                  "Details" -> {
+                    showToast("File: ${item.media.uri}\nDuration: ${item.media.duration}ms")
+                  }
+                  "Delete from library" -> {
+                    androidx.appcompat.app.AlertDialog.Builder(fragment.requireContext())
+                      .setTitle("Delete from library?")
+                      .setMessage("This will remove the file from your library.")
+                      .setPositiveButton("Delete") { _, _ ->
+                        // TODO: Implement delete from library
+                        showToast("Delete functionality coming soon")
+                      }
+                      .setNegativeButton("Cancel", null)
+                      .show()
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      is FeedData.FolderItem -> {
+        // Show options for folder: Open, Show path, etc.
+        val listOption = listOf("Open folder", "Show path", "Rescan")
+
+        SelectionDialog.single(listOption, -1, item.folder.name, false).show(
+          fragment.parentFragmentManager
+        ) { bundle ->
+          bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            when (listOption[index]) {
+              "Open folder" -> {
+                onItemClick(item) // Reuse click action
+              }
+              "Show path" -> {
+                showToast("Path: ${item.folder.path}")
+              }
+              "Rescan" -> {
+                showToast("Rescanning folder...")
+                // TODO: Implement folder rescan
+              }
+            }
+          }
+        }
+      }
+
+      is FeedData.PlaylistItem -> {
+        // Show options for playlist: Play all, Edit, Delete, etc.
+        val listOption = listOf("Play all", "Edit playlist", "Share", "Delete")
+
+        SelectionDialog.single(listOption, -1, item.title, false).show(
+          fragment.parentFragmentManager
+        ) { bundle ->
+          bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+            when (listOption[index]) {
+              "Play all" -> {
+                onItemClick(item) // Reuse click action
+              }
+              "Edit playlist" -> {
+                showToast("Edit playlist functionality coming soon")
+              }
+              "Share" -> {
+                showToast("Share playlist functionality coming soon")
+              }
+              "Delete" -> {
+                androidx.appcompat.app.AlertDialog.Builder(fragment.requireContext())
+                  .setTitle("Delete playlist?")
+                  .setMessage("This will delete the playlist: ${item.title}")
+                  .setPositiveButton("Delete") { _, _ ->
+                    showToast("Delete functionality coming soon")
+                  }
+                  .setNegativeButton("Cancel", null)
+                  .show()
+              }
+            }
+          }
+        }
+      }
+
+      is FeedData.AdItem -> {
+        // No long click action for ads
+        showToast("Long press not available for ads")
+      }
+
+      is FeedData.HorizontalList -> {
+        // No long click action for horizontal lists
+        showToast("Long press items within the list instead")
+      }
+
       is FeedData.HttpDownloadItem,
       is FeedData.TorrentDownloadItem -> {
         // Build dynamic options based on download status
         fragment.lifecycleScope.launch {
           val state = downloadRepository.observeState(item.id).firstOrNull()
           val status = state?.status
+
+          // Check if favorited
+          val isFav = favoriteRepository.isFavorite(item.id)
+          val favoriteText = if (isFav) "⭐ Remove from favorites" else "☆ Add to favorites"
 
           val listOption = buildList {
             // "play" - only if completed
@@ -200,6 +328,9 @@ class FeedAction(
             if (status == cloud.app.csplayer.download.DownloadStatus.COMPLETED) {
               add("show files")
             }
+
+            // "favorite" - always available
+            add(favoriteText)
 
             // "delete" - always available
             add("delete")
@@ -504,6 +635,33 @@ class FeedAction(
                   }
                 }
 
+                favoriteText -> {
+                  fragment.lifecycleScope.launch {
+                    try {
+                      val state = downloadRepository.observeState(item.id).firstOrNull()
+                      val downloadType = when (item) {
+                        is FeedData.HttpDownloadItem -> "download_http"
+                        is FeedData.TorrentDownloadItem -> "download_torrent"
+                        else -> "download"
+                      }
+
+                      val favorite = cloud.app.csplayer.media.dao.FavoriteEntity(
+                        id = item.id,
+                        type = downloadType,
+                        title = item.title,
+                        uri = state?.task?.fileName ?: state?.task?.targetPath,
+                        thumbnailPath = null
+                      )
+
+                      val added = favoriteRepository.toggleFavorite(favorite)
+                      showToast(if (added) "Added to favorites ⭐" else "Removed from favorites")
+                    } catch (e: Exception) {
+                      Timber.e(e, "Error toggling favorite")
+                      showToast("Failed to update favorite")
+                    }
+                  }
+                }
+
                 "show files" -> {
                   fragment.lifecycleScope.launch {
                     try {
@@ -608,6 +766,19 @@ class FeedAction(
         }
 
         Timber.d("Playing selected file: ${file.absolutePath}")
+
+        // Scan file into MediaStore to ensure it can be tracked in history
+        // This is done asynchronously and won't block playback
+        withContext(Dispatchers.IO) {
+          try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+            intent.data = android.net.Uri.fromFile(file)
+            fragment.requireContext().sendBroadcast(intent)
+            Timber.d("Requested MediaStore scan for: ${file.absolutePath}")
+          } catch (e: Exception) {
+            Timber.w(e, "Failed to scan file into MediaStore")
+          }
+        }
 
         // Create VideoLink from file
         val videoLink = VideoLink(

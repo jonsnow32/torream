@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.media.dao.DownloadDao
+import cloud.app.csplayer.media.dao.FavoriteDao
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
 import cloud.app.csplayer.media.dao.MediaPlaybackDao
@@ -68,6 +69,13 @@ object DatabaseModule {
   fun providePlaylistDao(database: MediaDatabase): PlaylistDao {
     return database.playlistDao()
   }
+
+  @Provides
+  @Singleton
+  fun provideFavoriteDao(database: MediaDatabase): FavoriteDao {
+    return database.favoriteDao()
+  }
+
 
   @Provides
   @Singleton
