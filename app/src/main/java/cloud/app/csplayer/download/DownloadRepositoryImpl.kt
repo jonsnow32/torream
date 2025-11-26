@@ -3,8 +3,6 @@ package cloud.app.csplayer.download
 import cloud.app.csplayer.media.entities.TorrentEntity
 import cloud.app.csplayer.media.dao.DownloadDao
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,7 +26,7 @@ class DownloadRepositoryImpl @Inject constructor(
         type = DownloadType.HTTP,
         source = e.url,
         targetPath = e.targetPath,
-        title = e.url.substringAfterLast("/").substringBefore("?"), // Extract filename from URL
+        fileName = e.fileName,
         totalBytes = e.totalBytes,
         createdAt = e.createdAt
       )
@@ -46,8 +44,8 @@ class DownloadRepositoryImpl @Inject constructor(
         id = e.infoHash,
         type = DownloadType.TORRENT,
         source = e.infoHash,
-        targetPath = e.savePath,
-        title = e.name, // Load title from database
+        targetPath = e.targetPath,
+        fileName = e.fileName,
         totalBytes = e.totalSize,
         createdAt = e.dateAdded
       )
@@ -66,7 +64,7 @@ class DownloadRepositoryImpl @Inject constructor(
           name = task.source, // Use full source as display name
           magnetUri = if (task.source.startsWith("magnet:")) task.source else null,
           torrentFilePath = if (task.source.endsWith(".torrent")) task.source else null,
-          savePath = task.targetPath,
+          targetPath = task.targetPath,
           status = initialStatus.name,
           progress = 0f,
           downloadSpeed = 0L,
@@ -88,6 +86,7 @@ class DownloadRepositoryImpl @Inject constructor(
         val entity = cloud.app.csplayer.media.entities.HttpEntity(
           url = task.source,
           targetPath = task.targetPath,
+          fileName = task.fileName,
           tempPath = null,
           totalBytes = task.totalBytes,
           downloadedBytes = 0L,
@@ -146,7 +145,8 @@ class DownloadRepositoryImpl @Inject constructor(
             name = state.task.source, // Display name from source
             magnetUri = if (state.task.source.startsWith("magnet:")) state.task.source else null,
             torrentFilePath = if (state.task.source.endsWith(".torrent")) state.task.source else null,
-            savePath = state.task.targetPath,
+            targetPath = state.task.targetPath,
+            fileName = state.task.fileName,
             status = state.status.name,
             progress = state.progress.toFloat(),
             downloadSpeed = state.speed,
@@ -161,9 +161,10 @@ class DownloadRepositoryImpl @Inject constructor(
             isAutoManaged = true
           )).copy(
             // copy over fields from current or state
-            // Use task.title if available (set by worker), otherwise keep current name or use source
-            name = state.task.title ?: current?.name ?: state.task.source,
-            savePath = current?.savePath ?: state.task.targetPath,
+            // Use task.fileName if available (set by worker), otherwise keep current name or use source
+            name = state.task.fileName ?: current?.name ?: state.task.source,
+            targetPath = state.task.targetPath,
+            fileName = state.task.fileName,
             status = state.status.name,
             progress = state.progress.toFloat(),
             downloadSpeed = state.speed,
@@ -197,6 +198,7 @@ class DownloadRepositoryImpl @Inject constructor(
           val updated = (current ?: cloud.app.csplayer.media.entities.HttpEntity(
             url = url,
             targetPath = state.task.targetPath,
+            fileName = state.task.fileName,
             tempPath = null,
             totalBytes = state.task.totalBytes,
             downloadedBytes = state.downloadedBytes,
@@ -210,6 +212,7 @@ class DownloadRepositoryImpl @Inject constructor(
             updatedAt = System.currentTimeMillis()
           )).copy(
             targetPath = state.task.targetPath,
+            fileName = state.task.fileName,
             totalBytes = if (state.task.totalBytes > 0) state.task.totalBytes else current?.totalBytes ?: 0L,
             downloadedBytes = state.downloadedBytes,
             progress = state.progress,
@@ -249,9 +252,9 @@ class DownloadRepositoryImpl @Inject constructor(
       type = DownloadType.HTTP,
       source = e.url,
       targetPath = e.targetPath,
-      title = e.url.substringAfterLast("/").substringBefore("?"), // Extract filename from URL
+      fileName = e.fileName,
       totalBytes = e.totalBytes,
-      createdAt = e.createdAt
+      createdAt = e.createdAt,
     )
     val status = try {
       DownloadStatus.valueOf(e.status)
@@ -273,8 +276,8 @@ class DownloadRepositoryImpl @Inject constructor(
       id = e.infoHash, // ID is the infoHash (or hashCode)
       type = DownloadType.TORRENT,
       source = e.magnetUri ?: e.torrentFilePath ?: e.name, // Source is the actual magnet/file
-      targetPath = e.savePath,
-      title = e.name, // Title is the torrent name
+      targetPath = e.targetPath,
+      fileName = e.fileName,
       totalBytes = e.totalSize,
       createdAt = e.dateAdded
     )

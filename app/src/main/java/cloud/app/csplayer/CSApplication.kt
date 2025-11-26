@@ -29,6 +29,9 @@ class CSApplication : Application(), ImageLoaderFactory, Configuration.Provider 
   @Inject
   lateinit var workerFactory: HiltWorkerFactory
 
+  @Inject
+  lateinit var downloadRecoveryManager: cloud.app.csplayer.download.DownloadRecoveryManager
+
   override val workManagerConfiguration: Configuration
     get() = Configuration.Builder()
       .setWorkerFactory(workerFactory)
@@ -48,6 +51,14 @@ class CSApplication : Application(), ImageLoaderFactory, Configuration.Provider 
 
     scope.launch {
       try {
+        // Recover interrupted downloads first
+        try {
+          downloadRecoveryManager.recoverInterruptedDownloads()
+          Timber.i("Download recovery check completed")
+        } catch (e: Exception) {
+          Timber.e(e, "Failed to recover downloads")
+        }
+
         adManager.initialize(this@CSApplication)
 
         // Initialize preload manager after AdManager is ready

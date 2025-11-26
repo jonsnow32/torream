@@ -27,7 +27,8 @@
   <com.google.android.material.textfield.TextInputLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp">
+    android:layout_margin="8dp"
+    android:layout_marginBottom="0dp">
 
     <com.google.android.material.textfield.TextInputEditText
       android:id="@+id/urlInput"
@@ -39,6 +40,19 @@
       android:inputType="text"
       android:padding="10dp" />
   </com.google.android.material.textfield.TextInputLayout>
+
+  <!-- Button to load .torrent file -->
+  <com.google.android.material.button.MaterialButton
+    android:id="@+id/loadTorrentFileBtt"
+    style="@style/Widget.Material3.Button.TextButton"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginTop="4dp"
+    android:text="@string/load_torrent_file"
+    android:drawableStart="@android:drawable/ic_menu_upload"
+    android:drawablePadding="8dp" />
 
   <LinearLayout
     android:layout_width="match_parent"

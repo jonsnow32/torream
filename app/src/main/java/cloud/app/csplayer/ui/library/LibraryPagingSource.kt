@@ -95,26 +95,32 @@ class LibraryPagingSource(
         when (task.type) {
           DownloadType.HTTP -> {
             val state = stateById[task.id]
-            val progress = state?.progress ?: 0
-            val fileName = task.targetPath.substringAfterLast('/', task.source.substringAfterLast('/'))
+            val fileName = task.fileName?.substringAfterLast('/')
+              ?: task.targetPath.substringAfterLast('/', task.source.substringAfterLast('/'))
 
-            FeedData.HttpDownloadItem(
-              id = task.id,
-              title = fileName,
-              downloadId = task.createdAt,
-              fileName = fileName,
-              progress = progress,
-              status = state?.status ?: DownloadStatus.QUEUED,
-              speed = state?.speed ?: 0,
-              downloadedBytes = state?.downloadedBytes ?: 0,
-              totalBytes = state?.totalBytes ?: 0,
-              savePath = task.targetPath
-            ) as FeedData
+            if (state != null) {
+              FeedData.HttpDownloadItem(
+                id = task.id,
+                title = fileName,
+                downloadState = state
+              ) as FeedData
+            } else {
+              // Fallback if state is not found
+              FeedData.HttpDownloadItem(
+                id = task.id,
+                title = fileName,
+                downloadState = DownloadState(
+                  task = task,
+                  status = DownloadStatus.QUEUED
+                )
+              ) as FeedData
+            }
           }
 
           DownloadType.TORRENT -> {
             val state = stateById[task.id]
-            val title = state?.task?.title ?: task.source.substringAfterLast('/')
+            val title = state?.task?.fileName?.substringAfterLast('/')
+              ?: task.source.substringAfterLast('/')
 
             if (state != null) {
               FeedData.TorrentDownloadItem(

@@ -17,6 +17,7 @@ import cloud.app.csplayer.download.DownloadStatus
 data class HttpEntity(
   @PrimaryKey @ColumnInfo(name = "url") val url: String,
   @ColumnInfo(name = "target_path") val targetPath: String,
+  @ColumnInfo(name = "file_name") val fileName: String? = null,
   @ColumnInfo(name = "temp_path") val tempPath: String? = null,
   @ColumnInfo(name = "total_bytes") val totalBytes: Long = 0L,
   @ColumnInfo(name = "downloaded_bytes") val downloadedBytes: Long = 0L,

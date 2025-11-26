@@ -17,7 +17,8 @@ data class TorrentEntity(
   @ColumnInfo(name = "name") val name: String,
   @ColumnInfo(name = "magnet_uri") val magnetUri: String? = null,
   @ColumnInfo(name = "torrent_file_path") val torrentFilePath: String? = null,
-  @ColumnInfo(name = "save_path") val savePath: String,
+  @ColumnInfo(name = "target_path") val targetPath: String,
+  @ColumnInfo(name = "file_name") val fileName: String? = null,
   @ColumnInfo(name = "status") val status: String, // DOWNLOADING, PAUSED, SEEDING, FINISHED, ERROR
   @ColumnInfo(name = "progress") val progress: Float = 0f,
   @ColumnInfo(name = "download_speed") val downloadSpeed: Long = 0,

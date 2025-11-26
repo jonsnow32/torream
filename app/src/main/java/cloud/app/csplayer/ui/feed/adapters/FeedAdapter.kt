@@ -60,11 +60,8 @@ class FeedAdapter(
             oldItem.folder.mediaCount == newItem.folder.mediaCount
         }
         oldItem is FeedData.HttpDownloadItem && newItem is FeedData.HttpDownloadItem -> {
-          // Rebind when progress or pause state or filename changes
-          oldItem.title == newItem.title &&
-            oldItem.fileName == newItem.fileName &&
-            oldItem.progress == newItem.progress &&
-            oldItem.status == newItem.status
+          // DownloadState is a data class — equality covers all relevant fields
+          oldItem.title == newItem.title && oldItem.downloadState == newItem.downloadState
         }
         oldItem is FeedData.TorrentDownloadItem && newItem is FeedData.TorrentDownloadItem -> {
           // DownloadState is a data class — equality covers all relevant fields

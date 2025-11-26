@@ -73,16 +73,12 @@ class LibraryViewModel @Inject constructor(
             is FeedData.HttpDownloadItem -> {
               val ds = stateById[feed.id]
               if (ds != null) {
-                // Use title from task if available, otherwise fallback to parsing path
-                val fileName = ds.task.title ?: ds.task.targetPath.substringAfterLast('/', ds.task.source.substringAfterLast('/'))
+                // Use fileName from task if available, otherwise fallback to parsing path
+                val displayName = ds.task.fileName?.substringAfterLast('/')
+                  ?: ds.task.targetPath.substringAfterLast('/', ds.task.source.substringAfterLast('/'))
                 feed.copy(
-                  title = fileName,
-                  fileName = fileName,
-                  progress = ds.progress,
-                  status = ds.status,
-                  speed = ds.speed,
-                  downloadedBytes = ds.downloadedBytes,
-                  totalBytes = ds.totalBytes
+                  title = displayName,
+                  downloadState = ds
                 )
               } else feed
             }
@@ -90,8 +86,10 @@ class LibraryViewModel @Inject constructor(
             is FeedData.TorrentDownloadItem -> {
               val ds = stateById[feed.id]
               if (ds != null) {
+                val displayName = ds.task.fileName?.substringAfterLast('/')
+                  ?: ds.task.source.substringAfterLast('/')
                 feed.copy(
-                  title = ds.task.title ?: ds.task.source.substringAfterLast('/'),
+                  title = displayName,
                   downloadState = ds
                 )
               } else feed

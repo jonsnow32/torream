@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadCoordinator
+import cloud.app.csplayer.download.DownloadStatus
 
 class FeedAction(
   val fragment: Fragment,
@@ -78,7 +79,80 @@ class FeedAction(
 
       is FeedData.HttpDownloadItem,
       is FeedData.TorrentDownloadItem -> {
-        //show torrent option dialog play/pause/cancel
+        // Handle download item click based on status
+        fragment.lifecycleScope.launch {
+          try {
+            val state = downloadRepository.observeState(item.id).firstOrNull()
+
+            if (state == null) {
+              showToast("Download not found")
+              return@launch
+            }
+
+            when (state.status) {
+              DownloadStatus.COMPLETED -> {
+                // Play the downloaded file
+                playDownloadedFile(item, state)
+              }
+
+              DownloadStatus.DOWNLOADING -> {
+                // Pause download
+                try {
+                  downloadCoordinator.pauseDownload(item.id)
+                  showToast("Download paused")
+                } catch (e: Exception) {
+                  showToast("Failed to pause: ${e.message}")
+                }
+              }
+
+              DownloadStatus.PAUSED -> {
+                // Resume download
+                try {
+                  downloadCoordinator.startDownload(state.task)
+                  showToast("Download resumed")
+                } catch (e: Exception) {
+                  showToast("Failed to resume: ${e.message}")
+                }
+              }
+
+              DownloadStatus.QUEUED -> {
+                // Show status
+                showToast("Download queued (${state.progress}%)")
+              }
+
+              DownloadStatus.FAILED -> {
+                // Show error and offer retry
+                val errorMsg = state.error ?: "Unknown error"
+                showToast("Failed: $errorMsg")
+
+                // Show retry option
+                androidx.appcompat.app.AlertDialog.Builder(fragment.requireContext())
+                  .setTitle("Download Failed")
+                  .setMessage(errorMsg)
+                  .setPositiveButton("Retry") { _, _ ->
+                    fragment.lifecycleScope.launch {
+                      try {
+                        downloadCoordinator.startDownload(state.task)
+                        showToast("Retrying download...")
+                      } catch (e: Exception) {
+                        showToast("Failed to retry: ${e.message}")
+                      }
+                    }
+                  }
+                  .setNegativeButton("Cancel", null)
+                  .show()
+              }
+
+              else -> {
+                // Unknown status - show long click menu
+                showToast("Long press for options")
+              }
+            }
+          } catch (e: Exception) {
+            Timber.e(e, "Error handling download item click")
+            showToast("Error: ${e.message}")
+          }
+        }
       }
     }
   }
@@ -96,6 +170,13 @@ class FeedAction(
             // "play" - only if completed
             if (status == cloud.app.csplayer.download.DownloadStatus.COMPLETED) {
               add("play")
+            }
+
+            // "stream" - play partially downloaded file (downloading or paused with progress > 10%)
+            if ((status == cloud.app.csplayer.download.DownloadStatus.DOWNLOADING ||
+                 status == cloud.app.csplayer.download.DownloadStatus.PAUSED) &&
+                (state?.progress ?: 0) > 10) {
+              add("stream")
             }
 
             // "pause" - only if downloading
@@ -137,6 +218,104 @@ class FeedAction(
             it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
               Timber.d("Download item clicked: ${listOption[this]}")
               when (listOption[this]) {
+                "stream" -> {
+                  fragment.lifecycleScope.launch {
+                    try {
+                      val state = downloadRepository.observeState(item.id).firstOrNull()
+
+                      if (state == null) {
+                        showToast("Download not found")
+                        return@launch
+                      }
+
+                      // For stream, we need to find the file being downloaded
+                      val downloadPath = state.task.fileName ?: state.task.targetPath
+                      val downloadDir = java.io.File(downloadPath)
+
+                      Timber.d("Attempting to stream from: ${downloadDir.absolutePath}")
+                      Timber.d("Download progress: ${state.progress}%, downloaded: ${state.downloadedBytes} bytes")
+
+                      // Find video files (may be incomplete)
+                      var fileToPlay: java.io.File? = null
+
+                      when {
+                        // Direct file
+                        downloadDir.isFile && downloadDir.exists() -> {
+                          fileToPlay = downloadDir
+                        }
+
+                        // Directory - find largest video file
+                        downloadDir.isDirectory && downloadDir.exists() -> {
+                          val videoFiles = mutableListOf<java.io.File>()
+
+                          fun findVideoFiles(dir: java.io.File) {
+                            dir.listFiles()?.forEach { file ->
+                              when {
+                                file.isDirectory -> findVideoFiles(file)
+                                file.isFile && isVideoFile(file) && file.length() > 1024 * 1024 -> {
+                                  // Only include files > 1MB
+                                  videoFiles.add(file)
+                                }
+                              }
+                            }
+                          }
+
+                          findVideoFiles(downloadDir)
+
+                          if (videoFiles.isNotEmpty()) {
+                            fileToPlay = videoFiles.maxByOrNull { it.length() }
+                            Timber.d("Found ${videoFiles.size} video files, streaming largest: ${fileToPlay?.name} (${fileToPlay?.length()} bytes)")
+                          }
+                        }
+                      }
+
+                      if (fileToPlay == null || !fileToPlay.exists()) {
+                        showToast("No video file found to stream. Wait for more data to download.")
+                        return@launch
+                      }
+
+                      if (fileToPlay.length() < 1024 * 1024) {
+                        showToast("File too small to stream (${fileToPlay.length()} bytes). Wait for more data.")
+                        return@launch
+                      }
+
+                      Timber.i("Streaming partially downloaded file: ${fileToPlay.absolutePath} (${fileToPlay.length() / (1024 * 1024)} MB)")
+
+                      // Create VideoLink from file
+                      val videoLink = VideoLink(
+                        url = fileToPlay.absolutePath,
+                        name = when (item) {
+                          is FeedData.HttpDownloadItem -> "${item.title} (Streaming ${state.progress}%)"
+                          is FeedData.TorrentDownloadItem -> "${item.title} (Streaming ${state.progress}%)"
+                          else -> fileToPlay.nameWithoutExtension
+                        },
+                        headers = emptyMap(),
+                        subtitles = emptyList(),
+                        position = 0,
+                        width = 0,
+                        height = 0
+                      )
+
+                      val playbackData = PlaybackData(
+                        title = videoLink.name,
+                        videoLinks = listOf(videoLink),
+                        subtitles = emptyList(),
+                        videoStartIndex = 0,
+                        subtitleStartIndex = 0,
+                        isSameEpisode = true,
+                        hasAd = false
+                      )
+
+                      val bundle = PlaybackDataHelper.createBundle(playbackData)
+                      fragment.requireActivity().navigate(R.id.global_to_navigation_mpv_player, bundle)
+
+                    } catch (e: Exception) {
+                      Timber.e(e, "Error streaming download %s", item.id)
+                      showToast("Failed to stream: ${e.message}")
+                    }
+                  }
+                }
+
                 "play" -> {
                   fragment.lifecycleScope.launch {
                     try {
@@ -155,7 +334,7 @@ class FeedAction(
                       }
 
                       // Get downloaded path from database
-                      val downloadedFilePath = state.task.downloadedFilePath
+                      val downloadedFilePath = state.task.fileName
 
                       if (downloadedFilePath.isNullOrBlank()) {
                         // Fallback to targetPath if downloadedFilePath not set (old downloads)
@@ -337,7 +516,7 @@ class FeedAction(
                       }
 
                       // Get download path
-                      val downloadPath = state.task.downloadedFilePath ?: state.task.targetPath
+                      val downloadPath = state.task.fileName ?: state.task.targetPath
                       val dir = java.io.File(downloadPath)
 
                       if (!dir.exists()) {
@@ -464,6 +643,75 @@ class FeedAction(
         Timber.e(e, "Error playing file ${file.name}")
         showToast("Failed to play: ${e.message}")
       }
+    }
+  }
+
+  // Helper function to play completed download
+  private fun playDownloadedFile(item: FeedData, state: cloud.app.csplayer.download.DownloadState) {
+    try {
+      val downloadedFilePath = state.task.fileName
+
+      if (downloadedFilePath.isNullOrBlank()) {
+        // Fallback to targetPath
+        Timber.w("downloadedFilePath is null, using targetPath")
+        val targetPath = state.task.targetPath
+        if (targetPath.isBlank()) {
+          showToast("Download path not found")
+          return
+        }
+      }
+
+      val path = downloadedFilePath ?: state.task.targetPath
+      val savedPath = java.io.File(path)
+
+      if (!savedPath.exists()) {
+        showToast("Downloaded file not found")
+        Timber.e("File not found: $path")
+        return
+      }
+
+      // Check if it's a file or directory
+      if (savedPath.isFile) {
+        // Single file - play directly
+        playFile(savedPath, item)
+      } else if (savedPath.isDirectory) {
+        // Directory (torrent) - find and play largest video file
+        val videoFiles = mutableListOf<java.io.File>()
+
+        fun findVideoFiles(dir: java.io.File) {
+          dir.listFiles()?.forEach { file ->
+            when {
+              file.isDirectory -> findVideoFiles(file)
+              file.isFile && isVideoFile(file) -> videoFiles.add(file)
+            }
+          }
+        }
+
+        findVideoFiles(savedPath)
+
+        if (videoFiles.isEmpty()) {
+          showToast("No video files found in download")
+          return
+        }
+
+        if (videoFiles.size == 1) {
+          // Only one video file - play it
+          playFile(videoFiles[0], item)
+        } else {
+          // Multiple video files - play largest one
+          val largestFile = videoFiles.maxByOrNull { it.length() }
+          if (largestFile != null) {
+            Timber.i("Playing largest video file: ${largestFile.name} (${largestFile.length() / (1024 * 1024)} MB)")
+            playFile(largestFile, item)
+          }
+        }
+      } else {
+        showToast("Invalid download path")
+      }
+
+    } catch (e: Exception) {
+      Timber.e(e, "Error playing downloaded file")
+      showToast("Failed to play: ${e.message}")
     }
   }
 

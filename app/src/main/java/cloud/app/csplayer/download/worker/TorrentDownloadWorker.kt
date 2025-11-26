@@ -157,16 +157,50 @@ class TorrentDownloadWorker @AssistedInject constructor(
         }
 
         task.source.endsWith(".torrent", ignoreCase = true) -> {
-          // Check file existence using KUniFile first
-          val torrentKuniFile = cloud.app.csplayer.utils.KUniFile.fromFile(context, File(task.source))
-          if (torrentKuniFile == null || !torrentKuniFile.exists()) {
-            val err = "Torrent file not found: ${task.source}"
-            Timber.e(err)
-            repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
-            return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+          // Handle both file paths and content:// URIs
+          val torrentFile = if (task.source.startsWith("content://")) {
+            // Content URI - need to copy to app storage first
+            try {
+              val sourceUri = task.source.toUri()
+              val tempTorrentFile = File(context.cacheDir, "temp_${System.currentTimeMillis()}.torrent")
+
+              // Copy content to temp file
+              context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                tempTorrentFile.outputStream().use { output ->
+                  input.copyTo(output)
+                }
+              }
+
+              if (!tempTorrentFile.exists() || tempTorrentFile.length() == 0L) {
+                val err = "Failed to copy torrent file from URI: ${task.source}"
+                Timber.e(err)
+                repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+                return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+              }
+
+              Timber.d("Copied torrent file to: ${tempTorrentFile.absolutePath}")
+              tempTorrentFile
+            } catch (e: Exception) {
+              val err = "Failed to read torrent file from URI: ${task.source} - ${e.message}"
+              Timber.e(e, err)
+              repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+              return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+            }
+          } else {
+            // Regular file path
+            val file = File(task.source)
+            val torrentKuniFile = cloud.app.csplayer.utils.KUniFile.fromFile(context, file)
+            if (torrentKuniFile == null || !torrentKuniFile.exists()) {
+              val err = "Torrent file not found: ${task.source}"
+              Timber.e(err)
+              repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
+              return@withContext Result.failure(workDataOf(KEY_ERROR to err))
+            }
+            file
           }
+
           // TorrentInfo requires File object (libtorrent API)
-          TorrentInfo(File(task.source))
+          TorrentInfo(torrentFile)
         }
 
         else -> {
@@ -214,7 +248,7 @@ class TorrentDownloadWorker @AssistedInject constructor(
       val torrentName = ti.name() // Get actual torrent name from TorrentInfo
       val updatedTask = currentState.task.copy(
         targetPath = saveDir.absolutePath,
-        title = torrentName
+        fileName = torrentName // Use fileName for display name
       )
       currentState = currentState.copy(task = updatedTask)
 
@@ -525,9 +559,12 @@ class TorrentDownloadWorker @AssistedInject constructor(
         Timber.d("Could not get numPeers: ${e.message}")
         0
       }
-
+      val task = currentState.task.copy(targetPath = saveDir.absolutePath,
+        fileName = torrentName
+        )
       repo.updateState(
         currentState.copy(
+          task = task,
           status = DownloadStatus.DOWNLOADING,
           downloadedBytes = totalBytes,
           totalBytes = torrentInfo.totalSize(),
@@ -577,44 +614,38 @@ class TorrentDownloadWorker @AssistedInject constructor(
     val torrentDirectory = File(saveDir, torrentRootName).absolutePath
 
     Timber.i("Torrent completed, saved to directory: $torrentDirectory")
+    Timber.d("Save dir: ${saveDir.absolutePath}")
+    Timber.d("Torrent root name: $torrentRootName")
 
-    // Find the largest video file in the torrent for thumbnail
-    val torrentDirKuni = cloud.app.csplayer.utils.KUniFile.fromFile(context, File(torrentDirectory))
-    val videoFiles = if (torrentDirKuni != null && torrentDirKuni.exists()) {
-      findVideoFilesRecursively(torrentDirKuni)
-    } else {
-      emptyList()
-    }
+    // fileName is the downloaded folder path (torrentDirectory)
+    // This allows UI to find video files within the folder
+    Timber.i("✓ Setting fileName to torrent folder: $torrentDirectory")
 
-    // Use the largest video file as the main file for thumbnail
-    val mainVideoFilePath = if (videoFiles.isNotEmpty()) {
-      videoFiles.maxByOrNull { filePath ->
-        try {
-          File(filePath).length()
-        } catch (e: Exception) {
-          0L
-        }
-      } ?: torrentDirectory
-    } else {
-      torrentDirectory
-    }
-
-    Timber.d("Main video file for torrent: $mainVideoFilePath")
-
-    val updatedTaskWithFile = currentState.task.copy(downloadedFilePath = mainVideoFilePath)
-
-    repo.updateState(
-      currentState.copy(
-        task = updatedTaskWithFile,
-        status = DownloadStatus.COMPLETED,
-        downloadedBytes = torrentInfo.totalSize(),
-        totalBytes = torrentInfo.totalSize(),
-        progress = 100,
-        speed = 0L,
-        uploadSpeed = uploadRate,
-        completedAt = System.currentTimeMillis()
-      )
+    val updatedTaskWithFile = currentState.task.copy(
+      targetPath = saveDir.absolutePath,
+      fileName = torrentDirectory  // Path to torrent download folder
     )
+
+    val completedState = currentState.copy(
+      task = updatedTaskWithFile,
+      status = DownloadStatus.COMPLETED,
+      downloadedBytes = torrentInfo.totalSize(),
+      totalBytes = torrentInfo.totalSize(),
+      progress = 100,
+      speed = 0L,
+      uploadSpeed = uploadRate,
+      completedAt = System.currentTimeMillis()
+    )
+
+    Timber.d("Updating state - targetPath (save dir): ${updatedTaskWithFile.targetPath}")
+    Timber.d("Updating state - fileName (torrent folder): ${updatedTaskWithFile.fileName}")
+    repo.updateState(completedState)
+
+    // Verify the update was persisted
+    delay(100L)
+    val verifyState = repo.observeState(taskId).first()
+    Timber.d("✓ Verified - targetPath: ${verifyState?.task?.targetPath}")
+    Timber.d("✓ Verified - fileName (torrent folder): ${verifyState?.task?.fileName}")
 
     scanVideoFilesIntoMediaStore(torrentDirectory)
 
@@ -625,7 +656,6 @@ class TorrentDownloadWorker @AssistedInject constructor(
     } catch (e: Exception) {
       Timber.w(e, "Failed to process queued downloads after completion")
     }
-
     true
   }
 

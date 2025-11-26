@@ -240,7 +240,10 @@ class DownloadCoordinator @Inject constructor(
     // Cleanup downloaded files if exists
     state?.let { downloadState ->
       try {
-        val targetPath = java.io.File(downloadState.task.targetPath)
+        if (downloadState.task.fileName.isNullOrBlank())
+          throw Exception("No fileName in task, skipping file cleanup")
+
+        val targetPath = java.io.File(downloadState.task.targetPath, downloadState.task.fileName)
 
         if (downloadState.task.type == DownloadType.TORRENT) {
           // For torrents: targetPath is the subdirectory, delete entire directory

@@ -23,11 +23,7 @@ class HttpDownloadViewHolder(
   override fun bind(feed: FeedData.HttpDownloadItem) {
     // Bind data from feed (already updated by ViewModel)
     binding.title.text = feed.title
-
-    updateUI(
-      feed
-    )
-
+    updateUI(feed)
     // Click listeners
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)
@@ -42,15 +38,16 @@ class HttpDownloadViewHolder(
   }
 
   private fun updateUI(feed: FeedData.HttpDownloadItem) {
-    val p = feed.progress.coerceIn(0, 100)
+    val state = feed.downloadState
+    val p = state.progress.coerceIn(0, 100)
     binding.progressBar.progress = p
 
-    val statusText = when (feed.status) {
+    val statusText = when (state.status) {
       DownloadStatus.PAUSED -> parent.context.getString(R.string.paused)
       DownloadStatus.COMPLETED,
       DownloadStatus.FINISHED -> {
-        feed.savePath?.let { filePath ->
-          binding.thumbnail.loadThumbnail("$filePath/${feed.fileName}")
+        state.task.fileName?.let { filePath ->
+          binding.thumbnail.loadThumbnail(filePath)
         }
         parent.context.getString(R.string.finished)
       }
@@ -64,11 +61,9 @@ class HttpDownloadViewHolder(
     }
 
     // Build progress text with size info
-    val sizeText = formatFileSize(feed.downloadedBytes)
+    val sizeText = formatFileSize(state.downloadedBytes)
 
-//    binding.txtSavePath.text = formatFileSize(totalBytes)
-//    binding.txtSavePath.visibility = if (totalBytes > 0) ViewGroup.VISIBLE else ViewGroup.GONE
-    val speedText = formatSpeed(feed.speed)
+    val speedText = formatSpeed(state.speed)
     binding.txtProgress.text = parent.context.getString(
       R.string.download_progress_compact,
       p,
@@ -76,7 +71,7 @@ class HttpDownloadViewHolder(
     ) + " • $speedText • $sizeText"
 
     // Update PieFetchButton state and progress
-    when (feed.status) {
+    when (state.status) {
       DownloadStatus.DOWNLOADING,
       DownloadStatus.QUEUED,
       DownloadStatus.SEEDING -> {

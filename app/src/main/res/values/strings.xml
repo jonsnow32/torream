@@ -159,6 +159,7 @@
   <string name="download_failed">Download Failed</string>
   <string name="download_canceled">Download Canceled</string>
   <string name="download_done">Download Done</string>
+  <string name="load_torrent_file">Load .torrent file</string>
   <string name="download_format" translatable="false">%s - %s</string>
   <string name="update_started">Update Started</string>
   <string name="stream">Network stream</string>
