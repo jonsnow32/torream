@@ -50,6 +50,9 @@ class LibraryFragment : Fragment() {
   lateinit var downloadCoordinator: DownloadCoordinator
 
   @Inject
+  lateinit var mediaRepository: cloud.app.csplayer.media.repository.MediaRepository
+
+  @Inject
   lateinit var playlistRepository: cloud.app.csplayer.media.repository.PlaylistRepository
 
   @Inject
@@ -96,6 +99,10 @@ class LibraryFragment : Fragment() {
           showCreatePlaylistDialog()
           true
         }
+        R.id.clearHistory -> {
+          clearHistory()
+          true
+        }
         else -> false
       }
     }
@@ -128,7 +135,6 @@ class LibraryFragment : Fragment() {
           2 -> viewModel.section.value = LibrarySection.HISTORY
           3 -> viewModel.section.value = LibrarySection.PLAYLISTS
         }
-//        binding.createPlaylistFab.isVisible = tab?.position == 3
         Timber.d("Tab selected: ${viewModel.section.value}")
       }
 
@@ -139,7 +145,7 @@ class LibraryFragment : Fragment() {
 
   private fun setupAdapter() {
     adapter = FeedAdapter(
-      FeedAction(this, downloadRepository, downloadCoordinator, favoriteRepository),
+      FeedAction(this, downloadRepository, downloadCoordinator, favoriteRepository, mediaRepository, playlistRepository),
       adManager,
       viewModel.filterConfig.value,
       downloadRepository
@@ -182,6 +188,29 @@ class LibraryFragment : Fragment() {
       }
     }
     dialog.show(childFragmentManager, CreatePlaylistDialog.TAG)
+  }
+
+  private fun clearHistory() {
+    androidx.appcompat.app.AlertDialog.Builder(requireContext())
+      .setTitle("Clear History")
+      .setMessage("Are you sure you want to clear all history?")
+      .setPositiveButton("Clear") { _, _ ->
+        viewLifecycleOwner.lifecycleScope.launch {
+          try {
+            val success = viewModel.clearHistory()
+            if (success) {
+              Toast.makeText(requireContext(), "History cleared", Toast.LENGTH_SHORT).show()
+            } else {
+              Toast.makeText(requireContext(), "Failed to clear history", Toast.LENGTH_SHORT).show()
+            }
+          } catch (e: Exception) {
+            Timber.e(e, "Failed to clear history")
+            Toast.makeText(requireContext(), "Failed to clear history", Toast.LENGTH_SHORT).show()
+          }
+        }
+      }
+      .setNegativeButton("Cancel", null)
+      .show()
   }
 
   companion object {

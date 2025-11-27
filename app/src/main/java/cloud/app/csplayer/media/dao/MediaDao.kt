@@ -67,6 +67,13 @@ interface MediaDao {
   @Query("DELETE FROM media WHERE uri IN (:uris)")
   suspend fun deleteByUris(uris: List<String>)
 
+  @Query("SELECT * FROM media WHERE uri = :uri LIMIT 1")
+  suspend fun getByUri(uri: String): MediaEntity?
+
+  @Transaction
+  @Query("SELECT * FROM media WHERE uri = :uri LIMIT 1")
+  suspend fun getByUriWithPlayback(uri: String): MediaWithPlayback?
+
   @Transaction
   @Query("""
     SELECT m.* FROM media m
@@ -76,6 +83,21 @@ interface MediaDao {
     LIMIT :limit OFFSET :offset
   """)
   suspend fun getRecentlyPlayedWithPlayback(limit: Int, offset: Int): List<MediaWithPlayback>
+
+  @Query("DELETE FROM media_playback")
+  suspend fun clearPlaybackHistory()
+
+  @Query("DELETE FROM media_playback WHERE media_uri = :mediaUri")
+  suspend fun deletePlaybackHistory(mediaUri: String)
+
+  @Query("""
+    SELECT EXISTS(
+      SELECT 1 FROM media_playback mp
+      WHERE mp.media_uri = :uri AND mp.is_finished = 0
+      LIMIT 1
+    )
+  """)
+  suspend fun isInHistory(uri: String): Boolean
 
   @Transaction
   suspend fun transaction(block: suspend () -> Unit) {

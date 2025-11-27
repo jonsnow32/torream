@@ -102,7 +102,7 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                             ?: ArrayList()
 
                     val dialogBuilder =
-                        AlertDialog.Builder(view.context)
+                        AlertDialog.Builder(view.context, R.style.BaseMaterialDialogTheme)
                     dialogBuilder.setView(R.layout.sort_bottom_sheet)
                     val dialog = dialogBuilder.create()
                     dialog.show()

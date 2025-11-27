@@ -5,5 +5,11 @@
     android:id="@+id/createPlaylist"
     android:icon="@drawable/media3_icon_playlist_add"
     android:title="@string/add_playlist"
-    app:showAsAction="always" />
+    app:showAsAction="never" />
+
+  <item
+    android:id="@+id/clearHistory"
+    android:icon="@drawable/outline_cached_24"
+    android:title="@string/clear_history"
+    app:showAsAction="never" />
 </menu>

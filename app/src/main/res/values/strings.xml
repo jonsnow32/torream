@@ -943,6 +943,10 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="playlist_created">Playlist "%s" created</string>
   <string name="failed_to_create_playlist">Failed to create playlist</string>
   <string name="create">Create</string>
+    <string name="feed_action">Select an action</string>
+  <string name="play">Play</string>
+  <string name="show_files">Show files</string>
+  <string name="delete_from_history">Delete from history</string>
 
   <plurals name="playlist_items">
     <item quantity="zero">No items</item>

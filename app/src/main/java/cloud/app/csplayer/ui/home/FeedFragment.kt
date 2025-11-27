@@ -68,6 +68,12 @@ class FeedFragment : Fragment() {
   lateinit var downloadCoordinator: DownloadCoordinator
 
   @Inject
+  lateinit var mediaRepository: cloud.app.csplayer.media.repository.MediaRepository
+
+  @Inject
+  lateinit var playlistRepository: cloud.app.csplayer.media.repository.PlaylistRepository
+
+  @Inject
   lateinit var favoriteRepository: cloud.app.csplayer.favorites.FavoriteRepository
 
   private var syncSnackbar: Snackbar? = null
@@ -222,7 +228,7 @@ class FeedFragment : Fragment() {
    */
   private fun setupAdapter() {
 
-    adapter = FeedAdapter(FeedAction(this, downloadRepository, downloadCoordinator, favoriteRepository), adManager, viewModel.filterConfig.value, downloadRepository)
+    adapter = FeedAdapter(FeedAction(this, downloadRepository, downloadCoordinator, favoriteRepository, mediaRepository, playlistRepository), adManager, viewModel.filterConfig.value, downloadRepository)
 
     // Observe filterConfig changes and update adapter
     observe(viewModel.filterConfig) { config ->

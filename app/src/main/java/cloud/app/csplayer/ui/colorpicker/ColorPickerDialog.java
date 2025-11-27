@@ -192,7 +192,7 @@ public class ColorPickerDialog extends DialogFragment implements cloud.app.cspla
       selectedButtonStringRes = R.string.cpv_select;
     }
 
-    AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity()).setView(rootView)
+    AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity(), R.style.BaseMaterialDialogTheme).setView(rootView)
       .setPositiveButton(selectedButtonStringRes, new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {

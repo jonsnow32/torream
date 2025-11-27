@@ -183,14 +183,22 @@ class LibraryPagingSource(
             try {
               val uri = favorite.uri ?: return@mapNotNull null
 
-              // Create minimal Media object from favorite data
-              val media = cloud.app.csplayer.model.Media(
+              // Load media metadata from database by URI
+              val mediaFromDb = try {
+                repository.getMediaByUri(uri)
+              } catch (e: Exception) {
+                Timber.w(e, "Could not load media from DB for URI: $uri")
+                null
+              }
+
+              // Use media from DB if available, otherwise create minimal object
+              val media = mediaFromDb ?: cloud.app.csplayer.model.Media(
                 id = uri.hashCode().toLong(), // Generate ID from URI hash
                 uri = uri,
                 path = uri,
                 name = favorite.title,
-                size = 0L, // Unknown, will be loaded when played
-                duration = 0L, // Unknown
+                size = mediaFromDb?.size ?: 0L,
+                duration = mediaFromDb?.duration ?: 0L,
                 width = 0,
                 height = 0,
                 dateModified = favorite.addedAt, // Use favorite added timestamp
@@ -201,7 +209,7 @@ class LibraryPagingSource(
               FeedData.MediaItem(
                 id = uri,
                 title = favorite.title,
-                type = FeedData.Type.Video, // Default to video type
+                type = determineMediaType(media.mimeType),
                 media = media
               ) as FeedData
             } catch (e: Exception) {

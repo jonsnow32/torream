@@ -62,8 +62,8 @@ class HttpDownloadViewHolder(
 
     // Build progress text with size info
     val sizeText = formatFileSize(state.downloadedBytes)
-
     val speedText = formatSpeed(state.speed)
+
     binding.txtProgress.text = parent.context.getString(
       R.string.download_progress_compact,
       p,

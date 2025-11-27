@@ -15,6 +15,23 @@ object Serializer {
   inline fun <reified T> T.toJson() = json.encodeToString(this)
 
 
+  inline fun <reified T> Bundle.putSerialized(key: String, value: T) {
+    putString(key, value.toJson())
+  }
+
+  inline fun <reified T> Bundle.getSerialized(key: String): T? {
+    return getString(key)?.toData()
+  }
+
+  inline fun <reified T> String.safeToData(): T? {
+    return try {
+      json.decodeFromString<T>(this)
+    } catch (ex: Exception) {
+      null
+    }
+  }
+
+
   @Suppress("DEPRECATION")
   inline fun <reified T : Parcelable> Bundle.getParcel(key: String?) =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)

@@ -295,7 +295,7 @@ class InAppUpdater {
             try {
               val currentVersion = "v" + BuildConfig.VERSION_CODE
 
-              val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+              val builder: AlertDialog.Builder = AlertDialog.Builder(this, R.style.BaseMaterialDialogTheme)
               builder.setTitle(
                 getString(R.string.new_update_format).format(
                   currentVersion,

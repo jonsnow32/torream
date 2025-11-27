@@ -53,6 +53,7 @@ interface MediaRepository {
   suspend fun countAllFolders(): Int
   suspend fun countAllMedia(): Int
   suspend fun updateMediaMetadata(uri: String, metadata: MediaMetadata)
+  suspend fun getMediaByUri(uri: String): Media?
   suspend fun search(
     query: String,
     limit: Int,
@@ -61,4 +62,7 @@ interface MediaRepository {
     sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.DESCENDING
   ): List<Media>
   suspend fun getRecentlyPlayed(limit: Int, offset: Int): List<Media>
+  suspend fun clearHistory(): Boolean
+  suspend fun deletePlaybackHistory(mediaUri: String): Boolean
+  suspend fun isInHistory(uri: String): Boolean
 }

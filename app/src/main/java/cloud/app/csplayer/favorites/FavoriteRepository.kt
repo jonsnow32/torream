@@ -2,13 +2,15 @@ package cloud.app.csplayer.favorites
 
 import cloud.app.csplayer.media.dao.FavoriteDao
 import cloud.app.csplayer.media.dao.FavoriteEntity
+import cloud.app.csplayer.media.repository.MediaRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class FavoriteRepository @Inject constructor(
-  private val favoriteDao: FavoriteDao
+  private val favoriteDao: FavoriteDao,
+  private val mediaRepository: MediaRepository
 ) {
 
   fun observeAllFavorites(): Flow<List<FavoriteEntity>> {
@@ -47,6 +49,10 @@ class FavoriteRepository @Inject constructor(
       addFavorite(favorite)
       true
     }
+  }
+
+  suspend fun isHistory(uri: String): Boolean {
+    return mediaRepository.isInHistory(uri)
   }
 
   suspend fun clearAllFavorites() {

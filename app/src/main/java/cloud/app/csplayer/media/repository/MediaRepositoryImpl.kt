@@ -563,6 +563,16 @@ class MediaRepositoryImpl @Inject constructor(
     mediaDao.upsertAll(listOf(updated))
   }
 
+  override suspend fun getMediaByUri(uri: String): Media? = withContext(Dispatchers.IO) {
+    try {
+      val mediaEntity = mediaDao.getByUri(uri)
+      return@withContext mediaEntity?.toMediaDomain()
+    } catch (e: Exception) {
+      Timber.e(e, "Error getting media by URI: $uri")
+      null
+    }
+  }
+
   override suspend fun search(
     query: String,
     limit: Int,
@@ -609,6 +619,37 @@ class MediaRepositoryImpl @Inject constructor(
       // Convert to Media domain models
       return@withContext mediaWithPlayback.map { it.toMediaDomain() }
     }
+
+  override suspend fun clearHistory(): Boolean = withContext(Dispatchers.IO) {
+    return@withContext try {
+      mediaDao.clearPlaybackHistory()
+      Timber.d("History cleared successfully")
+      true
+    } catch (e: Exception) {
+      Timber.e(e, "Error clearing history")
+      false
+    }
+  }
+
+  override suspend fun deletePlaybackHistory(mediaUri: String): Boolean = withContext(Dispatchers.IO) {
+    return@withContext try {
+      mediaDao.deletePlaybackHistory(mediaUri)
+      Timber.d("Deleted playback history for URI: $mediaUri")
+      true
+    } catch (e: Exception) {
+      Timber.e(e, "Error deleting playback history for URI: $mediaUri")
+      false
+    }
+  }
+
+  override suspend fun isInHistory(uri: String): Boolean = withContext(Dispatchers.IO) {
+    return@withContext try {
+      mediaDao.isInHistory(uri)
+    } catch (e: Exception) {
+      Timber.e(e, "Error checking if URI is in history: $uri")
+      false
+    }
+  }
 
   // Sorting helpers
   private fun sortMediaList(

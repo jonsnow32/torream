@@ -42,6 +42,14 @@ class LibraryViewModel @Inject constructor(
     refreshTrigger.value += 1
   }
 
+  suspend fun clearHistory(): Boolean {
+    return mediaRepository.clearHistory().also { success ->
+      if (success) {
+        invalidatePaging()
+      }
+    }
+  }
+
   @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
   // Create a Pager per section, then combine emitted PagingData with the live download states
   val feedData: Flow<PagingData<FeedData>> = combine(section, refreshTrigger) { sec, _ -> sec }

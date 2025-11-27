@@ -408,7 +408,7 @@ object MPVUtils {
     }
 
     class OpenUrlDialog(context: Context) {
-        val builder = AlertDialog.Builder(context)
+        val builder = AlertDialog.Builder(context, R.style.BaseMaterialDialogTheme)
         private val editText = EditText(builder.context)
         private lateinit var dialog: AlertDialog
 

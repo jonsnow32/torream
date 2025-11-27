@@ -182,6 +182,8 @@ class SettingsGeneral : PreferenceFragmentCompat() {
     setPreferencesFromResource(R.xml.settings_general, rootKey)
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
+    getPref(R.string.ad_key)?.isVisible = BuildConfig.DEBUG
+
     getPref(R.string.app_layout_key)?.setOnPreferenceClickListener {
       val prefNames = resources.getStringArray(R.array.app_layout)
       val prefValues = resources.getIntArray(R.array.app_layout_values)
@@ -299,7 +301,7 @@ class SettingsGeneral : PreferenceFragmentCompat() {
 
     getPref(R.string.legal_notice_key)?.setOnPreferenceClickListener {
       val builder: AlertDialog.Builder =
-        AlertDialog.Builder(it.context)
+        AlertDialog.Builder(it.context, R.style.BaseMaterialDialogTheme)
       builder.setTitle(R.string.legal_notice)
       builder.setMessage(R.string.legal_notice_text)
       builder.show()

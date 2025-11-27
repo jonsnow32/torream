@@ -224,7 +224,7 @@ class PlayerDialogManager(
     val ctx = fragment.activity ?: return
     val binding = SubtitleOffsetBinding.inflate(LayoutInflater.from(ctx), null, false)
 
-    val builder = AlertDialog.Builder(ctx)
+    val builder = AlertDialog.Builder(ctx, R.style.BaseMaterialDialogTheme)
       .setView(binding.root)
     val dialog = builder.create()
     dialog.show()

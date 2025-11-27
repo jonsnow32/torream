@@ -56,7 +56,7 @@ class SettingsUpdates : PreferenceFragmentCompat() {
 
     getPref(R.string.show_logcat_key)?.setOnPreferenceClickListener { pref ->
       val builder =
-        AlertDialog.Builder(pref.context)
+        AlertDialog.Builder(pref.context, R.style.BaseMaterialDialogTheme)
 
       val binding = LogcatBinding.inflate(layoutInflater, null, false)
       builder.setView(binding.root)

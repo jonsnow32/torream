@@ -102,10 +102,20 @@
   <color name="dialog_light_on_surface">#666666</color>
   <color name="dialog_light_background">#F5F5F5</color>
 
+  <!-- Dialog colors - Dark (base values for night mode) -->
+  <color name="dialog_dark_primary">#BB86FC</color>
+  <color name="dialog_dark_on_surface">#FFFFFF</color>
+  <color name="dialog_dark_background">#1E1E1E</color>
+
   <!-- Tab colors - Light -->
   <color name="tab_light_indicator">#0078D4</color>
   <color name="tab_light_text">#999999</color>
   <color name="tab_light_selected_text">#666666</color>
+
+  <!-- Tab colors - Dark (base values for night mode) -->
+  <color name="tab_dark_indicator">#BB86FC</color>
+  <color name="tab_dark_text">#BBBBBB</color>
+  <color name="tab_dark_selected_text">#FFFFFF</color>
 
   <!-- Chip colors -->
   <color name="chip_filled_background">#BB86FC</color>

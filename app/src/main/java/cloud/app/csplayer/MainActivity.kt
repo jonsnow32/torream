@@ -461,7 +461,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   }
 
   private fun showConfirmExitDialog() {
-    val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+    val builder: AlertDialog.Builder = AlertDialog.Builder(this, R.style.BaseMaterialDialogTheme)
     builder.setTitle(R.string.confirm_exit_dialog)
     builder.apply {
       // Forceful exit since back button can actually go back to setup
@@ -687,8 +687,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private var lastNavTime = 0L
   private fun onNavDestinationSelected(item: MenuItem, navController: NavController): Boolean {
     val currentTime = System.currentTimeMillis()
-    // safeDebounce: Check if a previous tap happened within the last 400ms
-    if (currentTime - lastNavTime < 400) return false
+    if (currentTime - lastNavTime < 200) return false
     lastNavTime = currentTime
 
     val destinationId = item.itemId
@@ -705,7 +704,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       builder.setPopUpTo(
         navController.graph.findStartDestination().id,
         inclusive = false,
-        saveState = true
+        saveState = false
       )
     }
     return try {

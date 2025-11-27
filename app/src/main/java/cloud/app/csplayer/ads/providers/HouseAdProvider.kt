@@ -195,7 +195,7 @@ class HouseAdProvider : AdProvider {
                 dialogView.findViewById<ImageView>(R.id.ad_image).setImageResource(imageRes)
             }
 
-            val dialog = AlertDialog.Builder(activity)
+            val dialog = AlertDialog.Builder(activity, R.style.BaseMaterialDialogTheme)
                 .setView(dialogView)
                 .setCancelable(true)
                 .create()
@@ -256,7 +256,7 @@ class HouseAdProvider : AdProvider {
                 dialogView.findViewById<ImageView>(R.id.ad_image).setImageResource(imageRes)
             }
 
-            val dialog = AlertDialog.Builder(activity)
+            val dialog = AlertDialog.Builder(activity, R.style.BaseMaterialDialogTheme)
                 .setView(dialogView)
                 .setCancelable(false) // Rewarded ads shouldn't be dismissible
                 .create()
