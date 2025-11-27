@@ -228,7 +228,12 @@ class FeedFragment : Fragment() {
    */
   private fun setupAdapter() {
 
-    adapter = FeedAdapter(FeedAction(this, downloadRepository, downloadCoordinator, favoriteRepository, mediaRepository, playlistRepository), adManager, viewModel.filterConfig.value, downloadRepository)
+    adapter = FeedAdapter(
+      FeedAction(this, downloadRepository, downloadCoordinator, favoriteRepository, mediaRepository, playlistRepository),
+      adManager,
+      viewModel.filterConfig.value,
+      downloadRepository
+    )
 
     // Observe filterConfig changes and update adapter
     observe(viewModel.filterConfig) { config ->

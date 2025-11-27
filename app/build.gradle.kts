@@ -195,11 +195,11 @@ dependencies {
   androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
   //Ads
-  implementation("com.google.android.gms:play-services-ads:24.7.0")
-  implementation("com.ironsource.sdk:mediationsdk:9.0.0")
-  implementation("com.applovin:applovin-sdk:13.5.0")
-  implementation("com.unity3d.ads:unity-ads:4.16.3")
-  implementation("com.vungle:vungle-ads:7.6.0")
+  implementation("com.google.android.gms:play-services-ads:24.8.0")
+  implementation("com.ironsource.sdk:mediationsdk:9.1.0")
+  implementation("com.applovin:applovin-sdk:13.5.1")
+  implementation("com.unity3d.ads:unity-ads:4.16.4")
+  implementation("com.vungle:vungle-ads:7.6.1")
 
 
   //logging

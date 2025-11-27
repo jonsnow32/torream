@@ -651,23 +651,42 @@ class MediaRepositoryImpl @Inject constructor(
     }
   }
 
-  // Sorting helpers
   private fun sortMediaList(
     media: List<Media>,
     sortBy: FeedFilterConfig.SortBy,
     sortOrder: FeedFilterConfig.SortOrder
   ): List<Media> {
-    val comparator: Comparator<Media> = when (sortBy) {
-      FeedFilterConfig.SortBy.TITLE -> compareBy { it.name.lowercase() }
-      FeedFilterConfig.SortBy.DURATION -> compareBy { it.duration }
-      FeedFilterConfig.SortBy.DATE -> compareBy { it.dateModified }
-      FeedFilterConfig.SortBy.SIZE -> compareBy { it.size }
-      FeedFilterConfig.SortBy.LOCATION -> compareBy { it.path.lowercase() }
-    }
-
-    return when (sortOrder) {
-      FeedFilterConfig.SortOrder.ASCENDING -> media.sortedWith(comparator)
-      FeedFilterConfig.SortOrder.DESCENDING -> media.sortedWith(comparator.reversed())
+    return when (sortBy) {
+      FeedFilterConfig.SortBy.TITLE -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> media.sortedBy { it.name.lowercase() }
+          FeedFilterConfig.SortOrder.DESCENDING -> media.sortedByDescending { it.name.lowercase() }
+        }
+      }
+      FeedFilterConfig.SortBy.DATE -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> media.sortedBy { it.dateModified }
+          FeedFilterConfig.SortOrder.DESCENDING -> media.sortedByDescending { it.dateModified }
+        }
+      }
+      FeedFilterConfig.SortBy.SIZE -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> media.sortedBy { it.size }
+          FeedFilterConfig.SortOrder.DESCENDING -> media.sortedByDescending { it.size }
+        }
+      }
+      FeedFilterConfig.SortBy.DURATION -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> media.sortedBy { it.duration }
+          FeedFilterConfig.SortOrder.DESCENDING -> media.sortedByDescending { it.duration }
+        }
+      }
+      FeedFilterConfig.SortBy.LOCATION -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> media.sortedBy { it.path }
+          FeedFilterConfig.SortOrder.DESCENDING -> media.sortedByDescending { it.path }
+        }
+      }
     }
   }
 
@@ -676,17 +695,38 @@ class MediaRepositoryImpl @Inject constructor(
     sortBy: FeedFilterConfig.SortBy,
     sortOrder: FeedFilterConfig.SortOrder
   ): List<Folder> {
-    val comparator: Comparator<Folder> = when (sortBy) {
-      FeedFilterConfig.SortBy.TITLE -> compareBy { it.name.lowercase() }
-      FeedFilterConfig.SortBy.DATE -> compareBy { it.modified }
-      FeedFilterConfig.SortBy.LOCATION -> compareBy { it.path.lowercase() }
-      FeedFilterConfig.SortBy.DURATION -> compareBy { it.mediaCount } // Use media count for folders
-      FeedFilterConfig.SortBy.SIZE -> compareBy { it.mediaCount } // Use media count for folders
-    }
-
-    return when (sortOrder) {
-      FeedFilterConfig.SortOrder.ASCENDING -> folders.sortedWith(comparator)
-      FeedFilterConfig.SortOrder.DESCENDING -> folders.sortedWith(comparator.reversed())
+    return when (sortBy) {
+      FeedFilterConfig.SortBy.TITLE -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> folders.sortedBy { it.name.lowercase() }
+          FeedFilterConfig.SortOrder.DESCENDING -> folders.sortedByDescending { it.name.lowercase() }
+        }
+      }
+      FeedFilterConfig.SortBy.DATE -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> folders.sortedBy { it.modified }
+          FeedFilterConfig.SortOrder.DESCENDING -> folders.sortedByDescending { it.modified }
+        }
+      }
+      FeedFilterConfig.SortBy.SIZE -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> folders.sortedBy { it.mediaCount }
+          FeedFilterConfig.SortOrder.DESCENDING -> folders.sortedByDescending { it.mediaCount }
+        }
+      }
+      FeedFilterConfig.SortBy.DURATION -> {
+        // Not applicable for folders, sort by name
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> folders.sortedBy { it.name.lowercase() }
+          FeedFilterConfig.SortOrder.DESCENDING -> folders.sortedByDescending { it.name.lowercase() }
+        }
+      }
+      FeedFilterConfig.SortBy.LOCATION -> {
+        when (sortOrder) {
+          FeedFilterConfig.SortOrder.ASCENDING -> folders.sortedBy { it.path }
+          FeedFilterConfig.SortOrder.DESCENDING -> folders.sortedByDescending { it.path }
+        }
+      }
     }
   }
 

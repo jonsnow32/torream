@@ -21,6 +21,7 @@ interface MediaRepository {
     sortBy: FeedFilterConfig.SortBy = FeedFilterConfig.SortBy.DATE,
     sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.DESCENDING
   ): List<Media>
+
   suspend fun getMediaByFolderPagedFiltered(
     folderPath: String,
     limit: Int,
@@ -29,12 +30,14 @@ interface MediaRepository {
     sortBy: FeedFilterConfig.SortBy = FeedFilterConfig.SortBy.DATE,
     sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.DESCENDING
   ): List<Media>
+
   suspend fun getAllMediaPaged(
     limit: Int,
     offset: Int,
     sortBy: FeedFilterConfig.SortBy = FeedFilterConfig.SortBy.DATE,
     sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.DESCENDING
   ): List<Media>
+
   suspend fun getAllMediaPagedFiltered(
     limit: Int,
     offset: Int,
@@ -42,12 +45,14 @@ interface MediaRepository {
     sortBy: FeedFilterConfig.SortBy = FeedFilterConfig.SortBy.DATE,
     sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.DESCENDING
   ): List<Media>
+
   suspend fun getFoldersPaged(
     limit: Int,
     offset: Int,
     sortBy: FeedFilterConfig.SortBy = FeedFilterConfig.SortBy.TITLE,
     sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.ASCENDING
   ): List<Folder>
+
   suspend fun getSubfoldersPaged(parentPath: String, limit: Int, offset: Int): List<Folder>
   suspend fun countMediaInFolder(folderPath: String): Int
   suspend fun countAllFolders(): Int
@@ -61,6 +66,7 @@ interface MediaRepository {
     sortBy: FeedFilterConfig.SortBy = FeedFilterConfig.SortBy.DATE,
     sortOrder: FeedFilterConfig.SortOrder = FeedFilterConfig.SortOrder.DESCENDING
   ): List<Media>
+
   suspend fun getRecentlyPlayed(limit: Int, offset: Int): List<Media>
   suspend fun clearHistory(): Boolean
   suspend fun deletePlaybackHistory(mediaUri: String): Boolean

@@ -87,9 +87,7 @@
       <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_margin="10dp"
-        android:textSize="20sp">
+        android:orientation="vertical">
 
         <TextView
           android:id="@+id/settings_general"
@@ -98,7 +96,7 @@
           android:background="@drawable/preference_focused"
           android:drawablePadding="4dp"
           android:nextFocusDown="@id/settings_player"
-          android:paddingVertical="8dp"
+          android:padding="8dp"
           android:text="@string/category_general"
           android:textSize="18sp"
           app:drawableEndCompat="@drawable/ic_keyboard_arrow_right"
@@ -112,7 +110,7 @@
           android:drawablePadding="4dp"
           android:nextFocusUp="@id/settings_general"
           android:nextFocusDown="@id/settings_updates"
-          android:paddingVertical="8dp"
+          android:padding="8dp"
           android:text="@string/category_player"
           android:textSize="18sp"
           app:drawableEndCompat="@drawable/ic_keyboard_arrow_right"
@@ -127,7 +125,7 @@
           android:drawablePadding="4dp"
           android:nextFocusUp="@id/settings_player"
           android:nextFocusDown="@id/settings_updates"
-          android:paddingVertical="8dp"
+          android:padding="8dp"
 
           android:text="@string/download"
           android:textSize="18sp"
@@ -142,7 +140,7 @@
           android:drawablePadding="4dp"
           android:nextFocusUp="@id/settings_download"
           android:nextFocusDown="@id/app_version_info"
-          android:paddingVertical="8dp"
+          android:padding="8dp"
 
           android:text="@string/category_updates"
           android:textSize="18sp"
