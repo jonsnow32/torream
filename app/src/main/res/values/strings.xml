@@ -126,7 +126,7 @@
   <string name="no_data">No Data</string>
   <string name="episode_more_options_des">More Options</string>
   <string name="next_episode">Next episode</string>
-  <string name="previous_episode">Previous episode</string>
+
   <string name="result_plot" translatable="false">@string/synopsis</string>
   <string name="result_tags">Genres</string>
   <string name="result_share">Share</string>
@@ -159,26 +159,14 @@
   <string name="download_failed">Download Failed</string>
   <string name="download_canceled">Download Canceled</string>
   <string name="download_done">Download Done</string>
-  <string name="load_torrent_file">Load .torrent file</string>
+
   <string name="download_format" translatable="false">%s - %s</string>
   <string name="update_started">Update Started</string>
   <string name="stream">Network stream</string>
   <string name="error_loading_links_toast">Error Loading Links</string>
-  <string name="error_loading">Error loading data</string>
+
   <string name="links_reloaded_toast">Links Reloaded</string>
-  <string name="select_folder">Select Folder</string>
-  <string name="add_folder">Add Folder</string>
-  <string name="no_folder_selected">No folder selected</string>
-  <string name="tap_add_folder_to_start">Tap "Add Folder" to select folders to scan</string>
-  <string name="no_folders_available">No folders available</string>
-  <string name="storage_permission_required">Storage permission is required to browse folders</string>
-  <string name="expand_collapse">Expand/Collapse</string>
-  <string name="all_files_access_title">All Files Access (Android 11+)</string>
-  <string name="all_files_access_description">Grant full storage access to browse all files and folders without restrictions</string>
-  <string name="request_all_files_access">Request All Files Access</string>
-  <string name="all_files_access_granted">✓ All Files Access Granted</string>
-  <string name="all_files_access_not_available">All Files Access is only available on Android 11+</string>
-  <string name="folder_icon">Folder icon</string>
+
   <string name="download_storage_text">Internal Storage</string>
   <string name="app_dubbed_text">Dub</string>
   <string name="app_subbed_text">Sub</string>
@@ -201,7 +189,8 @@
   <string name="sort_close">Close</string>
   <string name="sort_clear">Clear</string>
   <string name="sort_save">Save</string>
-  <string name="repo_copy_label">Repository name and URL</string>
+  <string name="battery_optimisation_key" translatable="false">battery_optimisation</string>
+
   <string name="toast_copied">copied!</string>
   <string name="subscribe_tooltip">New episode notification</string>
   <string name="result_search_tooltip">Search in other extensions</string>
@@ -274,9 +263,7 @@
   <string name="backup_failed_error_format">Error backing up %s</string>
   <string name="search">Search</string>
   <string name="library">Library</string>
-  <string name="downloads">Downloads</string>
-  <string name="favorites">Favorites</string>
-  <string name="playlists">Playlists</string>
+
   <string name="category_account">Accounts and Security</string>
   <string name="category_updates">Updates and Backup</string>
   <string name="settings_info">Info</string>
@@ -328,11 +315,10 @@
   <string name="delete">Delete</string>
   <string name="cancel">Cancel</string>
   <string name="pause">Pause</string>
-  <string name="pause_resume">Pause/Resume</string>
+
   <string name="start">Start</string>
   <!-- Progress formats -->
-  <string name="download_progress_compact" formatted="true">%1$d%% • %2$s</string>
-  <string name="torrent_progress_with_peers" formatted="true">%1$d%% • %2$s • %3$d seeds, %4$d peers</string>
+
   <string name="test_failed">Failed</string>
   <string name="test_passed">Passed</string>
   <string name="resume">Resume</string>
@@ -382,7 +368,7 @@
   <string name="nsfw_singular">NSFW</string>
   <string name="other_singular">Video</string>
   <string name="source_error">Source error</string>
-  <string name="fallback_to_software_decoding">Hardware decoder failed, trying software decoding…</string>
+
   <string name="remote_error">Remote error</string>
   <string name="render_error">Renderer error</string>
   <string name="unexpected_error">Unexpected player error</string>
@@ -438,22 +424,7 @@
   <string name="remove_site_pref">Remove site</string>
   <string name="add_site_summary">Add a clone of an existing site, with a different URL</string>
   <string name="download_path_pref">Download path</string>
-  <string name="download_over_wifi">Download over WiFi only</string>
-  <string name="download_over_wifi_summary">Only download when connected to WiFi</string>
-  <string name="download_over_metered">Allow metered connections</string>
-  <string name="download_over_metered_summary">Allow downloads over mobile data (may incur charges)</string>
-  <string name="download_notification">Show download notifications</string>
-  <string name="download_notification_summary">Display notifications for download progress and completion</string>
-  <string name="download_auto_retry">Auto-retry failed downloads</string>
-  <string name="download_auto_retry_summary">Automatically retry downloads that fail</string>
-  <string name="download_concurrent_limit">Concurrent downloads</string>
-  <string name="download_concurrent_limit_summary">Maximum number of simultaneous downloads</string>
-  <string name="download_torrent_port">Torrent port</string>
-  <string name="download_torrent_port_summary">Port for torrent connections (default: 6881)</string>
-  <string name="download_max_speed">Maximum download speed</string>
-  <string name="download_max_speed_summary">Limit download speed (0 = unlimited)</string>
-  <string name="download_delete_completed">Delete completed downloads</string>
-  <string name="download_delete_completed_summary">Remove downloaded files from the list when complete</string>
+
   <string name="nginx_url_pref">NGINX server URL</string>
   <string name="display_subbed_dubbed_settings">Display Dubbed/Subbed Anime</string>
   <string name="resize_fit">Fit to screen</string>
@@ -463,7 +434,7 @@
   <string name="resize_4_3" translatable="false">4:3</string>">
   <string name="legal_notice">Disclaimer</string>
   <string name="legal_notice_key" translatable="false">legal_notice_key</string>
-  <string name="legal_notice_text" translatable="false">Any legal issues regarding the content on this application
+  <string name="legal_notice_text">Any legal issues regarding the content on this application
         should be taken up with the actual file hosts and providers themselves as we are not affiliated with them.
 
         In case of copyright infringement, please directly contact the responsible parties or the streaming websites.
@@ -494,10 +465,7 @@
   <string name="pref_category_defaults">Defaults</string>
   <string name="pref_category_looks">Looks</string>
   <string name="pref_category_ui_features">Features</string>
-  <string name="pref_category_download_general">General</string>
-  <string name="pref_category_download_network">Network</string>
-  <string name="pref_category_download_torrent">Torrent Settings</string>
-  <string name="pref_category_download_notifications">Notifications</string>
+
   <string name="category_general">General</string>
   <string name="random_button_settings">Random Button</string>
   <string name="random_button_settings_desc">Show random button on Homepage and Library</string>
@@ -509,17 +477,8 @@
   <string name="category_providers">Providers</string>
   <string name="category_provider_test">Provider test</string>
   <string name="test_extensions">Test all Extensions</string>
-  <string name="test_extensions_summary">This Test is meant for developers only and does not verifies or denies working of any extension.</string>
   <string name="category_ui">Layout</string>
-  <string name="folder_view_mode">Folder view mode</string>
-  <string name="folder_view_mode_summary">Choose how to display folders and media</string>
-  <string name="folder_view_tree">Tree view (all levels)</string>
-  <string name="folder_view_hierarchical">Hierarchical (one level at a time)</string>
-  <string name="media_type_filter">Media type filter</string>
-  <string name="media_type_filter_summary">Filter by video, audio, or show all</string>
-  <string name="media_type_all">All (Video + Audio)</string>
-  <string name="media_type_video_only">Video only</string>
-  <string name="media_type_audio_only">Audio only</string>
+
   <string name="automatic">Auto</string>
   <string name="tv_layout">TV layout</string>
   <string name="phone_layout">Phone layout</string>
@@ -712,19 +671,12 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="history">History</string>
   <string name="enable_skip_op_from_database_des">Show skip popups for opening/ending</string>
   <string name="clipboard_too_large">Too much text. Unable to save to clipboard.</string>
-  <string name="clipboard_permission_error">Error accessing Clipboard, Please try again.</string>
-  <string name="clipboard_unknown_error">Error copying, Please copy logcat and contact app support.</string>
+
   <string name="action_mark_as_watched">Mark as watched</string>
   <string name="action_remove_from_watched">Remove from watched</string>
   <string name="confirm_exit_dialog">Are you sure you want to exit\?</string>
   <string name="yes">Yes</string>
   <string name="no">No</string>
-  <string name="ok">OK</string>
-  <string name="battery_dialog_title">Disable Battery optimization</string>
-  <string name="battery_dialog_message">To ensure uninterrupted downloads and background tasks, HexaPlayer needs permission to run without battery restrictions.\n\nBy pressing "Open Settings", you\'ll be directed to battery optimization settings. Please select "Don\'t optimize" or "Unrestricted" for this app.\n\nNote: This permission does not mean HexaPlayer will drain your battery. It will only run in the background when necessary, such as when downloading files or receiving notifications.\n\nYou can adjust this setting anytime in Download Settings.</string>
-  <string name="battery_optimisation_key" translatable="false">battery_optimisation</string>
-  <string name="app_unrestricted_toast">App battery usage is already set to unrestricted</string>
-  <string name="app_info_intent_error">Unable to open HexaPlayer\'s App info.</string>
   <string name="update_notification_downloading">Downloading app update…</string>
   <string name="update_notification_installing">Installing app update…</string>
   <string name="update_notification_failed">Could not install the new version of the app</string>
@@ -820,36 +772,11 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="biometric_setting">Lock with Biometrics</string>
   <string name="password_pin_authentication_title">Password/PIN Authentication</string>
   <string name="biometric_unsupported">Biometric authentication is not supported on this device</string>
-  <string name="biometric_setting_summary">Unlock the app with Fingerprint, Face ID, PIN, Pattern and Password.</string>
-  <string name="biometric_prompt_description">This screen was closed due to multiple failed attempts. Please restart the application.</string>
-  <string name="biometric_warning">Your HexaPlayer data has been backed up now. Although the possibility of this is very low, all devices can behave differently. In the rare case, that you get locked out from accessing the app, clear the app data completely and restore from a backup. We are very sorry for any inconvenience arising from this.</string>
-  <string name="music_singlar">Music</string>
-  <string name="audio_book_singular">Audio Book</string>
-  <string name="custom_media_singluar">Media</string>
-  <string name="go_back_app">return the app</string>
 
-  <string name="cast_context_error">Failed to get Cast context. Try updating Google Play Services and restart the app.</string>
-  <string name="error_unsupported_video">Media includes video tracks, but none are playable by this device</string>
-  <string name="error_unsupported_audio">Media includes audio tracks, but none are playable by this device</string>
-  <string name="media_route_menu_title">Cast</string>
-  <string name="quality">Quality</string>
-  <string name="speed">Speed</string>
-  <string name="subtitle">Subtitle</string>
-  <string name="audio">Audio</string>
-  <string name="lock_screen">Lock</string>
   <string name="picture_in_picture">PiP</string>
 
 
   <string name="version_update_at" translatable="false">2024-06-07T05:23:38Z</string>
-  <string name="cpv_default_title">Select a Color</string>
-  <string name="cpv_presets">Presets</string>
-  <string name="cpv_custom">Custom</string>
-  <string name="cpv_select">Select</string>
-  <string name="cpv_transparency">Transparency</string>
-  <string name="input_url">Enter your link</string>
-  <string name="reset_all">Reset All</string>
-  <string name="request_permission_message">The app needs to access all files to load subtitles from the local device and to back up and restore settings.</string>
-  <string name="request_permission_title">Request permission</string>
 
   <bool name="is_prerelease">false</bool>
   <!-- Value from default config. -->
@@ -866,6 +793,28 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="format_fixed_number" translatable="false">%.0f</string>
   <string name="format_seconds" translatable="false">%.1f s</string>
   <string name="ui_track" translatable="false">#%d</string>
+  <string name="ad_choices_description" translatable="false">Ad choices</string>
+  <string name="app_icon_description" translatable="false">App icon</string>
+
+  <string name="ok">OK</string>
+  <string name="clipboard_permission_error">Error accessing Clipboard, Please try again.</string>
+  <string name="clipboard_unknown_error">Error copying, Please copy logcat and contact app support.</string>
+  <string name="biometric_setting_summary">Unlock the app with Fingerprint, Face ID, PIN, Pattern and Password.</string>
+  <string name="biometric_prompt_description">This screen was closed due to multiple failed attempts. Please restart the application.</string>
+  <string name="biometric_warning">Your HexaPlayer data has been backed up now. Although the possibility of this is very low, all devices can behave differently. In the rare case, that you get locked out from accessing the app, clear the app data completely and restore from a backup. We are very sorry for any inconvenience arising from this.</string>
+  <string name="music_singlar">Music</string>
+  <string name="audio_book_singular">Audio Book</string>
+  <string name="custom_media_singluar">Media</string>
+  <string name="go_back_app">return the app</string>
+  <string name="cast_context_error">Failed to get Cast context. Try updating Google Play Services and restart the app.</string>
+  <string name="error_unsupported_video">Media includes video tracks, but none are playable by this device</string>
+  <string name="error_unsupported_audio">Media includes audio tracks, but none are playable by this device</string>
+  <string name="media_route_menu_title">Cast</string>
+  <string name="quality">Quality</string>
+  <string name="speed">Speed</string>
+  <string name="subtitle">Subtitle</string>
+  <string name="audio">Audio</string>
+  <string name="lock_screen">Lock</string>
   <string name="track_off">Off</string>
   <string name="pref_background_play_title">Background playback</string>
   <string name="action_open_url">Open URL</string>
@@ -878,9 +827,6 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="open_local_video">Open local video</string>
   <string name="ad_testing">Ad testing</string>
   <string name="ad_key">ad_key_pref</string>
-
-  <string name="ad_choices_description" translatable="false">Ad choices</string>
-  <string name="app_icon_description" translatable="false">App icon</string>
   <string name="duration_placeholder">00:00:00</string>
   <string name="empty">Empty</string>
   <string name="show_mode">Show mode</string>
@@ -895,8 +841,6 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="folders">%1$d folders</string>
   <string name="folder_items">%1$d folders • %2$d items</string>
   <string name="ms_bytes">%1$dms • %2$d bytes</string>
-
-  <!-- Bottom Sheet Filter -->
   <string name="quick_settings">Quick Settings</string>
   <string name="media_view_mode">View mode</string>
   <string name="view_mode_tree">Tree</string>
@@ -924,16 +868,16 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="media_group_mode">Group mode</string>
   <string name="settings">Settings</string>
   <string name="media">Media</string>
-    <string name="app_ad_icon">App ad icon</string>
+  <string name="app_ad_icon">App ad icon</string>
   <string name="ad_icon">Ad Icon</string>
   <string name="ad">Ad</string>
-    <string name="home">Home</string>
+  <string name="home">Home</string>
   <string name="streaming">Streaming</string>
   <string name="reset_btn">Reset</string>
   <string name="background_audio">Background audio</string>
   <string name="support_url_hint">[http,https,magnet,torrent]</string>
   <string name="logo">Logo</string>
-    <string name="paused">Paused</string>
+  <string name="paused">Paused</string>
   <string name="seeding">Seeding</string>
   <string name="finished">Finished</string>
   <string name="download_resumed">Resume</string>
@@ -943,14 +887,82 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="playlist_created">Playlist "%s" created</string>
   <string name="failed_to_create_playlist">Failed to create playlist</string>
   <string name="create">Create</string>
-    <string name="feed_action">Select an action</string>
+  <string name="feed_action">Select an action</string>
   <string name="play">Play</string>
   <string name="show_files">Show files</string>
   <string name="delete_from_history">Delete from history</string>
-
+  <string name="cpv_default_title">Select a Color</string>
+  <string name="cpv_presets">Presets</string>
+  <string name="cpv_custom">Custom</string>
+  <string name="cpv_select">Select</string>
+  <string name="cpv_transparency">Transparency</string>
+  <string name="input_url">Enter your link</string>
+  <string name="reset_all">Reset All</string>
+  <string name="request_permission_message">The app needs to access all files to load subtitles from the local device and to back up and restore settings.</string>
+  <string name="request_permission_title">Request permission</string>
+  <string name="error_loading">Error loading data</string>
+  <string name="load_torrent_file">Load .torrent file</string>
+  <string name="select_folder">Select Folder</string>
+  <string name="add_folder">Add Folder</string>
+  <string name="no_folder_selected">No folder selected</string>
+  <string name="tap_add_folder_to_start">Tap "Add Folder" to select folders to scan</string>
+  <string name="no_folders_available">No folders available</string>
+  <string name="storage_permission_required">Storage permission is required to browse folders</string>
+  <string name="expand_collapse">Expand/Collapse</string>
+  <string name="all_files_access_title">All Files Access (Android 11+)</string>
+  <string name="all_files_access_description">Grant full storage access to browse all files and folders without restrictions</string>
+  <string name="request_all_files_access">Request All Files Access</string>
+  <string name="all_files_access_granted">✓ All Files Access Granted</string>
+  <string name="all_files_access_not_available">All Files Access is only available on Android 11+</string>
+  <string name="folder_icon">Folder icon</string>
+  <string name="previous_episode">Previous episode</string>
+  <string name="download_over_wifi">Download over WiFi only</string>
+  <string name="download_over_wifi_summary">Only download when connected to WiFi</string>
+  <string name="download_over_metered">Allow metered connections</string>
+  <string name="download_over_metered_summary">Allow downloads over mobile data (may incur charges)</string>
+  <string name="download_notification">Show download notifications</string>
+  <string name="download_notification_summary">Display notifications for download progress and completion</string>
+  <string name="download_auto_retry">Auto-retry failed downloads</string>
+  <string name="download_auto_retry_summary">Automatically retry downloads that fail</string>
+  <string name="download_concurrent_limit">Concurrent downloads</string>
+  <string name="download_concurrent_limit_summary">Maximum number of simultaneous downloads</string>
+  <string name="download_torrent_port">Torrent port</string>
+  <string name="download_torrent_port_summary">Port for torrent connections (default: 6881)</string>
+  <string name="download_max_speed">Maximum download speed</string>
+  <string name="download_max_speed_summary">Limit download speed (0 = unlimited)</string>
+  <string name="download_delete_completed">Delete completed downloads</string>
+  <string name="download_delete_completed_summary">Remove downloaded files from the list when complete</string>
+  <string name="download_progress_compact" formatted="true">%1$d%% • %2$s</string>
+  <string name="torrent_progress_with_peers" formatted="true">%1$d%% • %2$s • %3$d seeds, %4$d peers</string>
+  <string name="pref_category_download_general">General</string>
+  <string name="pref_category_download_network">Network</string>
+  <string name="pref_category_download_torrent">Torrent Settings</string>
+  <string name="pref_category_download_notifications">Notifications</string>
+  <string name="test_extensions_summary">This Test is meant for developers only and does not verifies or denies working of any extension.</string>
+  <string name="folder_view_mode">Folder view mode</string>
+  <string name="folder_view_mode_summary">Choose how to display folders and media</string>
+  <string name="folder_view_tree">Tree view (all levels)</string>
+  <string name="folder_view_hierarchical">Hierarchical (one level at a time)</string>
+  <string name="media_type_filter">Media type filter</string>
+  <string name="media_type_filter_summary">Filter by video, audio, or show all</string>
+  <string name="media_type_all">All (Video + Audio)</string>
+  <string name="media_type_video_only">Video only</string>
+  <string name="media_type_audio_only">Audio only</string>
+  <string name="battery_dialog_title">Disable Battery optimization</string>
+  <string name="battery_dialog_message">To ensure uninterrupted downloads and background tasks, HexaPlayer needs permission to run without battery restrictions.\n\nBy pressing "Open Settings", you\'ll be directed to battery optimization settings. Please select "Don\'t optimize" or "Unrestricted" for this app.\n\nNote: This permission does not mean HexaPlayer will drain your battery. It will only run in the background when necessary, such as when downloading files or receiving notifications.\n\nYou can adjust this setting anytime in Download Settings.</string>
+  <string name="repo_copy_label">Repository name and URL</string>
+  <string name="app_unrestricted_toast">App battery usage is already set to unrestricted</string>
+  <string name="app_info_intent_error">Unable to open HexaPlayer\'s App info.</string>
+  <string name="downloads">Downloads</string>
+  <string name="favorites">Favorites</string>
+  <string name="playlists">Playlists</string>
+  <string name="pause_resume">Pause/Resume</string>
+  <string name="fallback_to_software_decoding">Hardware decoder failed, trying software decoding…</string>
   <plurals name="playlist_items">
     <item quantity="zero">No items</item>
     <item quantity="one">%d item</item>
     <item quantity="other">%d items</item>
   </plurals>
+  <string name="version_info" translatable="true">v%1$s</string>
+
 </resources>

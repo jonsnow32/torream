@@ -4,9 +4,7 @@ import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,12 +15,10 @@ import androidx.annotation.StringRes
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
-import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.VideoLink
@@ -32,8 +28,6 @@ import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
-//import cloud.app.csplayer.utils.UIHelper.navigate
-import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import cloud.app.csplayer.utils.isLayout
@@ -47,10 +41,23 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import androidx.preference.PreferenceManager
+import cloud.app.csplayer.R
+import cloud.app.csplayer.utils.CommonActivitty.setLocale
 
 class SettingsFragment : Fragment() {
 
   private var binding by autoCleared<FragmentSettingsBinding>()
+
+  override fun onAttach(context: Context) {
+    val settingsManager = PreferenceManager.getDefaultSharedPreferences(context)
+    val localeCode = settingsManager.getString(getString(R.string.locale_key), Locale.getDefault().language)
+    val wrappedContext = context.let {
+      setLocale(it, localeCode)
+      it
+    }
+    super.onAttach(wrappedContext)
+  }
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -142,7 +149,8 @@ class SettingsFragment : Fragment() {
     ).apply {
       timeZone = TimeZone.getTimeZone("UTC")
     }.format(Date(BuildConfig.BUILD_DATE)).replace("UTC", "")
-    binding.versionInfo.text = "v${BuildConfig.VERSION_NAME}"
+    // Use string resource for version info
+    binding.versionInfo.text = getString(R.string.version_info, BuildConfig.VERSION_NAME)
     binding.buildDate.text = buildTimestamp
     binding.appVersionInfo.setOnLongClickListener {
       clipboardHelper(txt(R.string.extension_version), "v$appVersion $commitInfo $buildTimestamp")
@@ -161,10 +169,12 @@ class SettingsFragment : Fragment() {
     }
 
     // For Android versions before API 19, use Intent.ACTION_PICK
+    /*
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
       intent.action = Intent.ACTION_PICK
       intent.data = MediaStore.Video.Media.INTERNAL_CONTENT_URI
     }
+    */
 
     // Launch the intent to open the file chooser
     normalSafeApiCall {
@@ -229,6 +239,8 @@ class SettingsFragment : Fragment() {
       }
     }
 
+    // Commented unused function to avoid warning
+    /*
     fun Fragment?.setToolBarScrollFlags() {
       if (this?.isTvOrEmulator() == true) {
         val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.general_toolbar)
@@ -238,6 +250,7 @@ class SettingsFragment : Fragment() {
         }
       }
     }
+    */
 
 
     fun PreferenceFragmentCompat?.setUpToolbar(@StringRes title: Int) {
