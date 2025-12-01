@@ -668,7 +668,12 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="skip_type_creddits">Credits</string>
   <string name="skip_type_intro">Intro</string>
   <string name="clear_history">Clear history</string>
-  <string name="history">History</string>
+  <string name="clear_history_message">Are you sure you want to clear all history?</string>
+  <string name="clear_history_confirm">Clear</string>
+  <string name="history_cleared">History cleared</string>
+  <string name="failed_to_clear_history">Failed to clear history</string>
+  <string name="clear_history_dialog_title">Clear history</string>
+  <string name="clear_history_dialog_message" formatted="true">This will clear your entire watch history, are you sure?</string>
   <string name="enable_skip_op_from_database_des">Show skip popups for opening/ending</string>
   <string name="clipboard_too_large">Too much text. Unable to save to clipboard.</string>
 
@@ -958,11 +963,11 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="playlists">Playlists</string>
   <string name="pause_resume">Pause/Resume</string>
   <string name="fallback_to_software_decoding">Hardware decoder failed, trying software decoding…</string>
-  <plurals name="playlist_items">
+  <plurals name="playlist_items" translatable="false">
     <item quantity="zero">No items</item>
     <item quantity="one">%d item</item>
     <item quantity="other">%d items</item>
   </plurals>
   <string name="version_info" translatable="true">v%1$s</string>
-
+  <string name="history">History</string>
 </resources>

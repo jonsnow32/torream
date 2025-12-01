@@ -70,15 +70,26 @@ class PackageInstallerService : Service() {
   }
 
     override fun onCreate() {
+        // Always create notification channel before posting notification
         this.createNotificationChannel(
             UPDATE_CHANNEL_ID,
             UPDATE_CHANNEL_NAME,
             UPDATE_CHANNEL_DESCRIPTION
         )
+        val notification = try {
+            baseNotification.build()
+        } catch (e: Exception) {
+            // Fallback notification in case of error
+            NotificationCompat.Builder(this, UPDATE_CHANNEL_ID)
+                .setContentTitle("Update")
+                .setContentText("Updating...")
+                .setSmallIcon(R.drawable.ic_baseline_system_update_24)
+                .build()
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(UPDATE_NOTIFICATION_ID, baseNotification.build(), FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            startForeground(UPDATE_NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         } else{
-            startForeground(UPDATE_NOTIFICATION_ID, baseNotification.build())
+            startForeground(UPDATE_NOTIFICATION_ID, notification)
         }
     }
 

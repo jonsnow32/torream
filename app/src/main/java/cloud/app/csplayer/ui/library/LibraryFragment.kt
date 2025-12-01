@@ -192,24 +192,24 @@ class LibraryFragment : Fragment() {
 
   private fun clearHistory() {
     androidx.appcompat.app.AlertDialog.Builder(requireContext())
-      .setTitle("Clear History")
-      .setMessage("Are you sure you want to clear all history?")
-      .setPositiveButton("Clear") { _, _ ->
+      .setTitle(getString(R.string.clear_history))
+      .setMessage(getString(R.string.clear_history_message))
+      .setPositiveButton(getString(R.string.clear_history_confirm)) { _, _ ->
         viewLifecycleOwner.lifecycleScope.launch {
           try {
             val success = viewModel.clearHistory()
             if (success) {
-              Toast.makeText(requireContext(), "History cleared", Toast.LENGTH_SHORT).show()
+              Toast.makeText(requireContext(), getString(R.string.history_cleared), Toast.LENGTH_SHORT).show()
             } else {
-              Toast.makeText(requireContext(), "Failed to clear history", Toast.LENGTH_SHORT).show()
+              Toast.makeText(requireContext(), getString(R.string.failed_to_clear_history), Toast.LENGTH_SHORT).show()
             }
           } catch (e: Exception) {
             Timber.e(e, "Failed to clear history")
-            Toast.makeText(requireContext(), "Failed to clear history", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.failed_to_clear_history), Toast.LENGTH_SHORT).show()
           }
         }
       }
-      .setNegativeButton("Cancel", null)
+      .setNegativeButton(getString(R.string.cancel), null)
       .show()
   }
 

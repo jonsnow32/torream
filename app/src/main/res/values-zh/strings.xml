@@ -792,4 +792,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
     <item quantity="other">%d 项</item>
   </plurals>
   <string name="legal_notice_text">本应用中的内容如有任何法律问题，请直接与实际的文件托管方和提供方联系，我们与其无任何关联。如有版权侵权，请直接联系相关责任方或流媒体网站。本应用仅供教育和个人使用。HexaPlayer 不在应用中托管任何内容，也无法控制媒体的上传或删除。HexaPlayer 的功能与 Google 等搜索引擎类似。HexaPlayer 不托管、上传或管理任何视频、电影或内容，仅以便捷、用户友好的界面抓取、聚合并展示链接。它只是抓取任何普通网页浏览器都能公开访问的第三方网站。用户有责任避免任何可能违反其所在地法律的行为。使用 HexaPlayer 风险自负。</string>
+  <string name="clear_history_message">您确定要清除所有历史记录吗？</string>
+  <string name="clear_history_confirm">清除</string>
+  <string name="history_cleared">历史记录已清除</string>
+  <string name="failed_to_clear_history">清除历史记录失败</string>
 </resources>

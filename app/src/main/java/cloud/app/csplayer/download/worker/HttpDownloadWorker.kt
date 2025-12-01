@@ -23,6 +23,9 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import android.app.NotificationManager
 
 /**
  * Simplified HTTP Download Worker
@@ -54,7 +57,12 @@ class HttpDownloadWorker @AssistedInject constructor(
     val taskId = inputData.getString(KEY_TASK_ID) ?: return@withContext Result.failure()
 
     Timber.i("HttpDownloadWorker started: $taskId")
-    setForeground(createForegroundInfo(taskId, 0))
+    if (ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+      setForeground(createForegroundInfo(taskId, 0))
+    } else {
+      // Show regular notification if in background
+      showProgressNotification(taskId, 0)
+    }
 
     // Load task from database with retry
     var state = repo.observeState(taskId).first()
@@ -217,7 +225,11 @@ class HttpDownloadWorker @AssistedInject constructor(
         ))
 
         // Update notification
-        setForeground(createForegroundInfo(taskId, progress))
+        if (ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+          setForeground(createForegroundInfo(taskId, progress))
+        } else {
+          showProgressNotification(taskId, progress)
+        }
         setProgress(workDataOf(KEY_PROGRESS to progress))
 
         lastProgressTime = now
@@ -226,6 +238,17 @@ class HttpDownloadWorker @AssistedInject constructor(
     }
 
     output.flush()
+  }
+
+  private fun showProgressNotification(taskId: String, progress: Int) {
+    val notification = DownloadNotificationHelper.createDownloadNotification(
+      context,
+      taskId,
+      progress,
+      isHttp = true
+    )
+    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    notificationManager.notify(taskId.hashCode(), notification)
   }
 
   /**
@@ -301,14 +324,12 @@ class HttpDownloadWorker @AssistedInject constructor(
    * Create foreground notification
    */
   private fun createForegroundInfo(taskId: String, progress: Int): ForegroundInfo {
-    val notification = android.app.Notification.Builder(context, "download_channel")
-      .setContentTitle("Downloading")
-      .setContentText("$taskId - $progress%")
-      .setSmallIcon(android.R.drawable.stat_sys_download)
-      .setProgress(100, progress, progress == 0)
-      .setOngoing(true)
-      .build()
-
+    val notification = DownloadNotificationHelper.createDownloadNotification(
+      context,
+      taskId,
+      progress,
+      isHttp = true
+    )
     // For Android 14+ (API 34+), specify foreground service type
     return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
       ForegroundInfo(
@@ -321,4 +342,3 @@ class HttpDownloadWorker @AssistedInject constructor(
     }
   }
 }
-
