@@ -8,7 +8,6 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color.TRANSPARENT
 import android.graphics.Rect
-import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
 import android.util.AttributeSet
@@ -17,7 +16,6 @@ import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
@@ -29,7 +27,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.isGone
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -41,6 +38,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.databinding.ActivityMainBinding
+import cloud.app.csplayer.datastore.Serializer
+import cloud.app.csplayer.model.PlaybackData.Companion.KEY_PLAYBACK_JSON_URI
 import cloud.app.csplayer.network.initClient
 import cloud.app.csplayer.ui.colorpicker.ColorPickerDialogListener
 import cloud.app.csplayer.ui.player.PlayBackResult
@@ -53,36 +52,30 @@ import cloud.app.csplayer.utils.CommonActivitty.getNextFocus
 import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.onUserLeaveHint
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
+import cloud.app.csplayer.utils.CommonActivitty.screenHeight
 import cloud.app.csplayer.utils.CommonActivitty.updateLocale
 import cloud.app.csplayer.utils.Coroutines.ioSafe
 import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
 import cloud.app.csplayer.utils.GlobalEvent.onDialogDismissedEvent
 import cloud.app.csplayer.utils.InAppUpdater.Companion.runAutoUpdate
 import cloud.app.csplayer.utils.UIHelper
+import cloud.app.csplayer.utils.UIHelper.getResourceColor
+import cloud.app.csplayer.utils.UIHelper.isLandscape
+import cloud.app.csplayer.utils.UIHelper.isNightMode
 import cloud.app.csplayer.utils.UIHelper.navigate
 import cloud.app.csplayer.utils.UIHelper.setDefaultFocus
 import cloud.app.csplayer.utils.Utils.USER_AGENT
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
-import cloud.app.csplayer.datastore.Serializer
-import cloud.app.csplayer.model.PlaybackData.Companion.KEY_PLAYBACK_JSON_URI
-import cloud.app.csplayer.utils.CommonActivitty.screenHeight
-import cloud.app.csplayer.utils.UIHelper.getResourceColor
-import cloud.app.csplayer.utils.UIHelper.isLandscape
-import cloud.app.csplayer.utils.UIHelper.isNightMode
-import cloud.app.csplayer.utils.isLayout
-import kotlinx.serialization.serializer
-
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.Session
 import com.google.android.gms.cast.framework.SessionManager
 import com.google.android.gms.cast.framework.SessionManagerListener
-import com.google.android.material.navigation.NavigationBarView
-import com.google.android.material.navigationrail.NavigationRailView
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.serializer
 import timber.log.Timber
 import kotlin.reflect.KClass
 

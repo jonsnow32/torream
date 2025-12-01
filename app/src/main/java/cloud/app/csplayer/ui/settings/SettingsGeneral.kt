@@ -11,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
-import androidx.core.view.isGone
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
