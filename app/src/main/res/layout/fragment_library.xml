@@ -8,12 +8,18 @@
   <com.google.android.material.appbar.AppBarLayout
     android:id="@+id/appBar"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:descendantFocusability="afterDescendants"
+    android:focusable="false">
 
     <androidx.appcompat.widget.Toolbar
       android:id="@+id/toolbar"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:descendantFocusability="afterDescendants"
+      android:focusableInTouchMode="false"
+      android:nextFocusLeft="@id/navRailView"
+      android:nextFocusDown="@id/tabLayout"
       app:layout_scrollFlags="scroll|enterAlways"
       app:menu="@menu/library_menu"
       app:title="Library" />
@@ -26,6 +32,9 @@
       android:layout_gravity="bottom"
       android:background="?colorSurface"
       android:focusable="true"
+      android:focusableInTouchMode="true"
+      android:nextFocusLeft="@id/navRailView"
+      android:nextFocusUp="@id/toolbar"
       android:paddingHorizontal="5dp"
       app:layout_scrollFlags="noScroll"
       app:tabGravity="center"
@@ -42,6 +51,8 @@
   <View
     android:id="@+id/appBarOutline"
     style="@style/AppBarOutline"
+    android:clickable="false"
+    android:focusable="false"
     app:layout_anchor="@id/toolbar"
     app:layout_anchorGravity="bottom" />
 
@@ -50,6 +61,8 @@
     android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:focusable="false"
+    android:nextFocusUp="@id/tabLayout"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <androidx.recyclerview.widget.RecyclerView
@@ -58,6 +71,7 @@
       android:layout_height="match_parent"
       android:clipToPadding="false"
       android:nestedScrollingEnabled="true"
+      android:nextFocusUp="@id/tabLayout"
       android:paddingHorizontal="8dp"
       android:paddingTop="8dp"
       android:scrollbars="vertical"
@@ -65,4 +79,3 @@
   </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

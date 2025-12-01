@@ -37,78 +37,25 @@ fun getCurrentLocale(context: Context): String {
   val res = context.resources
   val conf = res.configuration
 
-  return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-    conf?.locales?.get(0)?.toString() ?: "en"
+  val locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+    conf?.locales?.get(0)
   } else {
     @Suppress("DEPRECATION")
-    conf?.locale?.toString() ?: "en"
+    conf?.locale
   }
+
+  // Return only language code (e.g., "vi" instead of "vi_VN")
+  return locale?.language ?: "en"
 }
 
-// idk, if you find a way of automating this it would be great
-// https://www.iemoji.com/view/emoji/1794/flags/antarctica
-// Emoji Character Encoding Data --> C/C++/Java Src
-// https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes leave blank for auto
+// Supported languages: English, Spanish, Chinese (Simplified)
 val appLanguages = arrayListOf(
   /* begin language list */
-  Triple("", "Afrikaans", "af"),
-  Triple("", "عربي شامي", "ajp"),
-  Triple("", "አማርኛ", "am"),
-  Triple("", "العربية", "ar"),
-  Triple("", "اللهجة النجدية", "ars"),
-  Triple("", "български", "bg"),
-  Triple("", "বাংলা", "bn"),
-  Triple("\uD83C\uDDE7\uD83C\uDDF7", "português brasileiro", "bp"),
-  Triple("", "čeština", "cs"),
-  Triple("", "Deutsch", "de"),
-  Triple("", "Ελληνικά", "el"),
   Triple("", "English", "en"),
-  Triple("", "Esperanto", "eo"),
   Triple("", "español", "es"),
-  Triple("", "فارسی", "fa"),
-  Triple("", "fil", "fil"),
-  Triple("", "français", "fr"),
-  Triple("", "galego", "gl"),
-  Triple("", "हिन्दी", "hi"),
-  Triple("", "hrvatski", "hr"),
-  Triple("", "magyar", "hu"),
-  Triple("\uD83C\uDDEE\uD83C\uDDE9", "Bahasa Indonesia", "in"),
-  Triple("", "italiano", "it"),
-  Triple("\uD83C\uDDEE\uD83C\uDDF1", "עברית", "iw"),
-  Triple("", "日本語 (にほんご)", "ja"),
-  Triple("", "ಕನ್ನಡ", "kn"),
-  Triple("", "한국어", "ko"),
-  Triple("", "lietuvių kalba", "lt"),
-  Triple("", "latviešu valoda", "lv"),
-  Triple("", "македонски", "mk"),
-  Triple("", "മലയാളം", "ml"),
-  Triple("", "bahasa Melayu", "ms"),
-  Triple("", "Malti", "mt"),
-  Triple("", "ဗမာစာ", "my"),
-  Triple("", "नेपाली", "ne"),
-  Triple("", "Nederlands", "nl"),
-  Triple("", "norsk nynorsk", "nn"),
-  Triple("", "norsk bokmål", "no"),
-  Triple("", "ଓଡ଼ିଆ", "or"),
-  Triple("", "polski", "pl"),
-  Triple("\uD83C\uDDF5\uD83C\uDDF9", "português", "pt"),
-  Triple("\uD83E\uDD8D", "mmmm... monke", "qt"),
-  Triple("", "română", "ro"),
-  Triple("", "русский", "ru"),
-  Triple("", "slovenčina", "sk"),
-  Triple("", "Soomaaliga", "so"),
-  Triple("", "svenska", "sv"),
-  Triple("", "தமிழ்", "ta"),
-  Triple("", "ትግርኛ", "ti"),
-  Triple("", "Tagalog", "tl"),
-  Triple("", "Türkçe", "tr"),
-  Triple("", "українська", "uk"),
-  Triple("", "اردو", "ur"),
-  Triple("", "Tiếng Việt", "vi"),
   Triple("", "中文", "zh"),
-  Triple("\uD83C\uDDF9\uD83C\uDDFC", "正體中文(臺灣)", "zh-rTW"),
   /* end language list */
-).sortedBy { it.second.lowercase() } //ye, we go alphabetical, so ppl don't put their lang on top
+).sortedBy { it.second.lowercase() }
 
 class SettingsGeneral : PreferenceFragmentCompat() {
 
@@ -167,7 +114,7 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       // Stores the real URI using download_path_key
       // Important that the URI is stored instead of filepath due to permissions.
       PreferenceManager.getDefaultSharedPreferences(context)
-        .edit().putString(getString(R.string.download_path_key), uri.toString()).apply()
+        .edit { putString(getString(R.string.download_path_key), uri.toString()) }
 
       // From URI -> File path
       // File path here is purely for cosmetic purposes in settings
@@ -214,11 +161,23 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       val prefValues = resources.getStringArray(R.array.themes_names_values).toMutableList()
 
       val currentLayout =
-        settingsManager.getString(getString(R.string.app_theme_key), prefValues.first())
+        settingsManager.getString(getString(R.string.app_theme_key), "System")
+
+      // Handle unsupported themes (e.g., AmoledLight) by defaulting to System
+      val currentIndex = prefValues.indexOf(currentLayout)
+      val index = if (currentIndex == -1) {
+        // Migrate unsupported theme to System
+        settingsManager.edit {
+          putString(getString(R.string.app_theme_key), "System")
+        }
+        prefValues.indexOf("System")
+      } else {
+        currentIndex
+      }
 
       SelectionDialog.single(
         prefNames.toList(),
-        prefValues.indexOf(currentLayout),
+        index,
         getString(R.string.app_theme_settings),
         true
       ).show(parentFragmentManager) { bundle ->
@@ -234,11 +193,17 @@ class SettingsGeneral : PreferenceFragmentCompat() {
                 "Light" -> {
                   AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                 }
+
                 "Dark" -> {
                   AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
                 }
+
+                "System" -> {
+                  AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                }
+
                 else -> {
-                  AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                  AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
                 }
               }
               activity?.recreate()
@@ -260,7 +225,9 @@ class SettingsGeneral : PreferenceFragmentCompat() {
         val flag = emoji.ifBlank { SubtitleHelper.getFlagFromIso(iso) ?: "ERROR" }
         "$flag $name"
       }
-      val index = languageCodes.indexOf(current)
+      // Default to English if current locale is not in the list
+      val currentIndex = languageCodes.indexOf(current)
+      val index = if (currentIndex == -1) languageCodes.indexOf("en") else currentIndex
 
       SelectionDialog.single(
         languageNames, index, getString(R.string.app_language), true
@@ -284,7 +251,8 @@ class SettingsGeneral : PreferenceFragmentCompat() {
     }
 
     // disable preference on tvs and emulators
-    getPref(R.string.battery_optimisation_key)?.isEnabled = context?.isLayout(LayoutMode.Phone.id) == true
+    getPref(R.string.battery_optimisation_key)?.isEnabled =
+      context?.isLayout(LayoutMode.Phone.id) == true
     getPref(R.string.battery_optimisation_key)?.setOnPreferenceClickListener {
       val ctx = context ?: return@setOnPreferenceClickListener false
 
@@ -340,65 +308,6 @@ class SettingsGeneral : PreferenceFragmentCompat() {
     getPref(R.string.ad_key)?.setOnPreferenceClickListener {
       findNavController().navigate(R.id.adTestFragment)
       return@setOnPreferenceClickListener true
-    }
-
-
-
-    fun getDownloadDirs(): List<String> {
-//      return normalSafeApiCall {
-//        context?.let { ctx ->
-//          val defaultDir = VideoDownloadManager.getDefaultDir(ctx)?.filePath()
-//
-//          val first = listOf(defaultDir)
-//          (try {
-//            val currentDir = ctx.getBasePath().let { it.first?.filePath() ?: it.second }
-//
-//            (first +
-//              ctx.getExternalFilesDirs("").mapNotNull { it.path } +
-//              currentDir)
-//          } catch (e: Exception) {
-//            first
-//          }).filterNotNull().distinct()
-//        }
-//      } ?:
-      return emptyList()
-    }
-
-
-
-    getPref(R.string.download_path_key)?.setOnPreferenceClickListener {
-      val dirs = getDownloadDirs()
-
-//      val currentDir =
-//        settingsManager.getString(getString(R.string.download_path_pref), null)
-//          ?: context?.let { ctx -> VideoDownloadManager.getDefaultDir(ctx)?.filePath() }
-//
-//      activity?.showBottomDialog(
-//        dirs + listOf("Custom"),
-//        dirs.indexOf(currentDir),
-//        getString(R.string.download_path_pref),
-//        true,
-//        {}) {
-//        // Last = custom
-//        if (it == dirs.size) {
-//          try {
-//            pathPicker.launch(Uri.EMPTY)
-//          } catch (e: Exception) {
-//            logError(e)
-//          }
-//        } else {
-//          // Sets both visual and actual paths.
-//          // key = used path
-//          // pref = visual path
-//          settingsManager.edit()
-//            .putString(getString(R.string.download_path_key), dirs[it]).apply()
-//          settingsManager.edit()
-//            .putString(getString(R.string.download_path_pref), dirs[it]).apply()
-//        }
-//      }
-      return@setOnPreferenceClickListener true
-    }?.apply {
-      view?.isGone = BuildConfig.DEBUG
     }
   }
 }

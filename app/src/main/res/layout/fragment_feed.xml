@@ -9,16 +9,20 @@
     android:id="@+id/appBar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:clipToPadding="false">
+    android:clipToPadding="false"
+    android:descendantFocusability="afterDescendants"
+    android:focusable="false">
 
     <androidx.appcompat.widget.Toolbar
       android:id="@+id/toolbar"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:background="?colorSurface"
+      android:clipToPadding="false"
+      android:descendantFocusability="afterDescendants"
+      android:focusableInTouchMode="false"
       app:layout_scrollFlags="scroll|enterAlways"
       app:menu="@menu/feed_menu"
-      android:clipToPadding="false"
       app:title="@string/app_name" />
 
   </com.google.android.material.appbar.AppBarLayout>
@@ -34,6 +38,7 @@
     android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:focusable="false"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <androidx.recyclerview.widget.RecyclerView
@@ -41,7 +46,9 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:clipToPadding="false"
+      android:focusable="false"
       android:nestedScrollingEnabled="true"
+      android:nextFocusUp="@id/toolbar"
       android:paddingHorizontal="8dp"
       android:paddingTop="8dp"
       android:scrollbars="vertical"

@@ -152,14 +152,13 @@
     <item>2</item>
   </array>
 
-
-
-
   <string-array name="themes_names">
+    <item>Sistema</item>
     <item>Oscuro</item>
     <item>Claro</item>
   </string-array>
   <string-array name="themes_names_values">
+    <item>System</item>
     <item>Dark</item>
     <item>Light</item>
   </string-array>

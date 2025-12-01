@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color.TRANSPARENT
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
@@ -66,6 +67,7 @@ import cloud.app.csplayer.utils.Utils.setActivityInstance
 import cloud.app.csplayer.utils.isTvOrEmulator
 import cloud.app.csplayer.datastore.Serializer
 import cloud.app.csplayer.model.PlaybackData.Companion.KEY_PLAYBACK_JSON_URI
+import cloud.app.csplayer.utils.CommonActivitty.screenHeight
 import cloud.app.csplayer.utils.UIHelper.getResourceColor
 import cloud.app.csplayer.utils.UIHelper.isLandscape
 import cloud.app.csplayer.utils.UIHelper.isNightMode
@@ -300,6 +302,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         .penaltyLog()
         .build()
     )
+
+//
+//    binding.root.viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
+//      centerView(newFocus)
+//    }
   }
 
   override fun onRequestPermissionsResult(
@@ -505,7 +512,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     try {
       val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
       val themeKey = getString(R.string.app_theme_key)
-      val savedTheme = settingsManager.getString(themeKey, "Dark") // Default to Dark for existing users
+      val savedTheme = settingsManager.getString(themeKey, "System") // Default to System theme
 
       when (savedTheme) {
         "Light" -> {
@@ -514,15 +521,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         "Dark" -> {
           AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         }
+        "System" -> {
+          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
         else -> {
-          // Default to Dark theme for compatibility
-          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+          // Default to System theme
+          AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
       }
     } catch (e: Exception) {
       logError(e)
-      // Fallback to dark theme on error
-      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+      // Fallback to system theme on error
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
     }
   }
 
@@ -713,6 +723,23 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     } catch (e: IllegalArgumentException) {
       Log.e("NavigationError", "Failed to navigate: ${e.message}")
       false
+    }
+  }
+
+  private fun centerView(view: View?) {
+    if (view == null) return
+    try {
+      Timber.v("centerView: $view")
+      val r = Rect(0, 0, 0, 0)
+      view.getDrawingRect(r)
+      val x = r.centerX()
+      val y = r.centerY()
+      val dx = r.width() / 2 //screenWidth / 2
+      val dy = screenHeight / 2
+      val r2 = Rect(x - dx, y - dy, x + dx, y + dy)
+      view.requestRectangleOnScreen(r2, false)
+      // TvFocus.current =TvFocus.current.copy(y=y.toFloat())
+    } catch (_: Throwable) {
     }
   }
 

@@ -113,6 +113,8 @@
     <item name="android:background">?attr/primaryGrayBackground</item>
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">2dp</item>
+    <item name="android:focusable">false</item>
+    <item name="android:clickable">false</item>
   </style>
 
   <!-- Search Box Style - Base for subtitle/audio buttons -->
@@ -293,7 +295,7 @@
     <item name="itemIconTint">@color/item_select_color</item>
     <item name="itemTextColor">@color/item_select_color</item>
     <item name="android:focusable">true</item>
-    <item name="android:focusableInTouchMode">true</item>
+<!--    <item name="android:focusableInTouchMode">true</item>-->
     <item name="elevation">0dp</item>
     <item name="menuGravity">center</item>
     <item name="android:minWidth">@dimen/nav_height</item>

@@ -5,12 +5,14 @@
     android:id="@+id/search"
     android:icon="@drawable/outline_search_24"
     android:title="@string/search"
+    android:focusable="true"
     app:actionViewClass="androidx.appcompat.widget.SearchView"
     app:showAsAction="ifRoom|collapseActionView" />
   <item
     android:id="@+id/quickSettings"
     android:icon="@drawable/outline_grid_view_24"
     android:title="@string/quick_settings"
+    android:focusable="true"
     app:showAsAction="always" />
 
 <!--  <item-->

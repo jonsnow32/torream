@@ -4,16 +4,18 @@
     android:id="@+id/feedFragment"
     android:icon="@drawable/anim_home"
     android:title="@string/home"
-    />
+    android:focusable="true" />
 
   <item
     android:id="@+id/navigation_settings"
     android:icon="@drawable/anim_stream"
-    android:title="@string/streaming" />
+    android:title="@string/streaming"
+    android:focusable="true" />
 
 
   <item
     android:id="@+id/navigation_libraryFragment"
     android:icon="@drawable/anim_bookmark"
-    android:title="@string/library" />
+    android:title="@string/library"
+    android:focusable="true" />
 </menu>

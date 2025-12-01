@@ -91,17 +91,18 @@ class CSApplication : Application(), ImageLoaderFactory, Configuration.Provider 
     try {
       val preferences = PreferenceManager.getDefaultSharedPreferences(this)
       val themeKey = getString(R.string.app_theme_key)
-      val savedTheme = preferences.getString(themeKey, "Dark")
+      val savedTheme = preferences.getString(themeKey, "System")
 
       when (savedTheme) {
         "Light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         "Dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES) // Default to dark
+        "System" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) // Default to system
       }
     } catch (e: Exception) {
       Timber.e(e, "Failed to initialize theme")
-      // Fallback to dark theme
-      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+      // Fallback to system theme
+      AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
     }
   }
 }

@@ -3,6 +3,7 @@ package cloud.app.csplayer.ui.player.mpv
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
@@ -614,6 +615,19 @@ class PlayerGestureHandler(
   // ========== System Integration Methods ==========
 
   /**
+   * Try to find an Activity from a given Context by unwrapping ContextWrappers.
+   */
+  private fun findActivityFromContext(ctx: Context?): Activity? {
+    var current: Context? = ctx
+    while (current != null) {
+      if (current is Activity) return current
+      if (current is ContextWrapper) current = current.baseContext
+      else break
+    }
+    return null
+  }
+
+  /**
    * Get current screen brightness
    * Falls back to window brightness if system brightness unavailable
    */
@@ -630,7 +644,8 @@ class PlayerGestureHandler(
       }
     } else {
       try {
-        (context as? Activity)?.window?.attributes?.screenBrightness
+        val activity = findActivityFromContext(context) ?: return null
+        activity.window?.attributes?.screenBrightness
       } catch (_: Exception) {
         null
       }
@@ -660,7 +675,7 @@ class PlayerGestureHandler(
       }
     } else {
       try {
-        val activity = context as? Activity ?: return
+        val activity = findActivityFromContext(context) ?: return
         val lp = activity.window?.attributes ?: return
         lp.screenBrightness = brightness
         activity.window?.attributes = lp
@@ -710,5 +725,3 @@ class PlayerGestureHandler(
     return volumeIcons[index.coerceIn(0, volumeIcons.size - 1)]
   }
 }
-
-

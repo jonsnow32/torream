@@ -21,6 +21,11 @@ android {
   namespace = "cloud.app.csplayer"
   compileSdk = 36
 
+  // Limit packaged resources to these locales
+  androidResources {
+    localeFilters.addAll(listOf("en", "es", "zh"))
+  }
+
   buildFeatures {
     viewBinding = true
   }
@@ -32,6 +37,7 @@ android {
     targetSdk = 36
     versionCode = 118
     versionName = "1.1.8"
+
 
     // Reads local.properties
     val localProperties = gradleLocalProperties(rootDir, providers)
