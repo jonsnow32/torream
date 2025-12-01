@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!--https://newbedev.com/concatenate-multiple-strings-in-xml-->
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
   <!-- KEYS DON'T TRANSLATE -->
@@ -446,7 +446,7 @@
         manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient,
         user-friendly interface.
 
-        It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the
+        It merely scrapes 3rd-party websites that are publicly accessible via any regular web browser. It is the
         responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use
         HexaPlayer at your own risk.
     </string>
@@ -970,4 +970,59 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   </plurals>
   <string name="version_info" translatable="true">v%1$s</string>
   <string name="history">History</string>
+  <string name="download_not_found">Download not found</string>
+  <string name="ad_clicked">Ad clicked: %1$s</string>
+  <string name="playlist_info">Playlist: %1$s (%2$d items)</string>
+  <string name="download_queued">Download queued (%1$d%%)</string>
+  <string name="download_failed_title">Download Failed</string>
+  <string name="long_press_for_options">Long press for options</string>
+  <string name="details">Details</string>
+  <string name="add_to_playlist">Add to playlist</string>
+  <string name="delete_from_library_title">Remove from history</string>
+  <string name="delete_from_library_message">Are you sure you want to remove this item from your history?</string>
+  <string name="delete_playlist_title">Delete playlist</string>
+  <string name="delete_playlist_message">Are you sure you want to delete playlist "%1$s"?</string>
+  <string name="edit_playlist">Edit playlist</string>
+  <string name="share">Share</string>
+  <string name="play_all">Play all</string>
+  <string name="open_folder">Open folder</string>
+  <string name="show_path">Show path</string>
+  <string name="rescan">Rescan</string>
+  <string name="file_not_found">File not found: %1$s</string>
+  <string name="no_video_file_to_stream">No video file found to stream. Wait for more data to download.</string>
+  <string name="file_too_small_to_stream">File too small to stream (%1$d bytes). Wait for more data.</string>
+  <string name="download_path_not_found">Download path not found</string>
+  <string name="downloaded_file_not_found">Downloaded file not found</string>
+  <string name="no_video_files_in_download">No video files found in download</string>
+  <string name="invalid_download_path">Invalid download path</string>
+  <string name="failed_to_play">Failed to play: %1$s</string>
+  <string name="deleted">Deleted</string>
+  <string name="download_not_completed">Download not completed yet</string>
+  <string name="added_to_favorites">Added to favorites ⭐</string>
+  <string name="removed_from_favorites">Removed from favorites</string>
+  <string name="failed_to_update_favorite">Failed to update favorite</string>
+  <string name="no_actions_available">No actions available</string>
+  <string name="long_press_not_available_for_ads">Long press not available for ads</string>
+  <string name="long_press_items_within_list">Long press items within the list instead</string>
+  <string name="add_to_favorites">Add to favorites</string>
+  <string name="remove_from_favorites">Remove from favorites</string>
+  <string name="no_playlists_available">No playlists available</string>
+  <string name="file">File: %1$s\nDuration: %2$dms</string>
+  <string name="path">Path: %1$s</string>
+  <string name="no_video_files_found_in_download">No video files found in download</string>
+  <string name="no_video_files_found">No video files found</string>
+  <string name="error_playing_download">Error playing download %1$s</string>
+  <string name="error_streaming_download">Error streaming download %1$s</string>
+  <string name="error_pausing_download">Error pausing download %1$s</string>
+  <string name="error_resuming_download">Error resuming download %1$s</string>
+  <string name="error_canceling_download">Error canceling download %1$s</string>
+  <string name="error_deleting_download">Error deleting download %1$s</string>
+  <string name="error_fetching_playlists">Error fetching playlists from repository</string>
+  <string name="error_loading_playlists">Error loading playlists for add to playlist dialog</string>
+  <string name="error_handling_download_item_click">Error handling download item click</string>
+  <string name="error_toggling_favorite">Error toggling favorite</string>
+  <string name="error_updating_favorite">Error updating favorite</string>
+  <string name="error_removing_from_history">Error removing from history</string>
+  <string name="error_adding_to_playlist">Error adding to playlist</string>
+  <string name="error_playing_downloaded_file">Error playing downloaded file</string>
 </resources>

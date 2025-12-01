@@ -137,9 +137,9 @@ class FeedAction(
                   fragment.requireContext(),
                   R.style.BaseMaterialDialogTheme
                 )
-                  .setTitle("Download Failed")
+                  .setTitle(fragment.getString(R.string.download_failed_title))
                   .setMessage(errorMsg)
-                  .setPositiveButton("Retry") { _, _ ->
+                  .setPositiveButton(fragment.getString(R.string.retry)) { _, _ ->
                     fragment.lifecycleScope.launch {
                       try {
                         downloadCoordinator.startDownload(state.task)
@@ -149,7 +149,7 @@ class FeedAction(
                       }
                     }
                   }
-                  .setNegativeButton("Cancel", null)
+                  .setNegativeButton(fragment.getString(R.string.cancel), null)
                   .show()
               }
 
@@ -250,7 +250,7 @@ class FeedAction(
               fragment.parentFragmentManager
             ) { bundle ->
               bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
-                handleDownloadItemAction(item, actionItems[index].title, favoriteText, state)
+                handleDownloadItemAction(item, actionItems[index].id, favoriteText, state)
               }
             }
           }
@@ -301,7 +301,7 @@ class FeedAction(
           isDestructive = true
         )
       )
-    return list;
+    return list
   }
 
   private fun buildFolderItemActions(): List<ActionItem> {
@@ -374,7 +374,7 @@ class FeedAction(
       }
 
       // "stream" - play partially downloaded file
-      if ((status == DownloadStatus.DOWNLOADING || status == DownloadStatus.PAUSED)) {
+      if (status == DownloadStatus.PAUSED) {
         add(
           ActionItem(
             id = "stream",
@@ -398,17 +398,26 @@ class FeedAction(
       }
 
       // "resume" - only if paused or failed
-      if (status == DownloadStatus.PAUSED || status == DownloadStatus.FAILED) {
+      if (status == DownloadStatus.PAUSED) {
         add(
           ActionItem(
             id = "resume",
             title = fragment.getString(R.string.resume),
-            iconRes = R.drawable.play_to_pause,
+            iconRes = R.drawable.baseline_sync_24,
             isDestructive = false
           )
         )
       }
-
+      if (status == DownloadStatus.FAILED) {
+        add(
+          ActionItem(
+            id = "retry",
+            title = fragment.getString(R.string.retry),
+            iconRes = R.drawable.baseline_sync_24,
+            isDestructive = false
+          )
+        )
+      }
       // "cancel" - only if downloading or queued
       if (status == DownloadStatus.DOWNLOADING || status == DownloadStatus.QUEUED) {
         add(
@@ -499,12 +508,12 @@ class FeedAction(
           fragment.requireContext(),
           R.style.BaseMaterialDialogTheme
         )
-          .setTitle("Delete from library?")
-          .setMessage("This will remove the file from your library.")
-          .setPositiveButton("Delete") { _, _ ->
+          .setTitle(fragment.getString(R.string.delete_from_library_title))
+          .setMessage(fragment.getString(R.string.delete_from_library_message))
+          .setPositiveButton(fragment.getString(R.string.delete)) { _, _ ->
             deleteFromPlaybackHistory(item)
           }
-          .setNegativeButton("Cancel", null)
+          .setNegativeButton(fragment.getString(R.string.cancel), null)
           .show()
       }
     }
@@ -546,12 +555,12 @@ class FeedAction(
           fragment.requireContext(),
           R.style.BaseMaterialDialogTheme
         )
-          .setTitle("Delete playlist?")
-          .setMessage("This will delete the playlist: ${item.title}")
-          .setPositiveButton("Delete") { _, _ ->
+          .setTitle(fragment.getString(R.string.delete_playlist_title))
+          .setMessage(fragment.getString(R.string.delete_playlist_message, item.title))
+          .setPositiveButton(fragment.getString(R.string.delete)) { _, _ ->
             showToast("Delete functionality coming soon")
           }
-          .setNegativeButton("Cancel", null)
+          .setNegativeButton(fragment.getString(R.string.cancel), null)
           .show()
       }
     }
@@ -559,11 +568,11 @@ class FeedAction(
 
   private fun handleDownloadItemAction(
     item: FeedData,
-    actionTitle: String,
+    actionId: String,
     favoriteText: String,
     state: cloud.app.csplayer.download.DownloadState?
   ) {
-    when (actionTitle) {
+    when (actionId) {
       "play" -> {
         fragment.lifecycleScope.launch {
           try {
@@ -730,7 +739,7 @@ class FeedAction(
         }
       }
 
-      "show files" -> {
+      "show_files" -> {
         fragment.lifecycleScope.launch {
           try {
             val state = downloadRepository.observeState(item.id).firstOrNull()
