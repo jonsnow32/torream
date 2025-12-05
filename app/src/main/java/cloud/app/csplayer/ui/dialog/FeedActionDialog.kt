@@ -79,6 +79,8 @@ class FeedActionDialog : DockingDialog() {
           } else {
             ContextCompat.getColor(context, R.color.icon_tint)
           }
+
+          icon.imageTintList = android.content.res.ColorStateList.valueOf(textColor)
           tv.setTextColor(textColor)
 
           return v

@@ -823,5 +823,7 @@
   <string name="error_removing_from_history">Error al eliminar del historial</string>
   <string name="error_adding_to_playlist">Error al agregar a la lista de reproducción</string>
   <string name="error_playing_downloaded_file">Error al reproducir el archivo descargado</string>
-
+  <string name="load_from_file">Cargar desde archivo</string>
+  <string name="load_from_network">Cargar desde la red</string>
+  <string name="file_already_downloaded">Archivo ya descargado</string>
 </resources>

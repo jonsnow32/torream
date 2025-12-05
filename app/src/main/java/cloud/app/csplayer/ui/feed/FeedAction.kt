@@ -1,6 +1,7 @@
 package cloud.app.csplayer.ui.feed
 
 import android.os.Bundle
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -23,6 +24,8 @@ import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadCoordinator
 import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.media.repository.MediaRepository
+import cloud.app.csplayer.utils.UnifiedFile
+import cloud.app.csplayer.utils.UnifiedFileFactory
 
 class FeedAction(
   val fragment: Fragment,
@@ -40,8 +43,8 @@ class FeedAction(
       "mpg", "mpeg", "3gp", "ts", "m2ts", "vob", "ogv", "rmvb"
     )
 
-    private fun isVideoFile(file: java.io.File): Boolean {
-      return file.extension.lowercase() in VIDEO_EXTENSIONS
+    private fun isVideoFile(file: UnifiedFile): Boolean {
+      return file.name.lowercase() in VIDEO_EXTENSIONS
     }
   }
 
@@ -418,17 +421,6 @@ class FeedAction(
           )
         )
       }
-      // "cancel" - only if downloading or queued
-      if (status == DownloadStatus.DOWNLOADING || status == DownloadStatus.QUEUED) {
-        add(
-          ActionItem(
-            id = "cancel",
-            title = fragment.getString(R.string.cancel),
-            iconRes = R.drawable.pause_to_play,
-            isDestructive = true
-          )
-        )
-      }
 
       // "show files" - only if completed
       if (status == DownloadStatus.COMPLETED) {
@@ -572,6 +564,11 @@ class FeedAction(
     favoriteText: String,
     state: cloud.app.csplayer.download.DownloadState?
   ) {
+
+    val context = fragment.context ?: run{
+      Timber.e("Context is null in handleDownloadItemAction")
+      return
+    }
     when (actionId) {
       "play" -> {
         fragment.lifecycleScope.launch {
@@ -604,10 +601,13 @@ class FeedAction(
               return@launch
             }
 
-            val downloadPath = state.task.fileName ?: state.task.targetPath
-            val downloadDir = java.io.File(downloadPath)
+            // targetPath is the directory, open it directly
+            val downloadDir = UnifiedFileFactory.fromUri(context, state.task.targetPath.toUri()) ?: run {
+              showToast("Download path not found")
+              return@launch
+            }
 
-            var fileToPlay: java.io.File? = null
+            var fileToPlay: UnifiedFile? = null
 
             when {
               downloadDir.isFile && downloadDir.exists() -> {
@@ -615,9 +615,9 @@ class FeedAction(
               }
 
               downloadDir.isDirectory && downloadDir.exists() -> {
-                val videoFiles = mutableListOf<java.io.File>()
-                fun findVideoFiles(dir: java.io.File) {
-                  dir.listFiles()?.forEach { file ->
+                val videoFiles = mutableListOf<UnifiedFile>()
+                fun findVideoFiles(dir: UnifiedFile) {
+                  dir.listFiles()?.forEach { file: UnifiedFile ->
                     when {
                       file.isDirectory -> findVideoFiles(file)
                       file.isFile && isVideoFile(file) && file.length() > 1024 * 1024 -> {
@@ -676,17 +676,6 @@ class FeedAction(
         }
       }
 
-      "cancel" -> {
-        fragment.lifecycleScope.launch {
-          try {
-            downloadCoordinator.pauseDownload(item.id)
-            showToast(fragment.getString(R.string.download_canceled))
-          } catch (e: Exception) {
-            Timber.e(e, "Error canceling download %s", item.id)
-            showToast(fragment.getString(R.string.error_loading))
-          }
-        }
-      }
 
       "delete" -> {
         fragment.lifecycleScope.launch {
@@ -748,17 +737,19 @@ class FeedAction(
               return@launch
             }
 
-            val downloadPath = state.task.fileName ?: state.task.targetPath
-            val dir = java.io.File(downloadPath)
-
+            // targetPath is the directory, open it directly
+            val dir = UnifiedFileFactory.fromUri(context, state.task.targetPath.toUri()) ?: run {
+              showToast("Download folder not found")
+              return@launch
+            }
             if (!dir.exists()) {
               showToast("Download folder not found")
               return@launch
             }
 
-            val allFiles = mutableListOf<java.io.File>()
-            fun collectFiles(directory: java.io.File) {
-              directory.listFiles()?.forEach { file ->
+            val allFiles = mutableListOf<UnifiedFile>()
+            fun collectFiles(directory: UnifiedFile) {
+              directory.listFiles()?.forEach { file: UnifiedFile ->
                 when {
                   file.isDirectory -> collectFiles(file)
                   file.isFile -> allFiles.add(file)
@@ -817,7 +808,7 @@ class FeedAction(
   }
 
   // Helper function to play a specific file
-  fun playFile(file: java.io.File, item: FeedData) {
+  fun playFile(file: UnifiedFile, item: FeedData) {
     fragment.lifecycleScope.launch {
       try {
         if (!file.exists()) {
@@ -825,7 +816,7 @@ class FeedAction(
           return@launch
         }
 
-        Timber.d("Playing selected file: ${file.absolutePath}")
+        Timber.d("Playing selected file: ${file.uri.path}")
 
         // Scan file into MediaStore to ensure it can be tracked in history
         // This is done asynchronously and won't block playback
@@ -833,18 +824,20 @@ class FeedAction(
           try {
             val intent =
               android.content.Intent(android.content.Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-            intent.data = android.net.Uri.fromFile(file)
+            intent.data = file.uri
             fragment.requireContext().sendBroadcast(intent)
-            Timber.d("Requested MediaStore scan for: ${file.absolutePath}")
+            Timber.d("Requested MediaStore scan for: ${file.uri}")
           } catch (e: Exception) {
             Timber.w(e, "Failed to scan file into MediaStore")
           }
         }
 
+        val url = file.uri.toString()
+
         // Create VideoLink from file
         val videoLink = VideoLink(
-          url = file.absolutePath,
-          name = file.nameWithoutExtension,
+          url = url,
+          name = file.name,
           headers = emptyMap(),
           subtitles = emptyList(),
           position = 0,
@@ -857,7 +850,7 @@ class FeedAction(
           title = when (item) {
             is FeedData.HttpDownloadItem -> item.title
             is FeedData.TorrentDownloadItem -> item.title
-            else -> file.nameWithoutExtension
+            else -> file.name
           },
           videoLinks = listOf(videoLink),
           subtitles = emptyList(),
@@ -881,37 +874,32 @@ class FeedAction(
   // Helper function to play completed download
   fun playDownloadedFile(item: FeedData, state: cloud.app.csplayer.download.DownloadState) {
     try {
-      val downloadedFilePath = state.task.fileName
-
-      if (downloadedFilePath.isNullOrBlank()) {
-        // Fallback to targetPath
-        Timber.w("downloadedFilePath is null, using targetPath")
-        val targetPath = state.task.targetPath
-        if (targetPath.isBlank()) {
-          showToast("Download path not found")
-          return
-        }
-      }
-
-      val path = downloadedFilePath ?: state.task.targetPath
-      val savedPath = java.io.File(path)
-
-      if (!savedPath.exists()) {
-        showToast("Downloaded file not found")
-        Timber.e("File not found: $path")
+      val context = fragment.context ?: run {
+        showToast("Context not available")
         return
       }
 
-      // Check if it's a file or directory
-      if (savedPath.isFile) {
-        // Single file - play directly
-        playFile(savedPath, item)
-      } else if (savedPath.isDirectory) {
-        // Directory (torrent) - find and play largest video file
-        val videoFiles = mutableListOf<java.io.File>()
+      // targetPath is the directory URI, fileName is the final filename
+      val targetPath = state.task.targetPath
 
-        fun findVideoFiles(dir: java.io.File) {
-          dir.listFiles()?.forEach { file ->
+      val uniFile  = UnifiedFileFactory.fromUri(context, targetPath.toUri())
+      if (uniFile == null) {
+        showToast("Downloaded file not found")
+        Timber.e("playDownloadedFile: Failed to open directory - targetPath=$targetPath")
+        return
+      }
+
+
+      // Check if it's a file or directory
+      if (uniFile.isFile) {
+        // Single file - play directly
+        playFile(uniFile, item)
+      } else if (uniFile.isDirectory) {
+        // Directory (torrent) - find and play largest video file
+        val videoFiles = mutableListOf<UnifiedFile>()
+
+        fun findVideoFiles(dir: UnifiedFile) {
+          dir.listFiles()?.forEach { file: UnifiedFile ->
             when {
               file.isDirectory -> findVideoFiles(file)
               file.isFile && isVideoFile(file) -> videoFiles.add(file)
@@ -919,7 +907,7 @@ class FeedAction(
           }
         }
 
-        findVideoFiles(savedPath)
+        findVideoFiles(uniFile)
 
         if (videoFiles.isEmpty()) {
           showToast("No video files found in download")
@@ -939,6 +927,7 @@ class FeedAction(
         }
       } else {
         showToast("Invalid download path")
+        Timber.e("playDownloadedFile: Path is neither file nor directory - isFile=${uniFile.isFile}, isDirectory=${uniFile.isDirectory}")
       }
 
     } catch (e: Exception) {

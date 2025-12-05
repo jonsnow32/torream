@@ -78,18 +78,18 @@
       android:textStyle="bold"
       tools:text="Sample Download File.mp4" />
 
-<!--    &lt;!&ndash; File Name &ndash;&gt;-->
-<!--    <TextView-->
-<!--      android:id="@+id/txtSavePath"-->
-<!--      android:layout_width="match_parent"-->
-<!--      android:layout_height="wrap_content"-->
-<!--      android:layout_marginTop="4dp"-->
-<!--      android:ellipsize="middle"-->
-<!--      android:maxLines="1"-->
-<!--      android:textColor="?attr/colorOnSurfaceVariant"-->
-<!--      android:textSize="12sp"-->
-<!--      android:visibility="gone"-->
-<!--      tools:text="/storage/emulated/0/Download/file.mp4" />-->
+    <!-- File Name -->
+    <TextView
+      android:id="@+id/txtSavePath"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="4dp"
+      android:ellipsize="start"
+      android:maxLines="1"
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="12sp"
+      android:visibility="gone"
+      tools:text="/storage/emulated/0/Download/file.mp4" />
 
     <!-- Progress Bar -->
     <com.google.android.material.progressindicator.LinearProgressIndicator

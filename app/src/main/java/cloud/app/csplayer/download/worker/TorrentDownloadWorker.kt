@@ -12,6 +12,8 @@ import androidx.work.workDataOf
 import cloud.app.csplayer.download.DownloadCoordinator
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadStatus
+import cloud.app.csplayer.utils.UnifiedFile
+import cloud.app.csplayer.utils.UnifiedFileFactory
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -112,9 +114,9 @@ class TorrentDownloadWorker @AssistedInject constructor(
       // targetPath should be an absolute file path, but handle content URIs for backward compatibility
       val baseDirPath = when {
         task.targetPath.startsWith("content://") -> {
-          // Convert content URI to real filesystem path using KUniFile (for old downloads)
+          // Convert content URI to real filesystem path using UnifiedFile (for old downloads)
           Timber.w("Converting content URI to file path (backward compatibility): ${task.targetPath}")
-          val uniFile = cloud.app.csplayer.utils.KUniFile.fromUri(context, task.targetPath.toUri())
+          val uniFile = UnifiedFileFactory.fromUri(context, task.targetPath.toUri())
           if (uniFile != null && uniFile.exists()) {
             uniFile.filePath ?: task.targetPath
           } else {
@@ -128,17 +130,17 @@ class TorrentDownloadWorker @AssistedInject constructor(
         else -> task.targetPath
       }
 
-      // Use KUniFile for directory operations
+      // Use UnifiedFile for directory operations
       val baseDirFile = File(baseDirPath)
       val baseDir = if (baseDirFile.isDirectory) baseDirFile else (baseDirFile.parentFile ?: baseDirFile)
 
-      // Create KUniFile for directory checks and creation
-      val baseDirKuni = cloud.app.csplayer.utils.KUniFile.fromFile(context, baseDir)
-      if (baseDirKuni != null && !baseDirKuni.exists()) {
-        baseDirKuni.createDirectory(baseDir.name)
-        Timber.d("Created torrent save directory via KUniFile: ${baseDir.absolutePath}")
+      // Create UnifiedFile for directory checks and creation
+      val baseDirUni = UnifiedFileFactory.fromFile(context, baseDir)
+      if (baseDirUni != null && !baseDirUni.exists()) {
+        baseDirUni.createDirectory(baseDir.name)
+        Timber.d("Created torrent save directory via UnifiedFile: ${baseDir.absolutePath}")
       } else if (!baseDir.exists()) {
-        // Fallback to File if KUniFile fails
+        // Fallback to File if UnifiedFile fails
         baseDir.mkdirs()
         Timber.d("Created torrent save directory via File: ${baseDir.absolutePath}")
       }
@@ -189,8 +191,8 @@ class TorrentDownloadWorker @AssistedInject constructor(
           } else {
             // Regular file path
             val file = File(task.source)
-            val torrentKuniFile = cloud.app.csplayer.utils.KUniFile.fromFile(context, file)
-            if (torrentKuniFile == null || !torrentKuniFile.exists()) {
+            val torrentUni = UnifiedFileFactory.fromFile(context, file)
+            if (torrentUni == null || !torrentUni.exists()) {
               val err = "Torrent file not found: ${task.source}"
               Timber.e(err)
               repo.updateState(state.copy(status = DownloadStatus.FAILED, error = err))
@@ -344,22 +346,22 @@ class TorrentDownloadWorker @AssistedInject constructor(
 
     // Create temp directory for magnet metadata
     val tmpFile = File(saveDir, "magnet_tmp_${taskId}")
-    val tmpKuni = cloud.app.csplayer.utils.KUniFile.fromFile(context, tmpFile)
+    val tmpUni = UnifiedFileFactory.fromFile(context, tmpFile)
 
     // Clean up existing temp directory if it exists
-    if (tmpKuni != null && tmpKuni.exists()) {
-      // Use KUniFile to delete recursively
-      tmpKuni.delete()
-      Timber.d("Deleted existing temp directory via KUniFile")
+    if (tmpUni != null && tmpUni.exists()) {
+      // Use UnifiedFile to delete recursively
+      tmpUni.delete()
+      Timber.d("Deleted existing temp directory via UnifiedFile")
     } else if (tmpFile.exists()) {
-      // Fallback to File if KUniFile fails
+      // Fallback to File if UnifiedFile fails
       tmpFile.deleteRecursively()
       Timber.d("Deleted existing temp directory via File")
     }
 
     // Create new temp directory
-    if (tmpKuni != null) {
-      tmpKuni.createDirectory(tmpFile.name) ?: tmpFile.mkdirs()
+    if (tmpUni != null) {
+      tmpUni.createDirectory(tmpFile.name) ?: tmpFile.mkdirs()
     } else {
       tmpFile.mkdirs()
     }
@@ -661,12 +663,12 @@ class TorrentDownloadWorker @AssistedInject constructor(
 
   private suspend fun scanVideoFilesIntoMediaStore(downloadedFilePath: String) {
     try {
-      // Use KUniFile for directory operations
-      val torrentDirKuni = cloud.app.csplayer.utils.KUniFile.fromFile(context, File(downloadedFilePath))
+      // Use UnifiedFile for directory operations
+      val torrentDirUni = UnifiedFileFactory.fromFile(context, File(downloadedFilePath))
 
-      val videoFiles = if (torrentDirKuni != null && torrentDirKuni.exists() && torrentDirKuni.isDirectory) {
-        // Use KUniFile to list files
-        findVideoFilesRecursively(torrentDirKuni)
+      val videoFiles = if (torrentDirUni != null && torrentDirUni.exists() && torrentDirUni.isDirectory) {
+        // Use UnifiedFile to list files
+        findVideoFilesRecursively(torrentDirUni)
       } else {
         Timber.w("Torrent directory does not exist or is not accessible: $downloadedFilePath")
         emptyList()
@@ -687,13 +689,13 @@ class TorrentDownloadWorker @AssistedInject constructor(
   }
 
   /**
-   * Recursively find video files in a directory using KUniFile
+   * Recursively find video files in a directory using UnifiedFile
    */
-  private fun findVideoFilesRecursively(directory: cloud.app.csplayer.utils.KUniFile): List<String> {
+  private fun findVideoFilesRecursively(directory: UnifiedFile): List<String> {
     val videoExtensions = setOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp")
     val result = mutableListOf<String>()
 
-    fun scan(dir: cloud.app.csplayer.utils.KUniFile) {
+    fun scan(dir: UnifiedFile) {
       try {
         dir.listFiles()?.forEach { file ->
           if (file.isDirectory) {

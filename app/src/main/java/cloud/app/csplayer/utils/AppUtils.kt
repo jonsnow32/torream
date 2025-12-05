@@ -9,9 +9,11 @@ import android.provider.MediaStore
 import android.view.View
 import android.view.View.LAYOUT_DIRECTION_LTR
 import android.view.View.LAYOUT_DIRECTION_RTL
+import androidx.core.net.toUri
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import cloud.app.csplayer.R
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastState
 import com.google.android.gms.common.ConnectionResult
@@ -19,6 +21,8 @@ import com.google.android.gms.common.GoogleApiAvailability
 import java.io.*
 import java.net.URL
 import java.net.URLDecoder
+import kotlin.text.compareTo
+import kotlin.text.insert
 
 object AppUtils {
   fun RecyclerView.setMaxViewPoolSize(maxViewTypeId: Int, maxPoolSize: Int) {
@@ -152,4 +156,26 @@ object AppUtils {
     return null
   }
 
+  fun Context.getDefaultPath(): UnifiedFile? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      // API 29+: Use app-specific downloads directory
+      return UnifiedFileFactory.getDownloadsDirectory(this)
+    } else {
+      // API 28 and below: Use public downloads directory
+      return UnifiedFileFactory.getDownloadsDirectoryPublic(this)
+    }
+  }
+
+  fun Context.getDownloadPath(): UnifiedFile? {
+    val settingsManager = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
+    val path = settingsManager.getString(
+      this.getString(R.string.download_path_key),
+      null
+    )
+    return if (path.isNullOrEmpty()) {
+      getDefaultPath()
+    } else {
+      UnifiedFileFactory.fromUri(this, path.toUri())
+    }
+  }
 }

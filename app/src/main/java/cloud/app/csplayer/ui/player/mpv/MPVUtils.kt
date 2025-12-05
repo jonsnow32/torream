@@ -437,7 +437,7 @@ object MPVUtils {
         private fun validate(text: String): Boolean {
             val uri = Uri.parse(text)
             return uri.isHierarchical && !uri.isRelative &&
-                    !(uri.host.isNullOrEmpty() && uri.path.isNullOrEmpty()) &&
+                    !(uri.host.isNullOrEmpty() && uri.toString().isBlank()) &&
                     PROTOCOLS.contains(uri.scheme)
         }
 

@@ -12,22 +12,28 @@ import android.widget.ImageView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.core.net.toUri
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceManager
 import cloud.app.csplayer.BuildConfig
 import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
+import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.FragmentSettingsBinding
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.dialog.UrlInputDialog
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
+import cloud.app.csplayer.utils.CommonActivitty.setLocale
 import cloud.app.csplayer.utils.LayoutMode
 import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.clipboardHelper
 import cloud.app.csplayer.utils.UIHelper.navigate
+import cloud.app.csplayer.utils.UnifiedFile
+import cloud.app.csplayer.utils.UnifiedFileFactory
 import cloud.app.csplayer.utils.Utils.logError
 import cloud.app.csplayer.utils.Utils.normalSafeApiCall
 import cloud.app.csplayer.utils.isLayout
@@ -41,9 +47,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import androidx.preference.PreferenceManager
-import cloud.app.csplayer.R
-import cloud.app.csplayer.utils.CommonActivitty.setLocale
 
 class SettingsFragment : Fragment() {
 
@@ -96,14 +99,14 @@ class SettingsFragment : Fragment() {
       if (context?.isLayout(LayoutMode.Tv.id) == true) {
         settingsGeneral.requestFocus()
       }
-
+      val context = context ?: return
       urlBtn.setOnClickListener {
 
         val list = listOf(
           // Magnet Links
-          "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
-          "magnet:?xt=urn:btih:08ada5c11c42e4a0c83cc8521d04e6723d12fa27&dn=Sintel",
-          "magnet:?xt=urn:btih:7c3fcd16e27e49e243ec97465ea1b19e5bbd73d2&dn=Big+Buck+Bunny",
+//          "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
+//          "magnet:?xt=urn:btih:08ada5c11c42e4a0c83cc8521d04e6723d12fa27&dn=Sintel",
+//          "magnet:?xt=urn:btih:7c3fcd16e27e49e243ec97465ea1b19e5bbd73d2&dn=Big+Buck+Bunny",
 
           // HTTP Video Links - Short Duration
           "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
@@ -112,15 +115,8 @@ class SettingsFragment : Fragment() {
           "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
           "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
           "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMolecules.mp4",
           "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
 
-          // Public Domain/Creative Commons
-          "https://archive.org/download/BigBuckBunny_124/Content/Big_Buck_Bunny_1080_10s_30MB.mp4",
-
-          // More Magnet Links (Various Torrents)
-          "magnet:?xt=urn:btih:6a9759bffd5c0af65319979fb7832189f4f3c35d&dn=Tears+of+Steel&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce",
-          "magnet:?xt=urn:btih:1e8fbd02b98722a0b3192873f5e322b945d12157&dn=Blender+Foundation&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80%2Fannounce"
         )
 
         var text = if(BuildConfig.DEBUG) list.random() else ""
@@ -129,7 +125,7 @@ class SettingsFragment : Fragment() {
         (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager?)?.primaryClip?.getItemAt(
           0
         )?.text?.toString()?.let { copy ->
-          if (copy.isNotEmpty() && (copy.contains("http") || copy.contains("magnet")))
+          if (copy.isNotEmpty() && (copy.startsWith("http") || copy.startsWith("magnet") || UnifiedFileFactory.fromUri(context, copy.toUri())?.exists() == true))
             text = copy
         }
 
@@ -141,6 +137,7 @@ class SettingsFragment : Fragment() {
 //        activity?.navigate(R.id.feedFragment)
       }
     }
+
     val appVersion = BuildConfig.VERSION_NAME
     val commitInfo = getString(R.string.commit_hash)
     val buildTimestamp = SimpleDateFormat.getDateTimeInstance(

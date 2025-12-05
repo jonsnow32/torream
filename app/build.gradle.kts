@@ -180,6 +180,9 @@ dependencies {
   // Downloading & Networking
   implementation("com.github.Blatzar:NiceHttp:0.4.13")
 
+  // File handling
+  implementation("com.github.LagradOst:SafeFile:0.0.8")
+
   // Torrent Support
   implementation("org.libtorrent4j:libtorrent4j:2.1.0-38")
   implementation("org.libtorrent4j:libtorrent4j-android-arm:2.1.0-38")

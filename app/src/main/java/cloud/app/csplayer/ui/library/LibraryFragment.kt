@@ -83,6 +83,7 @@ class LibraryFragment : Fragment() {
 
     setupUI()
     setupAdapter()
+
   }
 
   private fun setupUI() {

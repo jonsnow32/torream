@@ -59,14 +59,13 @@ object CommonActivitty {
 
     val componentActivity = activity as? ComponentActivity ?: return
 
-    //https://stackoverflow.com/questions/52594181/how-to-know-if-user-has-disabled-picture-in-picture-feature-permission
-    //https://developer.android.com/guide/topics/ui/picture-in-picture
+    componentActivity.updateLocale()
+
     canShowPipMode =
       Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && // OS SUPPORT
         componentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) && // HAS FEATURE, MIGHT BE BLOCKED DUE TO POWER DRAIN
         componentActivity.hasPIPPermission() // CHECK IF FEATURE IS ENABLED IN SETTINGS
 
-    componentActivity.updateLocale()
 
     // Ask for notification permissions on Android 13
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -140,27 +139,59 @@ object CommonActivitty {
   }
 
   val appLanguageExceptions = hashMapOf(
-    "zh-rTW" to Locale.TRADITIONAL_CHINESE
+    "zh-rTW" to Locale.TRADITIONAL_CHINESE,
+    "zh" to Locale.SIMPLIFIED_CHINESE
   )
+
+  private var currentLocaleCode: String = ""
 
   fun setLocale(context: Context?, languageCode: String?) {
     if (context == null || languageCode == null) return
+
+    if (currentLocaleCode == languageCode) return
+
+    currentLocaleCode = languageCode
     val locale = appLanguageExceptions[languageCode] ?: Locale(languageCode)
+
+    Locale.setDefault(locale)
+
     val resources: Resources = context.resources
     val config = resources.configuration
-    Locale.setDefault(locale)
-    config.setLocale(locale)
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      config.setLocale(locale)
+    } else {
+      @Suppress("DEPRECATION")
+      config.locale = locale
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
       context.createConfigurationContext(config)
+    }
     resources.updateConfiguration(config, resources.displayMetrics)
   }
 
-  fun Context.updateLocale() {
+  fun Context.updateLocale(): Boolean {
     val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
     val localeCode =
       settingsManager.getString(getString(R.string.locale_key), Locale.getDefault().language)
+      ?: Locale.getDefault().language
+
+    val previousLocale = currentLocaleCode
     setLocale(this, localeCode)
+
+    return previousLocale != currentLocaleCode
+  }
+
+  fun changeLanguage(context: Context?, languageCode: String?) {
+    if (context == null || languageCode == null) return
+
+    val settingsManager = PreferenceManager.getDefaultSharedPreferences(context)
+    settingsManager.edit().putString(context.getString(R.string.locale_key), languageCode).apply()
+
+    setLocale(context, languageCode)
+
+    (context as? Activity)?.recreate()
   }
 
   private fun View.hasContent(): Boolean {

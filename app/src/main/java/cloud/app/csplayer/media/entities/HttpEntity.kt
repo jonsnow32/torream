@@ -22,6 +22,7 @@ data class HttpEntity(
   @ColumnInfo(name = "total_bytes") val totalBytes: Long = 0L,
   @ColumnInfo(name = "downloaded_bytes") val downloadedBytes: Long = 0L,
   @ColumnInfo(name = "progress") val progress: Int = 0, // 0..100
+  @ColumnInfo(name = "speed") val speed: Long = 0L, // bytes per second
   @ColumnInfo(name = "accept_ranges") val acceptRanges: Boolean = false,
   @ColumnInfo(name = "e_tag") val etag: String? = null,
   @ColumnInfo(name = "last_modified") val lastModified: String? = null,

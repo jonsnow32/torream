@@ -851,5 +851,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="error_removing_from_history">从历史记录中移除时出错</string>
   <string name="error_adding_to_playlist">添加到播放列表时出错</string>
   <string name="error_playing_downloaded_file">播放已下载文件时出错</string>
-
+  <string name="load_from_file">从文件加载</string>
+  <string name="load_from_network">从网络加载</string>
+  <string name="file_already_downloaded">文件已下载</string>
 </resources>

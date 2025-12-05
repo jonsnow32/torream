@@ -107,7 +107,7 @@ class SettingsGeneral : PreferenceFragmentCompat() {
       context.contentResolver.takePersistableUriPermission(uri, flags)
 
 //      val file = File(requireNotNull(uri.path))
-      val filePath = uri.path
+      val filePath = uri.toString()
       println("Selected URI path: $uri - Full path: $filePath")
 
       // Stores the real URI using download_path_key
@@ -117,9 +117,9 @@ class SettingsGeneral : PreferenceFragmentCompat() {
 
       // From URI -> File path
       // File path here is purely for cosmetic purposes in settings
-      (filePath ?: uri.toString()).let {
+      if(!filePath.isBlank()){
         PreferenceManager.getDefaultSharedPreferences(context)
-          .edit { putString(getString(R.string.download_path_pref), it) }
+          .edit { putString(getString(R.string.download_path_pref), filePath) }
       }
     }
 

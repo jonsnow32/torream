@@ -30,7 +30,7 @@ import cloud.app.csplayer.media.entities.PlaylistItemEntity
     PlaylistItemEntity::class,
     FavoriteEntity::class
   ],
-  version = 8,
+  version = 9,
   exportSchema = false
 )
 @TypeConverters(Converters::class)

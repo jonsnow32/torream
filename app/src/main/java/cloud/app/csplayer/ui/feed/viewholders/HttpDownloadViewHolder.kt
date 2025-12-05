@@ -1,14 +1,18 @@
 package cloud.app.csplayer.ui.feed.viewholders
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import androidx.core.net.toUri
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.ItemHttpDownloadBinding
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
 import cloud.app.csplayer.download.DownloadRepository
+import cloud.app.csplayer.download.DownloadState
 import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.ui.feed.FeedAction
+import cloud.app.csplayer.utils.UnifiedFileFactory
 import cloud.app.csplayer.utils.loadThumbnail
 
 class HttpDownloadViewHolder(
@@ -39,65 +43,65 @@ class HttpDownloadViewHolder(
 
   private fun updateUI(feed: FeedData.HttpDownloadItem) {
     val state = feed.downloadState
-    val p = state.progress.coerceIn(0, 100)
-    binding.progressBar.progress = p
+    val progress = state.progress.coerceIn(0, 100)
+    binding.progressBar.progress = progress
 
-    val statusText = when (state.status) {
-      DownloadStatus.PAUSED -> parent.context.getString(R.string.paused)
-      DownloadStatus.COMPLETED,
-      DownloadStatus.FINISHED -> {
-        state.task.fileName?.let { filePath ->
-          binding.thumbnail.loadThumbnail(filePath)
-        }
-        parent.context.getString(R.string.finished)
-      }
-
-      DownloadStatus.FAILED -> parent.context.getString(R.string.error)
-      DownloadStatus.QUEUED,
-      DownloadStatus.SEEDING,
-      DownloadStatus.DOWNLOADING -> parent.context.getString(R.string.downloading)
-
-      DownloadStatus.CANCELED -> parent.context.getString(R.string.cancel)
-    }
-
-    // Build progress text with size info
     val sizeText = formatFileSize(state.downloadedBytes)
     val speedText = formatSpeed(state.speed)
+    val isDownloading = state.status == DownloadStatus.DOWNLOADING
 
     binding.txtProgress.text = parent.context.getString(
       R.string.download_progress_compact,
-      p,
-      statusText
-    ) + " • $speedText • $sizeText"
+      progress,
+      getStatusString(state.status)
+    ) + if (isDownloading) " • $speedText • $sizeText" else " • $sizeText"
 
-    // Update PieFetchButton state and progress
-    when (state.status) {
-      DownloadStatus.DOWNLOADING,
-      DownloadStatus.QUEUED,
-      DownloadStatus.SEEDING -> {
-        binding.btnAction.setDownloading(p.toFloat())
-        binding.btnAction.contentDescription = parent.context.getString(R.string.pause)
+    updateButtonState(state.status, progress)
+    updateFinishedUI(state)
+  }
+
+  private fun getStatusString(status: DownloadStatus): String {
+    return parent.context.getString(when (status) {
+      DownloadStatus.PAUSED -> R.string.paused
+      DownloadStatus.COMPLETED, DownloadStatus.FINISHED -> R.string.finished
+      DownloadStatus.FAILED -> R.string.error
+      DownloadStatus.QUEUED, DownloadStatus.SEEDING, DownloadStatus.DOWNLOADING -> R.string.downloading
+      DownloadStatus.CANCELED -> R.string.cancel
+    })
+  }
+
+  private fun updateButtonState(status: DownloadStatus, progress: Int) {
+    val (state, description) = when (status) {
+      DownloadStatus.DOWNLOADING, DownloadStatus.QUEUED, DownloadStatus.SEEDING ->
+        "downloading" to parent.context.getString(R.string.pause)
+      DownloadStatus.PAUSED ->
+        "paused" to parent.context.getString(R.string.resume)
+      DownloadStatus.COMPLETED, DownloadStatus.FINISHED ->
+        "completed" to parent.context.getString(R.string.finished)
+      DownloadStatus.FAILED ->
+        "error" to parent.context.getString(R.string.error)
+      DownloadStatus.CANCELED ->
+        "idle" to parent.context.getString(R.string.cancel)
+    }
+
+    binding.btnAction.apply {
+      when (state) {
+        "downloading" -> setDownloading(progress.toFloat())
+        "paused" -> setPaused()
+        "completed" -> setCompleted()
+        "error" -> setError()
+        "idle" -> setIdle()
       }
+      contentDescription = description
+    }
+  }
 
-      DownloadStatus.PAUSED -> {
-        binding.btnAction.setPaused()
-        binding.btnAction.contentDescription = parent.context.getString(R.string.resume)
-      }
-
-      DownloadStatus.COMPLETED,
-      DownloadStatus.FINISHED -> {
-        binding.btnAction.setCompleted()
-        binding.btnAction.contentDescription = parent.context.getString(R.string.finished)
-      }
-
-      DownloadStatus.FAILED -> {
-        binding.btnAction.setError()
-        binding.btnAction.contentDescription = parent.context.getString(R.string.error)
-      }
-
-      DownloadStatus.CANCELED -> {
-        binding.btnAction.setIdle()
-        binding.btnAction.contentDescription = parent.context.getString(R.string.cancel)
+  private fun updateFinishedUI(state: DownloadState) {
+    if (state.status in setOf(DownloadStatus.COMPLETED, DownloadStatus.FINISHED)) {
+      state.task.fileName?.let { binding.thumbnail.loadThumbnail(it) }
+      binding.apply {
+        txtSavePath.text = formatSavePath(state.task.targetPath)
+        txtSavePath.visibility = View.VISIBLE
       }
     }
   }
@@ -109,6 +113,11 @@ class HttpDownloadViewHolder(
       bytesPerSecond < 1024 * 1024 -> "${bytesPerSecond / 1024} KB/s"
       else -> "${String.format("%.1f", bytesPerSecond / (1024.0 * 1024.0))} MB/s"
     }
+  }
+
+  private fun formatSavePath(targetPath: String): String {
+    val file = UnifiedFileFactory.fromUri(binding.root.context, targetPath.toUri())
+    return file?.filePath ?: targetPath
   }
 
   private fun formatFileSize(bytes: Long): String {

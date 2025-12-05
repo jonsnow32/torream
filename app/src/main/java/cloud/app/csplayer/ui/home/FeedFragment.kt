@@ -21,21 +21,16 @@ import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 import cloud.app.csplayer.R
 import cloud.app.csplayer.ads.AdManager
 import cloud.app.csplayer.databinding.FragmentFeedBinding
-import cloud.app.csplayer.model.PlaybackData
+import cloud.app.csplayer.download.DownloadCoordinator
 import cloud.app.csplayer.model.SyncState
-import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.app.csplayer.ui.adapter.GridAdapter.Companion.recalculateGridLayout
 import cloud.app.csplayer.ui.feed.FeedAction
-import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import cloud.app.csplayer.ui.feed.FeedFilterDialog
 import cloud.app.csplayer.ui.feed.adapters.FeedAdapter
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.FastScrollerHelper
-import cloud.app.csplayer.utils.PlaybackDataHelper
-import cloud.app.csplayer.utils.UIHelper.navigate
-import cloud.app.csplayer.utils.UIHelper.toPx
 import cloud.app.csplayer.utils.Utils.showToast
 import cloud.app.csplayer.utils.hasMediaPermissions
 import cloud.app.csplayer.utils.observe
@@ -45,8 +40,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
-import kotlin.math.max
-import cloud.app.csplayer.download.DownloadCoordinator
 
 
 @AndroidEntryPoint

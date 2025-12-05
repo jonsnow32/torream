@@ -5,13 +5,17 @@ import android.media.MediaMetadata
 import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import cloud.app.csplayer.download.DownloadStatus
+import cloud.app.csplayer.media.dao.DownloadDao
 import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
 import cloud.app.csplayer.media.dataSource.MediaPermissionException
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSource
 import cloud.app.csplayer.media.entities.FolderEntity
+import cloud.app.csplayer.media.entities.HttpEntity
 import cloud.app.csplayer.media.entities.MediaEntity
 import cloud.app.csplayer.media.entities.MediaWithPlayback
+import cloud.app.csplayer.media.entities.TorrentEntity
 import cloud.app.csplayer.model.Folder
 import cloud.app.csplayer.model.Media
 import cloud.app.csplayer.model.MediaTypeFilter
@@ -26,6 +30,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -39,6 +44,7 @@ import javax.inject.Inject
 class MediaRepositoryImpl @Inject constructor(
   private val mediaDao: MediaDao,
   private val folderDao: FolderDao,
+  private val downloadDao: DownloadDao,
   private val mediaStore: MediaStoreDataSource,
   private val scope: CoroutineScope,
   @ApplicationContext private val context: Context
@@ -109,9 +115,11 @@ class MediaRepositoryImpl @Inject constructor(
       coroutineScope {
         val mediaJob = launch { syncMedia(mediaItems) }
         val folderJob = launch { syncFolders(mediaItems) }
+        val downloadJob = launch { syncDownloadedFilesState() }
 
         mediaJob.join()
         folderJob.join()
+        downloadJob.join()
       }
 
       Timber.d("performSync: Sync completed successfully")
@@ -355,6 +363,184 @@ class MediaRepositoryImpl @Inject constructor(
     // No need to scan - MediaStore already has data, we just need permission to read it
     performSync()
     return true
+  }
+
+  /**
+   * Sync downloaded files state - check if downloaded files still exist
+   * Checks both HTTP downloads and Torrent downloads
+   */
+  override suspend fun syncDownloadedFilesState() = withContext(Dispatchers.IO) {
+    Timber.d("syncDownloadedFilesState: Checking downloaded files existence...")
+
+    try {
+      // Sync HTTP downloads
+      val httpDownloads = downloadDao.getAllHttpFlow().firstOrNull() ?: emptyList()
+      if (httpDownloads.isNotEmpty()) {
+        syncHttpDownloads(httpDownloads)
+      }
+
+      // Sync Torrent downloads
+      val torrentDownloads = downloadDao.getAllTorrentFlow().firstOrNull() ?: emptyList()
+      if (torrentDownloads.isNotEmpty()) {
+        syncTorrentDownloads(torrentDownloads)
+      }
+
+      Timber.d("syncDownloadedFilesState: Sync completed")
+    } catch (e: Exception) {
+      Timber.e(e, "syncDownloadedFilesState: Error during sync")
+    }
+  }
+
+  /**
+   * Sync HTTP downloads - check if downloaded files exist
+   */
+  private suspend fun syncHttpDownloads(httpDownloads: List<HttpEntity>) = withContext(Dispatchers.IO) {
+    Timber.d("syncHttpDownloads: Checking ${httpDownloads.size} HTTP downloads...")
+
+    val toUpdate = mutableListOf<HttpEntity>()
+    val missingFiles = mutableListOf<String>()
+
+    httpDownloads.forEach { http ->
+      try {
+        // Check if file exists using targetPath and fileName
+        val filePath = if (!http.fileName.isNullOrEmpty()) {
+          "${http.targetPath}/${http.fileName}"
+        } else {
+          http.targetPath
+        }
+
+        val fileExists = checkFileExists(http.targetPath, filePath)
+
+        if (!fileExists) {
+          Timber.w("syncHttpDownloads: File not found - url=${http.url}, path=$filePath")
+          missingFiles.add(http.url)
+          // Mark as missing by setting downloadedBytes to 0
+          toUpdate.add(http.copy(
+            downloadedBytes = 0L,
+            progress = 0,
+            status = DownloadStatus.FAILED.name,
+            error = "File not found"
+          ))
+        }
+      } catch (e: Exception) {
+        Timber.w(e, "syncHttpDownloads: Error checking file ${http.url}")
+      }
+    }
+
+    // Update database if there are missing files
+    if (toUpdate.isNotEmpty()) {
+      toUpdate.forEach { http ->
+        downloadDao.insertHttp(http)
+      }
+      Timber.d("syncHttpDownloads: Updated ${toUpdate.size} HTTP downloads with missing files")
+    }
+
+    if (missingFiles.isNotEmpty()) {
+      Timber.d("syncHttpDownloads: Found ${missingFiles.size} missing HTTP downloads")
+    }
+  }
+
+  /**
+   * Sync Torrent downloads - check if downloaded files exist
+   */
+  private suspend fun syncTorrentDownloads(torrentDownloads: List<TorrentEntity>) = withContext(Dispatchers.IO) {
+    Timber.d("syncTorrentDownloads: Checking ${torrentDownloads.size} torrent downloads...")
+
+    val toUpdate = mutableListOf<TorrentEntity>()
+    val missingFiles = mutableListOf<String>()
+
+    torrentDownloads.forEach { torrent ->
+      try {
+        // For torrents, targetPath is usually the directory
+        // Check if files in that directory exist
+        val fileExists = checkFileExists(torrent.targetPath, torrent.targetPath)
+
+        if (!fileExists) {
+          Timber.w("syncTorrentDownloads: Directory not found - infoHash=${torrent.infoHash}, path=${torrent.targetPath}")
+          missingFiles.add(torrent.infoHash)
+          // Mark as missing
+          toUpdate.add(torrent.copy(
+            downloadedSize = 0L,
+            progress = 0f,
+            status = DownloadStatus.FAILED.name,
+            error = "Directory not found"
+          ))
+        }
+      } catch (e: Exception) {
+        Timber.w(e, "syncTorrentDownloads: Error checking torrent ${torrent.infoHash}")
+      }
+    }
+
+    // Update database if there are missing files
+    if (toUpdate.isNotEmpty()) {
+      toUpdate.forEach { torrent ->
+        downloadDao.insertTorrent(torrent)
+      }
+      Timber.d("syncTorrentDownloads: Updated ${toUpdate.size} torrents with missing files")
+    }
+
+    if (missingFiles.isNotEmpty()) {
+      Timber.d("syncTorrentDownloads: Found ${missingFiles.size} missing torrents")
+    }
+  }
+
+  /**
+   * Check if a file exists at the given URI or path
+   * Supports both content:// URIs and file:// paths
+   */
+  private fun checkFileExists(uri: String, path: String): Boolean {
+    return try {
+      // First try the URI
+      if (uri.isNotEmpty()) {
+        try {
+          val contentUri = uri.toUri()
+          val exists = when {
+            contentUri.scheme == "content" -> {
+              // For content URIs, try to open a file descriptor
+              try {
+                context.contentResolver.openFileDescriptor(contentUri, "r")?.use { it.fileDescriptor }
+                true
+              } catch (e: Exception) {
+                Timber.w("checkFileExists: Content URI not accessible: $uri")
+                false
+              }
+            }
+            contentUri.scheme == "file" -> {
+              // For file URIs, check the file path
+              val filePath = contentUri.path
+              if (filePath != null) File(filePath).exists() else false
+            }
+            contentUri.scheme == null -> {
+              // No scheme, treat as file path
+              File(uri).exists()
+            }
+            else -> false
+          }
+
+          if (exists) return true
+        } catch (e: Exception) {
+          Timber.w("checkFileExists: Error checking URI: $uri - ${e.message}")
+        }
+      }
+
+      // Fallback to checking the path
+      if (path.isNotEmpty()) {
+        val file = File(path)
+        file.exists() && file.isFile
+      } else {
+        false
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "checkFileExists: Unexpected error checking $uri or $path")
+      false
+    }
+  }
+
+  /**
+   * Check if a specific file exists (public method)
+   */
+  override suspend fun isFileExists(uri: String, path: String): Boolean = withContext(Dispatchers.IO) {
+    return@withContext checkFileExists(uri, path)
   }
 
   override suspend fun getMediaByFolder(folderPath: String): List<Media> = withContext(Dispatchers.IO) {

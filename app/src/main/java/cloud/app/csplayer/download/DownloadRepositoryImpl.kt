@@ -2,6 +2,7 @@ package cloud.app.csplayer.download
 
 import cloud.app.csplayer.media.entities.TorrentEntity
 import cloud.app.csplayer.media.dao.DownloadDao
+import cloud.app.csplayer.media.entities.HttpEntity
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -195,7 +196,7 @@ class DownloadRepositoryImpl @Inject constructor(
             null
           }
 
-          val updated = (current ?: cloud.app.csplayer.media.entities.HttpEntity(
+          val updated = (current ?: HttpEntity(
             url = url,
             targetPath = state.task.targetPath,
             fileName = state.task.fileName,
@@ -203,6 +204,7 @@ class DownloadRepositoryImpl @Inject constructor(
             totalBytes = state.task.totalBytes,
             downloadedBytes = state.downloadedBytes,
             progress = state.progress,
+            speed = state.speed,
             acceptRanges = false,
             etag = null,
             lastModified = null,
@@ -217,6 +219,7 @@ class DownloadRepositoryImpl @Inject constructor(
             downloadedBytes = state.downloadedBytes,
             progress = state.progress,
             status = state.status.name,
+            speed = state.speed,
             error = state.error,
             updatedAt = System.currentTimeMillis()
           )
@@ -266,7 +269,7 @@ class DownloadRepositoryImpl @Inject constructor(
       status = status,
       downloadedBytes = e.downloadedBytes,
       progress = e.progress.coerceIn(0, 100),
-      speed = 0L, // Speed is not stored in HttpEntity, will be updated by worker
+      speed = e.speed, // Speed is not stored in HttpEntity, will be updated by worker
       error = e.error
     )
   }

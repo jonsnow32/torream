@@ -2434,7 +2434,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         )
 
-        val file = File(requireNotNull(uri.path))// SafeFile.fromUri(ctx, uri)
+        val file = File(requireNotNull(uri.toString()))// SafeFile.fromUri(ctx, uri)
         val fileName = file.name
         Timber.i("Loaded subtitle file. Selected URI path: $uri - Name: $fileName")
         // DO NOT REMOVE THE FILE EXTENSION FROM NAME, IT'S NEEDED FOR MIME TYPES

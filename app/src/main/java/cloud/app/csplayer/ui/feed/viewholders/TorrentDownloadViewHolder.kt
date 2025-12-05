@@ -1,15 +1,18 @@
 package cloud.app.csplayer.ui.feed.viewholders
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.net.toUri
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.ItemTorrentDownloadBinding
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadStatus
+import cloud.app.csplayer.ui.feed.FeedAction
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedViewHolder
-import cloud.app.csplayer.ui.feed.FeedAction
-import cloud.app.csplayer.utils.KUniFile
+import cloud.app.csplayer.utils.UnifiedFile
+import cloud.app.csplayer.utils.UnifiedFileFactory
 import cloud.app.csplayer.utils.loadThumbnail
 import coil.load
 import timber.log.Timber
@@ -27,7 +30,6 @@ class TorrentDownloadViewHolder(
   override fun bind(feed: FeedData.TorrentDownloadItem) {
     // Bind data from feed (already updated by LibraryViewModel which observes DownloadState)
     binding.title.text = feed.title
-
 
     val progress = feed.downloadState.progress.coerceIn(0, 100)
     updateUI(
@@ -69,11 +71,11 @@ class TorrentDownloadViewHolder(
         // Load thumbnail from downloaded file
         feed.downloadState.task.fileName?.let { filePath ->
           try {
-            val torrentDirKuni = KUniFile.fromFile(parent.context, File(filePath))
+            val torrentDir = UnifiedFileFactory.fromFile(parent.context, File(filePath))
 
-            if (torrentDirKuni != null && torrentDirKuni.exists()) {
+            if (torrentDir != null && torrentDir.exists()) {
               // Strategy 1: Try to find an existing image file in the torrent
-              val imagePath = findImageInTorrent(torrentDirKuni)
+              val imagePath = findImageInTorrent(torrentDir)
 
               if (imagePath != null) {
                 // Found an image file, load it directly with Coil
@@ -85,7 +87,7 @@ class TorrentDownloadViewHolder(
                 }
               } else {
                 // Strategy 2: Find largest video file and generate thumbnail from it
-                val videoPath = findLargestFileSize(torrentDirKuni)
+                val videoPath = findLargestFileSize(torrentDir)
 
                 if (videoPath != null) {
                   // Generate thumbnail from video file using FFmpeg
@@ -102,6 +104,9 @@ class TorrentDownloadViewHolder(
             Timber.e(e, "Failed to load thumbnail for torrent: $filePath")
           }
         }
+        // Display user-friendly save path
+        binding.txtSavePath.text = formatSavePath(feed.downloadState.task.targetPath)
+        binding.txtSavePath.visibility = android.view.View.VISIBLE
         parent.context.getString(R.string.finished)
       }
       DownloadStatus.DOWNLOADING -> {
@@ -156,6 +161,12 @@ class TorrentDownloadViewHolder(
     }
   }
 
+  private fun formatSavePath(targetPath: String): String {
+    val file = UnifiedFileFactory.fromUri(binding.root.context, targetPath.toUri())
+    return file?.filePath ?: targetPath
+  }
+
+  @SuppressLint("DefaultLocale")
   private fun formatFileSize(bytes: Long): String {
     return when {
       bytes <= 0 -> "0 B"
@@ -166,9 +177,9 @@ class TorrentDownloadViewHolder(
     }
   }
 
-  private fun findLargestFileSize(torrentDirKuni: KUniFile): String? {
-    val videoFiles = if (torrentDirKuni.exists()) {
-      val files = findVideoFilesRecursively(torrentDirKuni)
+  private fun findLargestFileSize(torrentDir: UnifiedFile): String? {
+    val videoFiles = if (torrentDir.exists()) {
+      val files = findVideoFilesRecursively(torrentDir)
       Timber.d("Found ${files.size} video files in torrent")
       files.forEachIndexed { index, filePath ->
         val size = try {
@@ -195,13 +206,13 @@ class TorrentDownloadViewHolder(
     return mainVideoFilePath
   }
 
-  private fun findImageInTorrent(torrentDirKuni: cloud.app.csplayer.utils.KUniFile): String? {
+  private fun findImageInTorrent(torrentDir: UnifiedFile): String? {
     val imageExtensions = setOf("jpg", "jpeg", "png", "gif", "webp", "bmp")
     var foundImagePath: String? = null
 
-    fun scan(dir: cloud.app.csplayer.utils.KUniFile) {
+    fun scan(dir: UnifiedFile) {
       try {
-        dir.listFiles()?.forEach { file ->
+        dir.listFiles()?.forEach { file: UnifiedFile ->
           if (file.isDirectory) {
             // Recursively scan subdirectories
             scan(file)
@@ -224,17 +235,17 @@ class TorrentDownloadViewHolder(
       }
     }
 
-    scan(torrentDirKuni)
+    scan(torrentDir)
     return foundImagePath
   }
 
-  private fun findVideoFilesRecursively(directory: cloud.app.csplayer.utils.KUniFile): List<String> {
+  private fun findVideoFilesRecursively(directory: UnifiedFile): List<String> {
     val videoExtensions = setOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp")
     val result = mutableListOf<String>()
 
-    fun scan(dir: cloud.app.csplayer.utils.KUniFile) {
+    fun scan(dir: UnifiedFile) {
       try {
-        dir.listFiles()?.forEach { file ->
+        dir.listFiles()?.forEach { file: UnifiedFile ->
           if (file.isDirectory) {
             // Recursively scan subdirectories
             scan(file)

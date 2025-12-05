@@ -7,9 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.DialogUrlInputBinding
 import cloud.app.csplayer.download.DownloadCoordinator
@@ -18,6 +16,7 @@ import cloud.app.csplayer.download.DownloadType
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.VideoLink
 import cloud.app.csplayer.ui.library.LibrarySection
+import cloud.app.csplayer.utils.AppUtils.getDownloadPath
 import cloud.app.csplayer.utils.AutoClearedValue.Companion.autoCleared
 import cloud.app.csplayer.utils.PlaybackDataHelper
 import cloud.app.csplayer.utils.UIHelper.dismissSafe
@@ -87,90 +86,19 @@ class UrlInputDialog : DockingDialog() {
       lifecycleScope.launch {
         // Determine type and save dir on IO (quick)
         val (taskType, saveDir) = withContext(Dispatchers.IO) {
-          // Get user-configured download path from settings
-          val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
-          val downloadPathUri = prefs.getString(ctx.getString(R.string.download_path_key), null)
-
-          // Function to get the appropriate download directory
-          fun getDownloadDir(subfolder: String): String {
-            return if (!downloadPathUri.isNullOrEmpty()) {
-              try {
-                // User has configured a custom path via SAF
-                val uri = downloadPathUri.toUri()
-                val docFile = DocumentFile.fromTreeUri(ctx, uri)
-                if (docFile != null && docFile.exists() && docFile.canWrite()) {
-                  // Create subfolder if needed
-                  val subDir = docFile.findFile(subfolder) ?: docFile.createDirectory(subfolder)
-                  if (subDir != null) {
-                    // For SAF URIs, check if we can convert to file path
-                    val uniFile = cloud.app.csplayer.utils.KUniFile.fromUri(ctx, subDir.uri)
-                    val filePath = uniFile?.filePath
-
-                    // Only use file path if we can actually write to it (app-specific storage)
-                    // For shared storage (e.g., /storage/emulated/0/Movies), keep SAF URI
-                    if (filePath != null && filePath.startsWith(ctx.getExternalFilesDir(null)?.absolutePath ?: "/data")) {
-                      // App-specific storage - safe to use file path
-                      filePath
-                    } else {
-                      // Shared storage or unknown - keep SAF URI for proper permission handling
-                      subDir.uri.toString()
-                    }
-                  } else {
-                    downloadPathUri
-                  }
-                } else {
-                  // Fallback if can't access custom path - use public Download folder
-                  val publicDownload = android.os.Environment.getExternalStoragePublicDirectory(
-                    android.os.Environment.DIRECTORY_DOWNLOADS
-                  )
-                  val downloadSubfolder = java.io.File(publicDownload, subfolder)
-                  if (!downloadSubfolder.exists()) {
-                    downloadSubfolder.mkdirs()
-                  }
-                  downloadSubfolder.absolutePath
-                }
-              } catch (e: Exception) {
-                // Fallback on error - use public Download folder
-                try {
-                  val publicDownload = android.os.Environment.getExternalStoragePublicDirectory(
-                    android.os.Environment.DIRECTORY_DOWNLOADS
-                  )
-                  val downloadSubfolder = java.io.File(publicDownload, subfolder)
-                  if (!downloadSubfolder.exists()) {
-                    downloadSubfolder.mkdirs()
-                  }
-                  downloadSubfolder.absolutePath
-                } catch (_: Exception) {
-                  // Last resort: app-specific storage
-                  ctx.getExternalFilesDir(subfolder)?.absolutePath ?: ctx.filesDir.absolutePath
-                }
-              }
-            } else {
-              // No custom path configured, use public Download folder as default
-              val publicDownload = android.os.Environment.getExternalStoragePublicDirectory(
-                android.os.Environment.DIRECTORY_DOWNLOADS
-              )
-              val downloadSubfolder = java.io.File(publicDownload, subfolder)
-
-              // Create subfolder if it doesn't exist
-              if (!downloadSubfolder.exists()) {
-                downloadSubfolder.mkdirs()
-              }
-
-              downloadSubfolder.absolutePath
-            }
-          }
-          val appName = ctx.getString(R.string.app_name).replace(" ", "_")
           when {
             inputUrl.startsWith("magnet:") -> {
-              DownloadType.TORRENT to getDownloadDir(appName)
+              DownloadType.TORRENT to context?.getDownloadPath()
             }
+
             inputUrl.endsWith(".torrent") -> {
-              DownloadType.TORRENT to getDownloadDir(appName)
+              DownloadType.TORRENT to context?.getDownloadPath()
             }
+
             inputUrl.startsWith("http") -> {
-              DownloadType.HTTP to getDownloadDir(appName)
+              DownloadType.HTTP to context?.getDownloadPath()
             }
+
             else -> null to null
           }
         }
@@ -206,6 +134,7 @@ class UrlInputDialog : DockingDialog() {
               }
             }
           }
+
           DownloadType.HTTP -> {
             // For HTTP, use URL as ID (matches database primary key)
             // This ensures task.id matches the URL used as primary key in HttpEntity table
@@ -213,11 +142,18 @@ class UrlInputDialog : DockingDialog() {
           }
         }
 
+        val targetPath = saveDir.uri.toString()
+
+        if (targetPath.isBlank()) {
+          binding.urlInput.error = "Invalid download directory"
+          return@launch
+        }
+
         val task = DownloadTask(
           id = taskId,
           type = taskType,
           source = inputUrl, // Always use full URL/magnet as source
-          targetPath = saveDir
+          targetPath = targetPath
         )
 
         // Start download using coordinator (WorkManager will persist it)
@@ -249,7 +185,8 @@ class UrlInputDialog : DockingDialog() {
 
       // Check if it's a magnet/torrent link for streaming
       if (inputUrl.startsWith("magnet:", ignoreCase = true) ||
-          inputUrl.endsWith(".torrent", ignoreCase = true)) {
+        inputUrl.endsWith(".torrent", ignoreCase = true)
+      ) {
         // Stream torrent using TorrentStreamingService
         streamTorrent(inputUrl)
         return@setOnClickListener
@@ -316,7 +253,11 @@ class UrlInputDialog : DockingDialog() {
 
               if (state.error != null) {
                 progressDialog.dismiss()
-                android.widget.Toast.makeText(ctx, "Streaming error: ${state.error}", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(
+                  ctx,
+                  "Streaming error: ${state.error}",
+                  android.widget.Toast.LENGTH_LONG
+                ).show()
               }
             }
           }

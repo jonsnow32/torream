@@ -53,6 +53,7 @@ import cloud.app.csplayer.utils.CommonActivitty.keyEventListener
 import cloud.app.csplayer.utils.CommonActivitty.onUserLeaveHint
 import cloud.app.csplayer.utils.CommonActivitty.playerEventListener
 import cloud.app.csplayer.utils.CommonActivitty.screenHeight
+import cloud.app.csplayer.utils.CommonActivitty.setLocale
 import cloud.app.csplayer.utils.CommonActivitty.updateLocale
 import cloud.app.csplayer.utils.Coroutines.ioSafe
 import cloud.app.csplayer.utils.GlobalEvent.onColorSelectedEvent
@@ -125,6 +126,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   lateinit var mSessionManager: SessionManager
   private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
 
+  // Cập nhật locale TRƯỚC khi inflate layout
+  override fun attachBaseContext(newBase: Context) {
+    val settingsManager = PreferenceManager.getDefaultSharedPreferences(newBase)
+    val localeCode = settingsManager.getString(
+      newBase.getString(R.string.locale_key),
+      java.util.Locale.getDefault().language
+    ) ?: java.util.Locale.getDefault().language
+
+    setLocale(newBase, localeCode)
+    super.attachBaseContext(newBase)
+  }
+
   private inner class SessionManagerListenerImpl : SessionManagerListener<Session> {
     override fun onSessionStarting(session: Session) {
     }
@@ -164,18 +177,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     loadThemes()
     super.onCreate(savedInstanceState)
 
-
-//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-//      window.attributes.layoutInDisplayCutoutMode =
-//        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-//    }
-
-    // Move heavy I/O operations to background thread to avoid ANR
     ioSafe {
       app.initClient(this@MainActivity)
       MPVUtils.copyAssets(this@MainActivity)
     }
-
     updateLocale()
     CommonActivitty.init(this)
 

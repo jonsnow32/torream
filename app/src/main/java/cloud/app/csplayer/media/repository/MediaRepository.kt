@@ -71,4 +71,6 @@ interface MediaRepository {
   suspend fun clearHistory(): Boolean
   suspend fun deletePlaybackHistory(mediaUri: String): Boolean
   suspend fun isInHistory(uri: String): Boolean
+  suspend fun syncDownloadedFilesState()
+  suspend fun isFileExists(uri: String, path: String) : Boolean
 }

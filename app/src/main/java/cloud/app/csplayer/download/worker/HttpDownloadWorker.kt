@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
@@ -26,6 +25,10 @@ import java.net.URL
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import android.app.NotificationManager
+import androidx.core.net.toUri
+import cloud.app.csplayer.download.DownloadState
+import cloud.app.csplayer.utils.UnifiedFile
+import cloud.app.csplayer.utils.UnifiedFileFactory
 
 /**
  * Simplified HTTP Download Worker
@@ -53,6 +56,8 @@ class HttpDownloadWorker @AssistedInject constructor(
     private const val PROGRESS_UPDATE_INTERVAL_MS = 1000L
   }
 
+  lateinit var targetDir: UnifiedFile
+
   override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
     val taskId = inputData.getString(KEY_TASK_ID) ?: return@withContext Result.failure()
 
@@ -77,23 +82,32 @@ class HttpDownloadWorker @AssistedInject constructor(
       return@withContext Result.failure(workDataOf(KEY_ERROR to "Task not found"))
     }
 
-    val task = state.task
+    var task = state.task
     Timber.d("Downloading from: ${task.source}")
     Timber.d("Save to: ${task.targetPath}")
 
     try {
+
+      Timber.i("targetPath file: ${task.targetPath}")
       // Step 1: Prepare download file
-      val targetDir = File(task.targetPath)
-      if (!targetDir.exists()) {
-        targetDir.mkdirs()
+      targetDir = UnifiedFileFactory.fromUri(context, task.targetPath.toUri()) ?: run {
+        val error = "Invalid target directory"
+        Timber.e(error)
+        repo.updateState(state.copy(status = DownloadStatus.FAILED, error = error))
+        return@withContext Result.failure(workDataOf(KEY_ERROR to error))
       }
 
-      val fileName = extractFileName(task.source)
-      val finalFile = File(targetDir, fileName)
-      val tempFile = File(targetDir, "$fileName.part")
+      val tempFileName = "${extractFileName(task.source)}.part"
+      val tempFile = targetDir.createFile(tempFileName)
 
-      Timber.i("Final file: ${finalFile.absolutePath}")
-      Timber.i("Temp file: ${tempFile.absolutePath}")
+      Timber.i("Temp file: ${tempFile?.uri}")
+      Timber.i("targetDir file: ${targetDir.uri}")
+
+      // Keep targetPath pointing to the directory, don't change it to the temp file
+      // The fileName will be updated after download completes
+      task = task.copy(fileName = tempFileName)
+      state = state.copy(task = task)
+      repo.updateState(state)
 
       // Step 2: Open HTTP connection
       val url = URL(task.source)
@@ -102,8 +116,25 @@ class HttpDownloadWorker @AssistedInject constructor(
       connection.connectTimeout = 15000
       connection.readTimeout = 15000
 
+      if (tempFile == null) {
+        val error = "Failed to access download files"
+        Timber.e(error)
+        repo.updateState(state.copy(status = DownloadStatus.FAILED, error = error))
+        return@withContext Result.failure(workDataOf(KEY_ERROR to error))
+      }
+
       // Resume support
-      val existingBytes = if (tempFile.exists()) tempFile.length() else 0L
+      val existingBytes = try {
+        if (tempFile.exists()) {
+          tempFile.length()
+        } else {
+          0L
+        }
+      } catch (e: Exception) {
+        Timber.w(e, "Failed to check temp file size, starting fresh download")
+        0L
+      }
+
       if (existingBytes > 0) {
         connection.setRequestProperty("Range", "bytes=$existingBytes-")
         Timber.i("Resuming from byte: $existingBytes")
@@ -114,14 +145,24 @@ class HttpDownloadWorker @AssistedInject constructor(
       val responseCode = connection.responseCode
       Timber.d("HTTP Response: $responseCode")
 
-      // Handle errors
+      // Check if already complete (416 Range Not Satisfiable)
+      if (responseCode == 416 && existingBytes > 0) {
+        Timber.i("File already complete (HTTP 416)")
+        // Need to get finalFileName first, so we'll handle this after extracting filename
+        // For now, treat this as complete with temp file name
+        val tempName = extractFinalFileName(connection, task.source)
+        finalizeDownload(tempFile, tempName, state)
+        return@withContext Result.success()
+      }
+
+      // Handle other errors
       if (responseCode in 400..599) {
         val error = "HTTP error: $responseCode"
         repo.updateState(state.copy(status = DownloadStatus.FAILED, error = error))
         return@withContext Result.failure(workDataOf(KEY_ERROR to error))
       }
 
-      // Step 3: Get file size
+      // Step 3: Get file size and fileName
       val contentLength = connection.getHeaderField("Content-Length")?.toLongOrNull() ?: -1L
       val totalBytes = if (contentLength > 0) {
         existingBytes + contentLength
@@ -129,18 +170,17 @@ class HttpDownloadWorker @AssistedInject constructor(
         -1L
       }
 
+      // Extract final filename from Content-Disposition header or URL
+      val tempName = extractFinalFileName(connection, task.source)
+
+
+      Timber.i("Temp filename: $tempName")
       Timber.i("Total size: ${totalBytes / (1024 * 1024)} MB")
 
-      // Check if already complete
-      if (responseCode == 416 && existingBytes > 0) {
-        Timber.i("File already complete (HTTP 416)")
-        finalizeDownload(tempFile, finalFile, state)
-        return@withContext Result.success()
-      }
 
       // Step 4: Download data
       connection.inputStream.use { input ->
-        java.io.FileOutputStream(tempFile, existingBytes > 0).use { output ->
+        tempFile.openOutputStream(existingBytes > 0).use { output ->
           downloadData(
             input = input,
             output = output,
@@ -158,7 +198,7 @@ class HttpDownloadWorker @AssistedInject constructor(
         return@withContext Result.retry()
       }
 
-      finalizeDownload(tempFile, finalFile, state)
+      finalizeDownload(tempFile, tempName, state)
 
       coordinator.processQueuedDownloads()
       return@withContext Result.success()
@@ -171,10 +211,12 @@ class HttpDownloadWorker @AssistedInject constructor(
       }
 
       Timber.e(e, "Download failed: $taskId")
-      repo.updateState(state.copy(
-        status = DownloadStatus.FAILED,
-        error = e.message ?: "Unknown error"
-      ))
+      repo.updateState(
+        state.copy(
+          status = DownloadStatus.FAILED,
+          error = e.message ?: "Unknown error"
+        )
+      )
 
       coordinator.processQueuedDownloads()
       return@withContext Result.failure(workDataOf(KEY_ERROR to e.message))
@@ -188,7 +230,7 @@ class HttpDownloadWorker @AssistedInject constructor(
     input: InputStream,
     output: OutputStream,
     taskId: String,
-    state: cloud.app.csplayer.download.DownloadState,
+    state: DownloadState,
     existingBytes: Long,
     totalBytes: Long
   ) {
@@ -216,13 +258,15 @@ class HttpDownloadWorker @AssistedInject constructor(
         val speed = ((downloadedBytes - lastReportBytes) * 1000) / (now - lastProgressTime)
 
         // Update state
-        repo.updateState(state.copy(
-          status = DownloadStatus.DOWNLOADING,
-          downloadedBytes = totalDownloaded,
-          totalBytes = if (totalBytes > 0) totalBytes else totalDownloaded,
-          progress = progress,
-          speed = speed
-        ))
+        repo.updateState(
+          state.copy(
+            status = DownloadStatus.DOWNLOADING,
+            downloadedBytes = totalDownloaded,
+            totalBytes = if (totalBytes > 0) totalBytes else totalDownloaded,
+            progress = progress,
+            speed = speed
+          )
+        )
 
         // Update notification
         if (ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
@@ -247,7 +291,8 @@ class HttpDownloadWorker @AssistedInject constructor(
       progress,
       isHttp = true
     )
-    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val notificationManager =
+      context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     notificationManager.notify(taskId.hashCode(), notification)
   }
 
@@ -255,50 +300,62 @@ class HttpDownloadWorker @AssistedInject constructor(
    * Finalize download - rename temp to final file
    */
   private suspend fun finalizeDownload(
-    tempFile: File,
-    finalFile: File,
-    state: cloud.app.csplayer.download.DownloadState
+    tempFile: UnifiedFile,
+    tempName: String,
+    state: DownloadState
   ) {
     if (!tempFile.exists()) {
-      Timber.e("Temp file missing: ${tempFile.absolutePath}")
+      Timber.e("Temp file missing: ${tempFile.uri}")
       throw IllegalStateException("Temp file not found")
     }
 
-    // Rename temp to final
-    if (finalFile.exists()) {
-      finalFile.delete()
-    }
-
-    val renamed = tempFile.renameTo(finalFile)
+    val renamed = tempFile.renameTo(tempName)
     if (!renamed) {
-      Timber.e("Failed to rename: ${tempFile.name} -> ${finalFile.name}")
+      Timber.e("Failed to rename: ${tempFile.name} -> $tempName")
       throw IllegalStateException("Failed to rename file")
     }
 
-    Timber.i("✓ Download complete: ${finalFile.absolutePath}")
-    Timber.i("File size: ${finalFile.length() / (1024 * 1024)} MB")
+    Timber.i("✓ File renamed: ${tempFile.name} -> $tempName")
+    Timber.i("✓ Download complete: ${tempFile.uri}")
 
-    // Update database
+    val fileSize = try {
+      tempFile.length()
+    } catch (e: Exception) {
+      Timber.w(e, "Failed to get file size after rename")
+      0L
+    }
+    Timber.i("File size: ${fileSize / (1024 * 1024)} MB")
+
+    val finalUri = tempFile.uri.toString().trim()
+    Timber.d("DEBUG: finalUri = '$finalUri'")
+
+    // Don't validate URI format here - it may vary based on storage backend
+    // Just keep targetPath as the directory and store fileName with final name
     val updatedTask = state.task.copy(
-      fileName = finalFile.absolutePath
+      fileName = tempFile.name,
+      targetPath = tempFile.uri.toString()
     )
 
-    repo.updateState(state.copy(
-      task = updatedTask,
-      status = DownloadStatus.COMPLETED,
-      downloadedBytes = finalFile.length(),
-      totalBytes = finalFile.length(),
-      progress = 100,
-      speed = 0L,
-      completedAt = System.currentTimeMillis()
-    ))
 
-    // Scan to MediaStore
+    repo.updateState(
+      state.copy(
+        task = updatedTask,
+        status = DownloadStatus.COMPLETED,
+        downloadedBytes = fileSize,
+        totalBytes = fileSize,
+        progress = 100,
+        speed = 0L,
+        completedAt = System.currentTimeMillis()
+      )
+    )
+
+    Timber.d("Saving to database - fileName=${updatedTask.fileName}, targetPath=${updatedTask.targetPath} totalBytes=$fileSize")
+
     try {
-      mediaStore.scanMedia(finalFile.absolutePath)
-      Timber.d("Scanned to MediaStore: ${finalFile.name}")
-    } catch (e: Exception) {
-      Timber.w(e, "Failed to scan to MediaStore")
+      mediaStore.scanMedia(finalUri)
+      Timber.d("Scanned to MediaStore: $tempName")
+    } catch (exception: Exception) {
+      Timber.w(exception, "Failed to scan to MediaStore")
     }
   }
 
@@ -315,9 +372,58 @@ class HttpDownloadWorker @AssistedInject constructor(
 
       // Ensure valid filename
       fileName.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-    } catch (e: Exception) {
+    } catch (_: Exception) {
       "download_${System.currentTimeMillis()}"
     }
+  }
+
+  /**
+   * Extract final filename from HTTP headers or URL
+   * Checks Content-Disposition header first, then falls back to URL path
+   */
+  private fun extractFinalFileName(connection: HttpURLConnection, url: String): String {
+    return try {
+      // Try to get filename from Content-Disposition header
+      val contentDisposition = connection.getHeaderField("Content-Disposition")
+      if (contentDisposition != null) {
+        // Parse: attachment; filename="example.mp4"
+        val fileNameMatch = Regex("""filename\*?=["']?([^"';]+)["']?""", RegexOption.IGNORE_CASE)
+          .find(contentDisposition)
+        if (fileNameMatch != null) {
+          val fileName = fileNameMatch.groupValues[1]
+            .trim()
+            .removeSurrounding("\"")
+            .removeSurrounding("'")
+
+          // Handle RFC 5987 encoding (filename*=UTF-8''example.mp4)
+          val decodedName = if (fileName.contains("''")) {
+            java.net.URLDecoder.decode(fileName.substringAfter("''"), "UTF-8")
+          } else {
+            fileName
+          }
+
+          if (decodedName.isNotBlank()) {
+            return sanitizeFileName(decodedName)
+          }
+        }
+      }
+
+      // Fallback to URL path
+      sanitizeFileName(extractFileName(url))
+    } catch (e: Exception) {
+      Timber.w(e, "Failed to extract filename from headers")
+      sanitizeFileName(extractFileName(url))
+    }
+  }
+
+  /**
+   * Sanitize filename to ensure it's valid for filesystem
+   */
+  private fun sanitizeFileName(fileName: String): String {
+    return fileName
+      .replace(Regex("[^a-zA-Z0-9._-]"), "_")
+      .take(255) // Max filename length on most filesystems
+      .ifBlank { "download_${System.currentTimeMillis()}" }
   }
 
   /**

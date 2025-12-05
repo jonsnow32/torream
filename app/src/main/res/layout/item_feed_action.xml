@@ -10,11 +10,11 @@
 
   <ImageView
     android:id="@+id/feedIcon"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="24dp"
+    android:layout_height="24dp"
     android:layout_margin="8dp"
-    android:tint="@color/icon_tint"
-    android:src="@drawable/ic_download" />
+    android:src="@drawable/ic_download"
+    app:tint="@color/icon_tint" />
 
   <TextView
     android:id="@+id/feedTitle"

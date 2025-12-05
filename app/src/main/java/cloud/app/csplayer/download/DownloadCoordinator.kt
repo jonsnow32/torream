@@ -12,10 +12,14 @@ import androidx.work.workDataOf
 import cloud.app.csplayer.R
 import cloud.app.csplayer.download.worker.HttpDownloadWorker
 import cloud.app.csplayer.download.worker.TorrentDownloadWorker
+import cloud.app.csplayer.utils.AppUtils.getDownloadPath
+import cloud.app.csplayer.utils.UnifiedFileFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -36,15 +40,56 @@ class DownloadCoordinator @Inject constructor(
    * Enqueue and start a download task.
    * This will persist the task and schedule a Worker to handle it.
    * Respects the concurrent download limit setting.
+   *
+   * Note: Updates task.targetPath to current user-configured download path before starting.
    */
   suspend fun startDownload(task: DownloadTask) {
     Timber.d("startDownload: taskId=${task.id}, type=${task.type}, source=${task.source}")
 
+    // Check if this source has already been downloaded successfully
+    val allStates = repo.observeAllStates().firstOrNull() ?: emptyList()
+    val alreadyDownloaded = allStates.any { it.status == DownloadStatus.COMPLETED && it.task.source == task.source }
+
+    if (alreadyDownloaded) {
+      // Show Toast on main/UI thread and skip starting download
+      withContext(Dispatchers.Main) {
+        android.widget.Toast.makeText(
+          context,
+          context.getString(R.string.file_already_downloaded),
+          android.widget.Toast.LENGTH_SHORT
+        ).show()
+      }
+      Timber.d("Source already downloaded, skipping start for taskId=${task.id}, source=${task.source}")
+      return
+    }
+
+    // Update task with current download path from preferences
+    // This ensures downloads go to the user's current download directory setting
+    val currentDownloadPath = withContext(Dispatchers.IO) {
+      try {
+        val downloadDir = context.getDownloadPath()
+        downloadDir?.uri?.toString()
+      } catch (e: Exception) {
+        Timber.w(e, "Failed to get current download path, using task's targetPath")
+        null
+      }
+    }
+
+    // Use current path if available, otherwise fallback to task's path
+    val updatedTask = if (currentDownloadPath != null) {
+      task.copy(targetPath = currentDownloadPath, createdAt = System.currentTimeMillis()).also {
+        Timber.d("Updated task targetPath to current setting: $currentDownloadPath")
+      }
+    } else {
+      task
+    }
+
+    // ...existing code...
     // Always cancel any existing work first to ensure clean slate
     // This handles case where work is left in ENQUEUED/CANCELLED state from previous delete
     try {
-      workManager.cancelUniqueWork("download_${task.id}")
-      Timber.d("Cancelled any existing work for taskId=${task.id}")
+      workManager.cancelUniqueWork("download_${updatedTask.id}")
+      Timber.d("Cancelled any existing work for taskId=${updatedTask.id}")
       // Small delay to ensure WorkManager processes cancellation
       kotlinx.coroutines.delay(50L)
     } catch (e: Exception) {
@@ -53,7 +98,7 @@ class DownloadCoordinator @Inject constructor(
 
     // Check if download is actually running (RUNNING state only, not ENQUEUED)
     val existingWork = try {
-      workManager.getWorkInfosForUniqueWork("download_${task.id}").get()
+      workManager.getWorkInfosForUniqueWork("download_${updatedTask.id}").get()
     } catch (e: Exception) {
       emptyList()
     }
@@ -63,7 +108,7 @@ class DownloadCoordinator @Inject constructor(
     }
 
     if (isCurrentlyRunning) {
-      Timber.w("Download currently RUNNING for taskId=${task.id}, skipping")
+      Timber.w("Download currently RUNNING for taskId=${updatedTask.id}, skipping")
       return
     }
 
@@ -75,37 +120,37 @@ class DownloadCoordinator @Inject constructor(
     if (concurrentLimit > 0) {
       val activeDownloads = getActiveDownloadCount()
       if (activeDownloads >= concurrentLimit) {
-        Timber.d("Concurrent download limit ($concurrentLimit) reached. Active: $activeDownloads. Queuing task ${task.id}")
+        Timber.d("Concurrent download limit ($concurrentLimit) reached. Active: $activeDownloads. Queuing task ${updatedTask.id}")
         // Keep in QUEUED status so it will be picked up when a download finishes
-        val existingState = repo.observeState(task.id).firstOrNull()
+        val existingState = repo.observeState(updatedTask.id).firstOrNull()
         if (existingState != null) {
-          repo.updateState(existingState.copy(status = DownloadStatus.QUEUED, error = null))
+          repo.updateState(existingState.copy(status = DownloadStatus.QUEUED, error = null, task = updatedTask))
         } else {
-          repo.insertTask(task, DownloadStatus.QUEUED)
+          repo.insertTask(updatedTask, DownloadStatus.QUEUED)
         }
         return
       }
     }
 
     // Insert or update task in repository
-    val existingState = repo.observeState(task.id).firstOrNull()
+    val existingState = repo.observeState(updatedTask.id).firstOrNull()
     if (existingState != null) {
-      // Update existing task
-      repo.updateState(existingState.copy(status = DownloadStatus.QUEUED, error = null))
-      Timber.d("Updated existing task in repository with id=${task.id}")
+      // Update existing task with new path
+      repo.updateState(existingState.copy(status = DownloadStatus.QUEUED, error = null, task = updatedTask))
+      Timber.d("Updated existing task in repository with id=${updatedTask.id}")
     } else {
-      // Insert new task
-      repo.insertTask(task, DownloadStatus.QUEUED)
-      Timber.d("Inserted new task into repository with id=${task.id}")
+      // Insert new task with updated path
+      repo.insertTask(updatedTask, DownloadStatus.QUEUED)
+      Timber.d("Inserted new task into repository with id=${updatedTask.id}")
     }
 
     // Ensure database write is committed before starting worker
     // Verify task exists in database
     var retries = 0
     while (retries < 10) {
-      val verifyState = repo.observeState(task.id).firstOrNull()
+      val verifyState = repo.observeState(updatedTask.id).firstOrNull()
       if (verifyState != null) {
-        Timber.d("✓ Task verified in database: ${task.id}")
+        Timber.d("✓ Task verified in database: ${updatedTask.id}")
         break
       }
       Timber.w("Task not yet in database, retry ${retries + 1}/10")
@@ -114,10 +159,10 @@ class DownloadCoordinator @Inject constructor(
     }
 
     if (retries >= 10) {
-      Timber.e("Failed to verify task in database after 10 retries: ${task.id}")
+      Timber.e("Failed to verify task in database after 10 retries: ${updatedTask.id}")
       // Try to insert again
       try {
-        repo.insertTask(task, DownloadStatus.QUEUED)
+        repo.insertTask(updatedTask, DownloadStatus.QUEUED)
         kotlinx.coroutines.delay(100L)
       } catch (e: Exception) {
         Timber.e(e, "Failed to insert task on retry")
@@ -125,30 +170,30 @@ class DownloadCoordinator @Inject constructor(
     }
 
     // Create work request based on type
-    val workRequest = when (task.type) {
+    val workRequest = when (updatedTask.type) {
       DownloadType.HTTP -> {
         OneTimeWorkRequestBuilder<HttpDownloadWorker>()
-          .setInputData(workDataOf(HttpDownloadWorker.KEY_TASK_ID to task.id))
+          .setInputData(workDataOf(HttpDownloadWorker.KEY_TASK_ID to updatedTask.id))
           .setConstraints(
             Constraints.Builder()
               .setRequiredNetworkType(getRequiredNetworkType(context))
               .build()
           )
           .addTag(DOWNLOAD_WORK_TAG)
-          .addTag(task.id)
+          .addTag(updatedTask.id)
           .build()
       }
 
       DownloadType.TORRENT -> {
         OneTimeWorkRequestBuilder<TorrentDownloadWorker>()
-          .setInputData(workDataOf(TorrentDownloadWorker.KEY_TASK_ID to task.id))
+          .setInputData(workDataOf(TorrentDownloadWorker.KEY_TASK_ID to updatedTask.id))
           .setConstraints(
             Constraints.Builder()
               .setRequiredNetworkType(getRequiredNetworkType(context))
               .build()
           )
           .addTag(DOWNLOAD_WORK_TAG)
-          .addTag(task.id)
+          .addTag(updatedTask.id)
           .build()
       }
     }
@@ -156,12 +201,12 @@ class DownloadCoordinator @Inject constructor(
     // Enqueue work with unique work name
     // Use REPLACE to allow re-downloading after delete/failure
     workManager.enqueueUniqueWork(
-      "download_${task.id}",
+      "download_${updatedTask.id}",
       ExistingWorkPolicy.REPLACE,
       workRequest
     )
 
-    Timber.i("Download work enqueued for taskId=${task.id}")
+    Timber.i("Download work enqueued for taskId=${updatedTask.id}")
   }
 
   /**
@@ -238,49 +283,79 @@ class DownloadCoordinator @Inject constructor(
     kotlinx.coroutines.delay(100L)
 
     // Cleanup downloaded files if exists
-    state?.let { downloadState ->
+    if (state != null) {
       try {
-        if (downloadState.task.fileName.isNullOrBlank())
-          throw Exception("No fileName in task, skipping file cleanup")
+        val downloadState = state
+        val taskId = taskId
+        val fileName = downloadState.task.fileName
+        val targetPath = downloadState.task.targetPath
+        val downloadType = downloadState.task.type
 
-        val targetPath = java.io.File(downloadState.task.targetPath, downloadState.task.fileName)
+        Timber.d("Cleanup: fileName=$fileName, targetPath=$targetPath, type=$downloadType")
 
-        if (downloadState.task.type == DownloadType.TORRENT) {
-          // For torrents: targetPath is the subdirectory, delete entire directory
-          if (targetPath.exists() && targetPath.isDirectory) {
-            targetPath.deleteRecursively()
-            Timber.d("Deleted torrent directory: ${targetPath.absolutePath}")
-          }
-
-          // Also cleanup magnet temp directory if exists
-          val magnetTempDir = java.io.File(targetPath.parentFile, "magnet_tmp_$taskId")
-          if (magnetTempDir.exists()) {
-            magnetTempDir.deleteRecursively()
-            Timber.d("Deleted magnet temp dir: ${magnetTempDir.absolutePath}")
-          }
+        if (fileName.isNullOrBlank()) {
+          Timber.w("No fileName in task, skipping file cleanup")
         } else {
-          // For HTTP: targetPath might be file or directory
-          if (targetPath.exists()) {
-            if (targetPath.isFile) {
-              targetPath.delete()
-              Timber.d("Deleted target file: ${targetPath.absolutePath}")
-            } else if (targetPath.isDirectory) {
-              // Delete directory and contents
-              targetPath.deleteRecursively()
-              Timber.d("Deleted target directory: ${targetPath.absolutePath}")
-            }
+          // Use UnifiedFile to handle both regular files and SAF URIs transparently
+          val unifiedFile = if (targetPath.startsWith("content://")) {
+            // SAF URI - use fromUri
+            UnifiedFileFactory.fromUri(context, android.net.Uri.parse(targetPath))
+          } else {
+            // Regular file path - use fromFile
+            UnifiedFileFactory.fromFile(context, java.io.File(targetPath))
           }
 
-          // Delete .part file if exists
-          val tempFile = java.io.File(downloadState.task.targetPath + ".part")
-          if (tempFile.exists()) {
-            tempFile.delete()
-            Timber.d("Deleted temp file: ${tempFile.absolutePath}")
+          if (unifiedFile != null) {
+            when (downloadType) {
+              DownloadType.TORRENT -> {
+                // For torrents: look for the subdirectory with fileName
+                if (unifiedFile.isDirectory) {
+                  val torrentDir = unifiedFile.findFile(fileName)
+                  if (torrentDir != null) {
+                    if (torrentDir.delete()) {
+                      Timber.d("✓ Deleted torrent directory: $fileName")
+                    } else {
+                      Timber.w("✗ Failed to delete torrent directory: $fileName")
+                    }
+                  } else {
+                    Timber.d("Torrent directory not found: $fileName")
+                  }
+                }
+
+                // Also cleanup magnet temp directory if exists
+                val magnetTempDirName = "magnet_tmp_$taskId"
+                val magnetTempDir = unifiedFile.findFile(magnetTempDirName)
+                if (magnetTempDir != null && magnetTempDir.delete()) {
+                  Timber.d("✓ Deleted magnet temp directory: $magnetTempDirName")
+                }
+              }
+
+              DownloadType.HTTP -> {
+                // For HTTP: directly delete the file
+                if (unifiedFile.delete()) {
+                  Timber.d("✓ Deleted HTTP file: $fileName")
+                } else {
+                  Timber.w("✗ Failed to delete HTTP file: $fileName")
+                }
+
+                // Try to delete .part temp file if it exists
+                val partFileName = "$fileName.part"
+                val partFile = unifiedFile.findFile(partFileName)
+                if (partFile?.delete() == true) {
+                  Timber.d("✓ Deleted .part file: $partFileName")
+                }
+              }
+            }
+          } else {
+            Timber.w("Failed to create UnifiedFile for path: $targetPath")
           }
         }
+
       } catch (e: Exception) {
-        Timber.w(e, "Failed to cleanup files for taskId=$taskId")
+        Timber.e(e, "Failed to cleanup files for taskId=$taskId")
       }
+    } else {
+      Timber.w("Download state is null, cannot cleanup files for taskId=$taskId")
     }
 
     // Delete from repository (this removes DB entry)

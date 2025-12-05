@@ -190,7 +190,7 @@ class PlayerDialogManager(
 
     val subtitleIndex = max((currentSubtitleTracks.indexOfFirst { it.selected }), 0)
     SelectionDialog.single(
-      currentSubtitleTracks.map { it.name } + listOf<String>("Load from file", "Load from network"),
+      currentSubtitleTracks.map { it.name } + listOf<String>(ctx.getString(R.string.load_from_file), ctx.getString(R.string.load_from_network)),
       subtitleIndex,
       fragment.getString(R.string.subtitle),
       true

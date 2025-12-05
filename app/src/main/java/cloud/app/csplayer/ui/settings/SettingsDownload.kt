@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import cloud.app.csplayer.R
@@ -22,9 +23,10 @@ import cloud.app.csplayer.ui.dialog.SelectionDialog
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.getPref
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import cloud.app.csplayer.ui.settings.SettingsFragment.Companion.setUpToolbar
+import cloud.app.csplayer.utils.AppUtils.getDownloadPath
 import cloud.app.csplayer.utils.CommonActivitty.hideKeyboard
-import cloud.app.csplayer.utils.KUniFile
 import cloud.app.csplayer.utils.LayoutMode
+import cloud.app.csplayer.utils.UnifiedFileFactory
 import cloud.app.csplayer.utils.isLayout
 
 class SettingsDownload : PreferenceFragmentCompat() {
@@ -41,22 +43,25 @@ class SettingsDownload : PreferenceFragmentCompat() {
 
       context.contentResolver.takePersistableUriPermission(uri, flags)
 
-      val filePath = uri.path
-      println("Selected download path: $uri - Full path: ${KUniFile.fromUri(context, uri)?.filePath}")
+      val file = UnifiedFileFactory.fromUri(context, uri) ?: run {
+        Toast.makeText(context, "Please select a valid directory", Toast.LENGTH_LONG).show()
+        return@registerForActivityResult
+      }
 
+      if (!file.isDirectory) {
+        Toast.makeText(context, "Please select a valid directory", Toast.LENGTH_LONG).show()
+        return@registerForActivityResult
+      }
       // Stores the real URI using download_path_key
       // Important that the URI is stored instead of filepath due to permissions.
       PreferenceManager.getDefaultSharedPreferences(context)
-        .edit { putString(getString(R.string.download_path_key), uri.toString()) }
+        .edit(true) { putString(getString(R.string.download_path_key), file.uri.toString()) }
 
-      // From URI -> File path
-      // File path here is purely for cosmetic purposes in settings
-      (filePath ?: uri.toString()).let {
-        PreferenceManager.getDefaultSharedPreferences(context)
-          .edit { putString(getString(R.string.download_path_pref), it) }
+      getPref(R.string.download_path_key)?.apply {
+        val downloadPathUri = context.getDownloadPath()
+        summary = downloadPathUri?.filePath ?: downloadPathUri?.uri?.toString() ?: "Unknown"
       }
-
-      Toast.makeText(context, "Download path updated to ${KUniFile.fromUri(context, uri)?.name}", Toast.LENGTH_SHORT).show()
+      Toast.makeText(context, "Download path updated to ${UnifiedFileFactory.fromUri(context, uri)?.name}", Toast.LENGTH_SHORT).show()
     }
 
   // Battery optimization request launcher
@@ -88,6 +93,8 @@ class SettingsDownload : PreferenceFragmentCompat() {
     setToolBarScrollFlags()
   }
 
+
+
   override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
     activity?.hideKeyboard()
     setPreferencesFromResource(R.xml.settings_download, rootKey)
@@ -97,19 +104,14 @@ class SettingsDownload : PreferenceFragmentCompat() {
     // Download path picker
     getPref(R.string.download_path_key)?.apply {
       // Set initial summary to show current download path
-      val downloadPathUri = settingsManager.getString(getString(R.string.download_path_key), null)
-      summary = if (!downloadPathUri.isNullOrEmpty()) {
-        // Show custom path
-        val uri = Uri.parse(downloadPathUri)
-        KUniFile.fromUri(requireContext(), uri)?.name ?: downloadPathUri
-      } else {
-        // Show default public Download folder
-        "/Download (default)"
-      }
+      val downloadPathUri = context.getDownloadPath()
+      summary = downloadPathUri?.filePath
 
       setOnPreferenceClickListener {
         try {
-          pathPicker.launch(null)
+          val downloadPath = context.getDownloadPath()?.uri?.path
+          val path = settingsManager.getString(getString(R.string.download_path_key), downloadPath)
+          pathPicker.launch(path?.toUri())
         } catch (e: Exception) {
           Toast.makeText(context, "Failed to open file picker: ${e.message}", Toast.LENGTH_LONG).show()
         }
