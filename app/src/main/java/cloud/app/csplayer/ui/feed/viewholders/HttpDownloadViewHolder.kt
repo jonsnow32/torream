@@ -98,7 +98,7 @@ class HttpDownloadViewHolder(
 
   private fun updateFinishedUI(state: DownloadState) {
     if (state.status in setOf(DownloadStatus.COMPLETED, DownloadStatus.FINISHED)) {
-      state.task.fileName?.let { binding.thumbnail.loadThumbnail(it) }
+      state.task.targetPath.let { binding.thumbnail.loadThumbnail(it) }
       binding.apply {
         txtSavePath.text = formatSavePath(state.task.targetPath)
         txtSavePath.visibility = View.VISIBLE

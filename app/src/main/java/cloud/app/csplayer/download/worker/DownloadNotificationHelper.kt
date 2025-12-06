@@ -15,6 +15,8 @@ object DownloadNotificationHelper {
   private const val CHANNEL_ID = "download_channel"
   private const val CHANNEL_NAME = "Downloads"
   const val ACTION_OPEN_DOWNLOADS = "cloud.app.csplayer.OPEN_DOWNLOADS"
+  const val ACTION_PAUSE_ALL = "cloud.app.csplayer.PAUSE_ALL_DOWNLOADS"
+  const val ACTION_CANCEL_ALL = "cloud.app.csplayer.CANCEL_ALL_DOWNLOADS"
 
   fun createDownloadNotification(
     context: Context,
@@ -46,6 +48,28 @@ object DownloadNotificationHelper {
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
+    // Create Pause All action
+    val pauseAllIntent = Intent(context, DownloadNotificationReceiver::class.java).apply {
+      action = ACTION_PAUSE_ALL
+    }
+    val pauseAllPendingIntent = PendingIntent.getBroadcast(
+      context,
+      1,
+      pauseAllIntent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    // Create Cancel All action
+    val cancelAllIntent = Intent(context, DownloadNotificationReceiver::class.java).apply {
+      action = ACTION_CANCEL_ALL
+    }
+    val cancelAllPendingIntent = PendingIntent.getBroadcast(
+      context,
+      2,
+      cancelAllIntent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
     return NotificationCompat.Builder(context, CHANNEL_ID)
       .setContentTitle(title)
       .setContentText(contentText)
@@ -53,6 +77,8 @@ object DownloadNotificationHelper {
       .setProgress(100, progress, progress == 0)
       .setOngoing(true)
       .setContentIntent(pendingIntent)
+      .addAction(android.R.drawable.ic_media_pause, "Pause All", pauseAllPendingIntent)
+      .addAction(android.R.drawable.ic_delete, "Cancel All", cancelAllPendingIntent)
       .build()
   }
 

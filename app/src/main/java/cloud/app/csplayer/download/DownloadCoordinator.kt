@@ -458,6 +458,46 @@ class DownloadCoordinator @Inject constructor(
     }
   }
 
+  /**
+   * Pause all active downloads
+   */
+  suspend fun pauseAllDownloads() {
+    try {
+      val allStates = repo.observeAllStates().firstOrNull() ?: emptyList()
+      val activeDownloads = allStates.filter {
+        it.status == DownloadStatus.DOWNLOADING || it.status == DownloadStatus.QUEUED
+      }
+
+      Timber.d("Pausing ${activeDownloads.size} active downloads")
+
+      activeDownloads.forEach { state ->
+        pauseDownload(state.task.id)
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to pause all downloads")
+    }
+  }
+
+  /**
+   * Cancel all downloads
+   */
+  suspend fun cancelAllDownloads() {
+    try {
+      val allStates = repo.observeAllStates().firstOrNull() ?: emptyList()
+      val activeDownloads = allStates.filter {
+        it.status != DownloadStatus.COMPLETED && it.status != DownloadStatus.FAILED
+      }
+
+      Timber.d("Cancelling ${activeDownloads.size} active downloads")
+
+      activeDownloads.forEach { state ->
+        deleteDownload(state.task.id)
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to cancel all downloads")
+    }
+  }
+
   companion object {
     private const val DOWNLOAD_WORK_TAG = "download_work"
   }

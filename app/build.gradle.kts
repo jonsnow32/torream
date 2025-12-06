@@ -190,6 +190,9 @@ dependencies {
   implementation("org.libtorrent4j:libtorrent4j-android-x86:2.1.0-38")
   implementation("org.libtorrent4j:libtorrent4j-android-x86_64:2.1.0-38")
 
+  // NanoHTTPD for torrent streaming
+  implementation("org.nanohttpd:nanohttpd:2.3.1")
+
   // Others
   implementation("org.mozilla:rhino:1.8.0")
   implementation("com.github.albfernandez:juniversalchardet:2.5.0")
