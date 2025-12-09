@@ -113,8 +113,45 @@ class SafeFileWrapper(
  * Factory object to create UnifiedFile instances
  */
 object UnifiedFileFactory {
+  /**
+   * Create UnifiedFile from a path string that can be either:
+   * - A file system path: /storage/emulated/0/Download/file.txt
+   * - A content URI: content://...
+   * - A file URI: file:///storage/...
+   */
+  fun fromPath(context: Context, path: String): UnifiedFile? {
+    return try {
+      when {
+        // Content URI
+        path.startsWith("content://", ignoreCase = true) -> {
+          fromUri(context, Uri.parse(path))
+        }
+        // File URI
+        path.startsWith("file://", ignoreCase = true) -> {
+          fromUri(context, Uri.parse(path))
+        }
+        // File system path
+        else -> {
+          fromFile(context, File(path))
+        }
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to create UnifiedFile from path: $path")
+      null
+    }
+  }
+
   fun fromUri(context: Context, uri: Uri): UnifiedFile? {
     return try {
+      // Check if uri has no scheme - likely a file system path string
+      if (uri.scheme.isNullOrBlank()) {
+        // This is probably a file system path that was incorrectly converted to Uri
+        val pathString = uri.toString()
+        Timber.d("No URI scheme detected, treating as file path: $pathString")
+        val file = File(pathString)
+        return fromFile(context, file)
+      }
+
       // Special handling for document tree URIs from downloads provider
       // Format: content://com.android.providers.downloads.documents/tree/raw:/storage/emulated/0/Download
       if (uri.scheme == "content" &&

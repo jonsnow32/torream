@@ -81,6 +81,7 @@ class TorrentDownloadWorker @AssistedInject constructor(
 
       Timber.d("✅ Save directory: ${saveDir.absolutePath}")
 
+      repo.updateState(state.copy(status = DownloadStatus.REPAIRING))
       // Start session
       sessionManager.start()
 
@@ -100,12 +101,16 @@ class TorrentDownloadWorker @AssistedInject constructor(
           return@collect
         }
 
+        // Libtorrent creates a folder named after the torrent inside saveDir
+        // So the actual torrent folder is: saveDir/torrentName
+        val actualTorrentFolder = File(saveDir, info.name)
+
         // Update state in database
         currentState = repo.observeState(taskId).first() ?: currentState
         repo.updateState(
           currentState.copy(
             task = currentState.task.copy(
-              targetPath = saveDir.absolutePath,
+              targetPath = actualTorrentFolder.absolutePath, // Save the actual torrent folder, not just download dir
               fileName = info.name
             ),
             status = when {
@@ -136,8 +141,8 @@ class TorrentDownloadWorker @AssistedInject constructor(
         if (info.isFinished) {
           Timber.i("✅ Download completed: ${info.name}")
 
-          // Scan files
-          scanVideoFiles(File(saveDir, info.name).absolutePath)
+          // Scan files in the actual torrent folder
+          scanVideoFiles(actualTorrentFolder.absolutePath)
 
           // Process queue
           try {

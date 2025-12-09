@@ -1,6 +1,7 @@
 package cloud.app.csplayer.download
 
 enum class DownloadStatus {
+  REPAIRING,
   QUEUED,
   DOWNLOADING,
   PAUSED,

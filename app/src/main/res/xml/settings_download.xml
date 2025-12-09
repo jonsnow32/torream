@@ -11,6 +11,14 @@
       android:title="@string/download_path_pref" />
 
     <Preference
+      android:icon="@drawable/ic_folder"
+      android:key="@string/open_download_folder_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/open_download_folder_summary"
+      app:isPreferenceVisible="false"
+      android:title="@string/open_download_folder" />
+
+    <Preference
       android:icon="@drawable/ic_battery"
       android:key="@string/battery_optimisation_key"
       android:layout="@layout/custom_preference"

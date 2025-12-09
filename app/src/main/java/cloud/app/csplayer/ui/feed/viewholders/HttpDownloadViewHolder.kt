@@ -65,14 +65,14 @@ class HttpDownloadViewHolder(
       DownloadStatus.PAUSED -> R.string.paused
       DownloadStatus.COMPLETED, DownloadStatus.FINISHED -> R.string.finished
       DownloadStatus.FAILED -> R.string.error
-      DownloadStatus.QUEUED, DownloadStatus.SEEDING, DownloadStatus.DOWNLOADING -> R.string.downloading
+      DownloadStatus.QUEUED, DownloadStatus.SEEDING, DownloadStatus.DOWNLOADING, DownloadStatus.REPAIRING -> R.string.downloading
       DownloadStatus.CANCELED -> R.string.cancel
     })
   }
 
   private fun updateButtonState(status: DownloadStatus, progress: Int) {
     val (state, description) = when (status) {
-      DownloadStatus.DOWNLOADING, DownloadStatus.QUEUED, DownloadStatus.SEEDING ->
+      DownloadStatus.DOWNLOADING, DownloadStatus.QUEUED, DownloadStatus.SEEDING, DownloadStatus.REPAIRING ->
         "downloading" to parent.context.getString(R.string.pause)
       DownloadStatus.PAUSED ->
         "paused" to parent.context.getString(R.string.resume)

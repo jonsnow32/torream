@@ -119,6 +119,12 @@ class SettingsDownload : PreferenceFragmentCompat() {
       }
     }
 
+    // Open download folder in file manager
+    getPref(R.string.open_download_folder_key)?.setOnPreferenceClickListener {
+      openDownloadFolder()
+      true
+    }
+
     // Battery optimization
     getPref(R.string.battery_optimisation_key)?.apply {
       isEnabled = context.isLayout(LayoutMode.Phone.id)
@@ -295,5 +301,101 @@ class SettingsDownload : PreferenceFragmentCompat() {
         Toast.makeText(context, "Port reset to 6881", Toast.LENGTH_SHORT).show()
       }
       .show()
+  }
+
+  /**
+   * Open the download folder in file manager
+   */
+  private fun openDownloadFolder() {
+    val context = context ?: return
+
+    try {
+      val downloadPath = context.getDownloadPath()
+
+      if (downloadPath == null) {
+        Toast.makeText(context, "Download path not configured", Toast.LENGTH_SHORT).show()
+        return
+      }
+
+      // Try to open the folder with ACTION_VIEW
+      val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(downloadPath.uri, "resource/folder")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      }
+
+      // Check if any app can handle this intent
+      if (intent.resolveActivity(context.packageManager) != null) {
+        try {
+          startActivity(intent)
+          return
+        } catch (e: Exception) {
+          // Fall through to alternative methods
+        }
+      }
+
+      // Alternative: Try using DocumentsContract for SAF URIs
+      if (downloadPath.uri.scheme == "content") {
+        try {
+          val docIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(downloadPath.uri, "vnd.android.document/directory")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          }
+          startActivity(docIntent)
+          return
+        } catch (e: Exception) {
+          // Fall through
+        }
+      }
+
+      // Alternative: Try opening file manager with generic intent
+      try {
+        val fileManagerIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
+          type = "*/*"
+          addCategory(Intent.CATEGORY_OPENABLE)
+          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        if (fileManagerIntent.resolveActivity(context.packageManager) != null) {
+          startActivity(Intent.createChooser(fileManagerIntent, "Open File Manager"))
+          Toast.makeText(
+            context,
+            "Navigate to: ${downloadPath.filePath ?: downloadPath.uri.path}",
+            Toast.LENGTH_LONG
+          ).show()
+          return
+        }
+      } catch (e: Exception) {
+        // Fall through
+      }
+
+      // Last resort: Show the path and suggest manual navigation
+      AlertDialog.Builder(context, R.style.BaseMaterialDialogTheme)
+        .setTitle("Download Folder Location")
+        .setMessage(
+          "Your downloads are saved at:\n\n" +
+          "${downloadPath.filePath ?: downloadPath.uri.path}\n\n" +
+          "Please open your file manager and navigate to this location."
+        )
+        .setPositiveButton("Copy Path") { _, _ ->
+          val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+          val clip = android.content.ClipData.newPlainText(
+            "Download Path",
+            downloadPath.filePath ?: downloadPath.uri.path
+          )
+          clipboard?.setPrimaryClip(clip)
+          Toast.makeText(context, "Path copied to clipboard", Toast.LENGTH_SHORT).show()
+        }
+        .setNegativeButton("OK", null)
+        .show()
+
+    } catch (e: Exception) {
+      Toast.makeText(context, "Failed to open download folder: ${e.message}", Toast.LENGTH_LONG).show()
+    }
+  }
+
+  companion object {
+    const val DEFAULT_TORRENT_PORT = 6881
   }
 }

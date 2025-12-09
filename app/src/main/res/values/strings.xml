@@ -47,6 +47,7 @@
   <string name="dns_key" translatable="false">dns_key</string>
   <string name="jsdelivr_proxy_key" translatable="false">jsdelivr_proxy_key</string>
   <string name="download_path_key" translatable="false">download_path_key</string>
+  <string name="open_download_folder_key" translatable="false">open_download_folder_key</string>
   <string name="app_name_download_path" translatable="false">HexaPlayer</string>
   <string name="download_over_wifi_key" translatable="false">download_over_wifi_key</string>
   <string name="download_over_metered_key" translatable="false">download_over_metered_key</string>
@@ -424,6 +425,8 @@
   <string name="remove_site_pref">Remove site</string>
   <string name="add_site_summary">Add a clone of an existing site, with a different URL</string>
   <string name="download_path_pref">Download path</string>
+  <string name="open_download_folder">Open download folder</string>
+  <string name="open_download_folder_summary">View downloaded files in file manager</string>
 
   <string name="nginx_url_pref">NGINX server URL</string>
   <string name="display_subbed_dubbed_settings">Display Dubbed/Subbed Anime</string>
@@ -1028,4 +1031,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="load_from_file">Load from file</string>
   <string name="load_from_network">Load from network</string>
   <string name="file_already_downloaded">File already downloaded</string>
+    <string name="connecting_to_peers">Connecting to peers...</string>
+  <string name="preparing_stream">Preparing Stream</string>
+  <string name="peers_0">Peers: 0</string>
+  <string name="seeds_0">Seeds: 0</string>
 </resources>

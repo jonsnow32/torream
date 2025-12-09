@@ -63,10 +63,16 @@ class TorrentDownloadViewHolder(
     speed: Long
   ) {
     binding.progressBar.progress = progress
-
+    binding.progressBar.isIndeterminate = progress == 0
     val statusText = when (status) {
+      DownloadStatus.REPAIRING -> {
+
+        parent.context.getString(R.string.downloading)
+      }
+      DownloadStatus.SEEDING -> {
+        parent.context.getString(R.string.seeding)
+      }
       DownloadStatus.PAUSED -> parent.context.getString(R.string.paused)
-      DownloadStatus.SEEDING -> parent.context.getString(R.string.seeding)
       DownloadStatus.FINISHED, DownloadStatus.COMPLETED -> {
         // Load thumbnail from downloaded file
         feed.downloadState.task.fileName?.let { filePath ->
@@ -133,6 +139,7 @@ class TorrentDownloadViewHolder(
       seeds,
       peers
     ) + " • ${formatSpeed(speed)} • $sizeText"
+
 
     // Update PieFetchButton state and progress
     val buttonState = when (status) {

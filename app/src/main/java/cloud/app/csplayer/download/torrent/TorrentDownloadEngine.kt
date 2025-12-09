@@ -47,7 +47,8 @@ class TorrentDownloadEngine @Inject constructor(
     val state: TorrentStatus.State,
     val isFinished: Boolean,
     val isSeeding: Boolean,
-    val error: String? = null
+    val error: String? = null,
+    val largestVideoFileIndex: Int = 0  // Index of the largest video file in the torrent
   )
 
   /**
@@ -86,7 +87,36 @@ class TorrentDownloadEngine @Inject constructor(
     }
 
     Timber.i("✅ Metadata fetched: ${metadata.size} bytes")
-    val torrentInfo = TorrentInfo.bdecode(metadata)
+
+    // Fix: For large metadata, save to file first to avoid StackOverflowError
+    val torrentInfo = try {
+      if (metadata.size > 500_000) { // 500KB threshold
+        Timber.d("Large metadata detected (${metadata.size} bytes), using file-based approach")
+        val metadataFile = File(context.cacheDir, "metadata_${System.currentTimeMillis()}.torrent")
+        try {
+          metadataFile.writeBytes(metadata)
+          TorrentInfo(metadataFile)
+        } finally {
+          try {
+            metadataFile.delete()
+          } catch (_: Exception) {}
+        }
+      } else {
+        TorrentInfo.bdecode(metadata)
+      }
+    } catch (e: StackOverflowError) {
+      Timber.e(e, "StackOverflowError while decoding metadata, trying file-based approach")
+      val metadataFile = File(context.cacheDir, "metadata_${System.currentTimeMillis()}.torrent")
+      try {
+        metadataFile.writeBytes(metadata)
+        TorrentInfo(metadataFile)
+      } finally {
+        try {
+          metadataFile.delete()
+        } catch (_: Exception) {}
+      }
+    }
+
     Timber.i("📦 Torrent: ${torrentInfo.name()}, size: ${torrentInfo.totalSize()}")
 
     // Start download
@@ -247,7 +277,37 @@ class TorrentDownloadEngine @Inject constructor(
 
       if (metadata != null && metadata.isNotEmpty()) {
         Timber.i("✅ Metadata fetched: ${metadata.size} bytes")
-        return@withContext TorrentInfo.bdecode(metadata)
+
+        // Fix: For large metadata, save to file first to avoid StackOverflowError
+        val torrentInfo = try {
+          if (metadata.size > 500_000) { // 500KB threshold
+            Timber.d("Large metadata detected (${metadata.size} bytes), using file-based approach")
+            val metadataFile = File(context.cacheDir, "metadata_${System.currentTimeMillis()}.torrent")
+            try {
+              metadataFile.writeBytes(metadata)
+              TorrentInfo(metadataFile)
+            } finally {
+              try {
+                metadataFile.delete()
+              } catch (_: Exception) {}
+            }
+          } else {
+            TorrentInfo.bdecode(metadata)
+          }
+        } catch (e: StackOverflowError) {
+          Timber.e(e, "StackOverflowError while decoding metadata, trying file-based approach")
+          val metadataFile = File(context.cacheDir, "metadata_${System.currentTimeMillis()}.torrent")
+          try {
+            metadataFile.writeBytes(metadata)
+            TorrentInfo(metadataFile)
+          } finally {
+            try {
+              metadataFile.delete()
+            } catch (_: Exception) {}
+          }
+        }
+
+        return@withContext torrentInfo
       } else {
         Timber.e("❌ Metadata fetch returned null or empty")
         return@withContext null
@@ -344,6 +404,34 @@ class TorrentDownloadEngine @Inject constructor(
   }
 
   /**
+   * Find the index of the largest video file in the torrent
+   */
+  private fun findLargestVideoFileIndex(torrentInfo: TorrentInfo): Int {
+    val videoExtensions = setOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v",
+                                "mpg", "mpeg", "3gp", "ts", "m2ts", "vob", "ogv", "rmvb")
+
+    val fileStorage = torrentInfo.files()
+    val numFiles = fileStorage.numFiles()
+
+    var largestVideoIndex = 0
+    var largestVideoSize = 0L
+
+    for (i in 0 until numFiles) {
+      val filePath = fileStorage.filePath(i)
+      val fileSize = fileStorage.fileSize(i)
+      val extension = filePath.substringAfterLast('.', "").lowercase()
+
+      if (extension in videoExtensions && fileSize > largestVideoSize) {
+        largestVideoSize = fileSize
+        largestVideoIndex = i
+      }
+    }
+
+    Timber.d("Largest video file: index=$largestVideoIndex, size=${largestVideoSize / (1024 * 1024)}MB")
+    return largestVideoIndex
+  }
+
+  /**
    * Monitor torrent download progress
    */
   private fun monitorDownload(
@@ -353,6 +441,7 @@ class TorrentDownloadEngine @Inject constructor(
   ): Flow<DownloadInfo> = flow {
     val infoHash = torrentInfo.infoHash().toString()
     val totalSize = torrentInfo.totalSize()
+    val largestVideoFileIndex = findLargestVideoFileIndex(torrentInfo)
 
     while (true) {
       if (!handle.isValid) {
@@ -369,7 +458,8 @@ class TorrentDownloadEngine @Inject constructor(
           state = TorrentStatus.State.UNKNOWN,
           isFinished = false,
           isSeeding = false,
-          error = "Handle became invalid"
+          error = "Handle became invalid",
+          largestVideoFileIndex = largestVideoFileIndex
         ))
         break
       }
@@ -407,7 +497,8 @@ class TorrentDownloadEngine @Inject constructor(
         state = state,
         isFinished = state == TorrentStatus.State.FINISHED || state == TorrentStatus.State.SEEDING,
         isSeeding = state == TorrentStatus.State.SEEDING,
-        error = errorMsg
+        error = errorMsg,
+        largestVideoFileIndex = largestVideoFileIndex
       )
 
       emit(info)

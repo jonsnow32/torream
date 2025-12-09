@@ -1,9 +1,15 @@
 package cloud.app.csplayer.download.torrent
 
+import android.content.Context
+import android.content.SharedPreferences
+import cloud.app.csplayer.R
+import cloud.app.csplayer.ui.settings.SettingsDownload.Companion.DEFAULT_TORRENT_PORT
+import dagger.hilt.android.qualifiers.ApplicationContext
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jsoup.helper.RequestAuthenticator
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
@@ -18,14 +24,15 @@ import javax.inject.Singleton
  */
 @Singleton
 class TorrentStreamServer @Inject constructor(
-  private val sessionManager: TorrentSessionManager
+  private val sessionManager: TorrentSessionManager,
+  private val sharedPreferences: SharedPreferences,
+  @ApplicationContext private val context: Context,
 ) {
 
   private var server: StreamServer? = null
   private var currentPort: Int = 0
 
   companion object {
-    private const val DEFAULT_PORT = 8080
     private const val MAX_PORT_ATTEMPTS = 10
   }
 
@@ -38,8 +45,7 @@ class TorrentStreamServer @Inject constructor(
       return@withContext "http://127.0.0.1:$currentPort"
     }
 
-    // Try to find an available port
-    var port = DEFAULT_PORT
+    var port = sharedPreferences.getInt(context.getString(R.string.download_torrent_port_key), DEFAULT_TORRENT_PORT)
     var started = false
     var attempts = 0
 
