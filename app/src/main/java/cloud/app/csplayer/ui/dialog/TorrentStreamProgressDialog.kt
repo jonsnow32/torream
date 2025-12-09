@@ -22,6 +22,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.TimeoutException
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
@@ -62,7 +64,7 @@ class TorrentStreamProgressDialog : DockingDialog() {
     super.onViewCreated(view, savedInstanceState)
 
     // Make dialog cancelable
-    isCancelable = true
+    isCancelable = false
 
     // Cancel button: run any external listener, and also remove torrent if started
     binding.cancelButton.setOnClickListener {
@@ -144,19 +146,22 @@ class TorrentStreamProgressDialog : DockingDialog() {
     val ctx = requireContext()
     val activity = requireActivity()
 
-    lifecycleScope.launch {
+    // Run on IO dispatcher to prevent blocking UI
+    lifecycleScope.launch(Dispatchers.IO) {
       try {
         // Start stream server
         val serverUrl = try {
           torrentStreamServer.start()
         } catch (e: Exception) {
           withContext(Dispatchers.Main) {
-            dismiss()
-            android.widget.Toast.makeText(
-              ctx,
-              "Failed to start stream server: ${e.message}",
-              android.widget.Toast.LENGTH_LONG
-            ).show()
+            if (isVisible) {
+              dismiss()
+              android.widget.Toast.makeText(
+                ctx,
+                "Failed to start stream server: ${e.message}",
+                android.widget.Toast.LENGTH_LONG
+              ).show()
+            }
           }
           Timber.e(e, "Failed to start stream server")
           return@launch
@@ -202,121 +207,100 @@ class TorrentStreamProgressDialog : DockingDialog() {
           }
           else -> {
             withContext(Dispatchers.Main) {
-              dismiss()
-              android.widget.Toast.makeText(
-                ctx,
-                "Invalid torrent URI",
-                android.widget.Toast.LENGTH_LONG
-              ).show()
+              if (isVisible) {
+                dismiss()
+                android.widget.Toast.makeText(
+                  ctx,
+                  "Invalid torrent URI",
+                  android.widget.Toast.LENGTH_LONG
+                ).show()
+              }
             }
             return@launch
           }
         }
 
         var streamReady = false
-        var streamUrl: String? = null
         var torrentName = ""
-        var errorMessage: String? = null
 
-        downloadFlow.collect { info ->
-          // Store info hash for cancellation
-          infoHashToRemove = info.infoHash
-          torrentName = info.name
+        try {
+          // Add timeout: if not ready within 60 seconds, fail
+          withTimeoutOrNull(60_000L) {
+            downloadFlow.collect { info ->
+              // Store info hash for cancellation
+              infoHashToRemove = info.infoHash
+              torrentName = info.name
 
-          // Update progress
+              // Update progress
+              withContext(Dispatchers.Main) {
+                if (isVisible) {
+                  val speedKB = info.downloadRate / 1024
+                  updateProgress(
+                    progress = info.progress,
+                    speedKBps = speedKB,
+                    peers = info.numPeers,
+                    seeds = info.numSeeds,
+                    message = "Downloading: ${info.name}"
+                  )
+                }
+              }
+
+              // Check if we have enough data to start streaming (5% or 10MB, whichever is smaller)
+              val minBytesNeeded = minOf((info.totalSize * 0.05).toLong(), 10 * 1024 * 1024L)
+              if (!streamReady && info.downloadedBytes >= minBytesNeeded) {
+                // Generate stream URL using the largest video file
+                val url = torrentStreamServer.getStreamUrl(info.infoHash, fileIndex = info.largestVideoFileIndex)
+                streamReady = true
+
+                Timber.i("✅ Stream ready: $url")
+                Timber.i("Downloaded: ${info.downloadedBytes / (1024 * 1024)} MB (${info.progress}%)")
+
+                // Start playback
+                withContext(Dispatchers.Main) {
+                  if (isVisible) dismiss()
+                  startPlayback(activity, url, torrentName, info.totalSize)
+                }
+
+                // Exit collect loop after starting playback
+                return@collect
+              }
+
+              // Check if download finished before reaching streaming threshold
+              if (info.isFinished && !streamReady) {
+                // Download finished, generate stream URL using the largest video file
+                val url = torrentStreamServer.getStreamUrl(info.infoHash, fileIndex = info.largestVideoFileIndex)
+                streamReady = true
+
+                Timber.i("✅ Download complete, starting playback: $url")
+
+                withContext(Dispatchers.Main) {
+                  if (isVisible) dismiss()
+                  startPlayback(activity, url, torrentName, info.totalSize)
+                }
+
+                // Exit collect loop after starting playback
+                return@collect
+              }
+
+              // Check for errors and log them
+              if (info.error != null) {
+                Timber.e("Streaming error: ${info.error}")
+              }
+            }
+          } ?: run {
+            // Timeout reached
+            throw TimeoutException("Stream preparation timeout after 60s - no peers found")
+          }
+        } catch (e: TimeoutException) {
+          Timber.e("Streaming timeout: ${e.message}")
           withContext(Dispatchers.Main) {
             if (isVisible) {
-              val speedKB = info.downloadRate / 1024
-              updateProgress(
-                progress = info.progress,
-                speedKBps = speedKB,
-                peers = info.numPeers,
-                seeds = info.numSeeds,
-                message = "Downloading: ${info.name}"
-              )
-            }
-          }
-
-          // Check if we have enough data to start streaming (5% or 10MB, whichever is smaller)
-          val minBytesNeeded = minOf((info.totalSize * 0.05).toLong(), 10 * 1024 * 1024L)
-          if (!streamReady && info.downloadedBytes >= minBytesNeeded) {
-            // Generate stream URL using the largest video file
-            val url = torrentStreamServer.getStreamUrl(info.infoHash, fileIndex = info.largestVideoFileIndex)
-            streamUrl = url
-            streamReady = true
-
-            Timber.i("✅ Stream ready: $url")
-            Timber.i("Downloaded: ${info.downloadedBytes / (1024 * 1024)} MB (${info.progress}%)")
-
-            // Start playback
-            withContext(Dispatchers.Main) {
               dismiss()
-
-              // Create PlaybackData for streaming URL
-              val playbackData = PlaybackData(
-                title = "Streaming: $torrentName",
-                videoLinks = listOf(
-                  VideoLink(
-                    url = url,
-                    name = "Torrent Stream (${info.totalSize / (1024 * 1024)} MB)",
-                    headers = emptyMap(),
-                    position = 0L,
-                    subtitles = emptyList(),
-                  )
-                ),
-                subtitles = emptyList(),
-                videoStartIndex = 0,
-                subtitleStartIndex = 0,
-                isSameEpisode = true,
-                hasAd = false
-              )
-
-              val bundle = PlaybackDataHelper.createBundle(playbackData)
-              activity.navigate(R.id.global_to_navigation_mpv_player, bundle)
-            }
-
-            // Continue downloading in background
-            return@collect
-          }
-
-          // Check for errors
-          if (info.error != null) {
-            errorMessage = info.error
-            Timber.e("Streaming error: ${info.error}")
-          }
-
-          // Check if download finished before reaching streaming threshold
-          if (info.isFinished && !streamReady) {
-            // Download finished, generate stream URL using the largest video file
-            val url = torrentStreamServer.getStreamUrl(info.infoHash, fileIndex = info.largestVideoFileIndex)
-            streamUrl = url
-            streamReady = true
-
-            Timber.i("✅ Download complete, starting playback: $url")
-
-            withContext(Dispatchers.Main) {
-              dismiss()
-
-              val playbackData = PlaybackData(
-                title = torrentName,
-                videoLinks = listOf(
-                  VideoLink(
-                    url = url,
-                    name = "Torrent (Complete)",
-                    headers = emptyMap(),
-                    position = 0L,
-                    subtitles = emptyList(),
-                  )
-                ),
-                subtitles = emptyList(),
-                videoStartIndex = 0,
-                subtitleStartIndex = 0,
-                isSameEpisode = true,
-                hasAd = false
-              )
-
-              val bundle = PlaybackDataHelper.createBundle(playbackData)
-              activity.navigate(R.id.global_to_navigation_mpv_player, bundle)
+              android.widget.Toast.makeText(
+                ctx,
+                "Connection timeout - no peers found",
+                android.widget.Toast.LENGTH_LONG
+              ).show()
             }
           }
         }
@@ -324,24 +308,28 @@ class TorrentStreamProgressDialog : DockingDialog() {
         // If we get here without starting stream, show error
         if (!streamReady) {
           withContext(Dispatchers.Main) {
-            dismiss()
-            android.widget.Toast.makeText(
-              ctx,
-              errorMessage ?: "Failed to start streaming. No peers found or connection timeout.",
-              android.widget.Toast.LENGTH_LONG
-            ).show()
+            if (isVisible) {
+              dismiss()
+              android.widget.Toast.makeText(
+                ctx,
+                "Failed to start streaming",
+                android.widget.Toast.LENGTH_LONG
+              ).show()
+            }
           }
         }
 
       } catch (e: Exception) {
         Timber.e(e, "Streaming exception")
         withContext(Dispatchers.Main) {
-          dismiss()
-          android.widget.Toast.makeText(
-            ctx,
-            "Streaming error: ${e.message}",
-            android.widget.Toast.LENGTH_LONG
-          ).show()
+          if (isVisible) {
+            dismiss()
+            android.widget.Toast.makeText(
+              ctx,
+              "Streaming error: ${e.message}",
+              android.widget.Toast.LENGTH_LONG
+            ).show()
+          }
         }
       }
     }
@@ -397,6 +385,36 @@ class TorrentStreamProgressDialog : DockingDialog() {
       Timber.w(e, "Error while looking up existing download dir in repo")
     }
     return null
+  }
+
+  /**
+   * Helper function to start MPV playback with streaming URL
+   */
+  private fun startPlayback(
+    activity: android.app.Activity,
+    url: String,
+    torrentName: String,
+    totalSize: Long
+  ) {
+    val playbackData = PlaybackData(
+      title = "Streaming: $torrentName",
+      videoLinks = listOf(
+        VideoLink(
+          url = url,
+          name = "Torrent Stream (${totalSize / (1024 * 1024)}MB)",
+          headers = emptyMap(),
+          position = 0L,
+          subtitles = emptyList(),
+        )
+      ),
+      subtitles = emptyList(),
+      videoStartIndex = 0,
+      subtitleStartIndex = 0,
+      isSameEpisode = true,
+      hasAd = false
+    )
+    val bundle = PlaybackDataHelper.createBundle(playbackData)
+    activity.navigate(R.id.global_to_navigation_mpv_player, bundle)
   }
 
   private val inputUrl: String by lazy {

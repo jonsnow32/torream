@@ -188,7 +188,7 @@ class UrlInputDialog : DockingDialog() {
         // Stream torrent using TorrentStreamProgressDialog (dialog now contains streaming logic)
         val progressDialog = TorrentStreamProgressDialog.newInstance(inputUrl)
         progressDialog.show(parentFragmentManager, "TorrentStreamProgress")
-
+        dialog.dismissSafe(activity)
         return@setOnClickListener
       }
 
