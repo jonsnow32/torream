@@ -16,7 +16,6 @@ val abiCodes = mapOf(
   "x86_64" to 4
 )
 
-
 android {
   namespace = "cloud.app.csplayer"
   compileSdk = 36
@@ -35,8 +34,8 @@ android {
     applicationId = "cloud.app.csplayer"
     minSdk = 23
     targetSdk = 36
-    versionCode = 118
-    versionName = "1.1.8"
+    versionCode = 119
+    versionName = "1.1.9"
 
 
     // Reads local.properties

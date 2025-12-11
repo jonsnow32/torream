@@ -20,7 +20,9 @@ import kotlin.math.max
  * Handles dialog lifecycle and integrates with MPV player
  */
 class PlayerDialogManager(
-  private val fragment: Fragment
+  private val fragment: Fragment,
+  private val onShowDialog: (() -> Unit)? = null,
+  private val onDismissDialog: (() -> Unit)? = null
 ) {
   private var currentDialog: Dialog? = null
 
@@ -33,21 +35,24 @@ class PlayerDialogManager(
    * Show playback speed selection dialog
    */
   fun showSpeedDialog(currentSpeed: Float, onSpeedSelected: (Float) -> Unit) {
+    onShowDialog?.invoke()
     val speedsText = listOf("0.5x", "0.75x", "1x", "1.25x", "1.5x", "1.75x", "2x")
     val speedsNumbers = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
     val speedIndex = speedsNumbers.indexOf(currentSpeed)
 
-    SelectionDialog.single(
+    val dialog = SelectionDialog.single(
       speedsText,
       speedIndex,
       fragment.getString(R.string.player_speed),
       true
-    ).show(fragment.parentFragmentManager) { bundle ->
+    )
+    dialog.show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
           onSpeedSelected(speedsNumbers[this])
         }
       }
+      onDismissDialog?.invoke()
     }
   }
 
@@ -55,6 +60,7 @@ class PlayerDialogManager(
    * Show codec/decoder selection dialog
    */
   fun showCodecsDialog(currentCodec: String, onCodecSelected: (String) -> Unit) {
+    onShowDialog?.invoke()
     val codecs = listOf("auto", "no", "auto-safe", "auto-copy", "mediacodec", "mediacodec-copy")
     val codecsDisplay = listOf(
       "Hardware (auto)",
@@ -67,19 +73,20 @@ class PlayerDialogManager(
 
     val currentIndex = codecs.indexOf(currentCodec).coerceAtLeast(0)
 
-    SelectionDialog.single(
+    val dialog = SelectionDialog.single(
       codecsDisplay,
       currentIndex,
       fragment.getString(R.string.codec),
       true
-    ).show(fragment.parentFragmentManager) { bundle ->
+    )
+    dialog.show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
           onCodecSelected(codecs[this])
         }
       }
+      onDismissDialog?.invoke()
     }
-
   }
 
   /**
@@ -92,16 +99,17 @@ class PlayerDialogManager(
     onSourceSelected: (VideoLink, SubtitleData?) -> Unit,
     onDismiss: () -> Unit
   ) {
-
+    onShowDialog?.invoke()
     val sourceIndex = currentSelectedLink?.let { allLinks.indexOf(it) } ?: 0
-    SelectionDialog.single(
+    val dialog = SelectionDialog.single(
       allLinks.mapIndexed { index, link ->
         "${index + 1}. ${link.name}"
       },
       sourceIndex,
       fragment.getString(R.string.pick_source),
       true
-    ).show(fragment.parentFragmentManager) { bundle ->
+    )
+    dialog.show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
           allLinks.getOrNull(this)?.let { item ->
@@ -109,6 +117,8 @@ class PlayerDialogManager(
           }
         }
       }
+      onDismissDialog?.invoke()
+      onDismiss()
     }
   }
 
@@ -120,24 +130,29 @@ class PlayerDialogManager(
     onTrackSelected: (Int) -> Unit,
     onDismiss: () -> Unit
   ) {
+    onShowDialog?.invoke()
     val currentVideoTracks = tracks["video"]
     if (currentVideoTracks == null) {
       Toast.makeText(fragment.requireActivity(), "No video tracks available", Toast.LENGTH_SHORT)
         .show()
+      onDismissDialog?.invoke()
       return
     }
     val videoIndex = max((currentVideoTracks.indexOfFirst { it.selected }), 0)
-    SelectionDialog.single(
+    val dialog = SelectionDialog.single(
       currentVideoTracks.map { it.name },
       videoIndex,
       fragment.getString(R.string.video_tracks),
       true
-    ).show(fragment.parentFragmentManager) { bundle ->
+    )
+    dialog.show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
           onTrackSelected(this)
         }
       }
+      onDismissDialog?.invoke()
+      onDismiss()
     }
   }
 
@@ -149,25 +164,30 @@ class PlayerDialogManager(
     onAudioSelected: (audioIndex: Int) -> Unit,
     onDismiss: () -> Unit
   ) {
+    onShowDialog?.invoke()
     val ctx = fragment.activity ?: return
     val currentAudioTracks = tracks["audio"]
     if (currentAudioTracks == null || currentAudioTracks.isEmpty()) {
       Toast.makeText(ctx, "No audio tracks available", Toast.LENGTH_SHORT)
         .show()
+      onDismissDialog?.invoke()
       return
     }
     val audioIndex = max((currentAudioTracks.indexOfFirst { it.selected }), 0)
-    SelectionDialog.single(
+    val dialog = SelectionDialog.single(
       currentAudioTracks.map { it.name },
       audioIndex,
       ctx.getString(R.string.video_tracks),
       true
-    ).show(fragment.parentFragmentManager) { bundle ->
+    )
+    dialog.show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
           onAudioSelected(this)
         }
       }
+      onDismissDialog?.invoke()
+      onDismiss()
     }
   }
 
@@ -181,20 +201,23 @@ class PlayerDialogManager(
     onLoadSubtitlesOnline: () -> Unit,
     onDismiss: () -> Unit
   ) {
+    onShowDialog?.invoke()
     val ctx = fragment.activity ?: return
     val currentSubtitleTracks = tracks["sub"]
     if (currentSubtitleTracks == null || currentSubtitleTracks.isEmpty()) {
       Toast.makeText(ctx, "No subtitle tracks available", Toast.LENGTH_SHORT).show()
+      onDismissDialog?.invoke()
       return
     }
 
     val subtitleIndex = max((currentSubtitleTracks.indexOfFirst { it.selected }), 0)
-    SelectionDialog.single(
+    val dialog = SelectionDialog.single(
       currentSubtitleTracks.map { it.name } + listOf<String>(ctx.getString(R.string.load_from_file), ctx.getString(R.string.load_from_network)),
       subtitleIndex,
       fragment.getString(R.string.subtitle),
       true
-    ).show(fragment.parentFragmentManager) { bundle ->
+    )
+    dialog.show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
         it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
           if (index == currentSubtitleTracks.size) {
@@ -209,8 +232,11 @@ class PlayerDialogManager(
 
         }
       }
+      onDismissDialog?.invoke()
+      onDismiss()
     }
   }
+
   /**
    * Show subtitle offset/delay adjustment dialog
    */
@@ -227,6 +253,7 @@ class PlayerDialogManager(
     val builder = AlertDialog.Builder(ctx, R.style.BaseMaterialDialogTheme)
       .setView(binding.root)
     val dialog = builder.create()
+    onShowDialog?.invoke()
     dialog.show()
 
     binding.apply {
@@ -256,6 +283,7 @@ class PlayerDialogManager(
       subtitleOffsetSubtractMore.setOnClickListener { changeBy(-1000L) }
 
       dialog.setOnDismissListener {
+        onDismissDialog?.invoke()
         onDismiss()
       }
 
@@ -316,4 +344,3 @@ class PlayerDialogManager(
     Toast.makeText(context, messageResId, duration).show()
   }
 }
-

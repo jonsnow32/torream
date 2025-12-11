@@ -826,4 +826,6 @@
   <string name="load_from_file">Cargar desde archivo</string>
   <string name="load_from_network">Cargar desde la red</string>
   <string name="file_already_downloaded">Archivo ya descargado</string>
+  <string name="preparing">Preparando</string>
+  <string name="select_files">Select file</string>
 </resources>

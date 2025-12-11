@@ -66,8 +66,7 @@ class TorrentDownloadViewHolder(
     binding.progressBar.isIndeterminate = progress == 0
     val statusText = when (status) {
       DownloadStatus.REPAIRING -> {
-
-        parent.context.getString(R.string.downloading)
+        parent.context.getString(R.string.preparing)
       }
       DownloadStatus.SEEDING -> {
         parent.context.getString(R.string.seeding)
@@ -75,7 +74,7 @@ class TorrentDownloadViewHolder(
       DownloadStatus.PAUSED -> parent.context.getString(R.string.paused)
       DownloadStatus.FINISHED, DownloadStatus.COMPLETED -> {
         // Load thumbnail from downloaded file
-        feed.downloadState.task.fileName?.let { filePath ->
+        feed.downloadState.task.targetPath.let { filePath ->
           try {
             val torrentDir = UnifiedFileFactory.fromFile(parent.context, File(filePath))
 
@@ -98,7 +97,11 @@ class TorrentDownloadViewHolder(
                 if (videoPath != null) {
                   // Generate thumbnail from video file using FFmpeg
                   Timber.d("Generating thumbnail from video: $videoPath")
-                  binding.thumbnail.loadThumbnail(videoPath)
+                  binding.thumbnail.loadThumbnail(
+                    videoPath,
+                    placeholderRes = android.R.drawable.ic_menu_gallery,
+                    errorRes = android.R.drawable.ic_menu_close_clear_cancel
+                  )
                 } else {
                   Timber.w("No image or video files found in torrent directory: $filePath")
                 }

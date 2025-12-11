@@ -46,6 +46,7 @@ fun ImageView.loadThumbnail(
       }
     } else {
       // Cache miss, load with FFmpeg
+      // Use multiple frame position fallbacks: try beginning, then various positions
       loadThumbnailWithFFmpeg(
         uriString,
         errorRes,

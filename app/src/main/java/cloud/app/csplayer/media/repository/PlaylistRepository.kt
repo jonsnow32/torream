@@ -1,9 +1,16 @@
 package cloud.app.csplayer.media.repository
 
+import android.content.Context
 import cloud.app.csplayer.media.dao.PlaylistDao
 import cloud.app.csplayer.media.entities.PlaylistEntity
 import cloud.app.csplayer.media.entities.PlaylistItemEntity
+import cloud.app.csplayer.ui.player.mpv.MPVUtils.MEDIA_EXTENSIONS
+import cloud.app.csplayer.utils.UnifiedFile
+import cloud.app.csplayer.utils.UnifiedFileFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -62,6 +69,82 @@ class PlaylistRepository @Inject constructor(
 
   suspend fun getPlaylistItemCount(playlistId: Long): Int {
     return playlistDao.getPlaylistItemCount(playlistId)
+  }
+
+  suspend fun createPlaylistFromFolder(context: Context, name: String, folderPath: String): Long = withContext(Dispatchers.IO) {
+    val uniFile: UnifiedFile? = try {
+      UnifiedFileFactory.fromPath(context, folderPath)
+    } catch (e: Exception) {
+      Timber.w(e, "createPlaylistFromFolder: failed to create UnifiedFile for $folderPath")
+      null
+    }
+
+    if (uniFile == null || !uniFile.exists()) {
+      Timber.w("createPlaylistFromFolder: path not found - $folderPath")
+      throw IllegalArgumentException("Path not found: $folderPath")
+    }
+
+    val mediaUris = mutableListOf<String>()
+
+    fun collect(dir: UnifiedFile) {
+      try {
+        dir.listFiles()?.forEach { file ->
+          when {
+            file.isDirectory -> collect(file)
+            file.isFile -> {
+              val ext = file.name.substringAfterLast('.', "").lowercase()
+              if (ext in MEDIA_EXTENSIONS) {
+                mediaUris.add(file.uri.toString())
+              }
+            }
+          }
+        }
+      } catch (e: Exception) {
+        Timber.w(e, "Error collecting media files from ${dir.name}")
+      }
+    }
+
+    if (uniFile.isFile) {
+      val ext = uniFile.name.substringAfterLast('.', "").lowercase()
+      if (ext in MEDIA_EXTENSIONS) {
+        mediaUris.add(uniFile.uri.toString())
+      }
+    } else {
+      collect(uniFile)
+    }
+
+    if (mediaUris.isEmpty()) {
+      Timber.w("createPlaylistFromFolder: no media files found in $folderPath")
+      throw IllegalArgumentException("No media files found in path: $folderPath")
+    }
+
+    // Insert playlist
+    val playlistEntity = PlaylistEntity(
+      id = 0L,
+      name = name,
+      createdAt = System.currentTimeMillis()
+    )
+
+    val playlistId = playlistDao.insertPlaylist(playlistEntity)
+
+    // Insert items preserving collected order
+    var position = 0
+    mediaUris.forEach { uri ->
+      try {
+        val item = PlaylistItemEntity(
+          id = 0L,
+          playlistId = playlistId,
+          mediaUri = uri,
+          position = position++
+        )
+        playlistDao.insertPlaylistItem(item)
+      } catch (e: Exception) {
+        Timber.w(e, "Failed to insert playlist item: $uri")
+      }
+    }
+
+    Timber.d("createPlaylistFromFolder: created playlist '$name' ($playlistId) with ${mediaUris.size} items")
+    playlistId
   }
 }
 

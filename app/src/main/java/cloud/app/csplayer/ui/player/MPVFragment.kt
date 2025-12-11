@@ -718,7 +718,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       mediaManager.setPlayer(player)
 
       // Initialize dialog manager
-      dialogManager = PlayerDialogManager(this)
+      dialogManager = PlayerDialogManager(this, onDismissDialog = {
+        enterFullscreen()
+      })
 
       // Initialize PIP action manager (Android O+)
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

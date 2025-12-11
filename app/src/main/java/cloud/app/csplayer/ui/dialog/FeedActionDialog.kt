@@ -8,7 +8,6 @@ import android.widget.AbsListView
 import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.view.isVisible
 import androidx.core.content.ContextCompat
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.DialogFeedActionBinding
@@ -37,6 +36,9 @@ class FeedActionDialog : DockingDialog() {
     args.getSerialized<List<ActionItem>>(ITEMS_KEY)
   }
 
+  private val titleRez by lazy {
+    args.getInt(TITLE_KEY, R.string.feed_action)
+  }
   override fun onCreateView(
     inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
   ): View {
@@ -48,7 +50,7 @@ class FeedActionDialog : DockingDialog() {
     val context = this.context ?: return
 
     binding.apply {
-      text1.text = getString(R.string.feed_action)
+      text1.text = getString(titleRez)
       // Setup listview1 with action items
       val itemList = items ?: emptyList()
       val adapter = object : ArrayAdapter<ActionItem>(
@@ -99,23 +101,28 @@ class FeedActionDialog : DockingDialog() {
 
   companion object {
     const val ITEMS_KEY = "feed_action_items_key"
+    const val TITLE_KEY = "feed_action_title_key"
     fun newInstance(
-      actionItems: List<ActionItem>
+      actionItems: List<ActionItem>,
+      title: Int? = null
     ) = FeedActionDialog().apply {
       arguments = Bundle().apply {
         putSerialized(ITEMS_KEY, actionItems)
+        title?.let {
+          putInt(TITLE_KEY, title)
+        }
       }
     }
   }
 
-  private var selectedItemIdex = -1
-  override fun getResultBundle(): Bundle? {
-    return if (selectedItemIdex > -1) {
-      Bundle().apply {
-        putIntegerArrayList(ITEMS_SELECTED, arrayListOf(selectedItemIdex))
+    private var selectedItemIdex = -1
+    override fun getResultBundle(): Bundle? {
+      return if (selectedItemIdex > -1) {
+        Bundle().apply {
+          putIntegerArrayList(ITEMS_SELECTED, arrayListOf(selectedItemIdex))
+        }
+      } else {
+        null
       }
-    } else {
-      null
     }
   }
-}

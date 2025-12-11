@@ -11,6 +11,7 @@ import cloud.app.csplayer.media.dao.FolderDao
 import cloud.app.csplayer.media.dao.MediaDao
 import cloud.app.csplayer.media.dataSource.MediaPermissionException
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSource
+import cloud.app.csplayer.media.dataSource.MediaStoreDataSourceImpl
 import cloud.app.csplayer.media.entities.FolderEntity
 import cloud.app.csplayer.media.entities.HttpEntity
 import cloud.app.csplayer.media.entities.MediaEntity
@@ -108,8 +109,25 @@ class MediaRepositoryImpl @Inject constructor(
     _syncState.value = SyncState.Syncing(0f)
 
     try {
-      val mediaItems = mediaStore.queryAllMedia()
-      Timber.d("performSync: Found ${mediaItems.size} media items")
+      // Get media from MediaStore
+      val mediaItems = mediaStore.queryAllMedia().toMutableList()
+      Timber.d("performSync: Found ${mediaItems.size} media items from MediaStore")
+
+      // Scan app's Download folder for media not in MediaStore
+      val downloadFolderItems = (mediaStore as? MediaStoreDataSourceImpl)?.scanAppDownloadFolder() ?: emptyList()
+      if (downloadFolderItems.isNotEmpty()) {
+        Timber.d("performSync: Found ${downloadFolderItems.size} media items in Download folder")
+
+        // Add download folder items that aren't already in mediaItems
+        val existingUris = mediaItems.map { it.uri }.toSet()
+        downloadFolderItems.forEach { item ->
+          if (item.uri !in existingUris) {
+            mediaItems.add(item)
+          }
+        }
+      }
+
+      Timber.d("performSync: Total ${mediaItems.size} media items after combining sources")
 
       // Parallel processing
       coroutineScope {

@@ -7,6 +7,7 @@ import androidx.navigation.fragment.findNavController
 import cloud.app.csplayer.R
 import cloud.app.csplayer.model.PlaybackData
 import cloud.app.csplayer.model.VideoLink
+import cloud.app.csplayer.model.Media
 import cloud.app.csplayer.ui.dialog.FeedActionDialog
 import cloud.app.csplayer.ui.dialog.ActionItem
 import cloud.app.csplayer.ui.dialog.SelectionDialog
@@ -21,6 +22,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.download.DownloadCoordinator
+import cloud.app.csplayer.download.DownloadState
 import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.media.repository.MediaRepository
 import cloud.app.csplayer.utils.UnifiedFile
@@ -42,10 +44,21 @@ class FeedAction(
       "mpg", "mpeg", "3gp", "ts", "m2ts", "vob", "ogv", "rmvb"
     )
 
+    // Audio file extensions supported by MPV player
+    private val AUDIO_EXTENSIONS = setOf(
+      "mp3", "aac", "flac", "wav", "ogg", "m4a", "wma"
+    )
+
     private fun isVideoFile(file: UnifiedFile): Boolean {
       val fileName = file.name.lowercase()
       val extension = fileName.substringAfterLast('.', "")
       return extension in VIDEO_EXTENSIONS
+    }
+
+    private fun isAudioFile(file: UnifiedFile): Boolean {
+      val fileName = file.name.lowercase()
+      val extension = fileName.substringAfterLast('.', "")
+      return extension in AUDIO_EXTENSIONS
     }
   }
 
@@ -186,11 +199,7 @@ class FeedAction(
               fragment.parentFragmentManager
             ) { bundle ->
               bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
-                val favoriteText =
-                  if (isFav) fragment.getString(R.string.action_remove_from_favorites) else fragment.getString(
-                    R.string.action_add_to_favorites
-                  )
-                handleMediaItemAction(item, actionItems[index], favoriteText)
+                handleMediaItemAction(item, actionItems[index])
               }
             }
           }
@@ -238,11 +247,11 @@ class FeedAction(
           val state = downloadRepository.observeState(item.id).firstOrNull()
           val status = state?.status
 
-          // Check if favorited
           val isFav = favoriteRepository.isFavorite(item.id)
-          val favoriteText = if (isFav) "⭐ Remove from favorites" else "☆ Add to favorites"
-
-          val actionItems = buildDownloadItemActions(status, favoriteText)
+          val unifiedFile = fragment.context?.let {
+            UnifiedFileFactory.fromPath(it, state?.task?.targetPath ?: "")
+          }
+          val actionItems = buildDownloadItemActions(status, unifiedFile)
 
           if (actionItems.isEmpty()) {
             showToast("No actions available")
@@ -254,7 +263,7 @@ class FeedAction(
               fragment.parentFragmentManager
             ) { bundle ->
               bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
-                handleDownloadItemAction(item, actionItems[index].id, favoriteText, state)
+                handleDownloadItemAction(item, actionItems[index].id)
               }
             }
           }
@@ -277,7 +286,7 @@ class FeedAction(
         isDestructive = false
       ),
       ActionItem(
-        id = "favorite",
+        id = (if (isFav) "add_to_favorite" else "remove_from_favorite"),
         title = favoriteText,
         iconRes = if (isFav) R.drawable.favorite_24dp else R.drawable.favorite_border_24dp,
         isDestructive = false
@@ -290,7 +299,7 @@ class FeedAction(
       ),
       ActionItem(
         id = "add_to_playlist",
-        title = "Add to playlist",
+        title = fragment.getString(R.string.add_to_playlist),
         iconRes = R.drawable.media3_icon_playlist_add,
         isDestructive = false
       ),
@@ -362,11 +371,13 @@ class FeedAction(
 
   private fun buildDownloadItemActions(
     status: DownloadStatus?,
-    favoriteText: String
+    unifiedFile: UnifiedFile? = null
   ): List<ActionItem> {
     return buildList {
+      val isFolder = unifiedFile?.isDirectory == true
+      val isFile = unifiedFile?.isFile == true
       // "play" - only if completed
-      if (status == DownloadStatus.COMPLETED) {
+      if (status == DownloadStatus.COMPLETED && isFile) {
         add(
           ActionItem(
             id = "play",
@@ -433,15 +444,34 @@ class FeedAction(
 
       // "show files" - only if completed
       if (status == DownloadStatus.COMPLETED) {
-        add(
-          ActionItem(
-            id = "show_files",
-            title = fragment.getString(R.string.show_files),
-            iconRes = R.drawable.outline_arrow_outward_24,
-            isDestructive = false
+        if (isFolder) {
+          add(
+            ActionItem(
+              id = "show_files",
+              title = fragment.getString(R.string.show_files),
+              iconRes = R.drawable.outline_arrow_outward_24,
+              isDestructive = false
+            )
           )
-        )
+          add(
+            ActionItem(
+              id = "add_to_playlist",
+              title = fragment.getString(R.string.add_to_playlist),
+              iconRes = androidx.media3.session.R.drawable.media3_icon_playlist_add,
+              isDestructive = false
+            )
+          )
+          add(
+            ActionItem(
+              id = "create_playlist_from_folder",
+              title = fragment.getString(R.string.add_playlist),
+              iconRes = R.drawable.ic_baseline_add_24,
+              isDestructive = false
+            )
+          )
+        }
       }
+
 
 //      // "favorite" - always available
 //      add(
@@ -469,15 +499,15 @@ class FeedAction(
 
   private fun handleMediaItemAction(
     item: FeedData.MediaItem,
-    actionItem: ActionItem,
-    favoriteText: String
+    actionItem: ActionItem
   ) {
     when (actionItem.id) {
       "play" -> {
         playMediaItem(item)
       }
 
-      favoriteText -> {
+      "remove_from_favorite",
+      "add_to_favorite" -> {
         fragment.lifecycleScope.launch {
           try {
             val favorite = cloud.app.csplayer.media.dao.FavoriteEntity(
@@ -570,11 +600,9 @@ class FeedAction(
   private fun handleDownloadItemAction(
     item: FeedData,
     actionId: String,
-    favoriteText: String,
-    state: cloud.app.csplayer.download.DownloadState?
   ) {
 
-    val context = fragment.context ?: run{
+    val context = fragment.context ?: run {
       Timber.e("Context is null in handleDownloadItemAction")
       return
     }
@@ -656,7 +684,8 @@ class FeedAction(
         }
       }
 
-      favoriteText -> {
+      "add_to_favorite",
+      "remove_from_favorite" -> {
         fragment.lifecycleScope.launch {
           try {
             val state = downloadRepository.observeState(item.id).firstOrNull()
@@ -683,6 +712,135 @@ class FeedAction(
         }
       }
 
+      "add_to_playlist" -> {
+        fragment.lifecycleScope.launch {
+          try {
+            val state = downloadRepository.observeState(item.id).firstOrNull()
+            if (state == null) {
+              showToast("Download not found")
+              return@launch
+            }
+
+            val targetPath = state.task.targetPath
+            val uniFile = UnifiedFileFactory.fromPath(context, targetPath)
+
+            if (uniFile == null || !uniFile.exists()) {
+              showToast("Download folder not found")
+              Timber.w("add_to_playlist: Download folder not found - targetPath=$targetPath")
+              return@launch
+            }
+
+            // Convert download files to MediaItems
+            val mediaItems = mutableListOf<FeedData.MediaItem>()
+
+            if (uniFile.isFile) {
+              // Single file - create MediaItem
+              val uri = uniFile.uri.toString()
+              mediaItems.add(
+                FeedData.MediaItem(
+                  id = uri,
+                  title = uniFile.name,
+                  type = FeedData.Type.Audio,
+                  media = Media(
+                    id = uri.hashCode().toLong(),
+                    uri = uri,
+                    path = targetPath,
+                    name = uniFile.name,
+                    size = uniFile.length(),
+                    duration = 0L,
+                    width = 0,
+                    height = 0,
+                    dateModified = System.currentTimeMillis(),
+                    mimeType = "",
+                    position = 0L
+                  )
+                )
+              )
+            } else if (uniFile.isDirectory) {
+              // Directory - collect all media files
+              val videoExtensions = setOf(
+                "mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v",
+                "mpg", "mpeg", "3gp", "ts", "m2ts", "vob", "ogv", "rmvb"
+              )
+              val audioExtensions = setOf("mp3", "aac", "flac", "wav", "ogg", "m4a", "wma")
+
+              fun collectMediaFiles(dir: UnifiedFile) {
+                try {
+                  dir.listFiles()?.forEach { file ->
+                    if (file.isDirectory) {
+                      collectMediaFiles(file)
+                    } else if (file.isFile) {
+                      val ext = file.name.substringAfterLast('.', "").lowercase()
+                      val isMedia = ext in videoExtensions || ext in audioExtensions
+                      if (isMedia) {
+                        val uri = file.uri.toString()
+                        val type = if (ext in audioExtensions) FeedData.Type.Audio else FeedData.Type.Video
+                        mediaItems.add(
+                          FeedData.MediaItem(
+                            id = uri,
+                            title = file.name,
+                            type = type,
+                    media = Media(
+                      id = uri.hashCode().toLong(),
+                      uri = uri,
+                      path = file.filePath ?: uri,
+                      name = file.name,
+                      size = file.length(),
+                      duration = 0L,
+                      width = 0,
+                      height = 0,
+                      dateModified = System.currentTimeMillis(),
+                      mimeType = "",
+                      position = 0L
+                    )
+                          )
+                        )
+                      }
+                    }
+                  }
+                } catch (e: Exception) {
+                  Timber.w(e, "Error collecting media files from directory")
+                }
+              }
+
+              collectMediaFiles(uniFile)
+            }
+
+            if (mediaItems.isEmpty()) {
+              showToast("No media files found in download")
+              Timber.w("add_to_playlist: No media files found in download - targetPath=$targetPath")
+              return@launch
+            }
+
+            Timber.d("Converting ${mediaItems.size} download file(s) to MediaItems for playlist")
+            showAddToPlaylistDialog(mediaItems)
+
+          } catch (e: Exception) {
+            Timber.e(e, "Error adding download to playlist")
+            showToast("Failed to add to playlist: ${e.message}")
+          }
+        }
+      }
+      "create_playlist_from_folder" -> {
+        fragment.lifecycleScope.launch {
+          try {
+
+            val state = downloadRepository.observeState(item.id).firstOrNull()
+            if (state == null) {
+              showToast("Download not found")
+              return@launch
+            }
+
+            val targetPath = state.task.targetPath
+
+            playlistRepository.createPlaylistFromFolder(fragment.requireContext(), item.title, targetPath)
+            showToast("Playlist created from folder")
+          } catch (e: Exception) {
+            Timber.e(e, "Error creating playlist from folder")
+            showToast("Failed to create playlist: ${e.message}")
+          }
+        }
+      }
       "show_files" -> {
         fragment.lifecycleScope.launch {
           try {
@@ -728,16 +886,15 @@ class FeedAction(
             val sortedFiles = allFiles.sortedByDescending { it.length() }
             val fileActionItems = sortedFiles.mapIndexed { index, file ->
               val size = formatFileSize(file.length())
-              val type = if (isVideoFile(file)) "🎬" else "📄"
               ActionItem(
                 id = index.toString(),
-                title = "$type ${file.name} ($size)",
-                iconRes = null,
+                title = "${file.name} ($size)",
+                iconRes = getFileIconRes(file),
                 isDestructive = false
               )
             }
 
-            FeedActionDialog.newInstance(fileActionItems).show(
+            FeedActionDialog.newInstance(fileActionItems, R.string.select_files).show(
               fragment.parentFragmentManager
             ) { bundle ->
               bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)
@@ -761,6 +918,14 @@ class FeedAction(
       bytes < 1024 * 1024 -> "${bytes / 1024} KB"
       bytes < 1024 * 1024 * 1024 -> "${bytes / (1024 * 1024)} MB"
       else -> String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
+    }
+  }
+
+  fun getFileIconRes(file: UnifiedFile): Int {
+    return when {
+      isVideoFile(file) -> R.drawable.outline_play_circle_24
+      isAudioFile(file) -> R.drawable.outline_music_note_24
+      else -> R.drawable.ic_file
     }
   }
 
@@ -828,6 +993,60 @@ class FeedAction(
     }
   }
 
+  fun showListFile(item: FeedData, state: DownloadState) {
+    val context = fragment.context ?: run {
+      showToast("Context not available")
+      return
+    }
+
+    // targetPath can be either a file system path or a URI
+    val targetPath = state.task.targetPath
+
+    // Use fromPath to automatically handle both URIs and file paths
+    val uniFile = UnifiedFileFactory.fromPath(context, targetPath)
+
+    if (uniFile == null || !uniFile.exists()) {
+      showToast(context.getString(R.string.downloaded_file_not_found))
+      Timber.e("playDownloadedFile: Failed to open or path doesn't exist - targetPath=$targetPath")
+      return
+    }
+
+    if (!uniFile.isDirectory) {
+      showToast("Downloaded path is not a directory")
+      return
+    }
+
+    val allFiles = mutableListOf<UnifiedFile>()
+    fun collectFiles(directory: UnifiedFile) {
+      directory.listFiles()?.forEach { file: UnifiedFile ->
+        when {
+          file.isDirectory -> collectFiles(file)
+          file.isFile -> allFiles.add(file)
+        }
+      }
+    }
+    collectFiles(uniFile)
+    val sortedFiles = allFiles.sortedByDescending { it.length() }
+    val fileActionItems = sortedFiles.mapIndexed { index, file ->
+      val size = formatFileSize(file.length())
+      ActionItem(
+        id = index.toString(),
+        title = "${file.name} ($size)",
+        iconRes = getFileIconRes(file),
+        isDestructive = false
+      )
+    }
+
+    FeedActionDialog.newInstance(fileActionItems, R.string.select_files).show(
+      fragment.parentFragmentManager
+    ) { bundle ->
+      bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)
+        ?.let { selectedIndex ->
+          playFile(sortedFiles[selectedIndex], item)
+        }
+    }
+  }
+
   // Helper function to play completed download
   fun playDownloadedFile(item: FeedData, state: cloud.app.csplayer.download.DownloadState) {
     try {
@@ -854,36 +1073,8 @@ class FeedAction(
         // Single file - play directly
         playFile(uniFile, item)
       } else if (uniFile.isDirectory) {
-        // Directory (torrent) - find and play largest video file
-        val videoFiles = mutableListOf<UnifiedFile>()
-
-        fun findVideoFiles(dir: UnifiedFile) {
-          dir.listFiles()?.forEach { file: UnifiedFile ->
-            when {
-              file.isDirectory -> findVideoFiles(file)
-              file.isFile && isVideoFile(file) -> videoFiles.add(file)
-            }
-          }
-        }
-
-        findVideoFiles(uniFile)
-
-        if (videoFiles.isEmpty()) {
-          showToast("No video files found in download")
-          return
-        }
-
-        if (videoFiles.size == 1) {
-          // Only one video file - play it
-          playFile(videoFiles[0], item)
-        } else {
-          // Multiple video files - play largest one
-          val largestFile = videoFiles.maxByOrNull { it.length() }
-          if (largestFile != null) {
-            Timber.i("Playing largest video file: ${largestFile.name} (${largestFile.length() / (1024 * 1024)} MB)")
-            playFile(largestFile, item)
-          }
-        }
+        // Directory - show file selection dialog
+        showListFile(item, state)
       } else {
         showToast("Invalid download path")
         Timber.e("playDownloadedFile: Path is neither file nor directory - isFile=${uniFile.isFile}, isDirectory=${uniFile.isDirectory}")
@@ -950,9 +1141,23 @@ class FeedAction(
   }
 
   private fun showAddToPlaylistDialog(item: FeedData.MediaItem) {
+    showAddToPlaylistDialog(listOf(item))
+  }
+
+  /**
+   * Show dialog to add one or multiple media items to a playlist
+   * @param items List of media items to add to playlist
+   */
+  private fun showAddToPlaylistDialog(items: List<FeedData.MediaItem>) {
+    if (items.isEmpty()) {
+      Timber.w("No items to add to playlist")
+      showToast("No items selected")
+      return
+    }
+
     fragment.lifecycleScope.launch {
       try {
-        Timber.d("Loading playlists for add to playlist dialog")
+        Timber.d("Loading playlists for add to playlist dialog (${items.size} item(s))")
 
         // Get all playlists - collect from Flow
         val playlists = withContext(Dispatchers.IO) {
@@ -993,12 +1198,13 @@ class FeedAction(
           FeedActionDialog.newInstance(playlistItems).show(
             fragment.parentFragmentManager
           ) { bundle ->
-            bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { selectedIndex ->
-              Timber.d("User selected playlist at index: $selectedIndex")
-              val selectedPlaylist = playlists[selectedIndex]
-              Timber.d("Selected playlist: ${selectedPlaylist.name}")
-              addMediaToPlaylist(item, selectedPlaylist.id)
-            }
+            bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)
+              ?.let { selectedIndex ->
+                Timber.d("User selected playlist at index: $selectedIndex")
+                val selectedPlaylist = playlists[selectedIndex]
+                Timber.d("Selected playlist: ${selectedPlaylist.name}")
+                addMediaToPlaylist(items, selectedPlaylist.id)
+              }
           }
         }
 
@@ -1009,18 +1215,38 @@ class FeedAction(
     }
   }
 
+  @Suppress("UNUSED")
   private fun addMediaToPlaylist(item: FeedData.MediaItem, playlistId: Long) {
+    addMediaToPlaylist(listOf(item), playlistId)
+  }
+
+  /**
+   * Add one or multiple media items to a playlist
+   * @param items List of media items to add
+   * @param playlistId ID of the target playlist
+   */
+  private fun addMediaToPlaylist(items: List<FeedData.MediaItem>, playlistId: Long) {
     fragment.lifecycleScope.launch {
       try {
-        val mediaUri = item.media.uri
-        Timber.d("Adding media to playlist - playlistId: $playlistId, mediaUri: $mediaUri")
+        Timber.d("Adding ${items.size} media item(s) to playlist - playlistId: $playlistId")
 
-        withContext(Dispatchers.IO) {
-          playlistRepository.addMediaToPlaylist(playlistId, mediaUri)
+        val successCount = withContext(Dispatchers.IO) {
+          var count = 0
+          for (item in items) {
+            try {
+              val mediaUri = item.media.uri
+              Timber.d("Adding media to playlist - playlistId: $playlistId, mediaUri: $mediaUri")
+              playlistRepository.addMediaToPlaylist(playlistId, mediaUri)
+              count++
+            } catch (e: Exception) {
+              Timber.w(e, "Failed to add individual media item to playlist")
+            }
+          }
+          count
         }
 
-        showToast("Added to playlist")
-        Timber.d("Successfully added media to playlist")
+        showToast("Added $successCount of ${items.size} item(s) to playlist")
+        Timber.d("Successfully added $successCount media item(s) to playlist")
 
       } catch (e: Exception) {
         Timber.e(e, "Error adding media to playlist")

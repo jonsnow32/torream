@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import cloud.app.csplayer.model.Media
@@ -446,6 +447,103 @@ class MediaStoreDataSourceImpl @Inject constructor(
       } catch (_: Exception) {
         false
       }
+    }
+  }
+
+  /**
+   * Scan app's Download folder for media files
+   * This handles files in /storage/emulated/0/Android/data/{package}/files/Download
+   * which are not indexed by MediaStore
+   */
+  suspend fun scanAppDownloadFolder(): List<Media> = withContext(Dispatchers.IO) {
+    val mediaItems = mutableListOf<Media>()
+
+    try {
+      val downloadDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+      if (downloadDir != null && downloadDir.exists() && downloadDir.isDirectory) {
+        timber.log.Timber.d("scanAppDownloadFolder: Scanning directory ${downloadDir.absolutePath}")
+        scanDirectoryForMedia(downloadDir, mediaItems)
+      } else {
+        timber.log.Timber.w("scanAppDownloadFolder: Download directory not found or not accessible")
+      }
+    } catch (e: Exception) {
+      timber.log.Timber.e(e, "scanAppDownloadFolder: Error scanning download folder")
+    }
+
+    timber.log.Timber.d("scanAppDownloadFolder: Found ${mediaItems.size} media items in download folder")
+    mediaItems
+  }
+
+  /**
+   * Recursively scan a directory for media files
+   */
+  private fun scanDirectoryForMedia(directory: File, mediaItems: MutableList<Media>) {
+    try {
+      directory.listFiles()?.forEach { file ->
+        when {
+          file.isDirectory -> {
+            // Recursively scan subdirectories
+            scanDirectoryForMedia(file, mediaItems)
+          }
+          file.isFile && isMediaFile(file) -> {
+            // Add media file
+            val mimeType = getMimeType(file)
+            mediaItems.add(
+              Media(
+                id = file.absolutePath.hashCode().toLong(),
+                uri = Uri.fromFile(file).toString(),
+                path = file.absolutePath,
+                name = file.name,
+                size = file.length(),
+                duration = 0L, // Duration would require MediaMetadataRetriever
+                width = if (mimeType.startsWith("video/")) 0 else 0,
+                height = if (mimeType.startsWith("video/")) 0 else 0,
+                dateModified = file.lastModified(),
+                mimeType = mimeType
+              )
+            )
+          }
+        }
+      }
+    } catch (e: Exception) {
+      timber.log.Timber.w(e, "scanDirectoryForMedia: Error scanning directory ${directory.absolutePath}")
+    }
+  }
+
+  /**
+   * Check if a file is a media file (video or audio)
+   */
+  private fun isMediaFile(file: File): Boolean {
+    val mimeType = getMimeType(file)
+    return mimeType.startsWith("video/") || mimeType.startsWith("audio/")
+  }
+
+  /**
+   * Get MIME type from file extension
+   */
+  private fun getMimeType(file: File): String {
+    return when (file.extension.lowercase()) {
+      // Video formats
+      "mp4", "m4v" -> "video/mp4"
+      "mkv" -> "video/x-matroska"
+      "webm" -> "video/webm"
+      "avi" -> "video/x-msvideo"
+      "mov" -> "video/quicktime"
+      "flv" -> "video/x-flv"
+      "wmv" -> "video/x-ms-wmv"
+      "3gp" -> "video/3gpp"
+      "m3u8" -> "application/vnd.apple.mpegurl"
+      "ts", "m2ts", "mts" -> "video/mp2t"
+      // Audio formats
+      "mp3" -> "audio/mpeg"
+      "m4a" -> "audio/mp4"
+      "aac" -> "audio/aac"
+      "ogg", "oga" -> "audio/ogg"
+      "flac" -> "audio/flac"
+      "wav" -> "audio/wav"
+      "wma" -> "audio/x-ms-wma"
+      "aiff" -> "audio/x-aiff"
+      else -> "application/octet-stream"
     }
   }
 
