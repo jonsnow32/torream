@@ -27,6 +27,9 @@ interface PlaylistDao {
   @Query("SELECT * FROM playlists WHERE id = :playlistId")
   fun getPlaylistByIdFlow(playlistId: Long): Flow<PlaylistEntity?>
 
+  @Query("SELECT * FROM playlists ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
+  suspend fun getPlaylists(limit: Int, offset: Int): List<PlaylistEntity>
+
   @Query("DELETE FROM playlists WHERE id = :playlistId")
   suspend fun deletePlaylistById(playlistId: Long)
 

@@ -11,6 +11,7 @@ import cloud.app.csplayer.media.dao.MediaPlaybackDao
 import cloud.app.csplayer.media.dao.PlaylistDao
 import cloud.app.csplayer.media.db.MediaDatabase
 import cloud.app.csplayer.media.db.migrations.Migration_8_9
+import cloud.app.csplayer.media.db.migrations.Migration_9_10
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSource
 import cloud.app.csplayer.media.dataSource.MediaStoreDataSourceImpl
 import cloud.app.csplayer.media.repository.MediaRepository
@@ -37,7 +38,7 @@ object DatabaseModule {
       MediaDatabase::class.java,
       "media_database"
     )
-      .addMigrations(Migration_8_9)
+      .addMigrations(Migration_8_9, Migration_9_10)
       .fallbackToDestructiveMigration(BuildConfig.DEBUG) // For development - recreate DB on schema changes
       .build()
   }
@@ -100,4 +101,3 @@ object DatabaseModule {
     return MediaRepositoryImpl(mediaDao, folderDao, downloadDao, mediaStore, scope, context)
   }
 }
-

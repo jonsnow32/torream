@@ -14,12 +14,6 @@ import androidx.room.PrimaryKey
       parentColumns = ["id"],
       childColumns = ["playlist_id"],
       onDelete = ForeignKey.CASCADE
-    ),
-    ForeignKey(
-      entity = MediaEntity::class,
-      parentColumns = ["uri"],
-      childColumns = ["media_uri"],
-      onDelete = ForeignKey.CASCADE
     )
   ],
   indices = [

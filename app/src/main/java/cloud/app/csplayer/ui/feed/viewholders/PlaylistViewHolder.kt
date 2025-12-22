@@ -36,9 +36,6 @@ class PlaylistViewHolder(
       binding.description.text = feed.description
     }
 
-    // TODO: Load thumbnail if available
-    // For now, use default playlist icon
-    binding.imgCover.setImageResource(R.drawable.media3_icon_playlist_add)
 
     binding.root.setOnClickListener {
       clickListener.onItemClick(feed)

@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
-  android:layout_width="match_parent"
+  android:layout_width="?attr/itemCoverSize2x"
   android:layout_height="wrap_content"
   style="@style/MediaItem"
   android:orientation="vertical">
@@ -17,7 +17,7 @@
       android:layout_height="0dp"
       android:importantForAccessibility="no"
       android:scaleType="centerCrop"
-      android:src="@drawable/media3_icon_playlist_add"
+      android:src="@drawable/rounded_featured_play_list_24"
       android:background="?attr/colorSurface"
       android:padding="24dp"
       app:layout_constraintBottom_toBottomOf="parent"

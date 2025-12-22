@@ -96,9 +96,32 @@ class FeedAction(
       }
 
       is FeedData.PlaylistItem -> {
-        // TODO: Navigate to playlist details screen
-        // For now, show a toast
-        showToast("Playlist: ${item.title} (${item.itemCount} items)")
+        fragment.lifecycleScope.launch {
+          try {
+            // Convert playlist id from String to Long
+            val playlistId = item.id.toLongOrNull() ?: run {
+              showToast("Invalid playlist ID")
+              return@launch
+            }
+
+            // Get all playlist items from repository
+            val playlistItems = playlistRepository.getPlaylistItems(playlistId)
+              .firstOrNull() ?: emptyList()
+
+            if (playlistItems.isEmpty()) {
+              showToast("Playlist is empty")
+              return@launch
+            }
+
+            Timber.d("Playing ${playlistItems.size} items from playlist: ${item.title}")
+
+            // Play all playlist items
+            playPlaylistItems(playlistItems)
+          } catch (e: Exception) {
+            Timber.e(e, "Error playing playlist items")
+            showToast("Error loading playlist: ${e.message}")
+          }
+        }
       }
 
       is FeedData.HttpDownloadItem,
@@ -184,6 +207,65 @@ class FeedAction(
     }
   }
 
+  private fun showPlayListItems(item: FeedData.PlaylistItem) {
+    fragment.lifecycleScope.launch {
+      try {
+        // Get playlist items
+        val playlistId = item.id.toLongOrNull() ?: run {
+          showToast("Invalid playlist ID")
+          return@launch
+        }
+        val playlistItems = playlistRepository.getPlaylistItems(playlistId)
+          .firstOrNull() ?: emptyList()
+
+        if (playlistItems.isEmpty()) {
+          showToast("Playlist is empty")
+          return@launch
+        }
+
+            // Convert media URIs to display names
+            val itemNames = playlistItems.map { playlistItem ->
+              // Extract filename from URI or use a generic name
+              playlistItem.mediaUri.substringAfterLast('/').let { name ->
+                if (name.isEmpty()) "Unknown" else name.replace("%20", " ")
+              }
+            }
+
+        // Show selection dialog with playlist items
+        val dialog = SelectionDialog.multiple(
+          items = itemNames,
+          selectedIndex = emptyList(),
+          name = item.title
+        )
+
+        // Show dialog with callback for selected items
+        dialog.show(fragment.parentFragmentManager) { resultBundle ->
+          if (resultBundle != null) {
+            val selectedIndices =
+              resultBundle.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED) ?: emptyList()
+            if (selectedIndices.isNotEmpty()) {
+              Timber.d("Selected ${selectedIndices.size} items from playlist: ${item.title}")
+              showToast("Selected ${selectedIndices.size} items from playlist")
+
+              // Get selected items and play them
+              val selectedItems = selectedIndices.mapNotNull { index ->
+                playlistItems.getOrNull(index)
+              }
+
+              if (selectedItems.isNotEmpty()) {
+                // Play first selected item with others in queue
+                playPlaylistItems(selectedItems)
+              }
+            }
+          }
+        }
+      } catch (e: Exception) {
+        Timber.e(e, "Error loading playlist items")
+        showToast("Error loading playlist items: ${e.message}")
+      }
+    }
+  }
+
   fun onItemLongClick(item: FeedData) {
     when (item) {
       is FeedData.MediaItem -> {
@@ -225,7 +307,7 @@ class FeedAction(
           fragment.parentFragmentManager
         ) { bundle ->
           bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
-            handlePlaylistItemAction(item, actionItems[index].title)
+            handlePlaylistItemAction(item, actionItems[index])
           }
         }
       }
@@ -345,7 +427,13 @@ class FeedAction(
       ActionItem(
         id = "play_all",
         title = "Play all",
-        iconRes = null,
+        iconRes = R.drawable.outline_play_circle_24,
+        isDestructive = false
+      ),
+      ActionItem(
+        id = "show_items",
+        title = fragment.getString(R.string.show_items),
+        iconRes = R.drawable.outline_format_list_bulleted_24,
         isDestructive = false
       ),
       ActionItem(
@@ -567,21 +655,24 @@ class FeedAction(
     }
   }
 
-  private fun handlePlaylistItemAction(item: FeedData.PlaylistItem, actionTitle: String) {
-    when (actionTitle) {
-      "Play all" -> {
+  private fun handlePlaylistItemAction(item: FeedData.PlaylistItem, actionItem: ActionItem) {
+    when (actionItem.id) {
+      "play" -> {
         onItemClick(item) // Reuse click action
       }
 
-      "Edit playlist" -> {
+      "edit" -> {
         showToast("Edit playlist functionality coming soon")
       }
 
-      "Share" -> {
+      "show_items" -> {
+        showPlayListItems(item)
+      }
+      "share" -> {
         showToast("Share playlist functionality coming soon")
       }
 
-      "Delete" -> {
+      "delete" -> {
         androidx.appcompat.app.AlertDialog.Builder(
           fragment.requireContext(),
           R.style.BaseMaterialDialogTheme
@@ -1211,6 +1302,57 @@ class FeedAction(
       } catch (e: Exception) {
         Timber.e(e, "Error showing playlist dialog")
         showToast("Error: ${e.message}")
+      }
+    }
+  }
+
+  private fun playPlaylistItems(items: List<cloud.app.csplayer.media.entities.PlaylistItemEntity>) {
+    fragment.viewLifecycleOwner.lifecycleScope.launch {
+      try {
+        if (items.isEmpty()) {
+          showToast("No items to play")
+          return@launch
+        }
+
+        // Convert playlist items to VideoLinks
+        val videoLinks = items.mapIndexed { index, item ->
+          VideoLink(
+            url = item.mediaUri,
+            name = item.mediaUri.substringAfterLast('/').let { filename ->
+              if (filename.isEmpty()) {
+                "Item ${index + 1}"
+              } else {
+                // Decode URL-encoded filenames (e.g., %20 to space)
+                java.net.URLDecoder.decode(filename, "UTF-8")
+              }
+            },
+            headers = emptyMap(),
+            subtitles = emptyList(),
+            position = 0,
+            width = 0,
+            height = 0
+          )
+        }
+
+        // Create PlaybackData with all items
+        val playbackData = PlaybackData(
+          title = videoLinks.firstOrNull()?.name ?: "Playlist",
+          videoLinks = videoLinks,
+          subtitles = emptyList(),
+          videoStartIndex = 0,
+          subtitleStartIndex = 0,
+          isSameEpisode = true,
+          hasAd = false
+        )
+
+        Timber.d("Playing ${items.size} playlist items")
+
+        // Navigate to MPV player with PlaybackData
+        val bundle = PlaybackDataHelper.createBundle(playbackData)
+        fragment.requireActivity().navigate(R.id.global_to_navigation_mpv_player, bundle)
+      } catch (e: Exception) {
+        Timber.e(e, "Error playing playlist items")
+        showToast("Failed to play playlist: ${e.message}")
       }
     }
   }

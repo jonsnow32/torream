@@ -52,6 +52,7 @@ class FeedViewModel @Inject constructor(
   @param:ApplicationContext private val context: Context,
   private val mediaRepository: MediaRepository,
   private val mediaPlaybackRepository: MediaPlaybackRepository,
+  private val playlistRepository: cloud.app.csplayer.media.repository.PlaylistRepository,
   private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
@@ -98,6 +99,7 @@ class FeedViewModel @Inject constructor(
       pagingSourceFactory = {
         FeedPagingSource(
           mediaRepository,
+          playlistRepository,
           rootFolderPath,
           params.viewMode,
           params.groupMode,

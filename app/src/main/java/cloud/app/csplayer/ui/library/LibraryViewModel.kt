@@ -10,6 +10,7 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import cloud.app.csplayer.download.DownloadRepository
 import cloud.app.csplayer.media.repository.MediaRepository
+import cloud.app.csplayer.media.repository.PlaylistRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +28,7 @@ import javax.inject.Inject
 class LibraryViewModel @Inject constructor(
   val mediaRepository: MediaRepository,
   val downloadRepository: DownloadRepository,
+  val playlistRepository: PlaylistRepository,
   val favoriteRepository: cloud.app.csplayer.favorites.FavoriteRepository,
   val sharedPreferences: SharedPreferences
 ) : ViewModel() {
@@ -64,6 +66,7 @@ class LibraryViewModel @Inject constructor(
             repository = mediaRepository,
             downloadRepository = downloadRepository,
             favoriteRepository = favoriteRepository,
+            playlistRepository = playlistRepository,
             section = section
           )
         }

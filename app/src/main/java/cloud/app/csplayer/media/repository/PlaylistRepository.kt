@@ -31,6 +31,10 @@ class PlaylistRepository @Inject constructor(
     return playlistDao.getPlaylistByIdFlow(playlistId)
   }
 
+  suspend fun getPlayLists(limit: Int, offset: Int): List<PlaylistEntity> {
+    return playlistDao.getPlaylists(limit, offset)
+  }
+
   suspend fun createPlaylist(name: String, description: String? = null): Long {
     val playlist = PlaylistEntity(
       name = name,
@@ -122,7 +126,8 @@ class PlaylistRepository @Inject constructor(
     val playlistEntity = PlaylistEntity(
       id = 0L,
       name = name,
-      createdAt = System.currentTimeMillis()
+      createdAt = System.currentTimeMillis(),
+      itemCount = mediaUris.size
     )
 
     val playlistId = playlistDao.insertPlaylist(playlistEntity)

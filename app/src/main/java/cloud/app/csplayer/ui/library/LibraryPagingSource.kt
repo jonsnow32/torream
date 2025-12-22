@@ -7,6 +7,7 @@ import cloud.app.csplayer.download.DownloadState
 import cloud.app.csplayer.download.DownloadType
 import cloud.app.csplayer.download.DownloadStatus
 import cloud.app.csplayer.media.repository.MediaRepository
+import cloud.app.csplayer.media.repository.PlaylistRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
@@ -27,6 +28,7 @@ class LibraryPagingSource(
   private val repository: MediaRepository,
   private val downloadRepository: DownloadRepository,
   private val favoriteRepository: cloud.app.csplayer.favorites.FavoriteRepository,
+  private val playlistRepository: PlaylistRepository,
   private val section: LibrarySection
 ) : PagingSource<Int, FeedData>() {
 
@@ -303,18 +305,41 @@ class LibraryPagingSource(
   }
 
   /**
-   * Load playlists
-   * Note: Playlist feature not yet implemented in the app.
-   * This is a placeholder that returns empty list.
+   * Load playlists from PlaylistRepository
+   * Uses paginated query from DAO for efficient database access
    */
-  private fun loadPlaylists(limit: Int, offset: Int): List<FeedData> {
+  private suspend fun loadPlaylists(limit: Int, offset: Int): List<FeedData> {
     Timber.d("Loading playlists with limit=$limit, offset=$offset")
 
-    // TODO: Implement playlist feature
-    Timber.w("Playlists feature not yet implemented")
+    return try {
+      // Get paginated playlists directly from repository
+      val pagePlaylist = playlistRepository.getPlayLists(limit, offset)
 
-    return emptyList()
+      Timber.d("Loaded ${pagePlaylist.size} playlists from repository")
+
+      // Convert to FeedData
+      val feedItems = pagePlaylist.mapNotNull { playlist ->
+        try {
+          FeedData.PlaylistItem(
+            id = playlist.id.toString(),
+            title = playlist.name,
+            itemCount = playlist.itemCount
+          ) as FeedData
+        } catch (e: Exception) {
+          Timber.e(e, "Error creating playlist item for playlist: ${playlist.id}")
+          null
+        }
+      }
+
+      Timber.d("Converted ${feedItems.size} playlists to FeedData items")
+      feedItems
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading playlists")
+      emptyList()
+    }
   }
+
+
 
   /**
    * Determine media type based on MIME type

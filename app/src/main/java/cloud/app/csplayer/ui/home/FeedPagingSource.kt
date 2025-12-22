@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import cloud.app.csplayer.model.MediaTypeFilter
 import cloud.app.csplayer.media.repository.MediaRepository
+import cloud.app.csplayer.media.repository.PlaylistRepository
 import cloud.app.csplayer.ui.feed.FeedData
 import cloud.app.csplayer.ui.feed.FeedFilterConfig
 import kotlinx.coroutines.CancellationException
@@ -15,6 +16,7 @@ import timber.log.Timber
  * Shows all media files indexed from MediaStore.
  *
  * @param repository MediaRepository for accessing media and folder data
+ * @param playlistRepository PlaylistRepository for accessing playlist data
  * @param rootFolderPath Optional root folder path. If provided, only shows media from this folder.
  *                       If null, shows all folders.
  * @param viewMode Display type that determines how items are shown (GRID or LIST)
@@ -24,6 +26,7 @@ import timber.log.Timber
  */
 class FeedPagingSource(
   private val repository: MediaRepository,
+  private val playlistRepository: PlaylistRepository? = null,
   private val rootFolderPath: String? = null,
   private val viewMode: FeedFilterConfig.ViewMode = FeedFilterConfig.ViewMode.GRID,
   private val groupMode: FeedFilterConfig.GroupMode = FeedFilterConfig.GroupMode.FOLDERS,
@@ -153,6 +156,55 @@ class FeedPagingSource(
       Timber.d("Successfully loaded ${it.size} folders")
     }
 
+  }
+
+  /**
+   * Load all playlists with pagination
+   */
+  private suspend fun loadPlaylistsPaged(limit: Int, offset: Int): List<FeedData> {
+    Timber.d("Loading playlists with limit=$limit, offset=$offset")
+
+    if (playlistRepository == null) {
+      Timber.w("PlaylistRepository not available, returning empty list")
+      return emptyList()
+    }
+
+    return try {
+      // Get playlists from repository using pagination
+      val allPlaylists = playlistRepository.getPlayLists(limit, offset)
+      Timber.d("Loaded ${allPlaylists.size} playlists from repository")
+
+      // Determine playlist type based on viewMode
+      val playlistType = when (viewMode) {
+        FeedFilterConfig.ViewMode.GRID -> FeedData.Type.PlayListSmall
+        FeedFilterConfig.ViewMode.LIST -> FeedData.Type.PlayList
+      }
+
+      // Convert to FeedData.PlaylistItem
+      val feedItems = allPlaylists.mapNotNull { playlist ->
+        try {
+          FeedData.PlaylistItem(
+            id = playlist.id.toString(),
+            title = playlist.name,
+            description = playlist.description,
+            itemCount = playlist.itemCount,
+            type = playlistType,
+            thumbnailPath = playlist.thumbnailPath,
+            createdAt = playlist.createdAt,
+            updatedAt = playlist.updatedAt
+          ) as FeedData
+        } catch (e: Exception) {
+          Timber.e(e, "Error creating playlist item for playlist: ${playlist.id}")
+          null
+        }
+      }
+
+      Timber.d("Converted ${feedItems.size} playlists to FeedData items")
+      feedItems
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading playlists")
+      emptyList()
+    }
   }
 
   /**
@@ -397,4 +449,3 @@ class FeedPagingSource(
     }
   }
 }
-

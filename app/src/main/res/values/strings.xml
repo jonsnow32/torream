@@ -1037,4 +1037,5 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="peers_0">Peers: 0</string>
   <string name="seeds_0">Seeds: 0</string>
   <string name="select_files">Select file</string>
+  <string name="show_items">Show Items</string>
 </resources>

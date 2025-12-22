@@ -30,7 +30,7 @@ import cloud.app.csplayer.media.entities.PlaylistItemEntity
     PlaylistItemEntity::class,
     FavoriteEntity::class
   ],
-  version = 9,
+  version = 10,
   exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -42,4 +42,3 @@ abstract class MediaDatabase : RoomDatabase() {
   abstract fun playlistDao(): PlaylistDao
   abstract fun favoriteDao(): FavoriteDao
 }
-
