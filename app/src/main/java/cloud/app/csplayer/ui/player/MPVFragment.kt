@@ -39,6 +39,7 @@ import cloud.app.csplayer.MainActivityViewModel.Companion.applyContentRect
 import cloud.app.csplayer.MainActivityViewModel.Companion.applyNotch
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
+import cloud.app.csplayer.databinding.PlayerCustomLayoutTvBinding
 import cloud.app.csplayer.media.dao.MediaPlaybackDao
 import cloud.app.csplayer.media.repository.MediaPlaybackRepository
 import cloud.app.csplayer.model.SaveCaptionStyle
@@ -261,7 +262,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     val controllerHolder = view.findViewById<FrameLayout>(R.id.controller_holder)
     player = view.findViewById(R.id.mvpPlayer)
     val childView = inflater.inflate(
-      if (context?.isTvOrEmulator() == true) R.layout.player_custom_layout_tv else R.layout.player_custom_layout,
+       if(context?.isTvOrEmulator() == true) R.layout.player_custom_layout_tv_new else R.layout.player_custom_layout,
       controllerHolder,
       false
     )
@@ -993,14 +994,15 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
                     togglePlayPause()
                   }
                   uiController.toggleControls()
+
                   return true
                 }
               }
-
               KeyEvent.KEYCODE_DPAD_DOWN,
               KeyEvent.KEYCODE_DPAD_UP -> {
                 if (!uiController.isShowing) {
                   uiController.toggleControls()
+                  playerBinding?.playPauseToggle?.requestFocus()
                   return true
                 }
               }

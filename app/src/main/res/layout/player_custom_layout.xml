@@ -214,6 +214,7 @@
           <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:descendantFocusability="beforeDescendants"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -223,6 +224,7 @@
               android:clickable="true"
               android:focusable="true"
               android:gravity="center"
+              android:background="?attr/selectableItemBackground"
               android:orientation="vertical"
               android:padding="8dp">
 
@@ -483,7 +485,7 @@
             android:layout_height="70dp"
             android:scaleX="2"
             android:scaleY="2"
-            android:background="@drawable/transparent_circle_background"
+            android:background="?attr/selectableItemBackground"
             android:button="@drawable/anim_play_pause_48dp"
             android:contentDescription="@string/play_episode"
             app:buttonTint="@color/white"

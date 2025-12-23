@@ -10,6 +10,7 @@ import androidx.core.view.isVisible
 import cloud.app.csplayer.R
 import cloud.app.csplayer.databinding.PlayerCustomLayoutBinding
 import cloud.app.csplayer.utils.UIHelper.toPx
+import cloud.app.csplayer.utils.isTvOrEmulator
 import timber.log.Timber
 
 /**
@@ -378,6 +379,7 @@ class PlayerUIController(
    * Animate to locked state (only lock button visible)
    */
   private fun animateLocked() {
+
     binding.apply {
       playerLock.animateToVisible()
       playerTopHolder.animateSlideUp()
@@ -411,20 +413,21 @@ class PlayerUIController(
   private fun animateShow() {
     binding.apply {
 
+      val isTv = binding.root.context.isTvOrEmulator()
       updateVisibilityControlBtt()
 
-      playerLock.isGone = false
+      playerLock.isGone = false || isTv
       playerTopHolder.isGone = false
       extraControls.isGone = false
       shadowOverlay.isGone = false
-      playerCenterMenu.isGone = false
+      playerCenterMenu.isGone = false || isTv
       playerVideoBar.isGone = false
 
-      playerLock.animateToVisible()
+      if(!isTv) playerLock.animateToVisible()
       playerTopHolder.animateToVisible()
       extraControls.animateToVisible()
       shadowOverlay.animateFadeIn()
-      playerCenterMenu.animateFadeIn()
+      if(!isTv) playerCenterMenu.animateFadeIn()
       playerVideoBar.animateToVisible()
     }
   }
