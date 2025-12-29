@@ -66,23 +66,23 @@ object CommonActivitty {
         componentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) && // HAS FEATURE, MIGHT BE BLOCKED DUE TO POWER DRAIN
         componentActivity.hasPIPPermission() // CHECK IF FEATURE IS ENABLED IN SETTINGS
 
-
-    // Ask for notification permissions on Android 13
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-      ContextCompat.checkSelfPermission(
-        componentActivity,
-        Manifest.permission.POST_NOTIFICATIONS
-      ) != PackageManager.PERMISSION_GRANTED
-    ) {
-      val requestPermissionLauncher = componentActivity.registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-      ) { isGranted: Boolean ->
-        Timber.d("Notification permission: $isGranted")
-      }
-      requestPermissionLauncher.launch(
-        Manifest.permission.POST_NOTIFICATIONS
-      )
-    }
+//
+//    // Ask for notification permissions on Android 13
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+//      ContextCompat.checkSelfPermission(
+//        componentActivity,
+//        Manifest.permission.POST_NOTIFICATIONS
+//      ) != PackageManager.PERMISSION_GRANTED
+//    ) {
+//      val requestPermissionLauncher = componentActivity.registerForActivityResult(
+//        ActivityResultContracts.RequestPermission()
+//      ) { isGranted: Boolean ->
+//        Timber.d("Notification permission: $isGranted")
+//      }
+//      requestPermissionLauncher.launch(
+//        Manifest.permission.POST_NOTIFICATIONS
+//      )
+//    }
   }
 
   fun Context.shouldShowPIPMode(isInPlayer: Boolean): Boolean {

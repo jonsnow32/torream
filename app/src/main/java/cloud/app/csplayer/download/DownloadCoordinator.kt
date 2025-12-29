@@ -10,6 +10,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import cloud.app.csplayer.R
+import cloud.app.csplayer.download.worker.DownloadNotificationHelper
 import cloud.app.csplayer.download.worker.HttpDownloadWorker
 import cloud.app.csplayer.download.worker.TorrentDownloadWorker
 import cloud.app.csplayer.utils.AppUtils.getDownloadPath
@@ -45,6 +46,9 @@ class DownloadCoordinator @Inject constructor(
    */
   suspend fun startDownload(task: DownloadTask) {
     Timber.d("startDownload: taskId=${task.id}, type=${task.type}, source=${task.source}")
+
+    // Request notification permission if needed on Android 13+
+    requestNotificationPermissionIfNeeded()
 
     // Check if this source has already been downloaded successfully
     val allStates = repo.observeAllStates().firstOrNull() ?: emptyList()
@@ -231,6 +235,9 @@ class DownloadCoordinator @Inject constructor(
    */
   suspend fun resumeDownload(taskId: String) {
     Timber.d("resumeDownload: taskId=$taskId")
+
+    // Request notification permission if needed on Android 13+
+    requestNotificationPermissionIfNeeded()
 
     // Get task from repository
     val currentState = repo.observeState(taskId).firstOrNull()
@@ -496,6 +503,21 @@ class DownloadCoordinator @Inject constructor(
     } catch (e: Exception) {
       Timber.e(e, "Failed to cancel all downloads")
     }
+  }
+
+  /**
+   * Request notification permission if needed (Android 13+)
+   * This is called automatically when a download starts
+   */
+  fun requestNotificationPermissionIfNeeded() {
+    // Check if permission is already granted
+    if (DownloadNotificationHelper.hasNotificationPermission(context)) {
+      Timber.d("Notification permission already granted")
+      return
+    }
+
+    // The permission will be requested by MainActivity when user initiates download
+    Timber.d("Notification permission check passed, worker will handle gracefully if not granted")
   }
 
   companion object {

@@ -67,6 +67,7 @@ android {
     }
   }
 
+
   buildFeatures {
     buildConfig = true
   }
@@ -79,14 +80,43 @@ android {
   }
 
 
-  flavorDimensions += listOf("default")
+  flavorDimensions += listOf("abi")
   productFlavors {
-    create("default") {
-      isDefault = true
+    create("arm64") {
+      dimension = "abi"
+      applicationIdSuffix = ".arm64"
+      versionNameSuffix = "-arm64"
+      ndk.abiFilters.clear()
+      ndk.abiFilters.addAll(listOf("arm64-v8a"))
+      versionCode = (abiCodes["arm64-v8a"] ?: 2) + 1000
     }
-    create("api29") {
-      targetSdk = 34
-      versionNameSuffix = "-oldapi"
+    create("arm32") {
+      dimension = "abi"
+      applicationIdSuffix = ".arm32"
+      versionNameSuffix = "-arm32"
+      ndk.abiFilters.clear()
+      ndk.abiFilters.addAll(listOf("armeabi-v7a"))
+      versionCode = (abiCodes["armeabi-v7a"] ?: 1) + 1000
+    }
+    create("x86") {
+      dimension = "abi"
+      applicationIdSuffix = ".x86"
+      versionNameSuffix = "-x86"
+      ndk.abiFilters.clear()
+      ndk.abiFilters.addAll(listOf("x86"))
+      versionCode = (abiCodes["x86"] ?: 3) + 1000
+    }
+    create("x86_64") {
+      dimension = "abi"
+      applicationIdSuffix = ".x86_64"
+      versionNameSuffix = "-x86_64"
+      ndk.abiFilters.clear()
+      ndk.abiFilters.addAll(listOf("x86_64"))
+      versionCode = (abiCodes["x86_64"] ?: 4) + 1000
+    }
+    create("universal") {
+      dimension = "abi"
+      versionCode = 9999
     }
   }
 
@@ -104,12 +134,12 @@ android {
       isDebuggable = true
       applicationIdSuffix = ".debug"
       resValue("string", "app_name", "HexaPlayer-Debug")
-      proguardFiles(
-        getDefaultProguardFile("proguard-android-optimize.txt"),
-        "proguard-rules.pro"
-      )
+      isMinifyEnabled = false
+      isShrinkResources = false
+      ndk {
+        abiFilters += listOf("arm64-v8a")
+      }
     }
-
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_21

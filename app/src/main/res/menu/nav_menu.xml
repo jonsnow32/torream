@@ -4,7 +4,8 @@
     android:id="@+id/feedFragment"
     android:icon="@drawable/anim_home"
     android:title="@string/home"
-    android:focusable="true" />
+    android:focusable="true"
+    />
 
   <item
     android:id="@+id/navigation_settings"

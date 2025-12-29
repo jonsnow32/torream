@@ -8,7 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import cloud.app.csplayer.R
+import androidx.core.content.ContextCompat
 
 object DownloadNotificationHelper {
 
@@ -20,7 +20,7 @@ object DownloadNotificationHelper {
 
   fun createDownloadNotification(
     context: Context,
-    taskId: String,
+    @Suppress("unused") taskId: String,
     progress: Int,
     isHttp: Boolean,
     fileName: String? = null
@@ -91,6 +91,21 @@ object DownloadNotificationHelper {
 
       val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
       notificationManager.createNotificationChannel(channel)
+    }
+  }
+
+  /**
+   * Check if notification permission is granted on Android 13+
+   * On older versions, return true since permission is not required
+   */
+  fun hasNotificationPermission(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.POST_NOTIFICATIONS
+      ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    } else {
+      true // Permission not required on older Android versions
     }
   }
 }

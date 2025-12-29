@@ -3,7 +3,7 @@
   xmlns:app="http://schemas.android.com/apk/res-auto">
   <item
     android:id="@+id/createPlaylist"
-    android:icon="@drawable/media3_icon_playlist_add"
+    android:icon="@drawable/ic_playlist_add"
     android:title="@string/add_playlist"
     android:focusable="true"
     app:showAsAction="ifRoom" />

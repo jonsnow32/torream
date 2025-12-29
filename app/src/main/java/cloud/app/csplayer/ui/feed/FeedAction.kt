@@ -182,6 +182,16 @@ class FeedAction(
                   .setPositiveButton(fragment.getString(R.string.retry)) { _, _ ->
                     fragment.lifecycleScope.launch {
                       try {
+                        // Request notification permission on-demand
+                        try {
+                          val activity = fragment.requireActivity()
+                          if (activity is cloud.app.csplayer.MainActivity) {
+                            activity.requestNotificationPermissionForDownload()
+                          }
+                        } catch (e: Exception) {
+                          Timber.d("Could not request notification permission: ${e.message}")
+                        }
+
                         downloadCoordinator.startDownload(state.task)
                         showToast("Retrying download...")
                       } catch (e: Exception) {
@@ -382,7 +392,7 @@ class FeedAction(
       ActionItem(
         id = "add_to_playlist",
         title = fragment.getString(R.string.add_to_playlist),
-        iconRes = R.drawable.media3_icon_playlist_add,
+        iconRes = R.drawable.ic_playlist_add,
         isDestructive = false
       ),
 
@@ -545,7 +555,7 @@ class FeedAction(
             ActionItem(
               id = "add_to_playlist",
               title = fragment.getString(R.string.add_to_playlist),
-              iconRes = androidx.media3.session.R.drawable.media3_icon_playlist_add,
+              iconRes = R.drawable.ic_playlist_add,
               isDestructive = false
             )
           )
@@ -741,6 +751,16 @@ class FeedAction(
       "resume" -> {
         fragment.lifecycleScope.launch {
           try {
+            // Request notification permission on-demand
+            try {
+              val activity = fragment.requireActivity()
+              if (activity is cloud.app.csplayer.MainActivity) {
+                activity.requestNotificationPermissionForDownload()
+              }
+            } catch (e: Exception) {
+              Timber.d("Could not request notification permission: ${e.message}")
+            }
+
             downloadCoordinator.resumeDownload(item.id)
             showToast(fragment.getString(R.string.download_resumed))
           } catch (e: Exception) {
@@ -1277,7 +1297,7 @@ class FeedAction(
           ActionItem(
             id = playlist.id.toString(),
             title = playlist.name,
-            iconRes = R.drawable.media3_icon_playlist_add,
+            iconRes = R.drawable.ic_playlist_add,
             isDestructive = false
           )
         }

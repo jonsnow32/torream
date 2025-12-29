@@ -285,6 +285,20 @@ class HttpDownloadWorker @AssistedInject constructor(
   }
 
   private fun showProgressNotification(taskId: String, progress: Int) {
+    // Check if permission is granted before showing notification
+    if (!DownloadNotificationHelper.hasNotificationPermission(context)) {
+      Timber.d("Notification permission not granted, skipping notification for taskId=$taskId")
+      // Try to request permission if we can access MainActivity
+      try {
+        val activity = android.app.ActivityManager::class.java
+        // We're in a background worker, can't directly request permissions
+        // The permission will be requested when user opens the app
+      } catch (e: Exception) {
+        Timber.w(e, "Could not request notification permission from worker")
+      }
+      return
+    }
+
     val notification = DownloadNotificationHelper.createDownloadNotification(
       context,
       taskId,

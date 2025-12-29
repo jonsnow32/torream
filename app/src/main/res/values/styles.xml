@@ -299,6 +299,7 @@
     <item name="elevation">0dp</item>
     <item name="menuGravity">center</item>
     <item name="android:minWidth">@dimen/nav_height</item>
+    <item name="itemBackground">@drawable/outline_drawable_forced</item>
   </style>
 
   <!-- Global Button Style - OneUI Style -->

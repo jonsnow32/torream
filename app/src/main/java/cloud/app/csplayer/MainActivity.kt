@@ -8,6 +8,7 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color.TRANSPARENT
 import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
 import android.util.AttributeSet
@@ -20,12 +21,14 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.isGone
 import androidx.navigation.NavController
@@ -125,6 +128,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   private var result = mutableListOf<PlayBackResult>()
   lateinit var mSessionManager: SessionManager
   private val mSessionManagerListener: SessionManagerListener<Session> by lazy { SessionManagerListenerImpl() }
+
+  // Notification permission launcher - deferred until first download
+  private val notificationPermissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { isGranted ->
+    if (isGranted) {
+      Timber.d("Notification permission granted")
+    } else {
+      Timber.d("Notification permission denied")
+    }
+  }
 
   // Cập nhật locale TRƯỚC khi inflate layout
   override fun attachBaseContext(newBase: Context) {
@@ -474,6 +488,24 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       setNegativeButton(R.string.no) { _, _ -> }
     }
     builder.show().setDefaultFocus()
+  }
+
+  /**
+   * Request notification permission on-demand when download is initiated
+   * Only requests on Android 13+ if permission hasn't been granted yet
+   */
+  @Suppress("unused")
+  fun requestNotificationPermissionForDownload() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      // Only request if permission is not already granted
+      if (ContextCompat.checkSelfPermission(
+          this,
+          android.Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+      ) {
+        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+      }
+    }
   }
 
   override fun onResume() {

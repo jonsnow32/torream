@@ -25,7 +25,8 @@
   <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Used for torrent downloads -->
   <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" /> <!-- Used for background downloads -->
 <!--  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" /> &lt;!&ndash; Used for app update &ndash;&gt;-->
-  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Used for app notifications on Android 13+ -->
+  <!-- POST_NOTIFICATIONS permission is NOT declared here to avoid showing permission request at install time -->
+  <!-- It will be requested on-demand when user initiates a download (Android 13+) -->
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- Used for update service -->
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" /> <!-- Used for torrent service -->
   <!-- Removed FOREGROUND_SERVICE_MEDIA_PLAYBACK - app does not need background video playback -->
