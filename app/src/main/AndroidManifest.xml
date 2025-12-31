@@ -48,7 +48,7 @@
   <queries>
     <package android:name="org.videolan.vlc" />
     <package android:name="com.instantbits.cast.webvideo" />
-    <package android:name="cloud.app.csplayer" />
+    <package android:name="com.tv.apps.zippy" />
   </queries>
 
   <application
@@ -103,7 +103,7 @@
     </provider>
 
     <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-      android:value="cloud.app.csplayer.utils.CastOptionsProvider"/>
+      android:value="com.tv.apps.zippy.utils.CastOptionsProvider"/>
 
     <activity
       android:name=".MainActivity"
@@ -194,8 +194,8 @@
       android:name=".download.worker.DownloadNotificationReceiver"
       android:exported="false">
       <intent-filter>
-        <action android:name="cloud.app.csplayer.PAUSE_ALL_DOWNLOADS" />
-        <action android:name="cloud.app.csplayer.CANCEL_ALL_DOWNLOADS" />
+        <action android:name="com.tv.apps.zippy.PAUSE_ALL_DOWNLOADS" />
+        <action android:name="com.tv.apps.zippy.CANCEL_ALL_DOWNLOADS" />
       </intent-filter>
     </receiver>
   </application>

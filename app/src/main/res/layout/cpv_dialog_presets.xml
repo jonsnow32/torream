@@ -13,7 +13,7 @@
       android:padding="16dp"
       >
 
-    <cloud.app.csplayer.ui.colorpicker.NestedGridView
+    <com.tv.apps.zippy.ui.colorpicker.NestedGridView
         android:id="@+id/gridView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

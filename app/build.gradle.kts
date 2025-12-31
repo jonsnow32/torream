@@ -17,7 +17,7 @@ val abiCodes = mapOf(
 )
 
 android {
-  namespace = "cloud.app.csplayer"
+  namespace = "com.tv.apps.zippy"
   compileSdk = 36
 
   // Limit packaged resources to these locales
@@ -31,7 +31,7 @@ android {
 
 
   defaultConfig {
-    applicationId = "cloud.app.csplayer"
+    applicationId = "com.tv.apps.zippy"
     minSdk = 23
     targetSdk = 36
     versionCode = 119
@@ -84,7 +84,6 @@ android {
   productFlavors {
     create("arm64") {
       dimension = "abi"
-      applicationIdSuffix = ".arm64"
       versionNameSuffix = "-arm64"
       ndk.abiFilters.clear()
       ndk.abiFilters.addAll(listOf("arm64-v8a"))
@@ -92,7 +91,6 @@ android {
     }
     create("arm32") {
       dimension = "abi"
-      applicationIdSuffix = ".arm32"
       versionNameSuffix = "-arm32"
       ndk.abiFilters.clear()
       ndk.abiFilters.addAll(listOf("armeabi-v7a"))
@@ -100,7 +98,6 @@ android {
     }
     create("x86") {
       dimension = "abi"
-      applicationIdSuffix = ".x86"
       versionNameSuffix = "-x86"
       ndk.abiFilters.clear()
       ndk.abiFilters.addAll(listOf("x86"))
@@ -108,7 +105,6 @@ android {
     }
     create("x86_64") {
       dimension = "abi"
-      applicationIdSuffix = ".x86_64"
       versionNameSuffix = "-x86_64"
       ndk.abiFilters.clear()
       ndk.abiFilters.addAll(listOf("x86_64"))
@@ -133,7 +129,7 @@ android {
     debug {
       isDebuggable = true
       applicationIdSuffix = ".debug"
-      resValue("string", "app_name", "HexaPlayer-Debug")
+      resValue("string", "app_name", "ZippyPlayer-Debug")
       isMinifyEnabled = false
       isShrinkResources = false
       ndk {

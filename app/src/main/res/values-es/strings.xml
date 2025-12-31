@@ -117,7 +117,7 @@
   <string name="filler" formatted="true">Relleno</string>
   <string name="duration_format" formatted="true">%d min</string>
 
-  <string name="play_with_app_name">Reproducir con HexaPlayer</string>
+  <string name="play_with_app_name">Reproducir con ZippyPlayer</string>
   <string name="title_home">Inicio</string>
   <string name="title_search">Buscar</string>
   <string name="title_downloads">Descargas</string>
@@ -287,7 +287,7 @@
   <string name="extension_language">Idioma</string>
   <string name="apk_installer_legacy">Legacy (método antiguo)</string>
   <string name="apk_installer_package_installer">Instalador de paquetes</string>
-  <string name="blank_repo_message">HexaPlayer no tiene sitios instalados por defecto. Necesitas instalar los sitios desde los repositorios.
+  <string name="blank_repo_message">ZippyPlayer no tiene sitios instalados por defecto. Necesitas instalar los sitios desde los repositorios.
 \n
 \nÚnase a nuestro Discord o busque en línea.</string>
   <string name="download_all_plugins_from_repo">¿Descargar todos los plugins de este repositorio?</string>
@@ -596,10 +596,10 @@
   <string name="biometric_setting">Bloquear biometricamente</string>
   <string name="password_pin_authentication_title">Autenticación mediante contraseña/PIN</string>
   <string name="biometric_setting_summary">Desbloquea la aplicación con huella digital, Face ID, PIN, patrón y contraseña.</string>
-  <string name="biometric_authentication_title">Desbloquear HexaPlayer</string>
+  <string name="biometric_authentication_title">Desbloquear ZippyPlayer</string>
   <string name="biometric_unsupported">La autenticación biométrica no es compatible con este dispositivo</string>
   <string name="biometric_prompt_description">Esta pantalla se cerró después de varios intentos fallidos. Reinicie la aplicación.</string>
-  <string name="biometric_warning">Tus datos de HexaPlayer se han respaldado ahora. Aunque la posibilidad de esto es muy baja, todos los dispositivos pueden comportarse de manera diferente. En el raro caso de que no puedas acceder a la aplicación, borra completamente los datos de la aplicación y restaura desde una copia de seguridad. Lamentamos cualquier inconveniente que esto pueda causarte.</string>
+  <string name="biometric_warning">Tus datos de ZippyPlayer se han respaldado ahora. Aunque la posibilidad de esto es muy baja, todos los dispositivos pueden comportarse de manera diferente. En el raro caso de que no puedas acceder a la aplicación, borra completamente los datos de la aplicación y restaura desde una copia de seguridad. Lamentamos cualquier inconveniente que esto pueda causarte.</string>
   <string name="favorite">Favorito</string>
   <string name="unfavorite">No favorito</string>
   <string name="resume_remaining" formatted="true">%s
@@ -753,15 +753,15 @@
   <string name="media_type_video_only">Solo video</string>
   <string name="media_type_audio_only">Solo audio</string>
   <string name="battery_dialog_title">Desactivar optimización de batería</string>
-  <string name="battery_dialog_message">Para asegurar descargas y tareas en segundo plano sin interrupciones, HexaPlayer necesita permiso para ejecutarse sin restricciones de batería.\n\nAl presionar "Abrir configuración", serás dirigido a la configuración de optimización de batería. Por favor, selecciona "No optimizar" o "Sin restricciones" para esta aplicación.\n\nNota: Este permiso no significa que HexaPlayer consumirá tu batería. Solo se ejecutará en segundo plano cuando sea necesario, como al descargar archivos o recibir notificaciones.\n\nPuedes ajustar esta configuración en cualquier momento en Ajustes de Descarga.</string>
+  <string name="battery_dialog_message">Para asegurar descargas y tareas en segundo plano sin interrupciones, ZippyPlayer necesita permiso para ejecutarse sin restricciones de batería.\n\nAl presionar "Abrir configuración", serás dirigido a la configuración de optimización de batería. Por favor, selecciona "No optimizar" o "Sin restricciones" para esta aplicación.\n\nNota: Este permiso no significa que ZippyPlayer consumirá tu batería. Solo se ejecutará en segundo plano cuando sea necesario, como al descargar archivos o recibir notificaciones.\n\nPuedes ajustar esta configuración en cualquier momento en Ajustes de Descarga.</string>
   <string name="app_unrestricted_toast">El uso de batería de la aplicación ya está configurado como sin restricciones</string>
-  <string name="app_info_intent_error">No se puede abrir la información de la aplicación HexaPlayer.</string>
+  <string name="app_info_intent_error">No se puede abrir la información de la aplicación ZippyPlayer.</string>
   <string name="downloads">Descargas</string>
   <string name="favorites">Favoritos</string>
   <string name="playlists">Listas de reproducción</string>
   <string name="pause_resume">Pausar/Reanudar</string>
   <string name="fallback_to_software_decoding">El decodificador de hardware falló, intentando decodificación por software…</string>
-  <string name="legal_notice_text">Cualquier problema legal relacionado con el contenido de esta aplicación debe ser tratado directamente con los servidores y proveedores de archivos, ya que no estamos afiliados a ellos. En caso de infracción de derechos de autor, por favor contacte directamente a las partes responsables o a los sitios web de streaming. La aplicación es solo para uso educativo y personal. HexaPlayer no aloja ningún contenido en la app y no tiene control sobre qué medios se suben o eliminan. HexaPlayer funciona como cualquier otro motor de búsqueda, como Google. HexaPlayer no aloja, sube ni gestiona ningún video, película o contenido. Simplemente rastrea, agrega y muestra enlaces en una interfaz conveniente y fácil de usar. Solo recopila sitios web de terceros que son accesibles públicamente a través de cualquier navegador web común. Es responsabilidad del usuario evitar cualquier acción que pueda violar las leyes de su localidad. Use HexaPlayer bajo su propio riesgo.</string>
+  <string name="legal_notice_text">Cualquier problema legal relacionado con el contenido de esta aplicación debe ser tratado directamente con los servidores y proveedores de archivos, ya que no estamos afiliados a ellos. En caso de infracción de derechos de autor, por favor contacte directamente a las partes responsables o a los sitios web de streaming. La aplicación es solo para uso educativo y personal. ZippyPlayer no aloja ningún contenido en la app y no tiene control sobre qué medios se suben o eliminan. ZippyPlayer funciona como cualquier otro motor de búsqueda, como Google. ZippyPlayer no aloja, sube ni gestiona ningún video, película o contenido. Simplemente rastrea, agrega y muestra enlaces en una interfaz conveniente y fácil de usar. Solo recopila sitios web de terceros que son accesibles públicamente a través de cualquier navegador web común. Es responsabilidad del usuario evitar cualquier acción que pueda violar las leyes de su localidad. Use ZippyPlayer bajo su propio riesgo.</string>
   <string name="ok">OK</string>
   <string name="clear_history_message">¿Está seguro de que desea borrar todo el historial?</string>
   <string name="clear_history_confirm">Borrar</string>

@@ -86,7 +86,7 @@
 
   <fragment
     android:id="@+id/navigation_settings_general"
-    android:name="cloud.app.csplayer.ui.settings.SettingsGeneral"
+    android:name="com.tv.apps.zippy.ui.settings.SettingsGeneral"
     android:label="@string/title_settings"
     app:enterAnim="@anim/enter_anim"
     app:exitAnim="@anim/exit_anim"
@@ -96,7 +96,7 @@
 
   <fragment
     android:id="@+id/navigation_settings"
-    android:name="cloud.app.csplayer.ui.settings.SettingsFragment"
+    android:name="com.tv.apps.zippy.ui.settings.SettingsFragment"
     android:layout_height="match_parent"
     android:label="@string/title_settings"
     app:enterAnim="@anim/enter_anim"
@@ -107,7 +107,7 @@
 
   <fragment
     android:id="@+id/navigation_settings_updates"
-    android:name="cloud.app.csplayer.ui.settings.SettingsUpdates"
+    android:name="com.tv.apps.zippy.ui.settings.SettingsUpdates"
     android:label="@string/title_settings"
     app:enterAnim="@anim/enter_anim"
     app:exitAnim="@anim/exit_anim"
@@ -116,7 +116,7 @@
 
   <fragment
     android:id="@+id/navigation_mpv_subtitles"
-    android:name="cloud.app.csplayer.ui.subtitles.MPVSubtitleFragment"
+    android:name="com.tv.apps.zippy.ui.subtitles.MPVSubtitleFragment"
     android:layout_height="match_parent"
     android:label="@string/subtitles_settings"
     app:enterAnim="@anim/enter_anim"
@@ -128,7 +128,7 @@
 
   <fragment
     android:id="@+id/navigation_chrome_subtitles"
-    android:name="cloud.app.csplayer.ui.subtitles.ChromecastSubtitlesFragment"
+    android:name="com.tv.apps.zippy.ui.subtitles.ChromecastSubtitlesFragment"
     android:layout_height="match_parent"
     android:label="@string/chromecast_subtitles_settings"
     app:enterAnim="@anim/enter_anim"
@@ -140,7 +140,7 @@
 
   <fragment
     android:id="@+id/mvpFragmentPlayer"
-    android:name="cloud.app.csplayer.ui.player.MPVFragment"
+    android:name="com.tv.apps.zippy.ui.player.MPVFragment"
     android:label="MPVFragment" >
     <action
       android:id="@+id/action_firstFragment_to_secondFragment"
@@ -150,12 +150,12 @@
 
   <fragment
     android:id="@+id/browseFragment"
-    android:name="cloud.app.csplayer.ui.browse.BrowseFragment"
+    android:name="com.tv.apps.zippy.ui.browse.BrowseFragment"
     android:label="BrowseFragment" />
 
   <fragment
     android:id="@+id/navigation_settings_player"
-    android:name="cloud.app.csplayer.ui.settings.SettingsPlayer"
+    android:name="com.tv.apps.zippy.ui.settings.SettingsPlayer"
     android:label="@string/title_settings"
     app:enterAnim="@anim/enter_anim"
     app:exitAnim="@anim/exit_anim"
@@ -172,11 +172,11 @@
   </fragment>
   <fragment
     android:id="@+id/adTestFragment"
-    android:name="cloud.app.csplayer.ads.AdTestFragment"
+    android:name="com.tv.apps.zippy.ads.AdTestFragment"
     android:label="AdTestFragment" />
   <fragment
     android:id="@+id/feedFragment"
-    android:name="cloud.app.csplayer.ui.home.FeedFragment"
+    android:name="com.tv.apps.zippy.ui.home.FeedFragment"
     android:label="FeedFragment">
 
     <!-- Self-navigation action for folder navigation -->
@@ -197,7 +197,7 @@
   </fragment>
   <fragment
     android:id="@+id/navigation_libraryFragment"
-    android:name="cloud.app.csplayer.ui.library.LibraryFragment"
+    android:name="com.tv.apps.zippy.ui.library.LibraryFragment"
     android:label="Library"
     app:enterAnim="@anim/enter_anim"
     app:exitAnim="@anim/exit_anim"
@@ -216,6 +216,6 @@
   </fragment>
   <fragment
     android:id="@+id/settingsDownload"
-    android:name="cloud.app.csplayer.ui.settings.SettingsDownload"
+    android:name="com.tv.apps.zippy.ui.settings.SettingsDownload"
     android:label="SettingsDownload" />
 </navigation>

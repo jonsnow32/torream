@@ -54,21 +54,21 @@
     *;
 }
 
--keep,includedescriptorclasses class cloud.app.csplayer.model.**$$serializer { *; }
--keep,includedescriptorclasses class cloud.app.csplayer.datastore.**$$serializer { *; }
--keep,includedescriptorclasses class cloud.app.csplayer.utils.**$$serializer { *; }
+-keep,includedescriptorclasses class com.tv.apps.zippy.model.**$$serializer { *; }
+-keep,includedescriptorclasses class com.tv.apps.zippy.datastore.**$$serializer { *; }
+-keep,includedescriptorclasses class com.tv.apps.zippy.utils.**$$serializer { *; }
 
--keepclassmembers class cloud.app.csplayer.model.** {
+-keepclassmembers class com.tv.apps.zippy.model.** {
     *** Companion;
 }
--keepclassmembers class cloud.app.csplayer.datastore.** {
+-keepclassmembers class com.tv.apps.zippy.datastore.** {
     *** Companion;
 }
 
--keepclasseswithmembers class cloud.app.csplayer.model.** {
+-keepclasseswithmembers class com.tv.apps.zippy.model.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
--keepclasseswithmembers class cloud.app.csplayer.datastore.** {
+-keepclasseswithmembers class com.tv.apps.zippy.datastore.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
@@ -85,16 +85,16 @@
 # ================================================================================================
 
 # Keep all the methods and fields of MPVLib since it's used via JNI
--keep class cloud.app.csplayer.ui.player.mpv.MPVLib {
+-keep class com.tv.apps.zippy.ui.player.mpv.MPVLib {
     *;
 }
 
 # Keep inner static classes for constants
--keep class cloud.app.csplayer.ui.player.mpv.MPVLib$* { *; }
+-keep class com.tv.apps.zippy.ui.player.mpv.MPVLib$* { *; }
 
 # Keep EventObserver and LogObserver interfaces and their methods
--keep interface cloud.app.csplayer.ui.player.mpv.MPVLib$EventObserver { *; }
--keep interface cloud.app.csplayer.ui.player.mpv.MPVLib$LogObserver { *; }
+-keep interface com.tv.apps.zippy.ui.player.mpv.MPVLib$EventObserver { *; }
+-keep interface com.tv.apps.zippy.ui.player.mpv.MPVLib$LogObserver { *; }
 
 # Keep all native methods
 -keepclasseswithmembernames,includedescriptorclasses class * {
@@ -111,9 +111,9 @@
     public static ** DATABASE;
 }
 
--keep class cloud.app.csplayer.media.entities.** { *; }
--keep class cloud.app.csplayer.media.dao.** { *; }
--keep class cloud.app.csplayer.media.db.** { *; }
+-keep class com.tv.apps.zippy.media.entities.** { *; }
+-keep class com.tv.apps.zippy.media.dao.** { *; }
+-keep class com.tv.apps.zippy.media.db.** { *; }
 
 # ================================================================================================
 # HILT / DAGGER
@@ -322,11 +322,11 @@
 # ================================================================================================
 
 # Keep all model classes
--keep class cloud.app.csplayer.model.** { *; }
--keep class cloud.app.csplayer.datastore.** { *; }
+-keep class com.tv.apps.zippy.model.** { *; }
+-keep class com.tv.apps.zippy.datastore.** { *; }
 
 # Keep data classes
--keepclassmembers class cloud.app.csplayer.model.** {
+-keepclassmembers class com.tv.apps.zippy.model.** {
     *;
 }
 
@@ -335,9 +335,9 @@
 # ================================================================================================
 
 # Keep application class
--keep class cloud.app.csplayer.CSApplication { *; }
--keep class cloud.app.csplayer.MainActivity { *; }
--keep class cloud.app.csplayer.ControllerActivity { *; }
+-keep class com.tv.apps.zippy.CSApplication { *; }
+-keep class com.tv.apps.zippy.MainActivity { *; }
+-keep class com.tv.apps.zippy.ControllerActivity { *; }
 
 # ================================================================================================
 # MISC LIBRARIES

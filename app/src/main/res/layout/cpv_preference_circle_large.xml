@@ -1,4 +1,4 @@
-<cloud.app.csplayer.ui.colorpicker.ColorPickerView
+<com.tv.apps.zippy.ui.colorpicker.ColorPickerView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@id/cpv_preference_preview_color_panel"

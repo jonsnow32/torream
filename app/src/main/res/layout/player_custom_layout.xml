@@ -668,7 +668,6 @@
             app:layout_constraintEnd_toStartOf="@id/exo_duration"
             app:layout_constraintStart_toEndOf="@+id/exo_position"
             app:played_color="?attr/colorPrimary"
-
             app:scrubber_color="?attr/colorPrimary"
             app:scrubber_dragged_size="26dp"
             app:scrubber_enabled_size="24dp"
@@ -948,7 +947,7 @@
   </FrameLayout>
 
 
-  <cloud.app.csplayer.ui.player.youtube.YouTubeOverlay
+  <com.tv.apps.zippy.ui.player.youtube.YouTubeOverlay
     android:id="@+id/ytOverlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

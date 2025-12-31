@@ -115,7 +115,7 @@
   </LinearLayout>
 
   <!-- Action Button -->
-  <cloud.app.csplayer.ui.download.PieFetchButton
+  <com.tv.apps.zippy.ui.download.PieFetchButton
     android:id="@+id/btnAction"
     android:layout_width="48dp"
     android:layout_height="48dp"

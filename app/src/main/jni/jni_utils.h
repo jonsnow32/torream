@@ -1,7 +1,7 @@
 #pragma once
 
 #include <jni.h>
-#define jni_func_name(name) Java_cloud_app_csplayer_ui_player_mpv_MPVLib_##name
+#define jni_func_name(name) Java_com_tv_apps_zippy_ui_player_mpv_MPVLib_##name
 #define jni_func(return_type, name, ...) JNIEXPORT return_type JNICALL jni_func_name(name) (JNIEnv *env, jobject obj, ##__VA_ARGS__)
 
 bool acquire_jni_env(JavaVM *vm, JNIEnv **env);

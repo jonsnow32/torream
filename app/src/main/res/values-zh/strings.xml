@@ -24,7 +24,7 @@
   <string name="filler" formatted="true">填充</string>
   <string name="duration_format" formatted="true">%d 分钟</string>
 
-  <string name="play_with_app_name">使用 HexaPlayer 播放</string>
+  <string name="play_with_app_name">使用 ZippyPlayer 播放</string>
   <string name="title_home">主页</string>
   <string name="title_search">搜索</string>
   <string name="title_downloads">下载</string>
@@ -432,7 +432,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="plugins_disabled" formatted="true">已禁用：%d</string>
   <string name="plugins_not_downloaded" formatted="true">未下载：%d</string>
   <string name="plugins_updated" formatted="true">已更新 %d 插件</string>
-  <string name="blank_repo_message">HexaPlayer 默认不安装片源。您需要从仓库中安装片源。\t
+  <string name="blank_repo_message">ZippyPlayer 默认不安装片源。您需要从仓库中安装片源。\t
 \n …「」『』­‐­­­‐–—
 \n\t
 \n
@@ -619,7 +619,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="biometric_unsupported">这台设备不支持生物验证</string>
   <string name="unfavorite">不喜欢</string>
   <string name="favorite">喜欢</string>
-  <string name="biometric_authentication_title">解锁 HexaPlayer</string>
+  <string name="biometric_authentication_title">解锁 ZippyPlayer</string>
   <string name="biometric_setting">使用生物识别技术锁定</string>
   <string name="password_pin_authentication_title">密码或 PIN 验证</string>
   <string name="resume_remaining" formatted="true">%s
@@ -631,7 +631,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="clipboard_unknown_error">复制出错，请复制日志并联系应用支持。</string>
   <string name="biometric_setting_summary">使用指纹、面容ID、PIN、图案和密码解锁应用。</string>
   <string name="biometric_prompt_description">由于多次尝试失败，此界面已关闭。请重新启动应用。</string>
-  <string name="biometric_warning">您的 HexaPlayer 数据已备份。虽然这种情况极少发生，但不同设备可能表现不同。如遇无法进入应用，请彻底清除应用数据并从备份恢复。对此带来的不便我们深表歉意。</string>
+  <string name="biometric_warning">您的 ZippyPlayer 数据已备份。虽然这种情况极少发生，但不同设备可能表现不同。如遇无法进入应用，请彻底清除应用数据并从备份恢复。对此带来的不便我们深表歉意。</string>
   <string name="music_singlar">音乐</string>
   <string name="audio_book_singular">有声书</string>
   <string name="custom_media_singluar">媒体</string>
@@ -779,10 +779,10 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="media_type_video_only">仅视频</string>
   <string name="media_type_audio_only">仅音频</string>
   <string name="battery_dialog_title">关闭电池优化</string>
-  <string name="battery_dialog_message">为确保下载和后台任务不中断，HexaPlayer 需要无电池限制的运行权限。\n\n点击“打开设置”将跳转到电池优化设置，请选择“不优化”或“无限制”本应用。\n\n注意：此权限不会导致 HexaPlayer 过度耗电，仅在必要时后台运行，如下载文件或接收通知。\n\n您可随时在下载设置中调整此项。</string>
+  <string name="battery_dialog_message">为确保下载和后台任务不中断，ZippyPlayer 需要无电池限制的运行权限。\n\n点击“打开设置”将跳转到电池优化设置，请选择“不优化”或“无限制”本应用。\n\n注意：此权限不会导致 ZippyPlayer 过度耗电，仅在必要时后台运行，如下载文件或接收通知。\n\n您可随时在下载设置中调整此项。</string>
   <string name="repo_copy_label">仓库名称和链接</string>
   <string name="app_unrestricted_toast">应用电池使用已设为无限制</string>
-  <string name="app_info_intent_error">无法打开 HexaPlayer 应用信息。</string>
+  <string name="app_info_intent_error">无法打开 ZippyPlayer 应用信息。</string>
   <string name="downloads">下载</string>
   <string name="favorites">收藏</string>
   <string name="playlists">播放列表</string>
@@ -791,7 +791,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <plurals name="playlist_items">
     <item quantity="other">%d 项</item>
   </plurals>
-  <string name="legal_notice_text">本应用中的内容如有任何法律问题，请直接与实际的文件托管方和提供方联系，我们与其无任何关联。如有版权侵权，请直接联系相关责任方或流媒体网站。本应用仅供教育和个人使用。HexaPlayer 不在应用中托管任何内容，也无法控制媒体的上传或删除。HexaPlayer 的功能与 Google 等搜索引擎类似。HexaPlayer 不托管、上传或管理任何视频、电影或内容，仅以便捷、用户友好的界面抓取、聚合并展示链接。它只是抓取任何普通网页浏览器都能公开访问的第三方网站。用户有责任避免任何可能违反其所在地法律的行为。使用 HexaPlayer 风险自负。</string>
+  <string name="legal_notice_text">本应用中的内容如有任何法律问题，请直接与实际的文件托管方和提供方联系，我们与其无任何关联。如有版权侵权，请直接联系相关责任方或流媒体网站。本应用仅供教育和个人使用。ZippyPlayer 不在应用中托管任何内容，也无法控制媒体的上传或删除。ZippyPlayer 的功能与 Google 等搜索引擎类似。ZippyPlayer 不托管、上传或管理任何视频、电影或内容，仅以便捷、用户友好的界面抓取、聚合并展示链接。它只是抓取任何普通网页浏览器都能公开访问的第三方网站。用户有责任避免任何可能违反其所在地法律的行为。使用 ZippyPlayer 风险自负。</string>
   <string name="clear_history_message">您确定要清除所有历史记录吗？</string>
   <string name="clear_history_confirm">清除</string>
   <string name="history_cleared">历史记录已清除</string>
