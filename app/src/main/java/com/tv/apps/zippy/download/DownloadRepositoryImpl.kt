@@ -5,6 +5,7 @@ import com.tv.apps.zippy.media.dao.DownloadDao
 import com.tv.apps.zippy.media.entities.HttpEntity
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.first
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,11 +14,53 @@ class DownloadRepositoryImpl @Inject constructor(
   private val downloadDao: DownloadDao
 ) : DownloadRepository {
 
+  /**
+   * Deserialize headers from JSON string to Map
+   */
+  private fun deserializeHeaders(headersJson: String?): Map<String, String>? {
+    if (headersJson == null || headersJson.isEmpty()) return null
+    return try {
+      val headerMap = mutableMapOf<String, String>()
+      // Parse simple JSON format: {"key1":"value1","key2":"value2"}
+      val entries = headersJson.removeSurrounding("{", "}").split(",")
+      entries.forEach { entry ->
+        val parts = entry.split(":", limit = 2)
+        if (parts.size == 2) {
+          val key = parts[0].trim().removeSurrounding("\"")
+          val value = parts[1].trim().removeSurrounding("\"")
+          if (key.isNotBlank() && value.isNotBlank()) {
+            headerMap[key] = value
+          }
+        }
+      }
+      if (headerMap.isNotEmpty()) headerMap else null
+    } catch (e: Exception) {
+      Timber.w(e, "Failed to deserialize headers")
+      null
+    }
+  }
+
+  /**
+   * Serialize headers Map to JSON string
+   */
+  private fun serializeHeaders(headers: Map<String, String>?): String? {
+    if (headers == null || headers.isEmpty()) return null
+    return try {
+      val entries = headers.entries.joinToString(",") { (key, value) ->
+        "\"${key.replace("\"", "\\\"")}\":\"${value.replace("\"", "\\\"")}\""
+      }
+      "{$entries}"
+    } catch (e: Exception) {
+      Timber.w(e, "Failed to serialize headers")
+      null
+    }
+  }
+
   override suspend fun loadAllTask(): List<DownloadTask> {
     // Load HTTP tasks from database
-    val httpEntities: List<com.tv.apps.zippy.media.entities.HttpEntity> = try {
+    val httpEntities: List<HttpEntity> = try {
       downloadDao.getAllHttpFlow().first()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
       emptyList()
     }
 
@@ -28,6 +71,7 @@ class DownloadRepositoryImpl @Inject constructor(
         source = e.url,
         targetPath = e.targetPath,
         fileName = e.fileName,
+        headers = deserializeHeaders(e.headers),
         totalBytes = e.totalBytes,
         createdAt = e.createdAt
       )
@@ -36,7 +80,7 @@ class DownloadRepositoryImpl @Inject constructor(
     // Load torrent entities from database
     val torrentEntities: List<TorrentEntity> = try {
       downloadDao.getAllTorrentFlow().first()
-    } catch (e: Exception) {
+    } catch (_: Exception) {
       emptyList()
     }
 
@@ -84,7 +128,7 @@ class DownloadRepositoryImpl @Inject constructor(
 
       DownloadType.HTTP -> {
         // Persist HTTP downloads to database
-        val entity = com.tv.apps.zippy.media.entities.HttpEntity(
+        val entity = HttpEntity(
           url = task.source,
           targetPath = task.targetPath,
           fileName = task.fileName,
@@ -95,6 +139,29 @@ class DownloadRepositoryImpl @Inject constructor(
           acceptRanges = false,
           etag = null,
           lastModified = null,
+          headers = serializeHeaders(task.headers),
+          status = initialStatus.name,
+          error = null,
+          createdAt = task.createdAt,
+          updatedAt = System.currentTimeMillis()
+        )
+        downloadDao.insertHttp(entity)
+      }
+
+      DownloadType.HLS -> {
+        // HLS downloads are persisted as HTTP entities with .m3u8 URL
+        val entity = HttpEntity(
+          url = task.source,
+          targetPath = task.targetPath,
+          fileName = task.fileName,
+          tempPath = null,
+          totalBytes = task.totalBytes,
+          downloadedBytes = 0L,
+          progress = 0,
+          acceptRanges = false,
+          etag = null,
+          lastModified = null,
+          headers = serializeHeaders(task.headers),
           status = initialStatus.name,
           error = null,
           createdAt = task.createdAt,
@@ -229,6 +296,50 @@ class DownloadRepositoryImpl @Inject constructor(
           // best-effort
         }
       }
+
+      DownloadType.HLS -> {
+        // HLS downloads are stored as HTTP entities
+        try {
+          val url = state.task.source
+          val current = try {
+            downloadDao.getHttpByUrlFlow(url).first()
+          } catch (_: Exception) {
+            null
+          }
+
+          val updated = (current ?: HttpEntity(
+            url = url,
+            targetPath = state.task.targetPath,
+            fileName = state.task.fileName,
+            tempPath = null,
+            totalBytes = state.task.totalBytes,
+            downloadedBytes = state.downloadedBytes,
+            progress = state.progress,
+            speed = state.speed,
+            acceptRanges = false,
+            etag = null,
+            lastModified = null,
+            status = state.status.name,
+            error = state.error,
+            createdAt = state.task.createdAt,
+            updatedAt = System.currentTimeMillis()
+          )).copy(
+            targetPath = state.task.targetPath,
+            fileName = state.task.fileName,
+            totalBytes = if (state.task.totalBytes > 0) state.task.totalBytes else current?.totalBytes ?: 0L,
+            downloadedBytes = state.downloadedBytes,
+            progress = state.progress,
+            status = state.status.name,
+            speed = state.speed,
+            error = state.error,
+            updatedAt = System.currentTimeMillis()
+          )
+
+          downloadDao.insertHttp(updated)
+        } catch (_: Exception) {
+          // best-effort
+        }
+      }
     }
   }
 
@@ -249,13 +360,14 @@ class DownloadRepositoryImpl @Inject constructor(
   }
 
   // mapping helpers
-  private fun httpEntityToDownloadState(e: com.tv.apps.zippy.media.entities.HttpEntity): DownloadState {
+  private fun httpEntityToDownloadState(e: HttpEntity): DownloadState {
     val task = DownloadTask(
-      id = e.url, // ID is the URL for HTTP downloads
+      id = e.url, // URL as unique ID for HTTP
       type = DownloadType.HTTP,
       source = e.url,
       targetPath = e.targetPath,
       fileName = e.fileName,
+      headers = deserializeHeaders(e.headers),
       totalBytes = e.totalBytes,
       createdAt = e.createdAt,
     )

@@ -30,7 +30,7 @@ import com.tv.apps.zippy.media.entities.PlaylistItemEntity
     PlaylistItemEntity::class,
     FavoriteEntity::class
   ],
-  version = 10,
+  version = 1,
   exportSchema = false
 )
 @TypeConverters(Converters::class)

@@ -10,8 +10,6 @@ import com.tv.apps.zippy.media.dao.MediaDao
 import com.tv.apps.zippy.media.dao.MediaPlaybackDao
 import com.tv.apps.zippy.media.dao.PlaylistDao
 import com.tv.apps.zippy.media.db.MediaDatabase
-import com.tv.apps.zippy.media.db.migrations.Migration_8_9
-import com.tv.apps.zippy.media.db.migrations.Migration_9_10
 import com.tv.apps.zippy.media.dataSource.MediaStoreDataSource
 import com.tv.apps.zippy.media.dataSource.MediaStoreDataSourceImpl
 import com.tv.apps.zippy.media.repository.MediaRepository
@@ -38,7 +36,7 @@ object DatabaseModule {
       MediaDatabase::class.java,
       "media_database"
     )
-      .addMigrations(Migration_8_9, Migration_9_10)
+//      .addMigrations(Migration_1_2)
       .fallbackToDestructiveMigration(BuildConfig.DEBUG) // For development - recreate DB on schema changes
       .build()
   }

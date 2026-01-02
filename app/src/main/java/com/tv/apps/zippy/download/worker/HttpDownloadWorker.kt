@@ -97,7 +97,7 @@ class HttpDownloadWorker @AssistedInject constructor(
         return@withContext Result.failure(workDataOf(KEY_ERROR to error))
       }
 
-      val tempFileName = "${extractFileName(task.source)}.part"
+      val tempFileName = "${extractFileName(task.fileName ?: task.source)}.part"
       val tempFile = targetDir.createFile(tempFileName)
 
       Timber.i("Temp file: ${tempFile?.uri}")
@@ -115,6 +115,12 @@ class HttpDownloadWorker @AssistedInject constructor(
       connection.requestMethod = "GET"
       connection.connectTimeout = 15000
       connection.readTimeout = 15000
+
+      // Apply custom headers from task if provided
+      task.headers?.forEach { (key, value) ->
+        connection.setRequestProperty(key, value)
+        Timber.d("Added header: $key = $value")
+      }
 
       if (tempFile == null) {
         val error = "Failed to access download files"

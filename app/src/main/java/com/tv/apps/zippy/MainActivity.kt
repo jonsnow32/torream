@@ -78,6 +78,7 @@ import com.google.android.gms.cast.framework.SessionManager
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
+import com.tv.apps.zippy.ui.dialog.UrlInputDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.serializer
 import timber.log.Timber
@@ -395,6 +396,28 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
     }
 
+    //handle DOWNLOAD_URL action with header
+    if (intent.action?.endsWith(".action.DOWNLOAD_URL") == true) {
+      val url = intent.getStringExtra("url") ?: return
+      val name = intent.getStringExtra("name")
+      val headersArray = intent.getStringArrayExtra("headers")
+      val headerMap = mutableMapOf<String, String>()
+
+      // Convert array to map - array contains alternating keys and values
+      // [key1, value1, key2, value2, ...]
+      if (headersArray != null && headersArray.size >= 2) {
+        var i = 0
+        while (i < headersArray.size - 1) {
+          headerMap[headersArray[i]] = headersArray[i + 1]
+          i += 2
+        }
+        Timber.d("Converted ${headerMap.size} headers from array to map")
+      }
+
+      UrlInputDialog.newInstance(url, name, if (headerMap.isNotEmpty()) headerMap else null).show(supportFragmentManager)
+      return
+    }
+
     // Handle ACTION_VIEW for PlaybackData
     if (intent.action != Intent.ACTION_VIEW) return
 
@@ -452,7 +475,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     val navHostFragment =
       supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
     navHostFragment.navController.currentDestination?.let {
-      if(!it.matchDestination( R.id.mvpFragmentPlayer))
+      if (!it.matchDestination(R.id.mvpFragmentPlayer))
         updateNavSafeRect(isLandScape)
       else {
         binding.navView.isGone = true
@@ -548,12 +571,15 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         "Light" -> {
           AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
+
         "Dark" -> {
           AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         }
+
         "System" -> {
           AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
+
         else -> {
           // Default to System theme
           AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)

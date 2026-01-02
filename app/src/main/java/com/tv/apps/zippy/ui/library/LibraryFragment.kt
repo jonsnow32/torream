@@ -21,7 +21,6 @@ import com.tv.apps.zippy.ui.feed.adapters.FeedAdapter
 import com.tv.apps.zippy.utils.AutoClearedValue.Companion.autoCleared
 import com.tv.apps.zippy.utils.FastScrollerHelper
 import com.tv.apps.zippy.utils.observe
-import com.google.android.material.tabs.TabLayout
 import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -71,7 +70,7 @@ class LibraryFragment : Fragment() {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    applyContentRect(binding.appBar, binding.swipeRefresh)
+    applyContentRect(binding.appBar, binding.rvLibrary)
     FastScrollerHelper.applyTo(binding.rvLibrary)
 
     // Handle section argument if provided
@@ -108,40 +107,34 @@ class LibraryFragment : Fragment() {
       }
     }
 
-    binding.swipeRefresh.setOnRefreshListener {
-      // Refresh data when user pulls down
-      adapter.refresh()
-    }
+//    binding.swipeRefresh.setOnRefreshListener {
+//      // Refresh data when user pulls down
+//      adapter.refresh()
+//    }
     // Setup tabs for different library sections
     setupTabs()
 
   }
 
   private fun setupTabs() {
-    // Add tabs
-    binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.downloads))
-    binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.favorites))
-    binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.history))
-    binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.playlists))
+    // Select the appropriate radio button based on current section
+    when (viewModel.section.value) {
+      LibrarySection.DOWNLOADS -> binding.tabDownloads.isChecked = true
+      LibrarySection.FAVORITES -> binding.tabFavorites.isChecked = true
+      LibrarySection.HISTORY -> binding.tabHistory.isChecked = true
+      LibrarySection.PLAYLISTS -> binding.tabPlaylists.isChecked = true
+    }
 
-    // Set default tab based on viewModel
-    binding.tabLayout.getTabAt(viewModel.section.value.ordinal)?.select()
-
-    // Handle tab selection
-    binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-      override fun onTabSelected(tab: TabLayout.Tab?) {
-        when (tab?.position) {
-          0 -> viewModel.section.value = LibrarySection.DOWNLOADS
-          1 -> viewModel.section.value = LibrarySection.FAVORITES
-          2 -> viewModel.section.value = LibrarySection.HISTORY
-          3 -> viewModel.section.value = LibrarySection.PLAYLISTS
-        }
-        Timber.d("Tab selected: ${viewModel.section.value}")
+    // Handle radio button selection changes
+    binding.tabLayout.setOnCheckedChangeListener { _, checkedId ->
+      when (checkedId) {
+        R.id.tabDownloads -> viewModel.section.value = LibrarySection.DOWNLOADS
+        R.id.tabFavorites -> viewModel.section.value = LibrarySection.FAVORITES
+        R.id.tabHistory -> viewModel.section.value = LibrarySection.HISTORY
+        R.id.tabPlaylists -> viewModel.section.value = LibrarySection.PLAYLISTS
       }
-
-      override fun onTabUnselected(tab: TabLayout.Tab?) {}
-      override fun onTabReselected(tab: TabLayout.Tab?) {}
-    })
+      Timber.d("Tab selected: ${viewModel.section.value}")
+    }
   }
 
   private fun setupAdapter() {
@@ -155,7 +148,7 @@ class LibraryFragment : Fragment() {
     // Observe feed data
     observe(viewModel.feedData) {
       adapter.submitData(it)
-      binding.swipeRefresh.isRefreshing = false
+//      binding.swipeRefresh.isRefreshing = false
     }
 
     // Configure adapter with loading states

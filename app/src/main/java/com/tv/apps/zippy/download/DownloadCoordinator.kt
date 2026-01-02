@@ -11,8 +11,10 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.tv.apps.zippy.R
 import com.tv.apps.zippy.download.worker.DownloadNotificationHelper
+import com.tv.apps.zippy.download.worker.HlsDownloadWorker
 import com.tv.apps.zippy.download.worker.HttpDownloadWorker
 import com.tv.apps.zippy.download.worker.TorrentDownloadWorker
+
 import com.tv.apps.zippy.utils.AppUtils.getDownloadPath
 import com.tv.apps.zippy.utils.UnifiedFileFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -200,6 +202,19 @@ class DownloadCoordinator @Inject constructor(
           .addTag(updatedTask.id)
           .build()
       }
+
+      DownloadType.HLS -> {
+        OneTimeWorkRequestBuilder<HlsDownloadWorker>()
+          .setInputData(workDataOf(HlsDownloadWorker.KEY_TASK_ID to updatedTask.id))
+          .setConstraints(
+            Constraints.Builder()
+              .setRequiredNetworkType(getRequiredNetworkType(context))
+              .build()
+          )
+          .addTag(DOWNLOAD_WORK_TAG)
+          .addTag(updatedTask.id)
+          .build()
+      }
     }
 
     // Enqueue work with unique work name
@@ -337,19 +352,21 @@ class DownloadCoordinator @Inject constructor(
                 }
               }
 
-              DownloadType.HTTP -> {
-                // For HTTP: directly delete the file
+              DownloadType.HTTP, DownloadType.HLS -> {
+                // For HTTP/HLS: directly delete the file
                 if (unifiedFile.delete()) {
-                  Timber.d("✓ Deleted HTTP file: $fileName")
+                  Timber.d("✓ Deleted file: $fileName")
                 } else {
-                  Timber.w("✗ Failed to delete HTTP file: $fileName")
+                  Timber.w("✗ Failed to delete file: $fileName")
                 }
 
-                // Try to delete .part temp file if it exists
-                val partFileName = "$fileName.part"
-                val partFile = unifiedFile.findFile(partFileName)
-                if (partFile?.delete() == true) {
-                  Timber.d("✓ Deleted .part file: $partFileName")
+                // Try to delete .part temp file if it exists (HTTP only)
+                if (downloadType == DownloadType.HTTP) {
+                  val partFileName = "$fileName.part"
+                  val partFile = unifiedFile.findFile(partFileName)
+                  if (partFile?.delete() == true) {
+                    Timber.d("✓ Deleted .part file: $partFileName")
+                  }
                 }
               }
             }

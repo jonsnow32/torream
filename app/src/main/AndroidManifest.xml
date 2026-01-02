@@ -6,6 +6,7 @@
   <uses-permission android:name="android.permission.INTERNET" /> <!-- unless you only use cs3 as a player for downloaded stuff, you need this -->
 
   <!-- Storage permissions for different Android versions -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
     android:maxSdkVersion="32" /> <!-- Android 6-12 -->
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -157,6 +158,14 @@
 
         <data android:scheme="content" />
         <data android:mimeType="application/json" />
+      </intent-filter>
+
+      <!-- For handling download URL requests from other apps -->
+      <!-- Accept actions like "com.packagename.action.DOWNLOAD_URL" -->
+      <intent-filter android:exported="true">
+        <action android:name="com.tv.apps.zippy.action.DOWNLOAD_URL" />
+        <action android:name="com.tv.apps.zippy.debug.action.DOWNLOAD_URL" />
+        <category android:name="android.intent.category.DEFAULT" />
       </intent-filter>
     </activity>
 

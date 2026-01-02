@@ -143,6 +143,31 @@ class LibraryPagingSource(
               ) as FeedData
             }
           }
+
+          DownloadType.HLS -> {
+            // HLS downloads are handled similar to HTTP downloads
+            val state = stateById[task.id]
+            val fileName = task.fileName?.substringAfterLast('/')
+              ?: task.targetPath.substringAfterLast('/', task.source.substringAfterLast('/'))
+
+            if (state != null) {
+              FeedData.HttpDownloadItem(
+                id = task.id,
+                title = fileName,
+                downloadState = state
+              ) as FeedData
+            } else {
+              // Fallback if state is not found
+              FeedData.HttpDownloadItem(
+                id = task.id,
+                title = fileName,
+                downloadState = DownloadState(
+                  task = task,
+                  status = DownloadStatus.QUEUED
+                )
+              ) as FeedData
+            }
+          }
         }
       }
 
@@ -199,8 +224,8 @@ class LibraryPagingSource(
                 uri = uri,
                 path = uri,
                 name = favorite.title,
-                size = mediaFromDb?.size ?: 0L,
-                duration = mediaFromDb?.duration ?: 0L,
+                size = 0L, // Unknown size when mediaFromDb is null
+                duration = 0L, // Unknown duration when mediaFromDb is null
                 width = 0,
                 height = 0,
                 dateModified = favorite.addedAt, // Use favorite added timestamp

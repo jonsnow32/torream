@@ -26,6 +26,7 @@ data class HttpEntity(
   @ColumnInfo(name = "accept_ranges") val acceptRanges: Boolean = false,
   @ColumnInfo(name = "e_tag") val etag: String? = null,
   @ColumnInfo(name = "last_modified") val lastModified: String? = null,
+  @ColumnInfo(name = "headers") val headers: String? = null, // JSON string of headers Map<String, String>
   @ColumnInfo(name = "status") val status: String = DownloadStatus.QUEUED.name, // store enum.name()
   @ColumnInfo(name = "error") val error: String? = null,
   @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis(),

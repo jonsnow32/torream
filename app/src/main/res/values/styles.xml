@@ -102,7 +102,7 @@
 
   <!-- Media Item Style - Used in various list items -->
   <style name="MediaItem">
-    <item name="android:background">?attr/selectableItemBackground</item>
+    <item name="android:background">@drawable/outline_drawable_forced</item>
     <item name="android:clickable">true</item>
     <item name="android:focusable">true</item>
   </style>

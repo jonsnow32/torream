@@ -10,6 +10,8 @@ import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import com.tv.apps.zippy.R
 import com.tv.apps.zippy.databinding.DialogUrlInputBinding
+import com.tv.apps.zippy.datastore.Serializer.getSerialized
+import com.tv.apps.zippy.datastore.Serializer.putSerialized
 import com.tv.apps.zippy.download.DownloadCoordinator
 import com.tv.apps.zippy.download.DownloadTask
 import com.tv.apps.zippy.download.DownloadType
@@ -21,6 +23,7 @@ import com.tv.apps.zippy.utils.AutoClearedValue.Companion.autoCleared
 import com.tv.apps.zippy.utils.PlaybackDataHelper
 import com.tv.apps.zippy.utils.UIHelper.dismissSafe
 import com.tv.apps.zippy.utils.UIHelper.navigate
+import com.tv.apps.zippy.utils.setText
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,6 +37,10 @@ class UrlInputDialog : DockingDialog() {
   private var binding by autoCleared<DialogUrlInputBinding>()
   private val args by lazy { requireArguments() }
   val url: String by lazy { args.getString("url", null) }
+  val name: String? by lazy { args.getString("name", null) }
+  val headers: Map<String, String> by lazy {
+    args.getSerialized<Map<String, String>>("headers") ?: emptyMap()
+  }
 
   @Inject
   lateinit var downloadCoordinator: DownloadCoordinator
@@ -62,6 +69,7 @@ class UrlInputDialog : DockingDialog() {
     super.onViewCreated(view, savedInstanceState)
     binding.urlInput.setText(url, android.widget.TextView.BufferType.EDITABLE)
 
+    if (name?.isNotBlank() == true) binding.text1.text = name
     // Load .torrent file button
     binding.loadTorrentFileBtt.setOnClickListener {
       try {
@@ -91,6 +99,10 @@ class UrlInputDialog : DockingDialog() {
 
             inputUrl.endsWith(".torrent") -> {
               DownloadType.TORRENT to context?.getDownloadPath()
+            }
+
+            inputUrl.endsWith(".m3u8") -> {
+              DownloadType.HLS to context?.getDownloadPath()
             }
 
             inputUrl.startsWith("http") -> {
@@ -133,9 +145,9 @@ class UrlInputDialog : DockingDialog() {
             }
           }
 
-          DownloadType.HTTP -> {
-            // For HTTP, use URL as ID (matches database primary key)
-            // This ensures task.id matches the URL used as primary key in HttpEntity table
+          DownloadType.HTTP, DownloadType.HLS -> {
+            // For HTTP/HLS, use URL as ID (matches database primary key)
+            // This ensures task.id matches the URL used as primary key
             inputUrl
           }
         }
@@ -151,7 +163,9 @@ class UrlInputDialog : DockingDialog() {
           id = taskId,
           type = taskType,
           source = inputUrl, // Always use full URL/magnet as source
-          targetPath = targetPath
+          targetPath = targetPath,
+          fileName = name, // Use provided name or null for auto-detection
+          headers = if (headers.isNotEmpty()) headers else null // Use provided headers or null
         )
 
         // Start download using coordinator (WorkManager will persist it)
@@ -218,9 +232,19 @@ class UrlInputDialog : DockingDialog() {
   }
 
   companion object {
-    fun newInstance(url: String): UrlInputDialog {
+    fun newInstance(
+      url: String,
+      name: String? = null,
+      headers: Map<String, String>? = null
+    ): UrlInputDialog {
       val args = Bundle()
       args.putString("url", url)
+      if (name != null) {
+        args.putString("name", name)
+      }
+      if (headers != null) {
+        args.putSerialized("headers", headers)
+      }
       val fragment = UrlInputDialog()
       fragment.arguments = args
       return fragment

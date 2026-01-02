@@ -5,10 +5,9 @@
   style="@style/MediaItem"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:layout_marginVertical="8dp"
   android:gravity="center_vertical"
   android:orientation="horizontal"
-  android:padding="12dp">
+  android:padding="8dp">
 
   <!-- Torrent Icon -->
   <!--    <ImageView-->
