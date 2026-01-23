@@ -382,18 +382,22 @@ class HlsDownloadWorker @AssistedInject constructor(
   /**
    * Show progress notification
    */
-  private fun showProgressNotification(taskId: String, progress: Int) {
+  private suspend fun showProgressNotification(taskId: String, progress: Int) {
     if (!DownloadNotificationHelper.hasNotificationPermission(context)) {
       Timber.d("Notification permission not granted, skipping notification for taskId=$taskId")
       return
     }
 
     try {
+      val state = repo.observeState(taskId).first()
+      val fileName = state?.task?.fileName
+
       val notification = DownloadNotificationHelper.createDownloadNotification(
         context,
         taskId,
         progress,
-        isHttp = false
+        isHttp = false,
+        fileName = fileName
       )
       val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -420,7 +424,7 @@ class HlsDownloadWorker @AssistedInject constructor(
   /**
    * Create foreground notification
    */
-  private fun createForegroundInfo(taskId: String, progress: Int): ForegroundInfo {
+  private suspend fun createForegroundInfo(taskId: String, progress: Int): ForegroundInfo {
     @Suppress("MissingPermission")
     val checkPerm = !DownloadNotificationHelper.hasNotificationPermission(context)
 
@@ -430,12 +434,16 @@ class HlsDownloadWorker @AssistedInject constructor(
       return ForegroundInfo(taskId.hashCode(), android.app.Notification())
     }
 
+    val state = repo.observeState(taskId).first()
+    val fileName = state?.task?.fileName
+
     @Suppress("MissingPermission")
     val notification = DownloadNotificationHelper.createDownloadNotification(
       context,
       taskId,
       progress,
-      isHttp = false
+      isHttp = false,
+      fileName = fileName
     )
 
     return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

@@ -195,6 +195,7 @@ object Utils {
       val toast = Toast(act)
       toast.duration = duration ?: Toast.LENGTH_SHORT
       toast.setGravity(Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM, 0, 5.toPx)
+      @Suppress("DEPRECATION")
       toast.view = binding.root
       currentToast = toast
       toast.show()
@@ -214,6 +215,7 @@ object Utils {
 
   fun Context.isUsingMobileData(): Boolean {
     val conManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    @Suppress("DEPRECATION")
     val networkInfo = conManager.allNetworks
     return networkInfo.any {
       conManager.getNetworkCapabilities(it)
@@ -273,6 +275,7 @@ object Utils {
     } else {
       val audioManager: AudioManager =
         getSystemService(Context.AUDIO_SERVICE) as AudioManager
+      @Suppress("DEPRECATION")
       audioManager.requestAudioFocus(
         null,
         AudioManager.STREAM_MUSIC,
@@ -411,9 +414,9 @@ object Utils {
       val char2 = triplet shr 8 and 0xFF
       val char3 = triplet and 0xFF
 
-      if (bytes[i + 2] != '='.toByte()) {
+      if (bytes[i + 2] != '='.code.toByte()) {
         result.add(char1.toChar().toString() + char2.toChar() + char3.toChar())
-      } else if (bytes[i + 3] != '='.toByte()) {
+      } else if (bytes[i + 3] != '='.code.toByte()) {
         result.add(char1.toChar().toString() + char2.toChar())
       } else {
         result.add(char1.toChar().toString())

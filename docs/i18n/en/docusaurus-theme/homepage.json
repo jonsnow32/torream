@@ -1,0 +1,38 @@
+{
+  "homepage.hero.tag": {
+    "message": "▶ STREAMING MEDIA PLAYER",
+    "description": "Hero section tag"
+  },
+  "homepage.hero.headline": {
+    "message": "Stream your library like it was mastered.",
+    "description": "Hero section headline"
+  },
+  "homepage.hero.description": {
+    "message": "ZippyPlayer is a powerful media player with advanced streaming, torrent support, 4K video playback, and deep customization. Experience your content the way it was meant to be enjoyed.",
+    "description": "Hero section description"
+  },
+  "homepage.hero.feature1": {
+    "message": "Optimized for Android",
+    "description": "Feature 1"
+  },
+  "homepage.hero.feature2": {
+    "message": "4K / Streaming Support",
+    "description": "Feature 2"
+  },
+  "homepage.hero.feature3": {
+    "message": "Torrent & Download",
+    "description": "Feature 3"
+  },
+  "homepage.hero.download": {
+    "message": "Get ZippyPlayer",
+    "description": "Download button text"
+  },
+  "homepage.hero.googleplay": {
+    "message": "Available on Google Play",
+    "description": "Google Play button text"
+  },
+  "homepage.hero.testimonial": {
+    "message": "Loved by millions of Android users worldwide. Free trial - No subscription required.",
+    "description": "Testimonial text"
+  }
+}

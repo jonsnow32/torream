@@ -1,0 +1,24 @@
+{
+  "id": "architecture/player-architecture",
+  "title": "player-architecture",
+  "description": "",
+  "source": "@site/docs/architecture/player-architecture.md",
+  "sourceDirName": "architecture",
+  "slug": "/architecture/player-architecture",
+  "permalink": "/docs/architecture/player-architecture",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/your-org/zippyplayer/tree/main/docs/docs/architecture/player-architecture.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "core-components",
+    "permalink": "/docs/architecture/core-components"
+  },
+  "next": {
+    "title": "download-system",
+    "permalink": "/docs/architecture/download-system"
+  }
+}

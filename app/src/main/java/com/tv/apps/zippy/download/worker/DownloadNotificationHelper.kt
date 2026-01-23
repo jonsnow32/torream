@@ -52,6 +52,7 @@ object DownloadNotificationHelper {
     val pauseAllIntent = Intent(context, DownloadNotificationReceiver::class.java).apply {
       action = ACTION_PAUSE_ALL
     }
+
     val pauseAllPendingIntent = PendingIntent.getBroadcast(
       context,
       1,

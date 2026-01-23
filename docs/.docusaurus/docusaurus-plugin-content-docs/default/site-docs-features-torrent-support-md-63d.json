@@ -1,0 +1,24 @@
+{
+  "id": "features/torrent-support",
+  "title": "torrent-support",
+  "description": "",
+  "source": "@site/docs/features/torrent-support.md",
+  "sourceDirName": "features",
+  "slug": "/features/torrent-support",
+  "permalink": "/docs/features/torrent-support",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/your-org/zippyplayer/tree/main/docs/docs/features/torrent-support.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "video-player",
+    "permalink": "/docs/features/video-player"
+  },
+  "next": {
+    "title": "download-manager",
+    "permalink": "/docs/features/download-manager"
+  }
+}

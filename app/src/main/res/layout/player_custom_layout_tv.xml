@@ -551,6 +551,7 @@
         android:layout_marginEnd="64dp"
         android:layout_marginBottom="10dp"
         android:gravity="center_vertical"
+        android:focusable="false"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -561,6 +562,7 @@
           android:layout_height="wrap_content"
           android:layoutDirection="ltr"
           android:orientation="horizontal"
+          android:focusable="false"
           tools:visibility="visible">
 
           <FrameLayout

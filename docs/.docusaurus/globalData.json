@@ -1,0 +1,107 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/docs",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/docs",
+          "mainDocId": "intro",
+          "docs": [
+            {
+              "id": "architecture/core-components",
+              "path": "/docs/architecture/core-components",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "architecture/download-system",
+              "path": "/docs/architecture/download-system",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "architecture/overview",
+              "path": "/docs/architecture/overview",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "architecture/player-architecture",
+              "path": "/docs/architecture/player-architecture",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "faq",
+              "path": "/docs/faq",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/android-tv",
+              "path": "/docs/features/android-tv",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/chromecast",
+              "path": "/docs/features/chromecast",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/download-manager",
+              "path": "/docs/features/download-manager",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/media-library",
+              "path": "/docs/features/media-library",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/overview",
+              "path": "/docs/features/overview",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/torrent-support",
+              "path": "/docs/features/torrent-support",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "features/video-player",
+              "path": "/docs/features/video-player",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "getting-started",
+              "path": "/docs/getting-started",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "intro",
+              "path": "/docs/intro",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "technical-stack",
+              "path": "/docs/technical-stack",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "theme-guide",
+              "path": "/docs/theme-guide"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "tutorialSidebar": {
+              "link": {
+                "path": "/docs/intro",
+                "label": "intro"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}

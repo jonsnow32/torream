@@ -169,6 +169,10 @@
   <string name="links_reloaded_toast">Links Reloaded</string>
 
   <string name="download_storage_text">Internal Storage</string>
+  <string name="storage_label_format">%1$s • %2$s</string>
+  <string name="storage_used">Used</string>
+  <string name="storage_app">App</string>
+  <string name="storage_free">Free</string>
   <string name="app_dubbed_text">Dub</string>
   <string name="app_subbed_text">Sub</string>
   <string name="popup_delete_file">Delete File</string>

@@ -537,7 +537,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     ioSafe {
       runAutoUpdate()
     }
-
     try {
       if (isCastApiAvailable()) {
         //mCastSession = mSessionManager.currentCastSession

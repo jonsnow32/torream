@@ -115,54 +115,45 @@
       android:supportsPictureInPicture="true">
 
 
+      <!-- Launcher intent -->
       <intent-filter android:exported="true">
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
         <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
       </intent-filter>
 
-      <intent-filter>
+      <!-- Custom scheme for deep linking -->
+      <intent-filter android:priority="100">
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-
         <data android:scheme="csplayer" />
       </intent-filter>
 
+      <!-- Video playback from all sources (merged file/content/http/https) -->
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-
         <data android:scheme="file" />
         <data android:scheme="content" />
-        <data android:mimeType="video/*" />
-      </intent-filter>
-
-      <!-- For playing videos from HTTP or HTTPS URLs -->
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-
         <data android:scheme="http" />
         <data android:scheme="https" />
         <data android:mimeType="video/*" />
+        <data android:mimeType="audio/*" />
       </intent-filter>
 
-      <!-- For handling playlist/video data from other apps (e.g., CinemaHD) -->
+      <!-- Playlist/JSON data from other apps (e.g., CinemaHD) -->
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-
         <data android:scheme="content" />
         <data android:mimeType="application/json" />
       </intent-filter>
 
-      <!-- For handling download URL requests from other apps -->
-      <!-- Accept actions like "com.packagename.action.DOWNLOAD_URL" -->
-      <intent-filter android:exported="true">
+      <!-- Custom download URL action from other apps -->
+      <intent-filter android:exported="true" android:priority="100">
         <action android:name="com.tv.apps.zippy.action.DOWNLOAD_URL" />
         <action android:name="com.tv.apps.zippy.debug.action.DOWNLOAD_URL" />
         <category android:name="android.intent.category.DEFAULT" />
@@ -172,6 +163,32 @@
     <activity
       android:name=".ControllerActivity"
       android:exported="false" />
+
+    <!-- Share Receiver Activity - Dialog style for receiving URLs from other apps via ACTION_SEND -->
+    <activity
+      android:name=".ui.dialog.ShareReceiverActivity"
+      android:theme="@style/ShareReceiverDialogTheme"
+      android:exported="true"
+      android:launchMode="singleInstance"
+      android:excludeFromRecents="true"
+      android:taskAffinity=""
+      android:noHistory="true">
+
+      <!-- Handle ACTION_SEND for text/plain (URLs shared from browsers, etc.) -->
+      <intent-filter android:priority="100">
+        <action android:name="android.intent.action.SEND" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:mimeType="text/plain" />
+      </intent-filter>
+
+      <!-- Handle magnet links and torrents -->
+      <intent-filter android:priority="100">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="magnet" />
+      </intent-filter>
+    </activity>
 
     <provider
       android:name="androidx.core.content.FileProvider"

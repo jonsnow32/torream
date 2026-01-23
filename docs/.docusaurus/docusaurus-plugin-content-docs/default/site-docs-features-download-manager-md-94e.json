@@ -1,0 +1,24 @@
+{
+  "id": "features/download-manager",
+  "title": "download-manager",
+  "description": "",
+  "source": "@site/docs/features/download-manager.md",
+  "sourceDirName": "features",
+  "slug": "/features/download-manager",
+  "permalink": "/docs/features/download-manager",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/your-org/zippyplayer/tree/main/docs/docs/features/download-manager.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "torrent-support",
+    "permalink": "/docs/features/torrent-support"
+  },
+  "next": {
+    "title": "media-library",
+    "permalink": "/docs/features/media-library"
+  }
+}

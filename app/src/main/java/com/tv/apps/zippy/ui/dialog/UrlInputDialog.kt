@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
+import androidx.core.view.isGone
 import androidx.lifecycle.lifecycleScope
 import com.tv.apps.zippy.R
 import com.tv.apps.zippy.databinding.DialogUrlInputBinding
@@ -41,6 +42,8 @@ class UrlInputDialog : DockingDialog() {
   val headers: Map<String, String> by lazy {
     args.getSerialized<Map<String, String>>("headers") ?: emptyMap()
   }
+
+  val simpleDownload: Boolean by lazy { args.getBoolean("simpleDownload", false) }
 
   @Inject
   lateinit var downloadCoordinator: DownloadCoordinator
@@ -229,13 +232,17 @@ class UrlInputDialog : DockingDialog() {
       activity?.navigate(R.id.global_to_navigation_mpv_player, bundle)
       dialog?.dismissSafe(activity)
     }
+
+    binding.streamingBtt.isGone = simpleDownload
+    binding.loadTorrentFileBtt.isGone = simpleDownload
   }
 
   companion object {
     fun newInstance(
       url: String,
       name: String? = null,
-      headers: Map<String, String>? = null
+      headers: Map<String, String>? = null,
+      simpleDownload: Boolean = false
     ): UrlInputDialog {
       val args = Bundle()
       args.putString("url", url)
@@ -245,6 +252,8 @@ class UrlInputDialog : DockingDialog() {
       if (headers != null) {
         args.putSerialized("headers", headers)
       }
+      args.putBoolean("simpleDownload", simpleDownload)
+
       val fragment = UrlInputDialog()
       fragment.arguments = args
       return fragment

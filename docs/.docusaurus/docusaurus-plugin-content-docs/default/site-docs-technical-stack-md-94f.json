@@ -1,0 +1,24 @@
+{
+  "id": "technical-stack",
+  "title": "technical-stack",
+  "description": "",
+  "source": "@site/docs/technical-stack.md",
+  "sourceDirName": ".",
+  "slug": "/technical-stack",
+  "permalink": "/docs/technical-stack",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/your-org/zippyplayer/tree/main/docs/docs/technical-stack.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "download-system",
+    "permalink": "/docs/architecture/download-system"
+  },
+  "next": {
+    "title": "faq",
+    "permalink": "/docs/faq"
+  }
+}

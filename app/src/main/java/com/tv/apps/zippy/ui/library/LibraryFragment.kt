@@ -82,6 +82,7 @@ class LibraryFragment : Fragment() {
 
     setupUI()
     setupAdapter()
+    setupStorageStats()
 
   }
 
@@ -107,10 +108,10 @@ class LibraryFragment : Fragment() {
       }
     }
 
-//    binding.swipeRefresh.setOnRefreshListener {
-//      // Refresh data when user pulls down
-//      adapter.refresh()
-//    }
+    binding.swipeRefresh.setOnRefreshListener {
+      // Refresh data when user pulls down
+      adapter.refresh()
+    }
     // Setup tabs for different library sections
     setupTabs()
 
@@ -134,6 +135,43 @@ class LibraryFragment : Fragment() {
         R.id.tabPlaylists -> viewModel.section.value = LibrarySection.PLAYLISTS
       }
       Timber.d("Tab selected: ${viewModel.section.value}")
+      // Update storage stats visibility
+      updateStorageStatsVisibility()
+    }
+  }
+
+  private fun setupStorageStats() {
+    // Initial update
+    updateStorageStatsVisibility()
+
+    // Update storage stats when on Downloads tab
+    if (viewModel.section.value == LibrarySection.DOWNLOADS) {
+      updateStorageStatsUI()
+    }
+
+    // Observe section changes
+    observe(viewModel.section) { section ->
+      updateStorageStatsVisibility()
+      if (section == LibrarySection.DOWNLOADS) {
+        updateStorageStatsUI()
+      }
+    }
+  }
+
+  private fun updateStorageStatsVisibility() {
+    // Show storage stats only on Downloads tab
+    binding.storageStatsView.visibility = if (viewModel.section.value == LibrarySection.DOWNLOADS) {
+      View.VISIBLE
+    } else {
+      View.GONE
+    }
+  }
+
+  private fun updateStorageStatsUI() {
+    try {
+      binding.storageStatsView.loadAndDisplay()
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to update storage stats UI")
     }
   }
 
@@ -148,7 +186,7 @@ class LibraryFragment : Fragment() {
     // Observe feed data
     observe(viewModel.feedData) {
       adapter.submitData(it)
-//      binding.swipeRefresh.isRefreshing = false
+      binding.swipeRefresh.isRefreshing = false
     }
 
     // Configure adapter with loading states

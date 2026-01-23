@@ -1,0 +1,24 @@
+{
+  "id": "features/android-tv",
+  "title": "android-tv",
+  "description": "",
+  "source": "@site/docs/features/android-tv.md",
+  "sourceDirName": "features",
+  "slug": "/features/android-tv",
+  "permalink": "/docs/features/android-tv",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/your-org/zippyplayer/tree/main/docs/docs/features/android-tv.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "media-library",
+    "permalink": "/docs/features/media-library"
+  },
+  "next": {
+    "title": "chromecast",
+    "permalink": "/docs/features/chromecast"
+  }
+}

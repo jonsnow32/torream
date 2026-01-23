@@ -18,5 +18,5 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "CSPlayer"
+rootProject.name = "ZippyPlayer"
 include(":app")

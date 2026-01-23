@@ -31,7 +31,6 @@
       android:background="?colorSurface"
       android:focusable="false"
       android:padding="8dp"
-      android:focusableInTouchMode="false"
       android:nextFocusLeft="@id/navRailView"
       android:nextFocusUp="@id/toolbar"
       android:nextFocusDown="@id/rvLibrary"
@@ -46,6 +45,7 @@
         android:paddingHorizontal="4dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:descendantFocusability="afterDescendants"
         android:nextFocusLeft="@id/toolbar"
         android:nextFocusRight="@id/rvLibrary"
         android:nextFocusUp="@id/toolbar"
@@ -61,7 +61,6 @@
           android:button="@null"
           android:gravity="center"
           android:focusable="true"
-          android:focusableInTouchMode="true"
           android:nextFocusLeft="@id/toolbar"
           android:nextFocusRight="@id/tabFavorites"
           android:nextFocusUp="@id/toolbar"
@@ -82,7 +81,6 @@
           android:button="@null"
           android:gravity="center"
           android:focusable="true"
-          android:focusableInTouchMode="true"
           android:nextFocusLeft="@id/tabDownloads"
           android:nextFocusRight="@id/tabHistory"
           android:nextFocusUp="@id/toolbar"
@@ -102,7 +100,6 @@
           android:button="@null"
           android:gravity="center"
           android:focusable="true"
-          android:focusableInTouchMode="true"
           android:nextFocusLeft="@id/tabFavorites"
           android:nextFocusRight="@id/tabPlaylists"
           android:nextFocusUp="@id/toolbar"
@@ -122,7 +119,6 @@
           android:button="@null"
           android:gravity="center"
           android:focusable="true"
-          android:focusableInTouchMode="true"
           android:nextFocusLeft="@id/tabHistory"
           android:nextFocusUp="@id/toolbar"
           android:nextFocusDown="@id/rvLibrary"
@@ -132,6 +128,14 @@
           android:textColor="@color/tab_text_color" />
       </RadioGroup>
     </HorizontalScrollView>
+
+    <!-- Storage Stats UI -->
+    <com.tv.apps.zippy.ui.library.StorageStatsView
+      android:id="@+id/storageStatsView"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:visibility="gone"
+      tools:visibility="visible" />
 
   </com.google.android.material.appbar.AppBarLayout>
 

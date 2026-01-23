@@ -19,7 +19,7 @@
     <item name="colorOnSurface">@color/oneui_on_surface</item>
 
     <!-- Status bar -->
-<!--    <item name="android:statusBarColor">@color/oneui_status_bar</item>-->
+    <item name="android:statusBarColor">@color/oneui_status_bar</item>
 <!--    <item name="android:navigationBarColor">@color/oneui_navigation_bar</item>-->
 <!--    <item name="android:windowLightStatusBar">false</item>-->
 <!--    <item name="android:windowDrawsSystemBarBackgrounds">true</item>-->

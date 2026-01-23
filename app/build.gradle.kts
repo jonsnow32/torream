@@ -54,8 +54,7 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-    // Support for 16 KB page sizes
-    ndk.abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+    // Support for 16 KB page sizes - will be set per flavor
     ndk.debugSymbolLevel = "FULL"
   }
 
@@ -85,33 +84,47 @@ android {
     create("arm64") {
       dimension = "abi"
       versionNameSuffix = "-arm64"
-      ndk.abiFilters.clear()
-      ndk.abiFilters.addAll(listOf("arm64-v8a"))
+      ndk {
+        abiFilters.clear()
+        abiFilters.addAll(listOf("arm64-v8a"))
+      }
       versionCode = (abiCodes["arm64-v8a"] ?: 2) + 1000
     }
     create("arm32") {
       dimension = "abi"
       versionNameSuffix = "-arm32"
-      ndk.abiFilters.clear()
-      ndk.abiFilters.addAll(listOf("armeabi-v7a"))
+      ndk {
+        abiFilters.clear()
+        abiFilters.addAll(listOf("armeabi-v7a"))
+      }
       versionCode = (abiCodes["armeabi-v7a"] ?: 1) + 1000
     }
     create("x86") {
       dimension = "abi"
       versionNameSuffix = "-x86"
-      ndk.abiFilters.clear()
-      ndk.abiFilters.addAll(listOf("x86"))
+      ndk {
+        abiFilters.clear()
+        abiFilters.addAll(listOf("x86"))
+      }
       versionCode = (abiCodes["x86"] ?: 3) + 1000
     }
     create("x86_64") {
       dimension = "abi"
       versionNameSuffix = "-x86_64"
-      ndk.abiFilters.clear()
-      ndk.abiFilters.addAll(listOf("x86_64"))
+      ndk {
+        abiFilters.clear()
+        abiFilters.addAll(listOf("x86_64"))
+      }
       versionCode = (abiCodes["x86_64"] ?: 4) + 1000
     }
     create("universal") {
       dimension = "abi"
+      versionNameSuffix = "-universal"
+      ndk {
+        // Include all ABIs for universal build
+        abiFilters.clear()
+        abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+      }
       versionCode = 9999
     }
   }
@@ -149,25 +162,25 @@ android {
 dependencies {
 
   // Needed for EdgeToEdge helper
-  implementation("androidx.activity:activity:1.11.0")
-  implementation("androidx.activity:activity-ktx:1.11.0")
+  implementation("androidx.activity:activity:1.12.2")
+  implementation("androidx.activity:activity-ktx:1.12.2")
 
   implementation("androidx.core:core-ktx:1.17.0")
   implementation("androidx.appcompat:appcompat:1.7.1")
   implementation("androidx.preference:preference-ktx:1.2.1")
   implementation("com.google.android.material:material:1.13.0")
-  implementation("androidx.navigation:navigation-ui-ktx:2.9.5")
-  implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.9.4")
-  implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4")
-  implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.9.4")
-  implementation("androidx.navigation:navigation-fragment-ktx:2.9.5")
-  implementation("androidx.navigation:navigation-fragment-ktx:2.9.5")
-  implementation("androidx.navigation:navigation-ui-ktx:2.9.5")
+  implementation("androidx.navigation:navigation-ui-ktx:2.9.6")
+  implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.10.0")
+  implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
+  implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0")
+  implementation("androidx.navigation:navigation-fragment-ktx:2.9.6")
+  implementation("androidx.navigation:navigation-fragment-ktx:2.9.6")
+  implementation("androidx.navigation:navigation-ui-ktx:2.9.6")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
   // Paging 3
   implementation("androidx.paging:paging-runtime-ktx:3.3.6")
-  implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+  implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
   implementation("androidx.documentfile:documentfile:1.1.0")
 
   // WorkManager for background downloads
@@ -184,7 +197,7 @@ dependencies {
   implementation("androidx.room:room-ktx:2.8.3")
   ksp("androidx.room:room-compiler:2.8.3")
 
-  val media3Version = "1.8.0"
+  val media3Version = "1.9.0"
   // Media 3 (ExoPlayer)
   implementation("androidx.media3:media3-ui:$media3Version")
   implementation("androidx.media3:media3-cast:$media3Version")
@@ -232,11 +245,11 @@ dependencies {
   androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
   //Ads
-  implementation("com.google.android.gms:play-services-ads:24.8.0")
-  implementation("com.ironsource.sdk:mediationsdk:9.1.0")
+  implementation("com.google.android.gms:play-services-ads:24.9.0")
+  implementation("com.ironsource.sdk:mediationsdk:9.2.0")
   implementation("com.applovin:applovin-sdk:13.5.1")
-  implementation("com.unity3d.ads:unity-ads:4.16.4")
-  implementation("com.vungle:vungle-ads:7.6.1")
+  implementation("com.unity3d.ads:unity-ads:4.16.5")
+  implementation("com.vungle:vungle-ads:7.6.3")
 
 
   //logging

@@ -1,4 +1,4 @@
-# csplayer
+# zippy-player
 
 ## Google Play Compliance
 
@@ -20,3 +20,7 @@
 - **Testing:** Please test the app on an emulator or device with a 16 KB page size to verify correct operation.
 
 For more details, see the build scripts in `buildscripts/`.
+
+
+build all releases
+/build-all-releases.sh

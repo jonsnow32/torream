@@ -1,0 +1,24 @@
+{
+  "id": "architecture/core-components",
+  "title": "core-components",
+  "description": "",
+  "source": "@site/docs/architecture/core-components.md",
+  "sourceDirName": "architecture",
+  "slug": "/architecture/core-components",
+  "permalink": "/docs/architecture/core-components",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/your-org/zippyplayer/tree/main/docs/docs/architecture/core-components.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "overview",
+    "permalink": "/docs/architecture/overview"
+  },
+  "next": {
+    "title": "player-architecture",
+    "permalink": "/docs/architecture/player-architecture"
+  }
+}
