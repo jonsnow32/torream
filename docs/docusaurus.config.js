@@ -83,6 +83,11 @@ const config = {
             label: 'Documentation',
           },
           {
+            href: 'https://zippyplayer.example.com/download',
+            label: 'Download',
+            position: 'right',
+          },
+          {
             href: 'https://github.com/your-org/zippyplayer',
             label: 'GitHub',
             position: 'right',

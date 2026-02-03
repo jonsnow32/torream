@@ -40,6 +40,100 @@
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border-bottom: 1px solid rgba(0, 212, 255, 0.1);
   backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile navbar fixes */
+@media (max-width: 996px) {
+  /* Hide navbar items on mobile, show only hamburger */
+  .navbar__items--right,
+  .navbar__items--left {
+    display: none;
+  }
+
+  /* Show hamburger menu toggle */
+  .navbar__toggle {
+    display: flex !important;
+    color: #00d4ff;
+  }
+
+  /* Mobile sidebar menu */
+  .navbar-sidebar {
+    background: #1a1a2e;
+    z-index: 10002 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80%;
+    max-width: 300px;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .navbar-sidebar__backdrop {
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10001 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+  }
+
+  .navbar-sidebar__brand {
+    background: #16213e;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+    padding: 1rem;
+  }
+
+  .navbar-sidebar__items {
+    padding: 1rem 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 80px);
+  }
+
+  .navbar-sidebar__item {
+    padding: 0.5rem 1rem;
+  }
+
+  .menu__link,
+  .navbar-sidebar .menu__link {
+    padding: 0.75rem 1rem;
+    color: rgba(255, 255, 255, 0.85);
+    border-radius: 4px;
+    margin: 0.25rem 0;
+  }
+
+  .menu__link:hover,
+  .navbar-sidebar .menu__link:hover {
+    background: rgba(0, 212, 255, 0.1);
+    color: #00d4ff;
+  }
+
+  /* Compact navbar on mobile */
+  .navbar {
+    min-height: 56px;
+    padding: 0.5rem 1rem;
+  }
+
+  .navbar__logo {
+    height: 32px;
+  }
+
+  .navbar__title {
+    font-size: 1.1rem;
+  }
+}
+
+/* Desktop - show navbar items */
+@media (min-width: 997px) {
+  .navbar__toggle {
+    display: none;
+  }
+
+  .navbar__items {
+    display: flex !important;
+  }
 }
 
 .navbar__title {
@@ -177,3 +271,90 @@ article {
   color: #00d4ff;
   font-weight: 600;
 }
+
+/* Additional mobile responsiveness */
+@media (max-width: 996px) {
+  /* Ensure content has proper padding below fixed navbar */
+  .main-wrapper {
+    padding-top: 56px;
+  }
+
+  /* Mobile article padding */
+  article {
+    padding: 1.5rem 1rem;
+    margin: 1rem 0;
+  }
+
+  /* Mobile sidebar menu scrolling */
+  .navbar-sidebar__items {
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .navbar-sidebar .menu {
+    height: auto;
+    max-height: none;
+  }
+  
+  .navbar-sidebar .menu__list {
+    max-height: none;
+  }
+
+  /* Hide table of contents on mobile */
+  .table-of-contents {
+    display: none;
+  }
+
+  /* Full width content on mobile */
+  .docMainContainer {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+
+  /* Responsive tables */
+  .markdown table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Mobile-friendly code blocks */
+  .markdown pre {
+    font-size: 0.85rem;
+    padding: 0.75rem;
+  }
+
+  /* Adjust menu width */
+  .menu {
+    padding: 1rem 0.5rem;
+  }
+}
+
+/* Tablet responsiveness */
+@media (max-width: 1200px) and (min-width: 997px) {
+  article {
+    padding: 1.75rem;
+  }
+
+  .docMainContainer {
+    padding: 0 1.5rem;
+  }
+}
+
+/* Ensure navbar is always on top */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10001;
+}
+
+/* Fix mobile menu close button */
+.clean-btn.navbar-sidebar__close {
+  color: #00d4ff;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+}
+
+
