@@ -73,6 +73,8 @@ const config = {
           alt: 'ZippyPlayer Logo',
           src: 'img/logo.png',
         },
+        style: 'dark',
+        hideOnScroll: false,
         items: [
           {
             type: 'docSidebar',

@@ -6,26 +6,174 @@
 
 /* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205834;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #379e64;
-  --ifm-color-primary-lightest: #4caf50;
+  --ifm-color-primary: #00d4ff;
+  --ifm-color-primary-dark: #00bfe6;
+  --ifm-color-primary-darker: #00b4d9;
+  --ifm-color-primary-darkest: #0094b3;
+  --ifm-color-primary-light: #1adcff;
+  --ifm-color-primary-lighter: #2ee0ff;
+  --ifm-color-primary-lightest: #5ce7ff;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-background-color: #0f0f23;
+  --ifm-navbar-background-color: #1a1a2e;
+  --ifm-footer-background-color: #0f0f23;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32dfc7;
-  --ifm-color-primary-lightest: #4fddbf;
+  --ifm-color-primary: #00d4ff;
+  --ifm-color-primary-dark: #00bfe6;
+  --ifm-color-primary-darker: #00b4d9;
+  --ifm-color-primary-darkest: #0094b3;
+  --ifm-color-primary-light: #1adcff;
+  --ifm-color-primary-lighter: #2ee0ff;
+  --ifm-color-primary-lightest: #5ce7ff;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --ifm-background-color: #0f0f23;
+  --ifm-navbar-background-color: #1a1a2e;
+  --ifm-footer-background-color: #0f0f23;
 }
 
+/* Navbar Styling */
+.navbar {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.navbar__title {
+  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.navbar__link {
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.3s ease;
+}
+
+.navbar__link:hover {
+  color: #00d4ff;
+}
+
+.navbar__link--active {
+  color: #00d4ff;
+  font-weight: 600;
+}
+
+/* Footer Styling */
+.footer {
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+  border-top: 1px solid rgba(0, 212, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.footer__title {
+  color: #00d4ff;
+  font-weight: 600;
+}
+
+.footer__link-item {
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.footer__link-item:hover {
+  color: #00d4ff;
+  text-decoration: none;
+}
+
+.footer__copyright {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Docs Page Background */
+.main-wrapper {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+  min-height: 100vh;
+}
+
+.docMainContainer {
+  background: transparent;
+}
+
+article {
+  background: rgba(15, 15, 35, 0.6);
+  border-radius: 12px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.markdown h1 {
+  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.markdown h2,
+.markdown h3 {
+  color: #00d4ff;
+}
+
+.markdown a {
+  color: #00d4ff;
+  transition: all 0.3s ease;
+}
+
+.markdown a:hover {
+  color: #7b2ff7;
+  text-decoration: none;
+}
+
+.markdown code {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  color: #00d4ff;
+}
+
+.menu {
+  background: rgba(15, 15, 35, 0.4);
+  border-right: 1px solid rgba(0, 212, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.menu__link {
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.menu__link:hover {
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.menu__link--active {
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.15);
+  font-weight: 600;
+}
+
+.table-of-contents {
+  background: rgba(15, 15, 35, 0.4);
+  border-left: 1px solid rgba(0, 212, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.table-of-contents__link {
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.table-of-contents__link:hover {
+  color: #00d4ff;
+}
+
+.table-of-contents__link--active {
+  color: #00d4ff;
+  font-weight: 600;
+}

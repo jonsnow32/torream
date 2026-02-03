@@ -19,6 +19,7 @@
     "@mdx-js/react": "^3.0.0",
     "autoprefixer": "^10.4.17",
     "clsx": "^2.0.0",
+    "embla-carousel-react": "^8.6.0",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.292.0",
     "postcss": "^8.4.32",
