@@ -7,29 +7,42 @@ import Autoplay from 'embla-carousel-autoplay'
 
 const features = [
   {
-    title: 'Powerful Video Playback',
-    description: 'Built on mpv, supporting all major video formats with hardware acceleration for smooth playback.',
+    title: 'Powerful Video Player',
+    description: 'Built on Media3 (ExoPlayer) supporting all major formats including H.265/HEVC, VP9, AV1, with hardware acceleration and adaptive streaming.',
     image: '/img/tv/tv-scene.png',
     imageAlt: 'Video playback interface'
   },
   {
-    title: 'Torrent Streaming',
-    description: 'Stream videos directly from torrents without waiting for complete downloads. Advanced peer management for optimal performance.',
+    title: 'Download Manager',
+    description: 'Advanced download manager with HTTP/HTTPS, HLS segmented downloads, resume/pause functionality, and background downloading.',
     image: '/img/tv/tv-scene.png',
-    imageAlt: 'Torrent streaming',
+    imageAlt: 'Download manager',
     reverse: true
   },
   {
-    title: 'HLS & DASH Support',
-    description: 'Seamless adaptive streaming with HLS and DASH protocols. Automatic quality switching based on network conditions.',
+    title: 'Torrent Support',
+    description: 'Full-featured torrent client powered by LibTorrent4j. Stream while downloading with magnet links, sequential downloading, and speed controls.',
     image: '/img/tv/tv-scene.png',
-    imageAlt: 'HLS streaming'
+    imageAlt: 'Torrent streaming'
   },
   {
-    title: 'Modern UI',
-    description: 'Beautiful Material Design 3 interface with gesture controls, customizable themes, and intuitive navigation.',
+    title: 'Media Library',
+    description: 'Central hub for organizing video content with automatic cataloging, playlist management, favorites, smart search, and thumbnail generation.',
     image: '/img/tv/tv-scene.png',
-    imageAlt: 'Modern UI design',
+    imageAlt: 'Media library',
+    reverse: true
+  },
+  {
+    title: 'Chromecast',
+    description: 'Built-in Chromecast support with one-tap casting, remote playback control, subtitle support, and audio track selection.',
+    image: '/img/tv/tv-scene.png',
+    imageAlt: 'Chromecast support'
+  },
+  {
+    title: 'Android TV',
+    description: 'Fully optimized for Android TV with leanback UI, D-pad navigation, voice search integration, and 10-foot design for big screens.',
+    image: '/img/tv/tv-scene.png',
+    imageAlt: 'Android TV interface',
     reverse: true
   }
 ]
