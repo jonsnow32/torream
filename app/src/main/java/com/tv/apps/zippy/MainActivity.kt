@@ -400,6 +400,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
     if (intent.action?.endsWith(".action.DOWNLOAD_URL") == true) {
       val url = intent.getStringExtra("url") ?: return
       val name = intent.getStringExtra("name")
+      val hasAds = intent.getBooleanExtra("hasAds", true)
       val headersArray = intent.getStringArrayExtra("headers")
       val headerMap = mutableMapOf<String, String>()
 
@@ -414,7 +415,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         Timber.d("Converted ${headerMap.size} headers from array to map")
       }
 
-      UrlInputDialog.newInstance(url, name, if (headerMap.isNotEmpty()) headerMap else null).show(supportFragmentManager)
+      UrlInputDialog.newInstance(url, name, if (headerMap.isNotEmpty()) headerMap else null, hasAds).show(supportFragmentManager)
       return
     }
 

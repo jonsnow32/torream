@@ -1,18 +1,15 @@
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import Layout from '@theme/Layout'
-import Hero from '../components/landing/Hero'
-import Particles from '../components/magicui/particles'
 
-export default function Home() {
-  const {
-    siteConfig: { customFields, tagline },
-  } = useDocusaurusContext()
-  const { description } = customFields as { description: string }
-
+export default function Home(): JSX.Element {
+  const {siteConfig} = useDocusaurusContext()
   return (
-    <Layout title={tagline} description={description}>
-      <main>
-        <Hero />
+    <Layout title={siteConfig.title} description={siteConfig.tagline}>
+      <main style={{padding: '2rem 0'}}>
+        <div style={{textAlign: 'center'}}>
+          <h1>{siteConfig.title}</h1>
+          <p>{siteConfig.tagline}</p>
+        </div>
       </main>
     </Layout>
   )

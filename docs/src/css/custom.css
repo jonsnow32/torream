@@ -4,102 +4,28 @@
  * work well for content-centric websites.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Product+Sans:wght@100;300;400;500;700;900&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Force dark theme */
-html {
-  color-scheme: dark;
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #2e8555;
+  --ifm-color-primary-dark: #29784c;
+  --ifm-color-primary-darker: #277148;
+  --ifm-color-primary-darkest: #205834;
+  --ifm-color-primary-light: #33925d;
+  --ifm-color-primary-lighter: #379e64;
+  --ifm-color-primary-lightest: #4caf50;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
-/* Hide theme toggle button */
-.toggleButton_node_modules-\@docusaurus-theme-classic-lib-theme-ColorModeToggle-styles-module {
-  display: none !important;
-}
-
-/* Alternative selectors for theme toggle */
-button[aria-label*="theme"],
-button[aria-label*="dark"],
-button[aria-label*="light"],
-.toggleButton,
-[class*="ColorModeToggle"] {
-  display: none !important;
-}
-
-@layer base {
-  html {
-    font-family: 'Product Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    color-scheme: dark;
-  }
-
-  :root {
-    --content-background: #18181b;
-    --ifm-color-primary: #12affa;
-    --ifm-color-primary-dark: #05a1ec;
-    --ifm-color-primary-darker: #0598df;
-    --ifm-color-primary-darkest: #047eb8;
-    --ifm-color-primary-light: #2cb8fb;
-    --ifm-color-primary-lighter: #b0e6ff;
-    --ifm-color-primary-lightest: #d5f1fd;
-    --ifm-code-font-size: 95%;
-    --ifm-font-family-base: ui-sans-serif, system-ui, -apple-system;
-    --ifm-heading-font-family: ui-sans-serif, system-ui, -apple-system;
-    --ifm-navbar-background-color: #18181b;
-    --ifm-navbar-shadow: 0 4px 28px rgb(0 0 0 / 30%);
-    --ifm-menu-color: #eceef1;
-    --ifm-heading-color: hsl(0deg 0% 100%);
-    --ifm-text-color: #eceef1;
-    --ifm-secondary-text-color: #aaa;
-    --ifm-border-color: #313131;
-    --ifm-toc-border-color: var(--ifm-border-color);
-    --blog-item-background-color: linear-gradient(180deg, #171717, #18181b);
-    --blog-item-shadow: 0 10px 18px #25374833, 0 0 8px #25374866;
-    --blog-item-shade: #27272a;
-    --docusaurus-highlighted-code-line-bg: #4b5563;
-  }
-
-  html[data-theme='dark'] {
-    --content-background: #18181b;
-    --ifm-color-primary: hsl(214deg 100% 60%);
-    --ifm-color-primary-light: hsl(214deg 100% 75%);
-    --ifm-heading-color: hsl(0deg 0% 100%);
-    --ifm-menu-color: #eceef1;
-    --ifm-text-color: var(--ifm-menu-color);
-    --ifm-secondary-text-color: #aaa;
-    --ifm-border-color: #313131;
-    --ifm-navbar-background-color: var(--content-background);
-    --ifm-toc-border-color: var(--ifm-border-color);
-    --blog-item-background-color: linear-gradient(180deg, #171717, #18181b);
-    --blog-item-shadow: 0 10px 18px #25374833, 0 0 8px #25374866;
-    --blog-item-shade: #27272a;
-    --docusaurus-highlighted-code-line-bg: #4b5563;
-  }
-}
-
-a:hover {
-  @apply no-underline;
-}
-
-@layer components {
-  .bg-blog {
-    background: var(--blog-item-background-color);
-  }
-  .bg-blog-shade {
-    background: var(--blog-item-shade);
-  }
-}
-
-html,
-body {
-  scroll-behavior: smooth;
-  background-color: #18181b;
-  color: #eceef1;
-}
-
-body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #25c2a0;
+  --ifm-color-primary-dark: #21af90;
+  --ifm-color-primary-darker: #1fa588;
+  --ifm-color-primary-darkest: #1a8870;
+  --ifm-color-primary-light: #29d5b0;
+  --ifm-color-primary-lighter: #32dfc7;
+  --ifm-color-primary-lightest: #4fddbf;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 

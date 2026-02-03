@@ -18,8 +18,8 @@ const config = {
   organizationName: 'your-org',
   projectName: 'zippyplayer',
 
-  onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'throw',
 
   // Internationalization
   i18n: {
@@ -35,6 +35,8 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/your-org/zippyplayer/tree/main/docs/',
+          showLastUpdateTime: true,
+          showLastUpdateAuthor: true,
         },
         blog: false,
         theme: {
@@ -49,12 +51,11 @@ const config = {
       return {
         name: 'docusaurus-tailwindcss',
         configurePostCss(postcssOptions) {
-          // Appends TailwindCSS and AutoPrefixer.
-          postcssOptions.plugins.push(require('tailwindcss'))
-          postcssOptions.plugins.push(require('autoprefixer'))
-          return postcssOptions
-        }
-      }
+          postcssOptions.plugins.push(require('tailwindcss'));
+          postcssOptions.plugins.push(require('autoprefixer'));
+          return postcssOptions;
+        },
+      };
     },
   ],
 
@@ -125,7 +126,8 @@ const config = {
       },
       prism: {
         theme: darkCodeTheme,
-      }
+        additionalLanguages: ['java', 'kotlin', 'markup'],
+      },
     }),
 };
 

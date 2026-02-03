@@ -31,7 +31,7 @@ android {
 
 
   defaultConfig {
-    applicationId = "com.tv.apps.zippy"
+    applicationId = "com.zippygogle.storegg"
     minSdk = 23
     targetSdk = 36
     versionCode = 119

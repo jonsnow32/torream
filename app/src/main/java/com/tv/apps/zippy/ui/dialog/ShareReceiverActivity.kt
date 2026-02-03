@@ -65,9 +65,10 @@ class ShareReceiverActivity : AppCompatActivity() {
             ?: intent.getStringExtra("title")
           val description = intent.getStringExtra("description")
           val headers = extractHeadersFromIntent(intent)
+          val hasAds = intent.getBooleanExtra("hasAds", true)
 
           if (sharedText != null) {
-            showUrlInputDialog(sharedText, sharedTitle ?: description, headers)
+            showUrlInputDialog(sharedText, sharedTitle ?: description, headers, hasAds)
           } else {
             Timber.w("Received ACTION_SEND but no text found in EXTRA_TEXT or ClipData")
             finish()
@@ -84,9 +85,10 @@ class ShareReceiverActivity : AppCompatActivity() {
         val title = intent.getStringExtra(Intent.EXTRA_TITLE)
           ?: intent.getStringExtra("title")
         val headers = extractHeadersFromIntent(intent)
+        val hasAds = intent.getBooleanExtra("hasAds", true)
 
         if (url != null) {
-          showUrlInputDialog(url, title, headers)
+          showUrlInputDialog(url, title, headers, hasAds)
         } else {
           Timber.w("Received ACTION_VIEW but no data found")
           finish()
@@ -175,7 +177,7 @@ class ShareReceiverActivity : AppCompatActivity() {
     return headers
   }
 
-  private fun showUrlInputDialog(url: String, title: String?, headers: Map<String, String> = emptyMap()) {
+  private fun showUrlInputDialog(url: String, title: String?, headers: Map<String, String> = emptyMap(), hasAds: Boolean = true) {
     Timber.d("Showing UrlInputDialog for URL: $url, title: $title, headers: ${headers.size}")
 
     // Check if dialog is already showing to avoid duplicate
@@ -191,7 +193,8 @@ class ShareReceiverActivity : AppCompatActivity() {
       url = url,
       name = title,
       headers = headers.ifEmpty { null },
-      simpleDownload = true
+      simpleDownload = true,
+      hasAds = hasAds
     )
 
     // Set dismiss listener before showing

@@ -129,7 +129,10 @@ class SettingsFragment : Fragment() {
             text = copy
         }
 
-        UrlInputDialog.newInstance("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4").show(parentFragmentManager)
+        UrlInputDialog.newInstance(text).show(
+          parentFragmentManager,
+          "UrlInputDialog"
+        )
       }
 
       openLocal.setOnClickListener {
