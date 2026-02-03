@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkzippyplayer_docs=globalThis.webpackChunkzippyplayer_docs||[]).push([[233],{1966(p){p.exports=JSON.parse('{"name":"docusaurus-plugin-content-docs","id":"default"}')}}]);
