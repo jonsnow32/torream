@@ -81,6 +81,7 @@ class SettingsFragment : Fragment() {
       listOf(
         settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
         settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
+        settingsCast to R.id.action_navigation_global_to_navigation_settings_cast,
         settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
         settingsDownload to R.id.action_navigation_global_to_navigation_settings_download,
       ).forEach { (view, navigationId) ->

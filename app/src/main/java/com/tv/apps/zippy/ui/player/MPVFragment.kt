@@ -667,9 +667,18 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerMediaRouteButton.apply {
-        val chromecastSupport = false
-        alpha = if (chromecastSupport) 1f else 0.3f
-        if (!chromecastSupport) {
+        val chromecastEnabled = sharedPreferences.getBoolean(
+          getString(R.string.enable_chromecast_key), true
+        )
+        val fcastEnabled = sharedPreferences.getBoolean(
+          getString(R.string.enable_fcast_key), false
+        )
+        val castSupported = chromecastEnabled || fcastEnabled
+
+        alpha = if (castSupported) 1f else 0.3f
+        isEnabled = castSupported
+
+        if (!castSupported) {
           setOnClickListener {
             showToast(
               R.string.no_chromecast_support_toast,

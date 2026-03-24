@@ -1,78 +1,221 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="match_parent"
+  android:layout_height="wrap_content"
   android:background="?attr/colorSurfaceContainer"
   android:orientation="vertical">
 
+  <!-- Title Text -->
   <TextView
     android:id="@+id/text1"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_rowWeight="1"
     android:layout_marginTop="20dp"
     android:layout_marginBottom="10dp"
-    android:paddingStart="?android:attr/listPreferredItemPaddingStart"
-    android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
     android:textSize="18sp"
-    tools:text="Test" />
+    android:textColor="?attr/colorOnSurface"
+    tools:text="Network Stream" />
 
-  <View
-    style="@style/AppBarOutline"
-    android:layout_width="match_parent"
-    android:layout_height="1dp"
-    android:background="@color/divider_color" />
-
-  <com.google.android.material.textfield.TextInputLayout
+  <!-- Tab Layout for Protocol Selection -->
+  <com.google.android.material.tabs.TabLayout
+    android:id="@+id/protocolTabs"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    android:layout_marginBottom="0dp">
+    android:background="?attr/colorSurfaceContainer"
+    app:tabMode="fixed"
+    app:tabGravity="fill"
+    app:tabTextColor="?attr/colorOnSurfaceVariant"
+    app:tabSelectedTextColor="?attr/colorPrimary"
+    app:tabIndicatorColor="?attr/colorPrimary"
+    app:tabIndicatorHeight="2dp">
+
+    <com.google.android.material.tabs.TabItem
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/protocol_http_hls" />
+
+<!--    <com.google.android.material.tabs.TabItem-->
+<!--      android:layout_width="wrap_content"-->
+<!--      android:layout_height="wrap_content"-->
+<!--      android:text="@string/protocol_rtmp" />-->
+
+<!--    <com.google.android.material.tabs.TabItem-->
+<!--      android:layout_width="wrap_content"-->
+<!--      android:layout_height="wrap_content"-->
+<!--      android:text="@string/protocol_webrtc" />-->
+
+    <com.google.android.material.tabs.TabItem
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/protocol_magnet" />
+  </com.google.android.material.tabs.TabLayout>
+
+  <!-- Stream Address Input -->
+  <com.google.android.material.textfield.TextInputLayout
+    android:id="@+id/streamAddressLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    android:hint="@string/input_url"
+    app:hintTextColor="?attr/colorPrimary"
+    app:boxBackgroundMode="outline"
+    app:boxStrokeColor="?attr/colorPrimary">
 
     <com.google.android.material.textfield.TextInputEditText
       android:id="@+id/urlInput"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:drawablePadding="10dp"
-      android:hint="@string/support_url_hint"
+      android:inputType="textUri"
       android:imeOptions="actionDone"
-      android:inputType="text"
-      android:padding="10dp" />
+      android:textColor="?attr/colorOnSurface"
+      android:textColorHint="?attr/colorOnSurfaceVariant"
+      tools:text="https://example.com/stream.m3u8" />
   </com.google.android.material.textfield.TextInputLayout>
 
-  <!-- Button to load .torrent file -->
+  <!-- Button to load .torrent file (for Magnet/Torrent tab) -->
   <com.google.android.material.button.MaterialButton
     android:id="@+id/loadTorrentFileBtt"
     style="@style/Widget.Material3.Button.TextButton"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginStart="8dp"
-    android:layout_marginEnd="8dp"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
     android:layout_marginTop="4dp"
     android:text="@string/load_torrent_file"
     android:drawableStart="@android:drawable/ic_menu_upload"
-    android:drawablePadding="8dp" />
+    android:drawablePadding="8dp"
+    />
 
+
+  <!-- Custom Headers Toggle -->
   <LinearLayout
     android:layout_width="match_parent"
-    android:layout_height="60dp"
-    android:layout_marginTop="8dp"
-    android:gravity="bottom|end"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:gravity="center_vertical">
+
+    <TextView
+      android:id="@+id/customHeadersLabel"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:text="@string/add_custom_headers"
+      android:textColor="?attr/colorOnSurface"
+      android:textSize="16sp" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+      android:id="@+id/customHeadersSwitch"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:checked="false" />
+  </LinearLayout>
+
+  <!-- Custom Headers Input Section (Expandable) -->
+  <LinearLayout
+    android:id="@+id/customHeadersContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:visibility="gone"
+    android:animateLayoutChanges="true">
+
+    <!-- Header Key Input -->
+    <com.google.android.material.textfield.TextInputLayout
+      android:id="@+id/headerKeyLayout"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="8dp"
+      android:hint="@string/header_key_hint"
+      app:boxBackgroundMode="outline"
+      app:boxStrokeColor="?attr/colorPrimary">
+
+      <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/headerKeyInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:imeOptions="actionNext"
+        android:singleLine="true"
+        android:textColor="?attr/colorOnSurface" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Header Value Input -->
+    <com.google.android.material.textfield.TextInputLayout
+      android:id="@+id/headerValueLayout"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="@string/header_value_hint"
+      app:boxBackgroundMode="outline"
+      app:boxStrokeColor="?attr/colorPrimary">
+
+      <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/headerValueInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:imeOptions="actionDone"
+        android:singleLine="true"
+        android:textColor="?attr/colorOnSurface" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Add Header Button -->
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/addHeaderButton"
+      style="@style/Widget.Material3.Button.TextButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="end"
+      android:layout_marginTop="4dp"
+      android:text="@string/add_header_button"
+      android:drawableStart="@android:drawable/ic_input_add"
+      android:drawablePadding="8dp" />
+
+    <!-- Headers List -->
+    <androidx.recyclerview.widget.RecyclerView
+      android:id="@+id/headersRecyclerView"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:visibility="gone" />
+
+  </LinearLayout>
+
+
+  <!-- Action Buttons -->
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="8dp"
+    android:gravity="end"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
     android:orientation="horizontal">
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/streamingBtt"
+      style="@style/Widget.Material3.Button.TextButton"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_gravity="center_vertical|end"
+      android:layout_marginEnd="8dp"
       android:text="@string/stream" />
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/downloadBtt"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_gravity="center_vertical|end"
       android:text="@string/download" />
   </LinearLayout>
 </LinearLayout>

@@ -16,6 +16,11 @@
   <string name="subtitle_settings_key" translatable="false">subtitle_settings_key</string>
   <string name="test_providers_key" translatable="false">test_providers_key</string>
   <string name="subtitle_settings_chromecast_key" translatable="false">subtitle_settings_chromecast_key</string>
+  <string name="enable_chromecast_key" translatable="false">enable_chromecast_key</string>
+  <string name="enable_fcast_key" translatable="false">enable_fcast_key</string>
+  <string name="cast_quality_key" translatable="false">cast_quality_key</string>
+  <string name="about_chromecast_key" translatable="false">about_chromecast_key</string>
+  <string name="about_fcast_key" translatable="false">about_fcast_key</string>
   <string name="quality_pref_key" translatable="false">quality_pref_key</string>
   <string name="quality_pref_mobile_data_key" translatable="false">quality_pref_mobile_data_key</string>
   <string name="player_pref_key" translatable="false">player_pref_key</string>
@@ -585,6 +590,30 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="quality_webrip">Web</string>
   <string name="poster_image">Poster Image</string>
   <string name="category_player">Player</string>
+
+  <!-- Cast Settings -->
+  <string name="cast_settings">Cast Settings</string>
+  <string name="cast_category_general">Cast Options</string>
+  <string name="cast_category_info">Information</string>
+  <string name="enable_chromecast">Enable Chromecast</string>
+  <string name="enable_chromecast_summary">Cast videos to Chromecast devices</string>
+  <string name="enable_fcast">Enable Fcast</string>
+  <string name="enable_fcast_summary">Cast videos using Fcast protocol (WebVideoCaster)</string>
+  <string name="cast_quality">Cast Quality</string>
+  <string name="cast_quality_summary">Preferred quality for casting</string>
+  <string name="about_chromecast">About Chromecast</string>
+  <string name="about_chromecast_summary">Learn more about Chromecast</string>
+  <string name="about_fcast">About Fcast</string>
+  <string name="about_fcast_summary">Learn more about Fcast and WebVideoCaster</string>
+
+  <!-- Cast Toasts -->
+  <string name="chromecast_enabled_toast">Chromecast enabled</string>
+  <string name="chromecast_disabled_toast">Chromecast disabled</string>
+  <string name="fcast_enabled_toast">Fcast enabled</string>
+  <string name="fcast_disabled_toast">Fcast disabled</string>
+  <string name="fcast_app_required_toast">WebVideoCaster app required for Fcast</string>
+  <string name="cast_quality_changed_toast">Cast quality preference saved</string>
+
   <string name="resolution_and_title">Resolution and title</string>
   <string name="title">Title</string>
   <string name="resolution">Resolution</string>
@@ -1042,4 +1071,13 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="seeds_0">Seeds: 0</string>
   <string name="select_files">Select file</string>
   <string name="show_items">Show Items</string>
+  <string name="protocol_http_hls">HTTP/HLS</string>
+  <string name="protocol_rtmp">RTMP</string>
+  <string name="protocol_webrtc">WebRTC</string>
+  <string name="protocol_magnet">Magnet</string>
+  <string name="stream_address">Stream address</string>
+  <string name="add_custom_headers">Add custom headers</string>
+  <string name="header_key_hint">Header Key (e.g., Authorization)</string>
+  <string name="header_value_hint">Header Value (e.g., Bearer token123)</string>
+  <string name="add_header_button">Add Header</string>
 </resources>

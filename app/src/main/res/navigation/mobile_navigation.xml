@@ -60,6 +60,15 @@
     app:exitAnim="@anim/exit_anim"
     app:popEnterAnim="@anim/enter_anim"
     app:popExitAnim="@anim/exit_anim" />
+
+  <action
+    android:id="@+id/action_navigation_global_to_navigation_settings_cast"
+    app:destination="@id/navigation_settings_cast"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
   <action
     android:id="@+id/action_navigation_global_to_navigation_settings_updates"
     app:destination="@id/navigation_settings_updates"
@@ -170,6 +179,16 @@
       app:popExitAnim="@anim/exit_anim" />
 
   </fragment>
+
+  <fragment
+    android:id="@+id/navigation_settings_cast"
+    android:name="com.tv.apps.zippy.ui.settings.SettingsCast"
+    android:label="@string/cast_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
   <fragment
     android:id="@+id/adTestFragment"
     android:name="com.tv.apps.zippy.ads.AdTestFragment"

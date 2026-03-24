@@ -109,13 +109,26 @@
           android:background="@drawable/preference_focused"
           android:drawablePadding="4dp"
           android:nextFocusUp="@id/settings_general"
-          android:nextFocusDown="@id/settings_updates"
+          android:nextFocusDown="@id/settings_cast"
           android:padding="16dp"
           android:text="@string/category_player"
           android:textSize="18sp"
           app:drawableEndCompat="@drawable/ic_keyboard_arrow_right"
           app:drawableStartCompat="@drawable/outline_play_circle_24" />
 
+        <TextView
+          android:id="@+id/settings_cast"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:background="@drawable/preference_focused"
+          android:drawablePadding="4dp"
+          android:nextFocusUp="@id/settings_player"
+          android:nextFocusDown="@id/settings_download"
+          android:padding="16dp"
+          android:text="@string/cast_settings"
+          android:textSize="18sp"
+          app:drawableEndCompat="@drawable/ic_keyboard_arrow_right"
+          app:drawableStartCompat="@drawable/ic_baseline_cast_24" />
 
         <TextView
           android:id="@+id/settings_download"
@@ -123,7 +136,7 @@
           android:layout_height="wrap_content"
           android:background="@drawable/preference_focused"
           android:drawablePadding="4dp"
-          android:nextFocusUp="@id/settings_player"
+          android:nextFocusUp="@id/settings_cast"
           android:nextFocusDown="@id/settings_updates"
           android:padding="16dp"
           android:text="@string/download"

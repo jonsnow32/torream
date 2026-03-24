@@ -53,6 +53,9 @@ class UrlInputDialog : DockingDialog() {
   @Inject
   lateinit var adPlacementHelper: AdPlacementHelper
 
+  // Headers adapter
+  private lateinit var headersAdapter: HeadersAdapter
+
   // File picker for .torrent files
   private val torrentFilePicker = registerForActivityResult(
     androidx.activity.result.contract.ActivityResultContracts.GetContent()
@@ -78,6 +81,58 @@ class UrlInputDialog : DockingDialog() {
     binding.urlInput.setText(url, android.widget.TextView.BufferType.EDITABLE)
 
     if (name?.isNotBlank() == true) binding.text1.text = name
+
+    // Setup headers adapter
+    headersAdapter = HeadersAdapter { position ->
+      headersAdapter.removeHeader(position)
+      updateHeadersVisibility()
+    }
+    binding.headersRecyclerView.adapter = headersAdapter
+    binding.headersRecyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
+
+    // Load headers from params if any
+    if (headers.isNotEmpty()) {
+      binding.customHeadersSwitch.isChecked = true
+      headersAdapter.setHeaders(headers.toList())
+      updateHeadersVisibility()
+    }
+
+    // Custom headers switch toggle
+    binding.customHeadersSwitch.setOnCheckedChangeListener { _, isChecked ->
+      binding.customHeadersContainer.isGone = !isChecked
+      if (!isChecked) {
+        // Clear input fields when toggled off
+        binding.headerKeyInput.text?.clear()
+        binding.headerValueInput.text?.clear()
+      }
+    }
+
+    // Add header button click
+    binding.addHeaderButton.setOnClickListener {
+      val key = binding.headerKeyInput.text.toString().trim()
+      val value = binding.headerValueInput.text.toString().trim()
+
+      if (key.isEmpty()) {
+        binding.headerKeyInput.error = "Header key required"
+        return@setOnClickListener
+      }
+
+      if (value.isEmpty()) {
+        binding.headerValueInput.error = "Header value required"
+        return@setOnClickListener
+      }
+
+      // Add header to adapter
+      headersAdapter.addHeader(key, value)
+      updateHeadersVisibility()
+
+      // Clear input fields
+      binding.headerKeyInput.text?.clear()
+      binding.headerValueInput.text?.clear()
+      binding.headerKeyInput.error = null
+      binding.headerValueInput.error = null
+    }
+
     // Load .torrent file button
     binding.loadTorrentFileBtt.setOnClickListener {
       try {
@@ -133,8 +188,44 @@ class UrlInputDialog : DockingDialog() {
       }
     }
 
+    binding.protocolTabs.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+      override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab?) {
+        val selectedProtocol = tab?.text?.toString()
+        binding.loadTorrentFileBtt.isGone = true;
+        // Prepend the selected protocol to the URL if it's not already present
+        val newUrl = when (selectedProtocol) {
+          "HTTP/HLS" -> {}
+          "Magnet" -> {
+            binding.loadTorrentFileBtt.isGone = false;
+
+          }
+          else -> {}
+        }
+      }
+
+      override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
+      override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
+    })
     binding.streamingBtt.isGone = simpleDownload
-    binding.loadTorrentFileBtt.isGone = simpleDownload
+    binding.loadTorrentFileBtt.isGone = binding.protocolTabs.selectedTabPosition != 1
+  }
+
+  /**
+   * Update headers RecyclerView visibility based on whether there are headers
+   */
+  private fun updateHeadersVisibility() {
+    binding.headersRecyclerView.isGone = headersAdapter.isEmpty()
+  }
+
+  /**
+   * Get current headers from adapter
+   */
+  private fun getCurrentHeaders(): Map<String, String> {
+    return if (binding.customHeadersSwitch.isChecked) {
+      headersAdapter.getHeaders()
+    } else {
+      emptyMap()
+    }
   }
 
   /**
@@ -215,7 +306,7 @@ class UrlInputDialog : DockingDialog() {
         source = inputUrl, // Always use full URL/magnet as source
         targetPath = targetPath,
         fileName = name, // Use provided name or null for auto-detection
-        headers = if (headers.isNotEmpty()) headers else null // Use provided headers or null
+        headers = getCurrentHeaders().ifEmpty { null } // Use custom headers from UI
       )
 
       // Start download using coordinator (WorkManager will persist it)
@@ -259,7 +350,7 @@ class UrlInputDialog : DockingDialog() {
         VideoLink(
           url = inputUrl,
           name = inputUrl,
-          headers = emptyMap(),
+          headers = getCurrentHeaders(), // Use custom headers from UI
           position = 0L,
           subtitles = emptyList(),
         )

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto">
+  <PreferenceCategory android:title="@string/cast_category_general">
+    <SwitchPreferenceCompat
+      android:icon="@drawable/ic_baseline_cast_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/enable_chromecast_summary"
+      android:title="@string/enable_chromecast"
+      app:defaultValue="true"
+      app:key="@string/enable_chromecast_key" />
+    <SwitchPreferenceCompat
+      android:icon="@drawable/ic_baseline_cast_connected_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/enable_fcast_summary"
+      android:title="@string/enable_fcast"
+      app:defaultValue="false"
+      app:key="@string/enable_fcast_key" />
+    <ListPreference
+      android:defaultValue="auto"
+      android:entries="@array/cast_quality_names"
+      android:entryValues="@array/cast_quality_values"
+      android:icon="@drawable/ic_baseline_high_quality_24"
+      android:key="@string/cast_quality_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/cast_quality_summary"
+      android:title="@string/cast_quality" />
+  </PreferenceCategory>
+  <PreferenceCategory android:title="@string/cast_category_info">
+    <Preference
+      android:icon="@drawable/ic_outline_info_24"
+      android:key="@string/about_chromecast_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/about_chromecast_summary"
+      android:title="@string/about_chromecast" />
+    <Preference
+      android:icon="@drawable/ic_outline_info_24"
+      android:key="@string/about_fcast_key"
+      android:layout="@layout/custom_preference"
+      android:summary="@string/about_fcast_summary"
+      android:title="@string/about_fcast" />
+  </PreferenceCategory>
+</androidx.preference.PreferenceScreen>

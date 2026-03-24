@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_marginBottom="8dp"
+  app:cardElevation="2dp"
+  app:cardCornerRadius="8dp"
+  app:strokeWidth="1dp"
+  app:strokeColor="?attr/colorOutline">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:layout_marginHorizontal="8dp"
+      android:orientation="horizontal">
+
+      <TextView
+        android:id="@+id/headerKeyText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text="Authorization" />
+
+      <TextView
+        android:id="@+id/brace"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text=" : " />
+
+      <TextView
+        android:id="@+id/headerValueText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="12sp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        tools:text="Bearer token123" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/deleteHeaderButton"
+      style="@style/Widget.Material3.Button.IconButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:contentDescription="Delete header"
+      app:icon="@android:drawable/ic_menu_delete"
+      app:iconTint="?attr/colorError" />
+  </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+
+
