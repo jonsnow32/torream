@@ -65,10 +65,10 @@ jobs:
         env:
           PLAY_SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
-          if [ -n "$PLAY_SA" ]; then
+          if echo "$PLAY_SA" | python3 -c "import sys,json; json.load(sys.stdin)" 2>/dev/null; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
-            echo "enabled=false (PLAY_SERVICE_ACCOUNT_JSON not set — skipping Play upload)"
+            echo "PLAY_SERVICE_ACCOUNT_JSON is missing or not valid JSON — skipping Play upload"
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
