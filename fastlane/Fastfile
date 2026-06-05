@@ -56,6 +56,7 @@ platform :android do
   desc "Upload an already-built AAB to the Play Store internal track (no rebuild)"
   lane :upload_internal do
     upload_to_play_store(
+      json_key:                ENV["PLAY_KEY_FILE"],
       track:                   "internal",
       aab:                     "app/build/outputs/bundle/universalRelease/app-universal-release.aab",
       skip_upload_apk:         true,
@@ -68,6 +69,7 @@ platform :android do
   desc "Upload AAB directly to Play Store closed testing (alpha) track"
   lane :upload_alpha do
     upload_to_play_store(
+      json_key:                ENV["PLAY_KEY_FILE"],
       track:                   "alpha",
       aab:                     "app/build/outputs/bundle/universalRelease/app-universal-release.aab",
       skip_upload_apk:         true,
