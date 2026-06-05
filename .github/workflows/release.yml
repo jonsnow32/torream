@@ -55,7 +55,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/bundle/release/*.aab
+          files: app/build/outputs/bundle/universalRelease/*.aab
           generate_release_notes: true
 
       # Upload to Play Console internal track — runs only when the Play service

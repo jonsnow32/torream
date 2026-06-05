@@ -57,7 +57,7 @@ platform :android do
   lane :upload_internal do
     upload_to_play_store(
       track:                   "internal",
-      aab:                     "app/build/outputs/bundle/release/app-release.aab",
+      aab:                     "app/build/outputs/bundle/universalRelease/app-universal-release.aab",
       skip_upload_apk:         true,
       skip_upload_metadata:    true,
       skip_upload_images:      true,
@@ -69,7 +69,7 @@ platform :android do
   lane :upload_alpha do
     upload_to_play_store(
       track:                   "alpha",
-      aab:                     "app/build/outputs/bundle/release/app-release.aab",
+      aab:                     "app/build/outputs/bundle/universalRelease/app-universal-release.aab",
       skip_upload_apk:         true,
       skip_upload_metadata:    true,
       skip_upload_changelogs:  true,
