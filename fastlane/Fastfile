@@ -1,0 +1,107 @@
+default_platform(:android)
+
+platform :android do
+
+  # ─── CI lanes ────────────────────────────────────────────────────────────────
+
+  desc "Run unit tests and lint (debug only)"
+  lane :test do
+    gradle(task: "testDebugUnitTest")
+    gradle(task: "lintDebug")
+  end
+
+  desc "Build debug APK (for PR artifact)"
+  lane :build_debug do
+    gradle(task: "assemble", build_type: "Debug")
+  end
+
+  # ─── Release lanes ───────────────────────────────────────────────────────────
+
+  desc "Build and sign release AAB"
+  lane :build_release do
+    # In CI: pass signing via env vars (STORE_FILE, STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD)
+    # Locally: signing is read from key.properties by build.gradle.kts
+    signing_props = {}
+    if ENV["STORE_FILE"]
+      signing_props = {
+        "android.injected.signing.store.file"     => ENV["STORE_FILE"],
+        "android.injected.signing.store.password" => ENV["STORE_PASSWORD"],
+        "android.injected.signing.store.type"     => ENV.fetch("STORE_TYPE", "JKS"),
+        "android.injected.signing.key.alias"      => ENV["KEY_ALIAS"],
+        "android.injected.signing.key.password"   => ENV["KEY_PASSWORD"],
+      }
+    end
+
+    # Inject real AdMob IDs from env vars (build.gradle.kts falls back to test IDs if unset).
+    admob_props = {}
+    %w[ADMOB_APP_ID ADMOB_BANNER_AD_UNIT_ID ADMOB_INTERSTITIAL_AD_UNIT_ID ADMOB_REWARDED_AD_UNIT_ID].each do |key|
+      admob_props[key] = ENV[key] unless (ENV[key] || "").empty?
+    end
+
+    gradle(
+      task:       "bundle",
+      build_type: "Release",
+      properties: signing_props.merge(admob_props)
+    )
+  end
+
+  desc "Build, sign, and upload AAB to Play Store internal track"
+  lane :deploy_internal do
+    test
+    build_release
+    upload_internal
+  end
+
+  desc "Upload an already-built AAB to the Play Store internal track (no rebuild)"
+  lane :upload_internal do
+    upload_to_play_store(
+      track:                   "internal",
+      aab:                     "app/build/outputs/bundle/release/app-release.aab",
+      skip_upload_apk:         true,
+      skip_upload_metadata:    true,
+      skip_upload_images:      true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "Upload AAB directly to Play Store closed testing (alpha) track"
+  lane :upload_alpha do
+    upload_to_play_store(
+      track:                   "alpha",
+      aab:                     "app/build/outputs/bundle/release/app-release.aab",
+      skip_upload_apk:         true,
+      skip_upload_metadata:    true,
+      skip_upload_changelogs:  true,
+      skip_upload_images:      true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "Build, sign, and upload AAB to Play Store closed testing (alpha) track"
+  lane :deploy_alpha do
+    test
+    build_release
+    upload_alpha
+  end
+
+  desc "Promote internal build to production"
+  lane :deploy_production do
+    upload_to_play_store(
+      track:            "internal",
+      track_promote_to: "production",
+      skip_upload_apk:  true,
+      skip_upload_aab:  true,
+    )
+  end
+
+  desc "Upload store listing metadata, images and screenshots (no build)"
+  lane :upload_metadata do
+    upload_to_play_store(
+      skip_upload_apk:         true,
+      skip_upload_aab:         true,
+      skip_upload_images:      false,
+      skip_upload_screenshots: false,
+    )
+  end
+
+end

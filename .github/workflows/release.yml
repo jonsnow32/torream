@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > app/release.jks
+          if [ ! -s app/release.jks ]; then
+            echo "ERROR: Keystore file is empty — check RELEASE_KEYSTORE secret"
+            exit 1
+          fi
+          echo "Keystore decoded: $(wc -c < app/release.jks) bytes"
+
+      - name: Build release AAB
+        run: bundle exec fastlane build_release
+        env:
+          STORE_FILE: ${{ github.workspace }}/app/release.jks
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          # Real AdMob IDs (falls back to Google test IDs if a secret is unset)
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_BANNER_AD_UNIT_ID: ${{ secrets.ADMOB_BANNER_AD_UNIT_ID }}
+          ADMOB_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_AD_UNIT_ID }}
+          ADMOB_REWARDED_AD_UNIT_ID: ${{ secrets.ADMOB_REWARDED_AD_UNIT_ID }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/bundle/release/*.aab
+          generate_release_notes: true
+
+      # Upload to Play Console internal track — runs only when the Play service
+      # account secret is configured, so a release still succeeds without it.
+      - name: Check Play credentials
+        id: play_check
+        env:
+          PLAY_SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -n "$PLAY_SA" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false (PLAY_SERVICE_ACCOUNT_JSON not set — skipping Play upload)"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Decode Play service account
+        if: steps.play_check.outputs.enabled == 'true'
+        env:
+          PLAY_SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: printf '%s' "$PLAY_SA" > play-store-credentials.json
+
+      - name: Upload to Play Store (Closed Testing / Alpha)
+        if: steps.play_check.outputs.enabled == 'true'
+        run: bundle exec fastlane upload_alpha
+        env:
+          PLAY_KEY_FILE: play-store-credentials.json
