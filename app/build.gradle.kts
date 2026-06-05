@@ -20,6 +20,11 @@ android {
   namespace = "com.tv.apps.zippy"
   compileSdk = 36
 
+  lint {
+    baseline = file("lint-baseline.xml")
+    abortOnError = true
+  }
+
   // Limit packaged resources to these locales
   androidResources {
     localeFilters.addAll(listOf("en", "es", "zh"))
