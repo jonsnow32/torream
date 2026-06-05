@@ -40,6 +40,7 @@ platform :android do
 
     gradle(
       task:       "bundle",
+      flavor:     "universal",
       build_type: "Release",
       properties: signing_props.merge(admob_props)
     )
