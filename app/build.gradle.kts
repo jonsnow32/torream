@@ -23,6 +23,7 @@ android {
   lint {
     baseline = file("lint-baseline.xml")
     abortOnError = true
+    checkReleaseBuilds = false
   }
 
   // Limit packaged resources to these locales

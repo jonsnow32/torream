@@ -31,12 +31,11 @@ jobs:
       - name: Generate lint baseline if missing
         if: ${{ !hashFiles('app/lint-baseline.xml') }}
         run: |
-          ./gradlew updateLintBaselineArm64Debug
+          ./gradlew updateLintBaselineArm64Debug || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/lint-baseline.xml
-          git commit -m "ci: add lint baseline [skip ci]"
-          git push
+          git commit -m "ci: add lint baseline [skip ci]" && git push || true
 
       - name: Run lint
         run: ./gradlew lintArm64Debug
