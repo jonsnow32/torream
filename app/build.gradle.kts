@@ -125,13 +125,12 @@ android {
     }
     create("universal") {
       dimension = "abi"
-      versionNameSuffix = "-universal"
       ndk {
-        // Include all ABIs for universal build
+        // Include all ABIs for Play Store AAB upload
         abiFilters.clear()
         abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
       }
-      versionCode = 9999
+      // No versionCode/versionNameSuffix override — inherits base values for Play Store
     }
   }
 
