@@ -1,0 +1,172 @@
+package cloud.streamless.torream.ui.home
+
+import android.content.Context
+import android.content.SharedPreferences
+import android.net.Uri
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import cloud.streamless.torream.R
+import cloud.streamless.torream.media.repository.MediaPlaybackRepository
+import cloud.streamless.torream.model.MediaTypeFilter
+import cloud.streamless.torream.media.repository.MediaRepository
+import cloud.streamless.torream.ui.feed.FeedData
+import cloud.streamless.torream.ui.feed.FeedFilterConfig
+import cloud.streamless.torream.utils.PREFERENCES_NAME
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import javax.inject.Inject
+import kotlin.inc
+
+/**
+ * Data class to hold feed data parameters for paging source
+ */
+private data class FeedDataParams(
+  val viewMode: FeedFilterConfig.ViewMode,
+  val groupMode: FeedFilterConfig.GroupMode,
+  val mediaType: MediaTypeFilter,
+  val searchQuery: String?,
+  val refresh: Int,
+  val sortBy: FeedFilterConfig.SortBy,
+  val sortOrder: FeedFilterConfig.SortOrder
+)
+
+@HiltViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
+class FeedViewModel @Inject constructor(
+  @param:ApplicationContext private val context: Context,
+  private val mediaRepository: MediaRepository,
+  private val mediaPlaybackRepository: MediaPlaybackRepository,
+  private val playlistRepository: cloud.streamless.torream.media.repository.PlaylistRepository,
+  private val sharedPreferences: SharedPreferences
+) : ViewModel() {
+
+  // Title - shows app name by default, or folder name when browsing
+  val title = MutableLiveData(context.getString(R.string.app_name))
+
+  // Root folder path - if set, only show files from this folder
+  private var rootFolderPath: String? = null
+
+  // Feed filter configuration state - single source of truth
+  val filterConfig = MutableStateFlow(FeedFilterConfig.load(sharedPreferences))
+
+  // Derived properties for convenience
+  val viewMode: Flow<FeedFilterConfig.ViewMode> = filterConfig.map { config ->
+    config.viewMode
+  }
+
+  val groupMode: Flow<FeedFilterConfig.GroupMode> = filterConfig.map { config ->
+    config.groupMode
+  }
+
+  // Media type filter state - loaded from preferences
+  val mediaTypeFilter = MutableStateFlow(loadMediaTypeFilter())
+
+  // Search query state
+  val searchQuery = MutableStateFlow<String?>(null)
+
+  // PagingData flow for the adapter - now loads real data from MediaRepository
+  // Recreates when displayType, folderViewMode, mediaTypeFilter, or searchQuery changes
+  val feedData: Flow<PagingData<FeedData>> = combine(
+    filterConfig,
+    mediaTypeFilter,
+    searchQuery,
+    mediaPlaybackRepository.playbackUpdateTrigger
+  ) { config, mediaType, query , refresh->
+    FeedDataParams(config.viewMode, config.groupMode, mediaType, query, refresh, config.sortBy, config.sortOrder)
+  }.distinctUntilChanged().flatMapLatest { params ->
+    Pager(
+      config = PagingConfig(
+        pageSize = 20,
+        enablePlaceholders = false,
+        initialLoadSize = 20
+      ),
+      pagingSourceFactory = {
+        FeedPagingSource(
+          mediaRepository,
+          playlistRepository,
+          rootFolderPath,
+          params.viewMode,
+          params.groupMode,
+          params.mediaType,
+          params.sortBy,
+          params.sortOrder,
+          params.searchQuery
+        )
+      }
+    ).flow
+  }.cachedIn(viewModelScope)
+  // Expose sync state from MediaRepository for UI feedback
+  val syncState = mediaRepository.observeSyncState()
+
+
+  /**
+   * Set root folder path to filter feed
+   * @param path Root folder path. If null, loads all folders from MediaRepository.
+   */
+  fun setRootFolder(path: String?) {
+    rootFolderPath = path
+    if (path != null) {
+      // Extract folder name from path or URI
+      val folderName = when {
+        // Content URI (SAF)
+        path.startsWith("content://") -> {
+          // Extract from URI encoded path
+          // e.g., content://.../tree/primary%3AMovies → Movies
+          val decoded = Uri.decode(path)
+          decoded.substringAfterLast(':').substringAfterLast('/')
+        }
+        // Regular file path
+        else -> {
+          path.substringAfterLast('/')
+        }
+      }
+      title.value = folderName.ifBlank { "Folder" }
+    } else {
+      // Reset to app name when viewing all folders
+      title.value = context.getString(R.string.app_name)
+    }
+  }
+
+  /**
+   * Refresh MediaRepository to sync from MediaStore
+   * Call this after permission is granted to trigger data sync
+   */
+  fun refreshMediaRepository() {
+    viewModelScope.launch {
+      try {
+        mediaRepository.refreshMedia()
+        Timber.d("MediaRepository refreshed successfully")
+      } catch (e: Exception) {
+        Timber.e(e, "Error refreshing media repository")
+      }
+    }
+  }
+
+  /**
+   * Load media type filter from SharedPreferences
+   */
+  private fun loadMediaTypeFilter(): MediaTypeFilter {
+    val savedValue =
+      sharedPreferences.getString(context.getString(R.string.media_type_filter_key), "all")
+    return MediaTypeFilter.fromValue(savedValue)
+  }
+}
+
+
+

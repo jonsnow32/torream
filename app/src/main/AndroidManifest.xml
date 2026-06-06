@@ -49,7 +49,7 @@
   <queries>
     <package android:name="org.videolan.vlc" />
     <package android:name="com.instantbits.cast.webvideo" />
-    <package android:name="com.tv.apps.zippy" />
+    <package android:name="cloud.streamless.torream" />
   </queries>
 
   <application
@@ -104,7 +104,7 @@
     </provider>
 
     <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-      android:value="com.tv.apps.zippy.utils.CastOptionsProvider"/>
+      android:value="cloud.streamless.torream.utils.CastOptionsProvider"/>
 
     <activity
       android:name=".MainActivity"
@@ -154,8 +154,8 @@
 
       <!-- Custom download URL action from other apps -->
       <intent-filter android:exported="true" android:priority="100">
-        <action android:name="com.tv.apps.zippy.action.DOWNLOAD_URL" />
-        <action android:name="com.tv.apps.zippy.debug.action.DOWNLOAD_URL" />
+        <action android:name="cloud.streamless.torream.action.DOWNLOAD_URL" />
+        <action android:name="cloud.streamless.torream.debug.action.DOWNLOAD_URL" />
         <category android:name="android.intent.category.DEFAULT" />
       </intent-filter>
     </activity>
@@ -220,8 +220,8 @@
       android:name=".download.worker.DownloadNotificationReceiver"
       android:exported="false">
       <intent-filter>
-        <action android:name="com.tv.apps.zippy.PAUSE_ALL_DOWNLOADS" />
-        <action android:name="com.tv.apps.zippy.CANCEL_ALL_DOWNLOADS" />
+        <action android:name="cloud.streamless.torream.PAUSE_ALL_DOWNLOADS" />
+        <action android:name="cloud.streamless.torream.CANCEL_ALL_DOWNLOADS" />
       </intent-filter>
     </receiver>
   </application>

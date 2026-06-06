@@ -883,7 +883,7 @@
   </FrameLayout>
 
 
-  <com.tv.apps.zippy.ui.player.youtube.YouTubeOverlay
+  <cloud.streamless.torream.ui.player.youtube.YouTubeOverlay
     android:id="@+id/ytOverlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

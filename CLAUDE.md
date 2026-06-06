@@ -13,9 +13,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## App Overview
 
-**ZippyPlayer** is an Android video/media player app targeting phones, tablets, and Android TV/Fire TV.
+**Torream** is an Android video/media player app targeting phones, tablets, and Android TV/Fire TV.
 
-- **Package:** `com.tv.apps.zippy` | **App ID:** `com.zippygogle.storegg`
+- **Package:** `cloud.streamless.torream` | **App ID:** `cloud.streamless.torream`
 - **Version:** 1.0.0 (versionCode 100)
 - **SDK:** minSdk 23 (Android 6) / targetSdk 36 / compileSdk 36 / JVM 21
 - **Language:** Kotlin + native MPV via JNI (`.so` in `app/src/main/libs/`)
@@ -84,7 +84,7 @@ Downloads are WorkManager workers coordinated by `DownloadCoordinator`.
 - `TorrentStreamServer` (NanoHTTPD) enables in-app torrent streaming before full download.
 - `DownloadRecoveryManager` resumes downloads interrupted by process death.
 - Notifications: `DownloadNotificationHelper` + `DownloadNotificationReceiver`.
-- Intent `com.tv.apps.zippy.OPEN_DOWNLOADS` navigates to the Downloads section in Library.
+- Intent `cloud.streamless.torream.OPEN_DOWNLOADS` navigates to the Downloads section in Library.
 - Intent `.action.DOWNLOAD_URL` opens `UrlInputDialog` with URL + custom headers.
 
 ---
@@ -137,7 +137,7 @@ Waterfall mediation via `AdWaterfallManager`.
 | x86_64 | x86_64 | 1004 |
 | universal | all | 9999 |
 
-- Debug: arm64-v8a only, ID suffix `.debug`, app name "ZippyPlayer-Debug".
+- Debug: arm64-v8a only, ID suffix `.debug`, app name "Torream-Debug".
 - Release: ProGuard + resource shrinking enabled.
 - Build all releases: `./build-all-releases.sh`
 - Single flavor: `./gradlew assembleArm64Release`

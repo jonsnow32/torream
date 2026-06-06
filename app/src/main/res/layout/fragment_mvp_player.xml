@@ -8,7 +8,7 @@
   android:orientation="horizontal"
   app:backgroundTint="@android:color/black">
 
-  <com.tv.apps.zippy.ui.player.mpv.MPVView
+  <cloud.streamless.torream.ui.player.mpv.MPVView
     android:id="@+id/mvpPlayer"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />

@@ -130,7 +130,7 @@
     </HorizontalScrollView>
 
     <!-- Storage Stats UI -->
-    <com.tv.apps.zippy.ui.library.StorageStatsView
+    <cloud.streamless.torream.ui.library.StorageStatsView
       android:id="@+id/storageStatsView"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"

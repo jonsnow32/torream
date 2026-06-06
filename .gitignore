@@ -44,3 +44,8 @@ local.properties
 /buildscripts/deps/ffmpeg/_build-arm64
 /buildscripts/deps/ffmpeg/_build-x86
 /buildscripts/deps/ffmpeg/_build-x64
+
+# Build outputs
+*.aab
+*.apk
+app/universal/

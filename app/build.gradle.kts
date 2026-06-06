@@ -17,7 +17,7 @@ val abiCodes = mapOf(
 )
 
 android {
-  namespace = "com.tv.apps.zippy"
+  namespace = "cloud.streamless.torream"
   compileSdk = 36
 
   lint {
@@ -37,7 +37,7 @@ android {
 
 
   defaultConfig {
-    applicationId = "com.zippygogle.storegg"
+    applicationId = "cloud.streamless.torream"
     minSdk = 23
     targetSdk = 36
     versionCode = 100
@@ -148,7 +148,7 @@ android {
     debug {
       isDebuggable = true
       applicationIdSuffix = ".debug"
-      resValue("string", "app_name", "ZippyPlayer-Debug")
+      resValue("string", "app_name", "Torream-Debug")
       isMinifyEnabled = false
       isShrinkResources = false
       ndk {

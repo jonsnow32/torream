@@ -15,7 +15,7 @@
       android:orientation="vertical"
       >
 
-    <com.tv.apps.zippy.ui.colorpicker.ColorPickerView
+    <cloud.streamless.torream.ui.colorpicker.ColorPickerView
         android:id="@id/cpv_color_picker_view"
         android:padding="16dp"
         style="@style/cpv_ColorPickerViewStyle"
@@ -28,7 +28,7 @@
         android:padding="16dp"
         >
 
-      <com.tv.apps.zippy.ui.colorpicker.ColorPanelView
+      <cloud.streamless.torream.ui.colorpicker.ColorPanelView
           android:id="@id/cpv_color_panel_old"
           android:layout_width="@dimen/cpv_dialog_preview_width"
           android:layout_height="@dimen/cpv_dialog_preview_height"
@@ -46,7 +46,7 @@
           tools:ignore="ContentDescription"
           />
 
-      <com.tv.apps.zippy.ui.colorpicker.ColorPanelView
+      <cloud.streamless.torream.ui.colorpicker.ColorPanelView
           android:id="@id/cpv_color_panel_new"
           android:layout_width="@dimen/cpv_dialog_preview_width"
           android:layout_height="@dimen/cpv_dialog_preview_height"

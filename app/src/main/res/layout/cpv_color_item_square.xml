@@ -5,7 +5,7 @@
   android:layout_height="wrap_content"
   android:clickable="false">
 
-  <com.tv.apps.zippy.ui.colorpicker.ColorPanelView
+  <cloud.streamless.torream.ui.colorpicker.ColorPanelView
     android:id="@+id/cpv_color_panel_view"
     android:layout_width="@dimen/cpv_item_size"
     android:layout_height="@dimen/cpv_item_size"

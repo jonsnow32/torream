@@ -122,7 +122,7 @@
   </LinearLayout>
 
   <!-- Action Button with Progress -->
-  <com.tv.apps.zippy.ui.download.PieFetchButton
+  <cloud.streamless.torream.ui.download.PieFetchButton
     android:id="@+id/btnAction"
     android:layout_width="48dp"
     android:layout_height="48dp"
