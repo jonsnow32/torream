@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tv.apps.zippy.ui.colorpicker;
+package cloud.streamless.torream.ui.colorpicker;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -40,7 +40,7 @@ import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.tv.apps.zippy.R;
+import cloud.streamless.torream.R;
 
 /**
  * Displays a color picker to the user and allow them to select a color. A slider for the alpha channel is also

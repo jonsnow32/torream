@@ -1,4 +1,4 @@
-package com.tv.apps.zippy.ui.player.mpv;
+package cloud.streamless.torream.ui.player.mpv;
 
 // Wrapper for native library
 

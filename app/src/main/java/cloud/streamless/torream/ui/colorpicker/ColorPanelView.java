@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tv.apps.zippy.ui.colorpicker;
+package cloud.streamless.torream.ui.colorpicker;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -38,7 +38,7 @@ import android.widget.Toast;
 import androidx.annotation.ColorInt;
 import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
-import com.tv.apps.zippy.R;
+import cloud.streamless.torream.R;
 import java.util.Locale;
 
 /**

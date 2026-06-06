@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tv.apps.zippy.ui.colorpicker;
+package cloud.streamless.torream.ui.colorpicker;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tv.apps.zippy.ui.colorpicker;
+package cloud.streamless.torream.ui.colorpicker;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -25,7 +25,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import androidx.core.graphics.ColorUtils;
 
-import com.tv.apps.zippy.R;
+import cloud.streamless.torream.R;
 class ColorPaletteAdapter extends BaseAdapter {
 
   /*package*/ final OnColorSelectedListener listener;

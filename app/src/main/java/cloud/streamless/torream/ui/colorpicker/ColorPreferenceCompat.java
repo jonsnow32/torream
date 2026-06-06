@@ -1,4 +1,4 @@
-package com.tv.apps.zippy.ui.colorpicker;
+package cloud.streamless.torream.ui.colorpicker;
 
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -11,7 +11,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
-import com.tv.apps.zippy.R;
+import cloud.streamless.torream.R;
 
 /**
  * A Preference to select a color
@@ -24,7 +24,7 @@ public class ColorPreferenceCompat extends Preference implements ColorPickerDial
   private OnShowDialogListener onShowDialogListener;
   private int color = Color.BLACK;
   private boolean showDialog;
-  @com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog.DialogType private int dialogType;
+  @cloud.streamless.torream.ui.colorpicker.ColorPickerDialog.DialogType private int dialogType;
   private int colorShape;
   private boolean allowPresets;
   private boolean allowCustom;
@@ -49,7 +49,7 @@ public class ColorPreferenceCompat extends Preference implements ColorPickerDial
     TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.ColorPreference);
     showDialog = a.getBoolean(R.styleable.ColorPreference_cpv_showDialog, true);
     //noinspection WrongConstant
-    dialogType = a.getInt(R.styleable.ColorPreference_cpv_dialogType, com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog.TYPE_PRESETS);
+    dialogType = a.getInt(R.styleable.ColorPreference_cpv_dialogType, cloud.streamless.torream.ui.colorpicker.ColorPickerDialog.TYPE_PRESETS);
     colorShape = a.getInt(R.styleable.ColorPreference_cpv_colorShape, ColorShape.CIRCLE);
     allowPresets = a.getBoolean(R.styleable.ColorPreference_cpv_allowPresets, true);
     allowCustom = a.getBoolean(R.styleable.ColorPreference_cpv_allowCustom, true);
@@ -61,7 +61,7 @@ public class ColorPreferenceCompat extends Preference implements ColorPickerDial
     if (presetsResId != 0) {
       presets = getContext().getResources().getIntArray(presetsResId);
     } else {
-      presets = com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog.MATERIAL_COLORS;
+      presets = cloud.streamless.torream.ui.colorpicker.ColorPickerDialog.MATERIAL_COLORS;
     }
     if (colorShape == ColorShape.CIRCLE) {
       setWidgetLayoutResource(
@@ -78,7 +78,7 @@ public class ColorPreferenceCompat extends Preference implements ColorPickerDial
     if (onShowDialogListener != null) {
       onShowDialogListener.onShowColorPickerDialog((String) getTitle(), color);
     } else if (showDialog) {
-      com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog dialog = com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog.newBuilder()
+      cloud.streamless.torream.ui.colorpicker.ColorPickerDialog dialog = cloud.streamless.torream.ui.colorpicker.ColorPickerDialog.newBuilder()
           .setDialogType(dialogType)
           .setDialogTitle(dialogTitle)
           .setColorShape(colorShape)
@@ -113,8 +113,8 @@ public class ColorPreferenceCompat extends Preference implements ColorPickerDial
   @Override public void onAttached() {
     super.onAttached();
     if (showDialog) {
-      com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog fragment =
-          (com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog) getActivity().getSupportFragmentManager().findFragmentByTag(getFragmentTag());
+      cloud.streamless.torream.ui.colorpicker.ColorPickerDialog fragment =
+          (cloud.streamless.torream.ui.colorpicker.ColorPickerDialog) getActivity().getSupportFragmentManager().findFragmentByTag(getFragmentTag());
       if (fragment != null) {
         // re-bind preference to fragment
         fragment.setColorPickerDialogListener(this);
@@ -165,7 +165,7 @@ public class ColorPreferenceCompat extends Preference implements ColorPickerDial
   }
 
   /**
-   * Get the colors that will be shown in the {@link com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog}.
+   * Get the colors that will be shown in the {@link cloud.streamless.torream.ui.colorpicker.ColorPickerDialog}.
    *
    * @return An array of color ints
    */
@@ -174,7 +174,7 @@ public class ColorPreferenceCompat extends Preference implements ColorPickerDial
   }
 
   /**
-   * Set the colors shown in the {@link com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog}.
+   * Set the colors shown in the {@link cloud.streamless.torream.ui.colorpicker.ColorPickerDialog}.
    *
    * @param presets An array of color ints
    */
@@ -183,7 +183,7 @@ public class ColorPreferenceCompat extends Preference implements ColorPickerDial
   }
 
   /**
-   * The listener used for showing the {@link com.tv.apps.zippy.ui.colorpicker.ColorPickerDialog}.
+   * The listener used for showing the {@link cloud.streamless.torream.ui.colorpicker.ColorPickerDialog}.
    * Call {@link #saveValue(int)} after the user chooses a color.
    * If this is set then it is up to you to show the dialog.
    *

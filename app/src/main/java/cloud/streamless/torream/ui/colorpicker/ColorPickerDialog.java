@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.tv.apps.zippy.ui.colorpicker;
+package cloud.streamless.torream.ui.colorpicker;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -53,7 +53,7 @@ import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 
-import com.tv.apps.zippy.R;
+import cloud.streamless.torream.R;
 
 
 import java.util.Arrays;
@@ -70,7 +70,7 @@ import java.util.Locale;
  *   ColorPickerDialog.newBuilder().show(activity);
  * </pre>
  */
-public class ColorPickerDialog extends DialogFragment implements com.tv.apps.zippy.ui.colorpicker.ColorPickerView.OnColorChangedListener, TextWatcher {
+public class ColorPickerDialog extends DialogFragment implements cloud.streamless.torream.ui.colorpicker.ColorPickerView.OnColorChangedListener, TextWatcher {
 
   private static final String TAG = "ColorPickerDialog";
 

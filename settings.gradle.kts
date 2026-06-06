@@ -21,5 +21,5 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "ZippyPlayer"
+rootProject.name = "Torream"
 include(":app")
