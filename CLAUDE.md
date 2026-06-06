@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **ZippyPlayer** is an Android video/media player app targeting phones, tablets, and Android TV/Fire TV.
 
 - **Package:** `com.tv.apps.zippy` | **App ID:** `com.zippygogle.storegg`
-- **Version:** 1.2.0 (versionCode 120)
+- **Version:** 1.0.0 (versionCode 100)
 - **SDK:** minSdk 23 (Android 6) / targetSdk 36 / compileSdk 36 / JVM 21
 - **Language:** Kotlin + native MPV via JNI (`.so` in `app/src/main/libs/`)
 
