@@ -7,7 +7,7 @@ platform :android do
   desc "Run unit tests and lint (debug only)"
   lane :test do
     gradle(task: "testDebugUnitTest")
-    gradle(task: "lintDebug")
+    gradle(task: "lintUniversalDebug")
   end
 
   desc "Build debug APK (for PR artifact)"
@@ -100,6 +100,7 @@ platform :android do
   desc "Upload store listing metadata, images and screenshots (no build)"
   lane :upload_metadata do
     upload_to_play_store(
+      json_key:                ENV["PLAY_KEY_FILE"],
       skip_upload_apk:         true,
       skip_upload_aab:         true,
       skip_upload_images:      false,
