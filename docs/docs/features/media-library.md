@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Media Library
 
-The Media Library is your central hub for organizing and accessing all your video content in ZippyPlayer. It provides powerful tools for managing, searching, and organizing your media collection.
+The Media Library is your central hub for organizing and accessing all your video content in Torream. It provides powerful tools for managing, searching, and organizing your media collection.
 
 ## Overview
 
@@ -315,7 +315,7 @@ Select multiple videos:
 **Scan Folders**:
 1. Settings > Library > Scan Folders
 2. Select folders to scan
-3. ZippyPlayer finds all videos
+3. Torream finds all videos
 4. Automatically added to library
 
 **Supported Locations**:
@@ -448,7 +448,7 @@ Select multiple videos:
 
 ## Summary
 
-ZippyPlayer's Media Library provides:
+Torream's Media Library provides:
 
 ✅ Automatic media cataloging
 ✅ Powerful playlist system

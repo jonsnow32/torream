@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Player Architecture
 
-ZippyPlayer's video player is built on top of modern media playback technologies, providing a feature-rich viewing experience with advanced controls and optimizations.
+Torream's video player is built on top of modern media playback technologies, providing a feature-rich viewing experience with advanced controls and optimizations.
 
 ## Player Components
 
@@ -295,7 +295,7 @@ fun playTorrentStream(torrentHandle: TorrentHandle) {
 
 ## Summary
 
-ZippyPlayer's player architecture provides:
+Torream's player architecture provides:
 
 ✅ **Feature-Rich Controls**: Gestures, PiP, Chromecast
 ✅ **Format Support**: Wide range of codecs and containers

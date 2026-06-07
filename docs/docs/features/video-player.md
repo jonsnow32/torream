@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Video Player
 
-ZippyPlayer's video player is the heart of the application, built on Media3 (ExoPlayer) with extensive customizations for an exceptional viewing experience.
+Torream's video player is the heart of the application, built on Media3 (ExoPlayer) with extensive customizations for an exceptional viewing experience.
 
 ## Playback Features
 
@@ -254,7 +254,7 @@ Continue listening:
 
 ## Summary
 
-ZippyPlayer's video player provides:
+Torream's video player provides:
 
 ✅ Wide format support
 ✅ Intuitive gesture controls

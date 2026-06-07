@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Features Overview
 
-ZippyPlayer is packed with powerful features that make it a comprehensive media solution for Android devices. This document provides an overview of all major features.
+Torream is packed with powerful features that make it a comprehensive media solution for Android devices. This document provides an overview of all major features.
 
 ## Core Features
 
@@ -161,7 +161,7 @@ Have an idea for a new feature? We'd love to hear from you!
 
 ## Performance Metrics
 
-ZippyPlayer is optimized for:
+Torream is optimized for:
 
 - **Launch time**: < 2 seconds cold start
 - **Memory usage**: ~150-300 MB during playback
@@ -179,7 +179,7 @@ ZippyPlayer is optimized for:
 
 ## Summary
 
-ZippyPlayer combines:
+Torream combines:
 - ✅ Powerful video playback
 - ✅ Comprehensive download system
 - ✅ Torrent streaming capabilities

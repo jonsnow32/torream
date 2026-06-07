@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Chromecast
 
-ZippyPlayer includes built-in Chromecast support, allowing you to stream your videos to any Chromecast-enabled device with just a tap.
+Torream includes built-in Chromecast support, allowing you to stream your videos to any Chromecast-enabled device with just a tap.
 
 ## Overview
 
@@ -24,7 +24,7 @@ Chromecast features include:
 **Requirements**:
 - Chromecast device or Chromecast built-in TV
 - Same WiFi network for phone and Chromecast
-- ZippyPlayer installed on Android device
+- Torream installed on Android device
 
 **Supported Devices**:
 - Chromecast (all generations)
@@ -42,14 +42,14 @@ Chromecast features include:
 
 2. **Connect Phone**:
    - Ensure phone on same WiFi
-   - Open ZippyPlayer
+   - Open Torream
    - Cast icon appears automatically
 
 ## Casting Videos
 
 ### Starting a Cast
 
-1. Open video in ZippyPlayer
+1. Open video in Torream
 2. Tap Cast button (‣ icon)
 3. Select your Chromecast device
 4. Video begins playing on TV
@@ -168,7 +168,7 @@ Chromecast features include:
 
 **Subtitle Styling**:
 - Uses TV's subtitle preferences
-- Or ZippyPlayer's settings
+- Or Torream's settings
 - Size, color, position
 
 ### Troubleshooting Subtitles
@@ -198,13 +198,13 @@ Chromecast features include:
 ### Continue Using Phone
 
 **While Casting**:
-- Close ZippyPlayer app
+- Close Torream app
 - Use other apps
 - Playback continues on TV
 - Controls in notification
 
 **Returning to App**:
-- Open ZippyPlayer
+- Open Torream
 - Automatically reconnects
 - Resume control
 
@@ -337,7 +337,7 @@ Chromecast features include:
 ### Battery Saving
 
 1. **Lower Screen Brightness**: While casting
-2. **Enable Battery Saver**: In ZippyPlayer settings
+2. **Enable Battery Saver**: In Torream settings
 3. **Lock Screen**: When not controlling
 4. **Use WiFi**: More efficient than cellular
 
@@ -406,7 +406,7 @@ Chromecast features include:
 
 ## Summary
 
-ZippyPlayer's Chromecast support provides:
+Torream's Chromecast support provides:
 
 ✅ One-tap casting
 ✅ Full playback control

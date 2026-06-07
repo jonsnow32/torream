@@ -4,7 +4,7 @@ sidebar_position: 7
 
 # Android TV
 
-ZippyPlayer is fully optimized for Android TV, providing a seamless big-screen experience with a beautiful leanback interface and complete remote control support.
+Torream is fully optimized for Android TV, providing a seamless big-screen experience with a beautiful leanback interface and complete remote control support.
 
 ## Overview
 
@@ -83,7 +83,7 @@ Android TV features include:
 **Voice Commands**:
 - "Search for [content]"
 - "Play [video name]"
-- "Open ZippyPlayer"
+- "Open Torream"
 - "Show my downloads"
 
 **How to Use**:
@@ -114,7 +114,7 @@ Android TV features include:
 ### App Launcher
 
 **Quick Access**:
-- ZippyPlayer appears in app drawer
+- Torream appears in app drawer
 - Can pin to home screen
 - Fast launch from anywhere
 
@@ -343,12 +343,12 @@ Android TV features include:
 
 **Native Support**:
 - Cast from phone to TV
-- ZippyPlayer receives cast
+- Torream receives cast
 - Control from mobile device
 - Seamless handoff
 
 **How to Use**:
-1. Open ZippyPlayer on phone
+1. Open Torream on phone
 2. Tap cast button
 3. Select Android TV device
 4. Content plays on TV
@@ -375,7 +375,7 @@ Planned TV features:
 
 ## Summary
 
-ZippyPlayer on Android TV provides:
+Torream on Android TV provides:
 
 ✅ Beautiful leanback UI
 ✅ Full remote control support

@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Core Components
 
-This document details the core components that form the foundation of ZippyPlayer's architecture. Each component plays a specific role in the application's functionality.
+This document details the core components that form the foundation of Torream's architecture. Each component plays a specific role in the application's functionality.
 
 ## Database Layer
 

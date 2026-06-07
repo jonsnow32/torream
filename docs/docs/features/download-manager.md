@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Download Manager
 
-ZippyPlayer features a powerful download manager that supports multiple protocols and provides reliable background downloading with advanced features.
+Torream features a powerful download manager that supports multiple protocols and provides reliable background downloading with advanced features.
 
 ## Overview
 
@@ -29,7 +29,7 @@ The download manager handles:
 ### From Browser
 
 1. Copy video URL from browser
-2. Open ZippyPlayer
+2. Open Torream
 3. It will detect the URL and prompt to download
 
 ### From Video Player
@@ -174,7 +174,7 @@ Downloads continue when:
 
 **Battery Optimization**:
 For reliable downloads, disable battery optimization:
-1. Settings > Apps > ZippyPlayer
+1. Settings > Apps > Torream
 2. Battery > Unrestricted
 
 ### Notifications
@@ -364,7 +364,7 @@ Track your downloading:
 
 ## Summary
 
-ZippyPlayer's download manager provides:
+Torream's download manager provides:
 
 ✅ Multi-protocol support (HTTP, HLS, Torrent)
 ✅ Reliable background downloading

@@ -4,29 +4,29 @@ sidebar_position: 10
 
 # Frequently Asked Questions (FAQ)
 
-Common questions and answers about ZippyPlayer.
+Common questions and answers about Torream.
 
 ## General Questions
 
-### What is ZippyPlayer?
+### What is Torream?
 
-ZippyPlayer is a feature-rich video player and download manager for Android devices and Android TV. It supports multiple video formats, download protocols (HTTP, HLS, Torrent), and includes advanced features like Chromecast support and subtitle customization.
+Torream is a feature-rich video player and download manager for Android devices and Android TV. It supports multiple video formats, download protocols (HTTP, HLS, Torrent), and includes advanced features like Chromecast support and subtitle customization.
 
-### Is ZippyPlayer free?
+### Is Torream free?
 
-Yes, ZippyPlayer is free to use with ad-supported features. A pro version with no ads and additional features may be available.
+Yes, Torream is free to use with ad-supported features. A pro version with no ads and additional features may be available.
 
 ### What Android versions are supported?
 
-ZippyPlayer requires Android 6.0 (API 23) or higher. It's optimized for Android 6.0 through Android 14+.
+Torream requires Android 6.0 (API 23) or higher. It's optimized for Android 6.0 through Android 14+.
 
 ### Does it work on Android TV?
 
-Yes! ZippyPlayer is fully optimized for Android TV with a leanback UI and D-pad navigation.
+Yes! Torream is fully optimized for Android TV with a leanback UI and D-pad navigation.
 
 ## Installation & Setup
 
-### How do I install ZippyPlayer?
+### How do I install Torream?
 
 1. Download the APK from the releases page
 2. Enable "Install from Unknown Sources" in settings
@@ -44,7 +44,7 @@ Check your device's CPU architecture in Settings > About Phone.
 
 ### Do I need to grant storage permissions?
 
-Yes, ZippyPlayer needs storage access to:
+Yes, Torream needs storage access to:
 - Save downloaded files
 - Access local video files
 - Store thumbnails and cache
@@ -55,7 +55,7 @@ On Android 13+, you'll be asked for specific media permissions.
 
 ### What video formats are supported?
 
-ZippyPlayer supports:
+Torream supports:
 - **Containers**: MP4, MKV, AVI, WebM, FLV, MOV
 - **Video Codecs**: H.264, H.265, VP9, AV1
 - **Audio Codecs**: AAC, MP3, Opus, AC3, DTS
@@ -105,20 +105,20 @@ Yes! Tap the speed button (1x) and select from 0.25x to 2.0x speed. Great for le
 
 ### Can I resume interrupted downloads?
 
-Yes! ZippyPlayer automatically resumes downloads when:
+Yes! Torream automatically resumes downloads when:
 - Network is restored
 - App is reopened
 - Device is restarted
 
 ### Where are downloads saved?
 
-Default location: `Internal Storage/ZippyPlayer/Downloads`
+Default location: `Internal Storage/Torream/Downloads`
 
 You can change this in Settings > Downloads > Download Location.
 
 ### Can I download multiple files at once?
 
-Yes! ZippyPlayer supports parallel downloads (default: 3 concurrent downloads).
+Yes! Torream supports parallel downloads (default: 3 concurrent downloads).
 
 ### Do downloads work in background?
 
@@ -127,7 +127,7 @@ Yes, downloads continue even when:
 - Screen is off
 - Using other apps
 
-Note: Battery optimization may affect background downloads. Disable battery optimization for ZippyPlayer in system settings.
+Note: Battery optimization may affect background downloads. Disable battery optimization for Torream in system settings.
 
 ## Torrent Questions
 
@@ -135,12 +135,12 @@ Note: Battery optimization may affect background downloads. Disable battery opti
 
 1. Copy magnet link or download .torrent file
 2. Paste in "Add Download" or open .torrent file
-3. ZippyPlayer will start downloading
+3. Torream will start downloading
 4. Watch while downloading (streaming mode)
 
 ### Can I stream torrents before download completes?
 
-Yes! ZippyPlayer uses sequential downloading and local HTTP streaming to enable playback while downloading.
+Yes! Torream uses sequential downloading and local HTTP streaming to enable playback while downloading.
 
 ### Is torrent downloading safe?
 
@@ -149,7 +149,7 @@ Torrent downloading itself is safe, but be cautious about:
 - Downloading from trusted sources only
 - Using VPN if needed
 
-ZippyPlayer is just a tool; users are responsible for legal use.
+Torream is just a tool; users are responsible for legal use.
 
 ### How do I control torrent speed?
 
@@ -187,7 +187,7 @@ Yes! Connect a mouse or keyboard via Bluetooth or USB for easier navigation.
 
 ### Can I organize videos into folders?
 
-ZippyPlayer automatically organizes by:
+Torream automatically organizes by:
 - All Media
 - Recently Added
 - Favorites
@@ -204,7 +204,7 @@ Long-press any video and tap the star icon, or tap the star during playback.
 ### App crashes on startup
 
 **Solutions**:
-1. Clear app cache: Settings > Apps > ZippyPlayer > Clear Cache
+1. Clear app cache: Settings > Apps > Torream > Clear Cache
 2. Clear app data (resets settings)
 3. Reinstall the app
 4. Update to latest version
@@ -223,7 +223,7 @@ Long-press any video and tap the star icon, or tap the star during playback.
 **Solutions**:
 1. Check internet connection
 2. Verify storage space available
-3. Disable battery optimization for ZippyPlayer
+3. Disable battery optimization for Torream
 4. Try different network (WiFi vs cellular)
 5. Check if URL is still valid
 
@@ -244,9 +244,9 @@ Long-press any video and tap the star icon, or tap the star during playback.
 
 ## Privacy & Security
 
-### Does ZippyPlayer collect my data?
+### Does Torream collect my data?
 
-ZippyPlayer is privacy-focused:
+Torream is privacy-focused:
 - No account required
 - No tracking of viewing habits
 - Data stays on your device
@@ -262,7 +262,7 @@ Yes, all download history is stored locally on your device. You can clear it any
 
 ## Updates & Support
 
-### How do I update ZippyPlayer?
+### How do I update Torream?
 
 **Manual Update**:
 1. Download latest APK from releases
@@ -332,13 +332,13 @@ Yes, in Settings > Downloads > Download Location. You can select any folder acce
 
 Yes, you can download to SD card on devices that support it (Android 10 and below have better support).
 
-### Can I use ZippyPlayer as default video player?
+### Can I use Torream as default video player?
 
-Yes! When you open a video file, Android will ask which app to use. Select ZippyPlayer and choose "Always" to set as default.
+Yes! When you open a video file, Android will ask which app to use. Select Torream and choose "Always" to set as default.
 
 ### Is there an API or automation support?
 
-Currently, ZippyPlayer doesn't expose a public API. This may be added in future versions.
+Currently, Torream doesn't expose a public API. This may be added in future versions.
 
 ## Still Have Questions?
 

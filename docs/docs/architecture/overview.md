@@ -4,13 +4,13 @@ sidebar_position: 1
 
 # Architecture Overview
 
-ZippyPlayer follows modern Android architecture patterns and best practices to create a scalable, maintainable, and testable application. This document provides a high-level overview of the application's architecture.
+Torream follows modern Android architecture patterns and best practices to create a scalable, maintainable, and testable application. This document provides a high-level overview of the application's architecture.
 
 ## Architecture Pattern
 
 ### MVVM (Model-View-ViewModel)
 
-ZippyPlayer implements the **MVVM** (Model-View-ViewModel) architecture pattern, which provides clear separation of concerns and improves testability.
+Torream implements the **MVVM** (Model-View-ViewModel) architecture pattern, which provides clear separation of concerns and improves testability.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -150,7 +150,7 @@ Repositories act as the single source of truth:
 
 ### Hilt/Dagger Architecture
 
-ZippyPlayer uses **Hilt** for dependency injection:
+Torream uses **Hilt** for dependency injection:
 
 ```
 @HiltAndroidApp
@@ -229,7 +229,7 @@ com.tv.apps.zippy/
 
 ### 1. Single Activity Architecture
 
-ZippyPlayer primarily uses a single-activity architecture with the Navigation component:
+Torream primarily uses a single-activity architecture with the Navigation component:
 
 **Benefits:**
 - Simplified navigation
@@ -434,7 +434,7 @@ The architecture supports:
 
 ## Conclusion
 
-ZippyPlayer's architecture provides:
+Torream's architecture provides:
 - ✅ Clear separation of concerns
 - ✅ Easy testing and maintenance
 - ✅ Scalable code organization

@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Getting Started
 
-This guide will help you set up the ZippyPlayer development environment and get the project running on your machine.
+This guide will help you set up the Torream development environment and get the project running on your machine.
 
 ## Prerequisites
 
@@ -28,8 +28,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/zippyPlayer.git
-cd zippyPlayer
+git clone https://github.com/jonsnow32/torream.git
+cd torream
 ```
 
 ### 2. Configure Local Properties
@@ -48,7 +48,7 @@ test.id=YOUR_TEST_ID_HERE
 
 1. Launch Android Studio
 2. Click **File → Open**
-3. Navigate to the cloned `zippyPlayer` directory
+3. Navigate to the cloned `torream` directory
 4. Click **OK** and wait for Gradle sync to complete
 
 ### 4. Sync Project Dependencies
@@ -59,7 +59,7 @@ Android Studio should automatically sync Gradle dependencies. If not:
 
 ## Build Configurations
 
-ZippyPlayer supports multiple build variants:
+Torream supports multiple build variants:
 
 ### ABI Flavors
 
@@ -114,7 +114,7 @@ The project is configured to build separate APKs for different CPU architectures
 ## Project Structure
 
 ```
-zippyPlayer/
+torream/
 ├── app/                          # Main application module
 │   ├── src/
 │   │   ├── main/

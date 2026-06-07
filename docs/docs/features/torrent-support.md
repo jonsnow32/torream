@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Torrent Support
 
-ZippyPlayer includes a full-featured torrent client powered by LibTorrent4j, enabling you to download and stream torrent content directly within the app.
+Torream includes a full-featured torrent client powered by LibTorrent4j, enabling you to download and stream torrent content directly within the app.
 
 ## Overview
 
@@ -23,13 +23,13 @@ Torrent features include:
 
 **Method 1: Magnet Link**
 1. Copy magnet link
-2. Open ZippyPlayer
+2. Open Torream
 3. Paste in "Add Download"
 4. Download starts automatically
 
 **Method 2: Torrent File**
 1. Download .torrent file
-2. Open with ZippyPlayer
+2. Open with Torream
 3. Or browse from app
 4. Select and start download
 
@@ -250,7 +250,7 @@ For multi-file torrents:
 ### Storage Location
 
 **Default**:
-- Internal storage/ZippyPlayer/Torrents
+- Internal storage/Torream/Torrents
 - Customizable per-torrent
 - SD card support
 
@@ -401,7 +401,7 @@ For multi-file torrents:
 
 ## Summary
 
-ZippyPlayer's torrent support provides:
+Torream's torrent support provides:
 
 ✅ Full-featured torrent client
 ✅ Magnet link & .torrent file support

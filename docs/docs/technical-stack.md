@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Technical Stack
 
-ZippyPlayer is built using modern Android development technologies and best practices. This document provides a comprehensive breakdown of all technologies, libraries, and frameworks used in the project.
+Torream is built using modern Android development technologies and best practices. This document provides a comprehensive breakdown of all technologies, libraries, and frameworks used in the project.
 
 ## Project Overview
 
@@ -315,7 +315,7 @@ Local Data Source (Room) + Remote Data Source (Network)
 
 ## Summary
 
-ZippyPlayer leverages a comprehensive technology stack that combines:
+Torream leverages a comprehensive technology stack that combines:
 - **Modern Android development** with Jetpack components
 - **Efficient media playback** with Media3/ExoPlayer
 - **Advanced download capabilities** with WorkManager and custom implementations
@@ -323,7 +323,7 @@ ZippyPlayer leverages a comprehensive technology stack that combines:
 - **Clean architecture** for maintainability and testability
 - **Multi-platform optimization** for phones, tablets, and Android TV
 
-This stack enables ZippyPlayer to deliver a feature-rich, performant, and reliable media experience across all Android devices.
+This stack enables Torream to deliver a feature-rich, performant, and reliable media experience across all Android devices.
 
 ## Version Information
 

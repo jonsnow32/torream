@@ -138,7 +138,7 @@ export default function Home(): JSX.Element {
                   <h2>Ready to experience the best Android video player?</h2>
                   <p>Download now and enjoy seamless streaming on your Android device</p>
                   <a href="https://github.com/staronecloud/csplayer/releases" className={styles.btnCta}>
-                    Download ZippyPlayer
+                    Download Torream
                   </a>
                 </div>
               </div>

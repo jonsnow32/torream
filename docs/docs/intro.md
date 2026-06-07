@@ -2,13 +2,13 @@
 sidebar_position: 1
 ---
 
-# Introduction to ZippyPlayer
+# Introduction to Torream
 
-Welcome to **ZippyPlayer**, a powerful and feature-rich video player application designed for Android devices and Android TV. ZippyPlayer combines advanced media playback capabilities with robust download management and torrent support to provide a comprehensive media consumption experience.
+Welcome to **Torream**, a powerful and feature-rich video player application designed for Android devices and Android TV. Torream combines advanced media playback capabilities with robust download management and torrent support to provide a comprehensive media consumption experience.
 
-## What is ZippyPlayer?
+## What is Torream?
 
-ZippyPlayer is a modern Android application that serves as an all-in-one media solution, offering:
+Torream is a modern Android application that serves as an all-in-one media solution, offering:
 
 - **Advanced Video Playback**: Built on Media3 (ExoPlayer) for high-quality, adaptive streaming
 - **Download Management**: Sophisticated multi-protocol download system supporting HTTP, HLS, and torrent downloads
@@ -46,7 +46,7 @@ ZippyPlayer is a modern Android application that serves as an all-in-one media s
 
 ## Target Audience
 
-ZippyPlayer is designed for:
+Torream is designed for:
 - Media enthusiasts who want a feature-rich video player
 - Users who need robust download management capabilities
 - Android TV users seeking a comprehensive media center
@@ -55,7 +55,7 @@ ZippyPlayer is designed for:
 
 ## Technology Stack
 
-ZippyPlayer is built using cutting-edge Android technologies:
+Torream is built using cutting-edge Android technologies:
 
 - **Language**: Kotlin with Java 21 compatibility
 - **UI Framework**: Android Jetpack, Material Design 3
@@ -71,7 +71,7 @@ ZippyPlayer is built using cutting-edge Android technologies:
 
 ## Getting Started
 
-To start using or contributing to ZippyPlayer:
+To start using or contributing to Torream:
 
 1. **For Users**: Download the latest APK from releases
 2. **For Developers**: Clone the repository and follow the [Getting Started Guide](./getting-started.md)
@@ -95,4 +95,4 @@ Explore the documentation to learn more about:
 
 ---
 
-*ZippyPlayer - Your Ultimate Media Companion for Android*
+*Torream - Your Ultimate Media Companion for Android*

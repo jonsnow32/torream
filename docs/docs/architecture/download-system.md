@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Download System
 
-ZippyPlayer features a sophisticated multi-protocol download system that supports HTTP, HLS, and torrent downloads with advanced features like resume support, parallel downloading, and background execution.
+Torream features a sophisticated multi-protocol download system that supports HTTP, HLS, and torrent downloads with advanced features like resume support, parallel downloading, and background execution.
 
 ## Architecture Overview
 
@@ -633,7 +633,7 @@ class DownloadViewModel @Inject constructor(
 
 ## Summary
 
-ZippyPlayer's download system provides:
+Torream's download system provides:
 
 ✅ **Multi-Protocol Support**: HTTP, HLS, Torrent
 ✅ **Resume Capability**: Pick up where you left off
