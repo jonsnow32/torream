@@ -5,18 +5,15 @@ const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'ZippyPlayer',
+  title: 'Torream',
   tagline: 'Advanced Android Video Player with Torrent & HLS Streaming',
   favicon: 'img/logo.webp',
 
-  // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  baseUrl: '/',
+  url: 'https://jonsnow32.github.io',
+  baseUrl: '/torream/',
 
-  // GitHub pages deployment config.
-  organizationName: 'your-org',
-  projectName: 'zippyplayer',
+  organizationName: 'jonsnow32',
+  projectName: 'torream',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
@@ -34,7 +31,7 @@ const config = {
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/your-org/zippyplayer/tree/main/docs/',
+          editUrl: 'https://github.com/jonsnow32/torream/tree/main/docs/',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
         },
@@ -68,9 +65,9 @@ const config = {
         disableSwitch: true,
       },
       navbar: {
-        title: 'ZippyPlayer',
+        title: 'Torream',
         logo: {
-          alt: 'ZippyPlayer Logo',
+          alt: 'Torream Logo',
           src: 'img/logo.png',
         },
         style: 'dark',
@@ -83,12 +80,12 @@ const config = {
             label: 'Documentation',
           },
           {
-            href: 'https://zippyplayer.example.com/download',
+            href: 'https://github.com/jonsnow32/torream/releases',
             label: 'Download',
             position: 'right',
           },
           {
-            href: 'https://github.com/your-org/zippyplayer',
+            href: 'https://github.com/jonsnow32/torream',
             label: 'GitHub',
             position: 'right',
           },
@@ -106,7 +103,7 @@ const config = {
               },
               {
                 label: 'Features',
-                to: '/docs/features',
+                to: '/docs/features/overview',
               },
             ],
           },
@@ -115,7 +112,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/your-org/zippyplayer',
+                href: 'https://github.com/jonsnow32/torream',
               },
             ],
           },
@@ -129,7 +126,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} ZippyPlayer. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Torream. Built with Docusaurus.`,
       },
       prism: {
         theme: darkCodeTheme,
