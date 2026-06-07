@@ -1,0 +1,38 @@
+Torream is a high-performance video and media player built on the MPV engine — the same engine trusted by power users worldwide for its unmatched format support and playback quality.
+
+UNIVERSAL FORMAT SUPPORT
+Play virtually any video or audio format without conversion: MKV, MP4, AVI, MOV, FLV, WebM, TS, M2TS, and hundreds more. Torream handles what other players can't.
+
+ADVANCED SUBTITLE SUPPORT
+Load and sync subtitles from any source. Supports SRT, ASS, SSA, VTT, and more. Fine-tune timing, style, and positioning to match your preferences.
+
+STREAMING & NETWORK PLAYBACK
+Stream directly from URLs, HLS/DASH streams, and network shares. Torream fetches and plays remote content with the same speed and reliability as local files.
+
+TORRENT STREAMING
+Stream torrent content before the download completes — no waiting for the full file. Built-in torrent engine gets you watching in seconds.
+
+ANDROID TV & FIRE TV READY
+Full DPAD remote control support with an optimized TV interface. Navigate your library, control playback, and manage subtitles entirely with your remote.
+
+PICTURE-IN-PICTURE
+Continue watching while multitasking with PiP mode. Torream keeps your video visible across all your Android apps.
+
+CHROMECAST SUPPORT
+Cast your content to any Chromecast device directly from the app. Subtitle support included for cast sessions.
+
+BACKGROUND AUDIO PLAYBACK
+Keep audio running when you switch apps or lock your screen. Full media session integration with lock screen controls and notification controls.
+
+DOWNLOAD FOR OFFLINE VIEWING
+Download HTTP, HLS, and torrent content directly to your device for offline playback anywhere.
+
+GESTURE CONTROLS
+Swipe to adjust brightness, volume, and seek position with intuitive touch gestures — designed for one-handed use.
+
+PHONE, TABLET & TV — ONE APP
+Adaptive layout that looks great on every screen size. Bottom navigation on phones, side nav rail on tablets and TV.
+
+---
+
+Torream is free to use. Optional ads support continued development.

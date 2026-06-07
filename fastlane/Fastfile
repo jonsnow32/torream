@@ -6,13 +6,13 @@ platform :android do
 
   desc "Run unit tests and lint (debug only)"
   lane :test do
-    gradle(task: "testDebugUnitTest")
+    gradle(task: "testArm64DebugUnitTest")
     gradle(task: "lintUniversalDebug")
   end
 
   desc "Build debug APK (for PR artifact)"
   lane :build_debug do
-    gradle(task: "assemble", build_type: "Debug")
+    gradle(task: "assembleArm64Debug")
   end
 
   # ─── Release lanes ───────────────────────────────────────────────────────────
@@ -105,6 +105,8 @@ platform :android do
       skip_upload_aab:         true,
       skip_upload_images:      false,
       skip_upload_screenshots: false,
+      skip_upload_changelogs:  true,
+      skip_upload_metadata:    true,
     )
   end
 
