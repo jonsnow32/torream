@@ -123,6 +123,10 @@ const config = {
                 label: 'Technical Stack',
                 to: '/docs/technical-stack',
               },
+              {
+                label: 'Privacy Policy',
+                to: '/privacy',
+              },
             ],
           },
         ],
