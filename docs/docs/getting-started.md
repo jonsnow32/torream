@@ -118,7 +118,7 @@ torream/
 ├── app/                          # Main application module
 │   ├── src/
 │   │   ├── main/
-│   │   │   ├── java/com/tv/apps/zippy/
+│   │   │   ├── java/cloud/streamless/torream/
 │   │   │   │   ├── ads/          # Ad integration
 │   │   │   │   ├── datastore/    # Data storage
 │   │   │   │   ├── download/     # Download system
@@ -233,7 +233,7 @@ Install these Android Studio plugins for better productivity:
 
 ### Debugging Tips
 
-- Use **Logcat** with filters: `com.tv.apps.zippy`
+- Use **Logcat** with filters: `cloud.streamless.torream`
 - Enable **Timber** logging in debug builds
 - Use **Layout Inspector** for UI debugging
 - Profile with **Android Profiler** for performance issues

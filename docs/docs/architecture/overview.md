@@ -189,7 +189,7 @@ Application
 ## Package Structure
 
 ```
-com.tv.apps.zippy/
+cloud.streamless.torream/
 ├── ads/                    # Ad integration
 │   ├── AdManager
 │   ├── AdPreloadManager

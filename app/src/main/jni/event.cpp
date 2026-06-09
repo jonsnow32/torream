@@ -1,4 +1,5 @@
 #include <jni.h>
+#include <cstdlib>
 
 #include <mpv/client.h>
 

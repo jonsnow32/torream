@@ -1,4 +1,4 @@
-# zippy-player
+# Torream
 
 ## Google Play Compliance
 

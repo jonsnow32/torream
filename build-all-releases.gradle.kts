@@ -9,7 +9,7 @@ tasks.register("buildAllReleases") {
         val flavors = listOf("arm64", "arm32", "x86", "x86_64", "universal")
 
         println("================================================")
-        println("  ZippyPlayer - Build All Release Flavors")
+        println("  Torream - Build All Release Flavors")
         println("================================================")
         println()
 

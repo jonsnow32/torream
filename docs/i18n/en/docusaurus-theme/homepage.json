@@ -8,7 +8,7 @@
     "description": "Hero section headline"
   },
   "homepage.hero.description": {
-    "message": "ZippyPlayer is a powerful media player with advanced streaming, torrent support, 4K video playback, and deep customization. Experience your content the way it was meant to be enjoyed.",
+    "message": "Torream is a powerful media player with advanced streaming, torrent support, 4K video playback, and deep customization. Experience your content the way it was meant to be enjoyed.",
     "description": "Hero section description"
   },
   "homepage.hero.feature1": {
@@ -24,7 +24,7 @@
     "description": "Feature 3"
   },
   "homepage.hero.download": {
-    "message": "Get ZippyPlayer",
+    "message": "Get Torream",
     "description": "Download button text"
   },
   "homepage.hero.googleplay": {

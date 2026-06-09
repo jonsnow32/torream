@@ -17,7 +17,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 echo -e "${BLUE}================================================${NC}"
-echo -e "${BLUE}  ZippyPlayer - Build All Release Flavors${NC}"
+echo -e "${BLUE}  Torream - Build All Release Flavors${NC}"
 echo -e "${BLUE}================================================${NC}"
 echo ""
 

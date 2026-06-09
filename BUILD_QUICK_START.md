@@ -10,7 +10,7 @@ This will:
 ## Expected Output
 ```
 ================================================
-  ZippyPlayer - Build All Release Flavors
+  Torream - Build All Release Flavors
 ================================================
 Cleaning previous builds...
 ✓ Clean completed

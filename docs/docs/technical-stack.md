@@ -8,7 +8,7 @@ Torream is built using modern Android development technologies and best practice
 
 ## Project Overview
 
-- **Package Name**: `com.zippygogle.storegg`
+- **Package Name**: `cloud.streamless.torream`
 - **Version**: 1.1.9 (Build 119)
 - **Min SDK**: 23 (Android 6.0 Marshmallow)
 - **Target SDK**: 36

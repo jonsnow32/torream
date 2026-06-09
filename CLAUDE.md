@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **Simplicity First** — Minimum code that solves the problem. No abstractions for single-use code. No speculative features or "flexibility" that wasn't requested. If you write 200 lines and it could be 50, rewrite it.
 3. **Surgical Changes** — Touch only what you must. Don't refactor adjacent code. Match existing style. Remove only imports/variables that YOUR changes made unused.
 4. **Goal-Driven Execution** — Define success criteria before starting. For multi-step tasks, state a brief plan with verifiable checkpoints.
+5. **No Documentation** — Do not create explainer documents, READMEs, or other documentation unless explicitly asked.
 
 ---
 
@@ -19,6 +20,67 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Version:** 1.0.0 (versionCode 100)
 - **SDK:** minSdk 23 (Android 6) / targetSdk 36 / compileSdk 36 / JVM 21
 - **Language:** Kotlin + native MPV via JNI (`.so` in `app/src/main/libs/`)
+
+---
+
+## Common Commands
+
+### Build
+```bash
+./gradlew assembleArm64Debug          # debug APK (fast, arm64 only)
+./gradlew assembleArm64Release        # single flavor release APK
+./gradlew bundleUniversalRelease      # AAB for Play Store upload
+./build-all-releases.sh               # all 5 ABI release APKs
+```
+
+### Test & Lint
+```bash
+./gradlew testUniversalDebugUnitTest                          # all unit tests
+./gradlew testUniversalDebugUnitTest --tests "*.FooTest"      # single test class
+./gradlew lintUniversalDebug                                  # lint (has baseline)
+```
+
+> Use `lintUniversalDebug` not `lintDebug` — the latter is ambiguous with 5 flavors.
+> Lint issues are baselined in `app/lint-baseline.xml`; only new issues fail the build.
+
+### Signing (local)
+Create `key.properties` in the project root (git-ignored):
+```
+storeFile=/path/to/keystore.jks
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
+For CI, pass as env vars: `STORE_FILE`, `STORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+
+---
+
+## Fastlane
+
+Ruby 3.4+ required. The macOS system Ruby (2.6) is too old — use Homebrew's:
+```bash
+export PATH="/opt/homebrew/opt/ruby/bin:$PATH"   # add to ~/.zshrc to make permanent
+bundle install                                    # first time only
+```
+
+Always run fastlane via `bundle exec`:
+```bash
+PLAY_KEY_FILE=/path/to/service-account.json bundle exec fastlane <lane>
+```
+
+| Lane | Purpose |
+|---|---|
+| `test` | Unit tests + lint |
+| `build_debug` | Debug APK |
+| `build_release` | Signed universal AAB |
+| `upload_internal` | Upload AAB → internal track (no build) |
+| `upload_alpha` | Upload AAB → alpha track (no build) |
+| `deploy_internal` | test + build_release + upload_internal |
+| `deploy_alpha` | test + build_release + upload_alpha |
+| `deploy_production` | Promote internal → production |
+| `upload_metadata` | Upload store images only (no APK/AAB) |
+
+Store assets live in `fastlane/metadata/android/en-US/images/`. The `PLAY_KEY_FILE` env var points to the Google service account JSON key.
 
 ---
 
@@ -97,6 +159,7 @@ Waterfall mediation via `AdWaterfallManager`.
 - `AdPreloadManager` / `AdPreloader` pre-loads ads before they are needed.
 - `AdPlacementHelper` decides when/where ads appear.
 - SDKs: Google AdMob 24, IronSource 9.2, AppLovin 13.5, Unity Ads 4.16, Vungle 7.6.
+- AdMob IDs injected at build time via `local.properties` or env vars (`ADMOB_APP_ID`, etc.); test IDs used as fallback.
 
 ---
 
@@ -135,12 +198,11 @@ Waterfall mediation via `AdWaterfallManager`.
 | arm32 | armeabi-v7a | 1001 |
 | x86 | x86 | 1003 |
 | x86_64 | x86_64 | 1004 |
-| universal | all | 9999 |
+| universal | all | 100 (base) |
 
 - Debug: arm64-v8a only, ID suffix `.debug`, app name "Torream-Debug".
 - Release: ProGuard + resource shrinking enabled.
-- Build all releases: `./build-all-releases.sh`
-- Single flavor: `./gradlew assembleArm64Release`
+- `universal` flavor is used for Play Store AAB uploads; it inherits the base versionCode (100) with no suffix.
 
 ---
 
@@ -171,7 +233,5 @@ Covers: ExoPlayer/Media3, HLS/DASH, adaptive bitrate, subtitle systems, Android 
 Pick the cheapest model that can do the subtask well: Haiku for bulk mechanical work, Sonnet for scoped research/synthesis, Opus for subtasks needing real planning. Parent owns final output.
 
 ## Preferred Tools
-  
-**WebFetch** for public pages; **agent-browser CLI** (`npm i -g agent-browser && agent-browser install`) for dynamic pages or auth-walled content — returns accessibility tree with element refs, ~82% fewer tokens than screenshot-based tools.
 
----
+**WebFetch** for public pages; **agent-browser CLI** (`npm i -g agent-browser && agent-browser install`) for dynamic pages or auth-walled content — returns accessibility tree with element refs, ~82% fewer tokens than screenshot-based tools.
