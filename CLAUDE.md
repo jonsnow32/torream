@@ -127,7 +127,6 @@ The core player is **MPV** (native, via JNI in `ui/player/mpv/`).
   - `PipActionManager` — Picture-in-Picture lifecycle
 - Background audio: `BackgroundPlaybackService` (foreground service + MediaSession).
 - Double-tap seek overlay: `YouTubeOverlay` in `ui/player/youtube/`.
-- Chromecast playback: `media3-cast` + `ChromecastSubtitlesFragment`.
 - Inter-app launch: `ACTION_VIEW` with `content://` URI carrying a `PlaybackData` JSON file; key `KEY_PLAYBACK_JSON_URI` in bundle.
 
 ---
@@ -142,11 +141,27 @@ Downloads are WorkManager workers coordinated by `DownloadCoordinator`.
 | `HlsDownloadWorker` | HLS stream download |
 | `TorrentDownloadWorker` | Torrent download via libtorrent4j |
 
-- `TorrentStreamServer` (NanoHTTPD) enables in-app torrent streaming before full download.
+- `TorrentStreamServer` (NanoHTTPD, port configurable) enables in-app torrent streaming before full download.
+- `LocalFileStreamServer` (NanoHTTPD, port 8766) serves `content://` and `file://` URIs over HTTP on the LAN IP so Chromecast receivers can fetch local video files.
 - `DownloadRecoveryManager` resumes downloads interrupted by process death.
 - Notifications: `DownloadNotificationHelper` + `DownloadNotificationReceiver`.
 - Intent `cloud.streamless.torream.OPEN_DOWNLOADS` navigates to the Downloads section in Library.
 - Intent `.action.DOWNLOAD_URL` opens `UrlInputDialog` with URL + custom headers.
+
+---
+
+## Cast System
+
+Chromecast is handled by Google Cast SDK v21 + `media3-cast`. Key components:
+
+- **`CastOptionsProvider`** — registers `DEFAULT_MEDIA_RECEIVER_APPLICATION_ID` and `ControllerActivity` as the expanded controller. Must be declared in `AndroidManifest.xml` as a `<meta-data>` entry.
+- **`CastHelper`** — builds `MediaInfo` from `VideoLink` + `MetadataHolder`, loads it via `remoteMediaClient.load()`. Content type is inferred from the URL (`.m3u8` → HLS, `.mpd` → DASH, else `video/mp4`).
+- **`MetadataHolder`** (`ControllerActivity.kt`) — serialized as `customData` on the Cast media item so the `ControllerActivity` can recover links/subs. **Must be `@Serializable`** — `Utils.toJson()` uses `kotlinx.serialization` and throws silently if the class is missing the annotation, causing `startCast()` to return `false` with no load sent.
+- **`LocalFileStreamServer`** — started lazily on first cast of a local file; binds to `0.0.0.0:8766` and serves `content://`/`file://` URIs with proper `Range` support. Uses `wlan0` IP for the URL served to Chromecast.
+- **`ControllerActivity`** — extends `ExpandedControllerActivity`; slot 0 = source picker, slot 1 = skip back 30s, slot 2 = skip forward 30s, slot 3 = next episode. Opened automatically on `onSessionStarted` and `onSessionResumed`.
+- **`MPVFragment` cast flow**: `onSessionStarted` → translate local URLs via `LocalFileStreamServer.getHttpUrl()` → `CastHelper.startCast()` → open `ControllerActivity`. On `onSessionEnded` → `LocalFileStreamServer.stop()` + resume local playback.
+
+> Default Media Receiver only supports MP4/WebM/HLS/DASH — MKV and AVI will cast but not play.
 
 ---
 
@@ -213,6 +228,7 @@ Waterfall mediation via `AdWaterfallManager`.
 - `SafeFile` (LagradOst) — SAF-compatible file abstraction.
 - `ThumbnailLoader` + `ThumbnailCache` — video thumbnail loading via Coil.
 - `FcastHelper` / `CastHelper` — FCAST protocol + Chromecast helpers.
+- `Utils.toJson()` — uses `kotlinx.serialization` runtime (`serializer(this::class.java)`). Any class passed to it **must be `@Serializable`**; missing annotation throws `SerializationException` that callers often swallow silently.
 - `InAppUpdater` — auto-update from GitHub releases.
 - Rhino JS engine (`org.mozilla:rhino`) — used for scripting/parsing.
 - juniversalchardet — charset detection for subtitle files.
