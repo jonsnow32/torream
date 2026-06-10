@@ -212,6 +212,9 @@ dependencies {
   // Chromecast
   implementation("com.google.android.gms:play-services-cast-framework:21.5.0")
   implementation("androidx.mediarouter:mediarouter:1.7.0")
+
+  // Play In-App Updates (for Play Store installs)
+  implementation("com.google.android.play:app-update-ktx:2.1.0")
 //  implementation("androidx.media3:media3-exoplayer:$media3Version")
 //  implementation("com.google.android.mediahome:video:1.0.0")
 //  implementation("androidx.media3:media3-exoplayer-hls:$media3Version")

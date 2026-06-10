@@ -21,6 +21,11 @@ import cloud.streamless.torream.utils.UIHelper.setDefaultFocus
 import cloud.streamless.torream.utils.Utils.logError
 import cloud.streamless.torream.utils.Utils.parseJson
 import cloud.streamless.torream.utils.Utils.showToast
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.coroutines.sync.Mutex
@@ -32,12 +37,13 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
+import kotlin.coroutines.resume
 
 
 class InAppUpdater {
   companion object {
-    const val GITHUB_USER_NAME = "staronecloud"
-    const val GITHUB_REPO = "csplayer-release"
+    const val GITHUB_USER_NAME = "jonsnow32"
+    const val GITHUB_REPO = "torream"
 
     const val LOG_TAG = "InAppUpdater"
 
@@ -214,6 +220,50 @@ class InAppUpdater {
     }
 
 
+    private fun Context.isInstalledFromPlayStore(): Boolean {
+      return try {
+        val installer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+          packageManager.getInstallSourceInfo(packageName).installingPackageName
+        } else {
+          @Suppress("DEPRECATION")
+          packageManager.getInstallerPackageName(packageName)
+        }
+        installer == "com.android.vending"
+      } catch (e: Exception) {
+        false
+      }
+    }
+
+    private suspend fun Activity.triggerPlayStoreUpdate(): Boolean {
+      return suspendCancellableCoroutine { cont ->
+        val appUpdateManager = AppUpdateManagerFactory.create(this)
+        appUpdateManager.appUpdateInfo
+          .addOnSuccessListener { info ->
+            if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+              && info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
+            ) {
+              try {
+                appUpdateManager.startUpdateFlow(
+                  info,
+                  this,
+                  AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE)
+                )
+                cont.resume(true)
+              } catch (e: Exception) {
+                Log.e(LOG_TAG, "Play update flow failed", e)
+                cont.resume(false)
+              }
+            } else {
+              cont.resume(false)
+            }
+          }
+          .addOnFailureListener {
+            Log.e(LOG_TAG, "Play appUpdateInfo failed", it)
+            cont.resume(false)
+          }
+      }
+    }
+
     private val updateLock = Mutex()
 
     private suspend fun Activity.downloadUpdate(url: String): Boolean {
@@ -270,11 +320,13 @@ class InAppUpdater {
     suspend fun Activity.runAutoUpdate(checkAutoUpdate: Boolean = true): Boolean {
       val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
-      if (!checkAutoUpdate || settingsManager.getBoolean(
-          getString(R.string.auto_update_key),
-          true
-        )
-      ) {
+      if (!checkAutoUpdate || settingsManager.getBoolean(getString(R.string.auto_update_key), true)) {
+        // Play Store re-signs the APK so sideloading a GitHub APK fails with signature mismatch.
+        // Use the Play In-App Update API instead for Play Store installs.
+        if (isInstalledFromPlayStore()) {
+          return triggerPlayStoreUpdate()
+        }
+
         val update = getAppUpdate()
         if (
           update.shouldUpdate &&
