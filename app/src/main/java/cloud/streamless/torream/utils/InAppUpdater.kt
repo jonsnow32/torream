@@ -33,6 +33,7 @@ import kotlinx.coroutines.sync.withLock
 import okio.BufferedSink
 import okio.buffer
 import okio.sink
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
@@ -258,7 +259,7 @@ class InAppUpdater {
             }
           }
           .addOnFailureListener {
-            Log.e(LOG_TAG, "Play appUpdateInfo failed", it)
+            Timber.tag(LOG_TAG).e(it, "Play appUpdateInfo failed")
             cont.resume(false)
           }
       }
@@ -268,7 +269,7 @@ class InAppUpdater {
 
     private suspend fun Activity.downloadUpdate(url: String): Boolean {
       try {
-        Log.d(LOG_TAG, "Downloading update: $url")
+        Timber.tag(LOG_TAG).d("Downloading update: $url")
         val appUpdateName = "CloudStream"
         val appUpdateSuffix = "apk"
 

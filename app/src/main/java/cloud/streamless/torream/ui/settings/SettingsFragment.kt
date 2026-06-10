@@ -107,16 +107,16 @@ class SettingsFragment : Fragment() {
           // Magnet Links
 //          "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
 //          "magnet:?xt=urn:btih:08ada5c11c42e4a0c83cc8521d04e6723d12fa27&dn=Sintel",
-//          "magnet:?xt=urn:btih:7c3fcd16e27e49e243ec97465ea1b19e5bbd73d2&dn=Big+Buck+Bunny",
+          "magnet:?xt=urn:btih:7c3fcd16e27e49e243ec97465ea1b19e5bbd73d2&dn=Big+Buck+Bunny",
 
           // HTTP Video Links - Short Duration
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+//          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+//          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+//          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+//          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+//          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+//          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+//          "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
 
         )
 

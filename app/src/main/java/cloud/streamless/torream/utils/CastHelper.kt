@@ -53,16 +53,16 @@ object CastHelper {
                 .build()
         }
 
+        val contentType = when {
+            link.url.contains(".m3u8", ignoreCase = true) -> MimeTypes.APPLICATION_M3U8
+            link.url.contains(".mpd", ignoreCase = true) -> MimeTypes.APPLICATION_MPD
+            else -> MimeTypes.VIDEO_MP4
+        }
+        android.util.Log.i("CastHelper", "Loading url=${link.url} contentType=$contentType")
+
         val builder = MediaInfo.Builder(link.url)
             .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-            .setContentType(
-                // Infer content type from URL
-                when {
-                    link.url.contains(".m3u8", ignoreCase = true) -> MimeTypes.APPLICATION_M3U8
-                    link.url.contains(".mpd", ignoreCase = true) -> MimeTypes.APPLICATION_MPD
-                    else -> MimeTypes.VIDEO_MP4
-                }
-            )
+            .setContentType(contentType)
             .setMetadata(movieMetadata)
             .setMediaTracks(tracks)
 
@@ -80,12 +80,13 @@ object CastHelper {
         if (pending == null) return
         main {
             val res = withContext(Dispatchers.IO) { pending.await() }
+            android.util.Log.i("CastHelper", "load result statusCode=${res.status.statusCode} msg=${res.status.statusMessage}")
             when (res.status.statusCode) {
                 CastStatusCodes.FAILED -> {
                     callback.invoke(true)
-                    println("FAILED AND LOAD NEXT")
+                    android.util.Log.e("CastHelper", "FAILED AND LOAD NEXT")
                 }
-                else -> Unit //IDK DO SMTH HERE
+                else -> Unit
             }
         }
     }
@@ -137,6 +138,7 @@ object CastHelper {
             }
             return true
         } catch (e: Exception) {
+            android.util.Log.e("CastHelper", "startCast failed: ${e::class.simpleName}: ${e.message}", e)
             logError(e)
             return false
         }

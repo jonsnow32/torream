@@ -155,6 +155,7 @@ class FeedAction(
               DownloadStatus.PAUSED -> {
                 // Resume download
                 try {
+                  (fragment.activity as? cloud.streamless.torream.MainActivity)?.requestNotificationPermissionForDownload()
                   downloadCoordinator.startDownload(state.task)
                   showToast("Download resumed")
                 } catch (e: Exception) {

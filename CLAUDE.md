@@ -17,7 +17,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Torream** is an Android video/media player app targeting phones, tablets, and Android TV/Fire TV.
 
 - **Package:** `cloud.streamless.torream` | **App ID:** `cloud.streamless.torream`
-- **Version:** 1.0.0 (versionCode 100)
 - **SDK:** minSdk 23 (Android 6) / targetSdk 36 / compileSdk 36 / JVM 21
 - **Language:** Kotlin + native MPV via JNI (`.so` in `app/src/main/libs/`)
 
@@ -198,11 +197,11 @@ Waterfall mediation via `AdWaterfallManager`.
 | arm32 | armeabi-v7a | 1001 |
 | x86 | x86 | 1003 |
 | x86_64 | x86_64 | 1004 |
-| universal | all | 100 (base) |
+| universal | all | 101 (base) |
 
 - Debug: arm64-v8a only, ID suffix `.debug`, app name "Torream-Debug".
 - Release: ProGuard + resource shrinking enabled.
-- `universal` flavor is used for Play Store AAB uploads; it inherits the base versionCode (100) with no suffix.
+- `universal` flavor is used for Play Store AAB uploads; it inherits the base versionCode (101) with no suffix.
 
 ---
 

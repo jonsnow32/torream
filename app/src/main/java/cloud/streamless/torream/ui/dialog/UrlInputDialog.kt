@@ -309,6 +309,9 @@ class UrlInputDialog : DockingDialog() {
         headers = getCurrentHeaders().ifEmpty { null } // Use custom headers from UI
       )
 
+      // Request notification permission before starting (Android 13+)
+      (activity as? cloud.streamless.torream.MainActivity)?.requestNotificationPermissionForDownload()
+
       // Start download using coordinator (WorkManager will persist it)
       withContext(Dispatchers.IO) {
         try {

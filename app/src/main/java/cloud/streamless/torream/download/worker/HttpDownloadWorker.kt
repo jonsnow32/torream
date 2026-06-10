@@ -22,8 +22,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.Lifecycle
 import android.app.NotificationManager
 import androidx.core.net.toUri
 import cloud.streamless.torream.download.DownloadState
@@ -62,12 +60,7 @@ class HttpDownloadWorker @AssistedInject constructor(
     val taskId = inputData.getString(KEY_TASK_ID) ?: return@withContext Result.failure()
 
     Timber.i("HttpDownloadWorker started: $taskId")
-    if (ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-      setForeground(createForegroundInfo(taskId, 0))
-    } else {
-      // Show regular notification if in background
-      showProgressNotification(taskId, 0)
-    }
+    setForeground(createForegroundInfo(taskId, 0))
 
     // Load task from database with retry
     var state = repo.observeState(taskId).first()
@@ -184,6 +177,9 @@ class HttpDownloadWorker @AssistedInject constructor(
       Timber.i("Total size: ${totalBytes / (1024 * 1024)} MB")
 
 
+      // Update notification with resolved filename before download starts
+      setForeground(createForegroundInfo(taskId, 0, tempName))
+
       // Step 4: Download data
       connection.inputStream.use { input ->
         tempFile.openOutputStream(existingBytes > 0).use { output ->
@@ -193,7 +189,8 @@ class HttpDownloadWorker @AssistedInject constructor(
             taskId = taskId,
             state = state,
             existingBytes = existingBytes,
-            totalBytes = totalBytes
+            totalBytes = totalBytes,
+            fileName = tempName
           )
         }
       }
@@ -238,7 +235,8 @@ class HttpDownloadWorker @AssistedInject constructor(
     taskId: String,
     state: DownloadState,
     existingBytes: Long,
-    totalBytes: Long
+    totalBytes: Long,
+    fileName: String? = null
   ) {
     val buffer = ByteArray(BUFFER_SIZE)
     var downloadedBytes = 0L
@@ -274,12 +272,8 @@ class HttpDownloadWorker @AssistedInject constructor(
           )
         )
 
-        // Update notification
-        if (ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-          setForeground(createForegroundInfo(taskId, progress))
-        } else {
-          showProgressNotification(taskId, progress)
-        }
+        // Update notification without re-promoting the foreground service
+        showProgressNotification(taskId, progress, fileName)
         setProgress(workDataOf(KEY_PROGRESS to progress))
 
         lastProgressTime = now
@@ -290,7 +284,7 @@ class HttpDownloadWorker @AssistedInject constructor(
     output.flush()
   }
 
-  private fun showProgressNotification(taskId: String, progress: Int) {
+  private fun showProgressNotification(taskId: String, progress: Int, fileName: String? = null) {
     // Check if permission is granted before showing notification
     if (!DownloadNotificationHelper.hasNotificationPermission(context)) {
       Timber.d("Notification permission not granted, skipping notification for taskId=$taskId")
@@ -309,7 +303,8 @@ class HttpDownloadWorker @AssistedInject constructor(
       context,
       taskId,
       progress,
-      isHttp = true
+      isHttp = true,
+      fileName = fileName
     )
     val notificationManager =
       context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -449,12 +444,13 @@ class HttpDownloadWorker @AssistedInject constructor(
   /**
    * Create foreground notification
    */
-  private fun createForegroundInfo(taskId: String, progress: Int): ForegroundInfo {
+  private fun createForegroundInfo(taskId: String, progress: Int, fileName: String? = null): ForegroundInfo {
     val notification = DownloadNotificationHelper.createDownloadNotification(
       context,
       taskId,
       progress,
-      isHttp = true
+      isHttp = true,
+      fileName = fileName
     )
     // For Android 14+ (API 34+), specify foreground service type
     return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

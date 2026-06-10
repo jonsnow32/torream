@@ -35,6 +35,7 @@ import androidx.fragment.app.viewModels
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
+import cloud.streamless.torream.ControllerActivity
 import cloud.streamless.torream.MainActivityViewModel.Companion.applyContentRect
 import cloud.streamless.torream.MainActivityViewModel.Companion.applyNotch
 import cloud.streamless.torream.R
@@ -77,7 +78,16 @@ import cloud.streamless.torream.utils.Utils.toSubtitleMimeType
 import cloud.streamless.torream.utils.hideSystemUI
 import cloud.streamless.torream.utils.isTvOrEmulator
 import cloud.streamless.torream.utils.observe
+import cloud.streamless.torream.utils.AppUtils.isCastApiAvailable
+import cloud.streamless.torream.utils.CastHelper.startCast
+import cloud.streamless.torream.utils.FcastHelper
+import cloud.streamless.torream.utils.LocalFileStreamServer
 import com.github.rubensousa.previewseekbar.PreviewBar
+import com.google.android.gms.cast.framework.CastButtonFactory
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.SessionManager
+import com.google.android.gms.cast.framework.SessionManagerListener
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import java.io.File
@@ -155,6 +165,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   @Inject
   lateinit var sharedPreferences: SharedPreferences
 
+  @Inject
+  lateinit var localFileStreamServer: LocalFileStreamServer
+
   private var player: MPVView? = null
   private val viewModel by viewModels<PlayerViewModel>()
   private val eventUiHandler = Handler(Looper.getMainLooper())
@@ -210,6 +223,27 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private var currentSubs: Set<SubtitleData> = mutableSetOf()
   private var currentSelectedLink: VideoLink? = null
   private var currentSelectedSubtitles: SubtitleData? = null
+
+  private var castSessionManager: SessionManager? = null
+  private val castSessionListener = object : SessionManagerListener<CastSession> {
+    override fun onSessionStarted(session: CastSession, sessionId: String) {
+      startChromecast(session)
+      openCastController()
+    }
+    override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) {
+      openCastController()
+    }
+    override fun onSessionStarting(session: CastSession) {}
+    override fun onSessionStartFailed(session: CastSession, error: Int) {}
+    override fun onSessionEnding(session: CastSession) {}
+    override fun onSessionEnded(session: CastSession, error: Int) {
+      localFileStreamServer.stop()
+      player?.paused = false
+    }
+    override fun onSessionSuspended(session: CastSession, reason: Int) {}
+    override fun onSessionResuming(session: CastSession, sessionId: String) {}
+    override fun onSessionResumeFailed(session: CastSession, error: Int) {}
+  }
 
   private var isSameEpisode: Boolean = false;
   private var triedSwDecFallback = false
@@ -667,24 +701,31 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       }
 
       playerMediaRouteButton.apply {
-        val chromecastEnabled = sharedPreferences.getBoolean(
-          getString(R.string.enable_chromecast_key), true
-        )
-        val fcastEnabled = sharedPreferences.getBoolean(
-          getString(R.string.enable_fcast_key), false
-        )
+        val chromecastEnabled = sharedPreferences.getBoolean(getString(R.string.enable_chromecast_key), true)
+        val fcastEnabled = sharedPreferences.getBoolean(getString(R.string.enable_fcast_key), false)
         val castSupported = chromecastEnabled || fcastEnabled
 
-        alpha = if (castSupported) 1f else 0.3f
-        isEnabled = castSupported
-
         if (!castSupported) {
-          setOnClickListener {
-            showToast(
-              R.string.no_chromecast_support_toast,
-              Toast.LENGTH_LONG
-            )
-          }
+          alpha = 0.3f
+          isEnabled = false
+          setOnClickListener { showToast(R.string.no_chromecast_support_toast, Toast.LENGTH_LONG) }
+          return@apply
+        }
+
+        isVisible = true
+        alpha = 1f
+        isEnabled = true
+
+        if (chromecastEnabled && requireContext().isCastApiAvailable()) {
+          try {
+            CastButtonFactory.setUpMediaRouteButton(requireContext(), this)
+            castSessionManager = CastContext.getSharedInstance(requireContext()).sessionManager
+          } catch (e: Exception) { logError(e) }
+        }
+
+        when {
+          fcastEnabled && !chromecastEnabled -> setOnClickListener { startFcast() }
+          fcastEnabled -> setOnLongClickListener { startFcast(); true }
         }
       }
     }
@@ -1229,6 +1270,55 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
+  private fun openCastController() {
+    startActivity(Intent(requireContext(), ControllerActivity::class.java))
+  }
+
+  private fun buildCastTitle(): String? =
+    playerBinding?.playerVideoTitle?.text?.toString()?.takeIf { it.isNotBlank() }
+      ?: currentSelectedLink?.name
+
+  private fun getCurrentPositionMs(): Long =
+    player?.timePos?.toLong()?.times(1000L) ?: 0L
+
+  private fun startChromecast(castSession: CastSession) {
+    if (allLinks.isEmpty()) return
+    val startIndex = currentSelectedLink?.let { allLinks.indexOf(it) }?.takeIf { it >= 0 } ?: 0
+    val resolvedLinks = allLinks.map { link ->
+      if (link.url.startsWith("content://") || link.url.startsWith("file://")) {
+        link.copy(url = localFileStreamServer.getHttpUrl(link.url))
+      } else link
+    }
+    castSession.startCast(
+      apiName = requireContext().getString(R.string.app_name),
+      isMovie = true,
+      title = buildCastTitle(),
+      poster = null,
+      currentLinks = resolvedLinks,
+      subtitles = currentSubs.toList(),
+      startIndex = startIndex,
+      startTime = getCurrentPositionMs()
+    )
+    player?.paused = true
+  }
+
+  private fun startFcast() {
+    val link = currentSelectedLink ?: allLinks.firstOrNull() ?: return
+    val resolvedLink = if (link.url.startsWith("content://") || link.url.startsWith("file://")) {
+      link.copy(url = localFileStreamServer.getHttpUrl(link.url))
+    } else link
+    val launched = FcastHelper.castVideo(
+      context = requireContext(),
+      videoLink = resolvedLink,
+      title = buildCastTitle(),
+      poster = null,
+      subtitles = currentSubs.toList(),
+      position = getCurrentPositionMs()
+    )
+    if (!launched) FcastHelper.openWebVideoCasterInStore(requireContext())
+    else player?.paused = true
+  }
+
   private fun showSubtitleOffsetDialog() {
     dialogManager.showSubtitleOffsetDialog(
       currentOffset = subtitleDelay,
@@ -1657,6 +1747,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   override fun onResume() {
+    castSessionManager?.addSessionManagerListener(castSessionListener, CastSession::class.java)
     enterFullscreen()
     if (activityIsForeground) {
       super.onResume()
@@ -1672,6 +1763,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   override fun onPause() {
+    castSessionManager?.removeSessionManagerListener(castSessionListener, CastSession::class.java)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
       if (requireActivity().isInMultiWindowMode || requireActivity().isInPictureInPictureMode) {
         Timber.v("Going into multi-window mode")
@@ -1748,6 +1840,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     player?.removeObserver(this)
     player?.destroy()
 
+    localFileStreamServer.stop()
     playerEventListener = null
     keyEventListener = null
 

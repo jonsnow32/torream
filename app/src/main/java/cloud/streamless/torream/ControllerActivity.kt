@@ -21,6 +21,7 @@ import cloud.streamless.torream.utils.Utils.logError
 import cloud.streamless.torream.utils.Utils.sortSubs
 import cloud.streamless.torream.utils.Utils.sortUrls
 import cloud.streamless.torream.utils.Utils.toJson
+import kotlinx.serialization.Serializable
 import com.google.android.gms.cast.MediaQueueItem
 import com.google.android.gms.cast.MediaSeekOptions
 import com.google.android.gms.cast.MediaStatus.REPEAT_MODE_REPEAT_OFF
@@ -77,6 +78,7 @@ class SkipNextEpisodeController(val view: ImageView) : UIController() {
     }
 }
 
+@Serializable
 data class MetadataHolder(
   val apiName: String,
   val title: String?,

@@ -4,8 +4,6 @@ import android.app.NotificationManager
 import android.content.Context
 import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
@@ -64,11 +62,7 @@ class HlsDownloadWorker @AssistedInject constructor(
     val taskId = inputData.getString(KEY_TASK_ID) ?: return@withContext Result.failure()
 
     Timber.i("HlsDownloadWorker started: $taskId")
-    if (ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-      setForeground(createForegroundInfo(taskId, 0))
-    } else {
-      showProgressNotification(taskId, 0)
-    }
+    setForeground(createForegroundInfo(taskId, 0))
 
     // Load task from database with retry
     var state = repo.observeState(taskId).first()
@@ -337,11 +331,7 @@ class HlsDownloadWorker @AssistedInject constructor(
               )
             )
 
-            // Only show notification in background - don't call setForeground during download loop
-            // as it can conflict with worker completion
-            if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-              showProgressNotification(taskId, progress)
-            }
+            showProgressNotification(taskId, progress)
 
             setProgress(workDataOf(KEY_PROGRESS to progress))
             lastProgressTime = now
@@ -425,19 +415,9 @@ class HlsDownloadWorker @AssistedInject constructor(
    * Create foreground notification
    */
   private suspend fun createForegroundInfo(taskId: String, progress: Int): ForegroundInfo {
-    @Suppress("MissingPermission")
-    val checkPerm = !DownloadNotificationHelper.hasNotificationPermission(context)
-
-    // Permission already checked before calling this
-    if (checkPerm) {
-      // Return a dummy ForegroundInfo if permission not granted
-      return ForegroundInfo(taskId.hashCode(), android.app.Notification())
-    }
-
     val state = repo.observeState(taskId).first()
     val fileName = state?.task?.fileName
 
-    @Suppress("MissingPermission")
     val notification = DownloadNotificationHelper.createDownloadNotification(
       context,
       taskId,

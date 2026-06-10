@@ -19,7 +19,7 @@ PICTURE-IN-PICTURE
 Continue watching while multitasking with PiP mode. Torream keeps your video visible across all your Android apps.
 
 CHROMECAST SUPPORT
-Cast your content to any Chromecast device directly from the app. Subtitle support included for cast sessions.
+Cast any video to your Chromecast — including local files from your device. Control playback with a full cast player UI: seek, play/pause, skip, and subtitle selection, all without leaving the app.
 
 BACKGROUND AUDIO PLAYBACK
 Keep audio running when you switch apps or lock your screen. Full media session integration with lock screen controls and notification controls.
