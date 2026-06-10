@@ -78,8 +78,8 @@ jobs:
           PLAY_SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: printf '%s' "$PLAY_SA" > play-store-credentials.json
 
-      - name: Upload to Play Store (Closed Testing / Alpha)
+      - name: Upload to Play Store (Internal Testing)
         if: steps.play_check.outputs.enabled == 'true'
-        run: bundle exec fastlane upload_alpha
+        run: bundle exec fastlane upload_internal
         env:
           PLAY_KEY_FILE: play-store-credentials.json
