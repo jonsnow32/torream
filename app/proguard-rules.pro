@@ -54,21 +54,21 @@
     *;
 }
 
--keep,includedescriptorclasses class com.tv.apps.zippy.model.**$$serializer { *; }
--keep,includedescriptorclasses class com.tv.apps.zippy.datastore.**$$serializer { *; }
--keep,includedescriptorclasses class com.tv.apps.zippy.utils.**$$serializer { *; }
+-keep,includedescriptorclasses class cloud.streamless.torream.model.**$$serializer { *; }
+-keep,includedescriptorclasses class cloud.streamless.torream.datastore.**$$serializer { *; }
+-keep,includedescriptorclasses class cloud.streamless.torream.utils.**$$serializer { *; }
 
--keepclassmembers class com.tv.apps.zippy.model.** {
+-keepclassmembers class cloud.streamless.torream.model.** {
     *** Companion;
 }
--keepclassmembers class com.tv.apps.zippy.datastore.** {
+-keepclassmembers class cloud.streamless.torream.datastore.** {
     *** Companion;
 }
 
--keepclasseswithmembers class com.tv.apps.zippy.model.** {
+-keepclasseswithmembers class cloud.streamless.torream.model.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
--keepclasseswithmembers class com.tv.apps.zippy.datastore.** {
+-keepclasseswithmembers class cloud.streamless.torream.datastore.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
@@ -85,16 +85,16 @@
 # ================================================================================================
 
 # Keep all the methods and fields of MPVLib since it's used via JNI
--keep class com.tv.apps.zippy.ui.player.mpv.MPVLib {
+-keep class cloud.streamless.torream.ui.player.mpv.MPVLib {
     *;
 }
 
 # Keep inner static classes for constants
--keep class com.tv.apps.zippy.ui.player.mpv.MPVLib$* { *; }
+-keep class cloud.streamless.torream.ui.player.mpv.MPVLib$* { *; }
 
 # Keep EventObserver and LogObserver interfaces and their methods
--keep interface com.tv.apps.zippy.ui.player.mpv.MPVLib$EventObserver { *; }
--keep interface com.tv.apps.zippy.ui.player.mpv.MPVLib$LogObserver { *; }
+-keep interface cloud.streamless.torream.ui.player.mpv.MPVLib$EventObserver { *; }
+-keep interface cloud.streamless.torream.ui.player.mpv.MPVLib$LogObserver { *; }
 
 # Keep all native methods
 -keepclasseswithmembernames,includedescriptorclasses class * {
@@ -111,9 +111,9 @@
     public static ** DATABASE;
 }
 
--keep class com.tv.apps.zippy.media.entities.** { *; }
--keep class com.tv.apps.zippy.media.dao.** { *; }
--keep class com.tv.apps.zippy.media.db.** { *; }
+-keep class cloud.streamless.torream.media.entities.** { *; }
+-keep class cloud.streamless.torream.media.dao.** { *; }
+-keep class cloud.streamless.torream.media.db.** { *; }
 
 # ================================================================================================
 # HILT / DAGGER
@@ -322,11 +322,11 @@
 # ================================================================================================
 
 # Keep all model classes
--keep class com.tv.apps.zippy.model.** { *; }
--keep class com.tv.apps.zippy.datastore.** { *; }
+-keep class cloud.streamless.torream.model.** { *; }
+-keep class cloud.streamless.torream.datastore.** { *; }
 
 # Keep data classes
--keepclassmembers class com.tv.apps.zippy.model.** {
+-keepclassmembers class cloud.streamless.torream.model.** {
     *;
 }
 
@@ -335,9 +335,9 @@
 # ================================================================================================
 
 # Keep application class
--keep class com.tv.apps.zippy.CSApplication { *; }
--keep class com.tv.apps.zippy.MainActivity { *; }
--keep class com.tv.apps.zippy.ControllerActivity { *; }
+-keep class cloud.streamless.torream.CSApplication { *; }
+-keep class cloud.streamless.torream.MainActivity { *; }
+-keep class cloud.streamless.torream.ControllerActivity { *; }
 
 # ================================================================================================
 # MISC LIBRARIES
