@@ -8,18 +8,21 @@
       android:layout="@layout/custom_preference"
       android:icon="@drawable/ic_baseline_color_lens_24"
       android:key="@string/app_theme_key"
+      android:summary="@string/app_theme_settings_des"
       android:title="@string/app_theme_settings" />
 
     <Preference
       android:layout="@layout/custom_preference"
       android:icon="@drawable/ic_baseline_tv_24"
       android:key="@string/app_layout_key"
+      android:summary="@string/app_layout_des"
       android:title="@string/app_layout" />
 
     <Preference
       android:icon="@drawable/ic_baseline_language_24"
       android:key="@string/locale_key"
       android:layout="@layout/custom_preference"
+      android:summary="@string/app_language_des"
       android:title="@string/app_language" />
 
 
@@ -61,6 +64,7 @@
       android:icon="@drawable/outline_ad_24"
       android:key="@string/ad_key"
       android:layout="@layout/custom_preference"
+      android:summary="@string/ad_testing_des"
       android:title="@string/ad_testing" />
 
   </PreferenceCategory>

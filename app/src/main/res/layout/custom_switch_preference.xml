@@ -1,10 +1,13 @@
 <!-- res/layout/custom_switch_preference.xml -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
   android:minHeight="?attr/listPreferredItemHeight"
-  android:paddingStart="?attr/listPreferredItemPaddingStart"
-  android:paddingEnd="?attr/listPreferredItemPaddingEnd"
+  android:paddingStart="16dp"
+  android:paddingEnd="16dp"
+  android:paddingTop="12dp"
+  android:paddingBottom="12dp"
   android:gravity="center_vertical"
   android:clickable="true"
   android:background="@drawable/preference_focused"
@@ -12,17 +15,18 @@
 
   <ImageView
     android:id="@android:id/icon"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="24dp"
+    android:layout_height="24dp"
     android:layout_alignParentStart="true"
-    android:layout_alignParentTop="true"
     android:layout_centerVertical="true"
     android:layout_marginEnd="16dp"
+    app:tint="?attr/colorPrimary"
     android:visibility="gone" />
 
   <LinearLayout
     android:layout_width="0dp"
     android:layout_height="wrap_content"
+    android:layout_centerVertical="true"
     android:layout_toEndOf="@android:id/icon"
     android:layout_toStartOf="@+id/switchWidget"
     android:orientation="vertical">
@@ -31,8 +35,8 @@
       android:id="@android:id/title"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:textAppearance="?attr/textAppearanceListItem"
       android:textColor="@color/text_primary"
+      android:textSize="16sp"
       android:ellipsize="end"
       android:singleLine="true"
       android:maxLines="1" />
@@ -41,12 +45,12 @@
       android:id="@android:id/summary"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:textAppearance="?attr/textAppearanceListItemSecondary"
+      android:layout_marginTop="2dp"
       android:textColor="@color/text_secondary"
+      android:textSize="13sp"
       android:visibility="gone"
       android:ellipsize="end"
-      android:singleLine="true"
-      android:maxLines="1" />
+      android:maxLines="2" />
   </LinearLayout>
 
   <androidx.appcompat.widget.SwitchCompat
@@ -54,6 +58,6 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_alignParentEnd="true"
-    android:layout_alignParentTop="true"
-    android:layout_centerVertical="true" />
+    android:layout_centerVertical="true"
+    android:layout_marginStart="8dp" />
 </RelativeLayout>

@@ -8,6 +8,7 @@
       android:icon="@drawable/ic_download"
       android:key="@string/download_path_key"
       android:layout="@layout/custom_preference"
+      android:summary="@string/download_path_des"
       android:title="@string/download_path_pref" />
 
     <Preference
@@ -22,6 +23,7 @@
       android:icon="@drawable/ic_battery"
       android:key="@string/battery_optimisation_key"
       android:layout="@layout/custom_preference"
+      android:summary="@string/battery_optimisation_des"
       android:title="@string/battery_dialog_title" />
 
   </PreferenceCategory>

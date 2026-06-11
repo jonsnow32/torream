@@ -3,84 +3,89 @@
   xmlns:app="http://schemas.android.com/apk/res-auto"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:background="?attr/colorSurfaceContainer"
+  android:background="@null"
   android:orientation="vertical">
 
-  <!-- Title -->
+  <View
+    android:layout_width="32dp"
+    android:layout_height="4dp"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginTop="12dp"
+    android:layout_marginBottom="4dp"
+    android:alpha="0.4"
+    android:background="@drawable/drag_handle_indicator" />
+
   <TextView
     android:id="@+id/textView2"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_gravity="top"
-    android:padding="10dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="8dp"
     android:text="@string/quick_settings"
+    android:textAppearance="?attr/textAppearanceTitleMedium"
     android:textColor="?attr/colorOnSurface"
-    android:textSize="20sp"
     android:textStyle="bold" />
 
   <androidx.core.widget.NestedScrollView
     android:id="@+id/nestedScrollView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_weight="1"
-    android:background="?attr/colorSurfaceContainer">
+    android:layout_weight="1">
 
     <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:orientation="vertical">
+      android:orientation="vertical"
+      android:paddingStart="16dp"
+      android:paddingEnd="16dp"
+      android:paddingBottom="8dp">
 
-      <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginVertical="10dp"
-        android:background="@color/divider_color"/>
-
-      <!-- Media group mode -->
+      <!-- Section: Display -->
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="@string/media_group_mode"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="14sp" />
+        android:layout_marginTop="12dp"
+        android:text="@string/filter_section_display"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
-      <com.google.android.material.tabs.TabLayout
+      <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/groupMode"
-        style="@style/Widget.MaterialComponents.TabLayout.PrimarySurface"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:background="@color/transparent"
-        app:tabIconTint="@color/tab_color_selector"
-        app:tabTextColor="@color/tab_color_selector"
-        app:tabMinWidth="72dp"
-        app:tabPaddingStart="12dp"
-        app:tabPaddingEnd="12dp"
-        app:tabGravity="center"
-        app:tabIndicator="@null"
-        app:tabIndicatorFullWidth="true"
-        app:tabMode="auto">
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        app:selectionRequired="true"
+        app:singleSelection="true">
 
-        <com.google.android.material.tabs.TabItem
-          android:layout_width="wrap_content"
+        <com.google.android.material.button.MaterialButton
+          android:id="@+id/folderMode"
+          style="@style/Widget.Material3.Button.OutlinedButton"
+          android:layout_width="0dp"
           android:layout_height="wrap_content"
-          android:icon="@drawable/ic_folder"
-          android:text="@string/view_mode_folders" />
+          android:layout_weight="1"
+          android:text="@string/view_mode_folders"
+          app:icon="@drawable/ic_folder"
+          app:iconGravity="textStart" />
 
-        <com.google.android.material.tabs.TabItem
-          android:layout_width="wrap_content"
+        <com.google.android.material.button.MaterialButton
+          android:id="@+id/mediaMode"
+          style="@style/Widget.Material3.Button.OutlinedButton"
+          android:layout_width="0dp"
           android:layout_height="wrap_content"
-          android:icon="@drawable/ic_baseline_ondemand_video_24"
-          android:text="@string/media" />
-      </com.google.android.material.tabs.TabLayout>
+          android:layout_weight="1"
+          android:text="@string/media"
+          app:icon="@drawable/ic_baseline_ondemand_video_24"
+          app:iconGravity="textStart" />
+      </com.google.android.material.button.MaterialButtonToggleGroup>
 
-      <!-- Sort Order Buttons -->
       <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/viewMode"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal"
         app:selectionRequired="true"
         app:singleSelection="true">
@@ -88,91 +93,89 @@
         <com.google.android.material.button.MaterialButton
           android:id="@+id/gridView"
           style="@style/Widget.Material3.Button.OutlinedButton"
-          android:layout_width="wrap_content"
+          android:layout_width="0dp"
           android:layout_height="wrap_content"
-          android:layout_marginBottom="16dp"
+          android:layout_weight="1"
           android:text="@string/grid"
           app:icon="@drawable/outline_grid_view_24"
-          app:iconGravity="start" />
+          app:iconGravity="textStart" />
 
         <com.google.android.material.button.MaterialButton
           android:id="@+id/listView"
           style="@style/Widget.Material3.Button.OutlinedButton"
-          android:layout_width="wrap_content"
+          android:layout_width="0dp"
           android:layout_height="wrap_content"
+          android:layout_weight="1"
           android:text="@string/list"
           app:icon="@drawable/outline_view_agenda_24"
-          app:iconGravity="start" />
+          app:iconGravity="textStart" />
       </com.google.android.material.button.MaterialButtonToggleGroup>
 
-      <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginVertical="10dp"
-        android:background="@color/divider_color"/>
-
-      <!-- Sort Section -->
+      <!-- Section: Sort -->
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="@string/sort_by" />
+        android:layout_marginTop="20dp"
+        android:text="@string/sort_by"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
-      <com.google.android.material.tabs.TabLayout
-        android:id="@+id/sortByTabLayout"
-        style="@style/Widget.MaterialComponents.TabLayout.PrimarySurface"
+      <com.google.android.material.chip.ChipGroup
+        android:id="@+id/sortByChipGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:background="@color/transparent"
-        app:tabIconTint="@color/tab_color_selector"
-        app:tabTextColor="@color/tab_color_selector"
-        app:tabMinWidth="72dp"
-        app:tabPaddingStart="12dp"
-        app:tabPaddingEnd="12dp"
-        app:tabGravity="start"
-        app:tabIndicator="@null"
-        app:tabIndicatorFullWidth="false"
-        app:tabMode="scrollable">
+        android:layout_marginTop="4dp"
+        app:chipSpacingHorizontal="8dp"
+        app:selectionRequired="true"
+        app:singleSelection="true">
 
-        <com.google.android.material.tabs.TabItem
+        <com.google.android.material.chip.Chip
+          android:id="@+id/sortByTitle"
+          style="@style/Widget.Material3.Chip.Filter"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:icon="@drawable/ic_baseline_text_format_24"
+          android:checkable="true"
           android:text="@string/sort_title" />
 
-        <com.google.android.material.tabs.TabItem
+        <com.google.android.material.chip.Chip
+          android:id="@+id/sortByDuration"
+          style="@style/Widget.Material3.Chip.Filter"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:icon="@drawable/ic_baseline_access_time_24"
+          android:checkable="true"
           android:text="@string/sort_duration" />
 
-        <com.google.android.material.tabs.TabItem
+        <com.google.android.material.chip.Chip
+          android:id="@+id/sortByDate"
+          style="@style/Widget.Material3.Chip.Filter"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:icon="@drawable/ic_baseline_calendar_month_24"
+          android:checkable="true"
           android:text="@string/sort_date" />
 
-        <com.google.android.material.tabs.TabItem
+        <com.google.android.material.chip.Chip
+          android:id="@+id/sortBySize"
+          style="@style/Widget.Material3.Chip.Filter"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:icon="@drawable/ic_baseline_data_usage_24"
+          android:checkable="true"
           android:text="@string/sort_size" />
 
-        <com.google.android.material.tabs.TabItem
+        <com.google.android.material.chip.Chip
+          android:id="@+id/sortByLocation"
+          style="@style/Widget.Material3.Chip.Filter"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:icon="@drawable/ic_folder"
+          android:checkable="true"
           android:text="@string/sort_location" />
-      </com.google.android.material.tabs.TabLayout>
+      </com.google.android.material.chip.ChipGroup>
 
-      <!-- Sort Order Buttons -->
       <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/sortOrderToggleGroup"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginBottom="16dp"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal"
         app:selectionRequired="true"
         app:singleSelection="true">
@@ -180,43 +183,39 @@
         <com.google.android.material.button.MaterialButton
           android:id="@+id/sortAscButton"
           style="@style/Widget.Material3.Button.OutlinedButton"
-          android:layout_width="wrap_content"
+          android:layout_width="0dp"
           android:layout_height="wrap_content"
+          android:layout_weight="1"
           android:text="@string/sort_asc"
           app:icon="@drawable/ic_baseline_arrow_upward_24"
-          app:iconGravity="start" />
+          app:iconGravity="textStart" />
 
         <com.google.android.material.button.MaterialButton
           android:id="@+id/sortDescButton"
           style="@style/Widget.Material3.Button.OutlinedButton"
-          android:layout_width="wrap_content"
+          android:layout_width="0dp"
           android:layout_height="wrap_content"
+          android:layout_weight="1"
           android:text="@string/sort_desc"
           app:icon="@drawable/ic_baseline_arrow_downward_24"
-          app:iconGravity="start" />
+          app:iconGravity="textStart" />
       </com.google.android.material.button.MaterialButtonToggleGroup>
-      <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginVertical="10dp"
-        android:background="@color/divider_color"/>
 
-      <!-- Fields to show -->
+      <!-- Section: Fields to show -->
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:gravity="center"
+        android:layout_marginTop="20dp"
         android:text="@string/display_fields"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="14sp" />
+        android:textColor="?attr/colorPrimary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
       <com.google.android.material.chip.ChipGroup
         android:id="@+id/fieldsChipGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:padding="8dp"
+        android:layout_marginTop="4dp"
         app:chipSpacingHorizontal="8dp"
         app:chipSpacingVertical="4dp"
         app:singleSelection="false">
@@ -229,7 +228,6 @@
           android:checkable="true"
           android:checked="true"
           android:text="@string/field_duration" />
-
 
         <com.google.android.material.chip.Chip
           android:id="@+id/chipPath"
@@ -269,18 +267,17 @@
       </com.google.android.material.chip.ChipGroup>
     </LinearLayout>
   </androidx.core.widget.NestedScrollView>
-  <View
-    android:layout_width="match_parent"
-    android:layout_height="1dp"
-    android:background="@color/divider_color"/>
+
   <!-- Action buttons -->
   <LinearLayout
     android:id="@+id/linearLayout2"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_gravity="bottom"
     android:gravity="end"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="8dp">
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/cancelButton"
@@ -292,7 +289,7 @@
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/applyButton"
-      style="@style/Widget.Material3.Button.TextButton"
+      style="@style/Widget.Material3.Button.TonalButton"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:text="@string/apply" />

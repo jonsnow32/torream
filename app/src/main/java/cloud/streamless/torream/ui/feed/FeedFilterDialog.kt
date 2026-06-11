@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.android.material.tabs.TabLayout
 import cloud.streamless.torream.databinding.BottomSheetFeedFilterBinding
 import cloud.streamless.torream.ui.dialog.DockingDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -50,19 +49,25 @@ class FeedFilterDialog : DockingDialog() {
   }
 
   private fun setupGroupModeTab() {
-    val tab = binding.groupMode
-    tab.getTabAt(currentConfig.groupMode.ordinal)?.select()
+    val toggleGroup = binding.groupMode
 
-    tab.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-      override fun onTabSelected(tab: TabLayout.Tab?) {
-        currentConfig = currentConfig.copy(
-          groupMode = FeedFilterConfig.GroupMode.entries[tab?.position ?: 0]
-        )
+    val initialButtonId = if (currentConfig.groupMode == FeedFilterConfig.GroupMode.FOLDERS) {
+      binding.folderMode.id
+    } else {
+      binding.mediaMode.id
+    }
+    toggleGroup.check(initialButtonId)
+
+    toggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+      if (!isChecked) return@addOnButtonCheckedListener
+
+      val newGroupMode = when (checkedId) {
+        binding.folderMode.id -> FeedFilterConfig.GroupMode.FOLDERS
+        binding.mediaMode.id -> FeedFilterConfig.GroupMode.CAROUSEL
+        else -> return@addOnButtonCheckedListener
       }
-
-      override fun onTabUnselected(tab: TabLayout.Tab?) {}
-      override fun onTabReselected(tab: TabLayout.Tab?) {}
-    })
+      currentConfig = currentConfig.copy(groupMode = newGroupMode)
+    }
   }
 
   private fun setupViewModeTab() {
@@ -91,21 +96,24 @@ class FeedFilterDialog : DockingDialog() {
   }
 
   private fun setupSortByTab() {
-    val tab = binding.root.findViewById<TabLayout>(cloud.streamless.torream.R.id.sortByTabLayout)
-    tab?.getTabAt(currentConfig.sortBy.ordinal)?.select()
+    val chipBySortBy = mapOf(
+      FeedFilterConfig.SortBy.TITLE to binding.sortByTitle,
+      FeedFilterConfig.SortBy.DURATION to binding.sortByDuration,
+      FeedFilterConfig.SortBy.DATE to binding.sortByDate,
+      FeedFilterConfig.SortBy.SIZE to binding.sortBySize,
+      FeedFilterConfig.SortBy.LOCATION to binding.sortByLocation,
+    )
 
-    tab?.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-      override fun onTabSelected(tab: TabLayout.Tab?) {
-        currentConfig = currentConfig.copy(
-          sortBy = FeedFilterConfig.SortBy.entries[tab?.position ?: 0]
-        )
-        // Update sort order buttons to reflect the order for this sortBy
-        updateSortOrderButtons()
-      }
+    chipBySortBy[currentConfig.sortBy]?.isChecked = true
 
-      override fun onTabUnselected(tab: TabLayout.Tab?) {}
-      override fun onTabReselected(tab: TabLayout.Tab?) {}
-    })
+    binding.sortByChipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+      val checkedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+      val newSortBy = chipBySortBy.entries.firstOrNull { it.value.id == checkedId }?.key
+        ?: return@setOnCheckedStateChangeListener
+      currentConfig = currentConfig.copy(sortBy = newSortBy)
+      // Update sort order buttons to reflect the order for this sortBy
+      updateSortOrderButtons()
+    }
   }
 
   private fun setupSortOrderButtons() {

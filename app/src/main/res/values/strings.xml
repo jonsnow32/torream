@@ -1080,4 +1080,19 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="header_key_hint">Header Key (e.g., Authorization)</string>
   <string name="header_value_hint">Header Value (e.g., Bearer token123)</string>
   <string name="add_header_button">Add Header</string>
+  <string name="settings_general_des">Theme, layout, language and notifications</string>
+  <string name="settings_player_des">Subtitles, picture-in-picture and playback behavior</string>
+  <string name="settings_cast_des">Chromecast, FCast and cast quality</string>
+  <string name="settings_download_des">Download location, network and speed limits</string>
+  <string name="settings_updates_des">App updates, crash reports and backup</string>
+  <string name="input_url_des">Play a video from a link, magnet or torrent</string>
+  <string name="open_local_video_des">Pick a video file from this device</string>
+  <string name="app_theme_settings_des">Light, dark or follow system</string>
+  <string name="app_layout_des">Phone, TV or automatic layout</string>
+  <string name="app_language_des">Change the app display language</string>
+  <string name="ad_testing_des">Preview ad placements</string>
+  <string name="video_buffer_clear_des">Free up space used by cached video and images</string>
+  <string name="download_path_des">Choose where downloaded files are saved</string>
+  <string name="battery_optimisation_des">Keep downloads running in the background</string>
+  <string name="filter_section_display">Display</string>
 </resources>

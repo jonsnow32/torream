@@ -159,6 +159,7 @@
       android:icon="@drawable/ic_baseline_delete_outline_24"
       android:key="@string/video_buffer_clear_key"
       android:layout="@layout/custom_preference"
+      android:summary="@string/video_buffer_clear_des"
       android:title="@string/video_buffer_clear_settings" />
   </PreferenceCategory>
   <PreferenceCategory android:title="@string/pref_category_android_tv">
