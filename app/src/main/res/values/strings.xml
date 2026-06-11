@@ -444,6 +444,12 @@
   <string name="resize_zoom">Zoom</string>
   <string name="resize_16_9" translatable="false">16:9</string>
   <string name="resize_4_3" translatable="false">4:3</string>">
+  <string name="continue_watching_reminder_key" translatable="false">continue_watching_reminder</string>
+  <string name="category_notifications">Notifications</string>
+  <string name="continue_watching_reminder">Continue watching reminders</string>
+  <string name="continue_watching_reminder_summary">Remind you about videos you haven\'t finished</string>
+  <string name="continue_watching_notification_title">Continue watching?</string>
+  <string name="continue_watching_notification_text">Pick up where you left off in %1$s</string>
   <string name="legal_notice">Disclaimer</string>
   <string name="legal_notice_key" translatable="false">legal_notice_key</string>
   <string name="legal_notice_text">Any legal issues regarding the content on this application

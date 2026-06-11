@@ -28,6 +28,18 @@
 
   </PreferenceCategory>
 
+  <PreferenceCategory android:title="@string/category_notifications">
+
+    <SwitchPreferenceCompat
+      android:icon="@drawable/ic_baseline_notifications_active_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/continue_watching_reminder_summary"
+      android:title="@string/continue_watching_reminder"
+      app:defaultValue="true"
+      app:key="@string/continue_watching_reminder_key" />
+
+  </PreferenceCategory>
+
   <PreferenceCategory android:title="@string/title_downloads" app:isPreferenceVisible="false">
 
     <Preference

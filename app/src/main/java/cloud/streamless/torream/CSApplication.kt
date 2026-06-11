@@ -4,9 +4,15 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
 import androidx.work.Configuration
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.hilt.work.HiltWorkerFactory
 import cloud.streamless.torream.ads.AdManager
 import cloud.streamless.torream.ads.AdPreloadManager
+import cloud.streamless.torream.utils.ContinueWatchingReminderWorker
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.VideoFrameDecoder
@@ -16,6 +22,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -71,6 +78,36 @@ class CSApplication : Application(), ImageLoaderFactory, Configuration.Provider 
       } catch (e: Exception) {
         Timber.e(e, "Failed to initialize ad system")
       }
+    }
+
+    scheduleContinueWatchingReminder()
+  }
+
+  private fun scheduleContinueWatchingReminder() {
+    try {
+      val workManager = WorkManager.getInstance(this)
+      val request = PeriodicWorkRequestBuilder<ContinueWatchingReminderWorker>(1, TimeUnit.DAYS)
+        .setInitialDelay(1, TimeUnit.DAYS)
+        .build()
+      workManager.enqueueUniquePeriodicWork(
+        ContinueWatchingReminderWorker.WORK_NAME,
+        ExistingPeriodicWorkPolicy.KEEP,
+        request
+      )
+
+      if (BuildConfig.DEBUG) {
+        // Test mode: also fire once shortly after each launch
+        val testRequest = OneTimeWorkRequestBuilder<ContinueWatchingReminderWorker>()
+          .setInitialDelay(30, TimeUnit.SECONDS)
+          .build()
+        workManager.enqueueUniqueWork(
+          ContinueWatchingReminderWorker.WORK_NAME + "_test",
+          ExistingWorkPolicy.REPLACE,
+          testRequest
+        )
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "Failed to schedule continue watching reminder")
     }
   }
 

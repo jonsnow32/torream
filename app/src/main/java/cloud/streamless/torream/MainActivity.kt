@@ -29,6 +29,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.isGone
 import androidx.navigation.NavController
@@ -42,7 +43,10 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import cloud.streamless.torream.databinding.ActivityMainBinding
 import cloud.streamless.torream.datastore.Serializer
+import cloud.streamless.torream.model.PlaybackData
 import cloud.streamless.torream.model.PlaybackData.Companion.KEY_PLAYBACK_JSON_URI
+import cloud.streamless.torream.model.VideoLink
+import cloud.streamless.torream.utils.PlaybackDataHelper
 import cloud.streamless.torream.network.initClient
 import cloud.streamless.torream.ui.colorpicker.ColorPickerDialogListener
 import cloud.streamless.torream.ui.player.PlayBackResult
@@ -51,6 +55,7 @@ import cloud.streamless.torream.ui.player.mpv.MPVUtils
 import cloud.streamless.torream.utils.AppUtils.isCastApiAvailable
 import cloud.streamless.torream.utils.CommonActivitty
 import cloud.streamless.torream.utils.CommonActivitty.activityResultEvent
+import cloud.streamless.torream.utils.ContinueWatchingReminderWorker
 import cloud.streamless.torream.utils.CommonActivitty.getNextFocus
 import cloud.streamless.torream.utils.CommonActivitty.keyEventListener
 import cloud.streamless.torream.utils.CommonActivitty.onUserLeaveHint
@@ -396,6 +401,41 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
       }
     }
 
+    // Handle continue watching notification click - resume the unfinished video
+    if (intent.action == ContinueWatchingReminderWorker.ACTION_CONTINUE_WATCHING) {
+      val mediaUri = intent.getStringExtra(ContinueWatchingReminderWorker.EXTRA_MEDIA_URI)
+      if (mediaUri != null) {
+        try {
+          val name = intent.getStringExtra(ContinueWatchingReminderWorker.EXTRA_MEDIA_NAME) ?: ""
+          val position = intent.getLongExtra(ContinueWatchingReminderWorker.EXTRA_POSITION, 0L)
+          val playbackData = PlaybackData(
+            title = name,
+            videoLinks = listOf(
+              VideoLink(
+                url = mediaUri,
+                name = name,
+                subtitles = emptyList(),
+                position = position
+              )
+            ),
+            subtitles = emptyList(),
+            videoStartIndex = 0,
+            subtitleStartIndex = 0,
+            isSameEpisode = true,
+            hasAd = false
+          )
+          navigate(
+            R.id.global_to_navigation_mpv_player,
+            PlaybackDataHelper.createBundle(playbackData),
+            navOptions
+          )
+          return
+        } catch (e: Exception) {
+          Timber.e(e, "Failed to resume media from continue watching notification")
+        }
+      }
+    }
+
     //handle DOWNLOAD_URL action with header
     if (intent.action?.endsWith(".action.DOWNLOAD_URL") == true) {
       val url = intent.getStringExtra("url") ?: return
@@ -535,6 +575,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
   override fun onResume() {
     super.onResume()
     setActivityInstance(this)
+    PreferenceManager.getDefaultSharedPreferences(this).edit {
+      putLong(ContinueWatchingReminderWorker.PREF_APP_LAST_OPENED_AT, System.currentTimeMillis())
+    }
     ioSafe {
       runAutoUpdate()
     }
