@@ -3,25 +3,31 @@
   android:id="@+id/subs_root"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:background="?attr/primaryBlackBackground">
+  android:background="?attr/colorSurfaceContainer">
 
   <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <View
+      android:layout_width="32dp"
+      android:layout_height="4dp"
+      android:layout_gravity="center_horizontal"
+      android:layout_marginTop="22dp"
+      android:layout_marginBottom="4dp"
+      android:alpha="0.4"
+      android:background="@drawable/drag_handle_indicator" />
+
     <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_rowWeight="1"
-      android:layout_marginTop="20dp"
-      android:layout_marginBottom="10dp"
-      android:paddingStart="20dp"
-      android:paddingEnd="20dp"
+      android:layout_marginTop="12dp"
+      android:layout_marginBottom="8dp"
+      android:paddingHorizontal="16dp"
       android:text="@string/chromecast_subtitles_settings"
-      android:textColor="@color/text_primary"
-      android:textSize="20sp"
-      android:textStyle="bold" />
+      android:textAppearance="?attr/textAppearanceTitleLarge"
+      android:textColor="?attr/colorOnSurface" />
 
     <FrameLayout
       android:layout_width="match_parent"
@@ -37,105 +43,136 @@
 
       <androidx.media3.ui.SubtitleView
         android:id="@+id/subtitle_text"
-
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:foregroundGravity="center" />
     </FrameLayout>
 
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?attr/colorOutlineVariant" />
+
     <TextView
       android:id="@+id/subs_font"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-
+      style="@style/SubtileOption"
       android:nextFocusLeft="@id/apply_btt"
       android:nextFocusRight="@id/cancel_btt"
       android:nextFocusDown="@id/subs_font_size"
       android:text="@string/subs_font" />
 
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?attr/colorOutlineVariant"
+      android:alpha="0.3" />
+
     <TextView
       android:id="@+id/subs_font_size"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      style="@style/SubtileOption"
       android:nextFocusLeft="@id/apply_btt"
-
       android:nextFocusRight="@id/cancel_btt"
       android:nextFocusUp="@id/subs_font"
       android:nextFocusDown="@id/subs_text_color"
       android:text="@string/subs_font_size" />
 
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?attr/colorOutlineVariant"
+      android:alpha="0.3" />
+
     <TextView
       android:id="@+id/subs_text_color"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      style="@style/SubtileOption"
       android:nextFocusLeft="@id/apply_btt"
-
       android:nextFocusRight="@id/cancel_btt"
       android:nextFocusUp="@id/subs_font_size"
       android:nextFocusDown="@id/subs_outline_color"
       android:text="@string/subs_text_color" />
 
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?attr/colorOutlineVariant"
+      android:alpha="0.3" />
+
     <TextView
       android:id="@+id/subs_outline_color"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      style="@style/SubtileOption"
       android:nextFocusLeft="@id/apply_btt"
-
       android:nextFocusRight="@id/cancel_btt"
       android:nextFocusUp="@id/subs_text_color"
       android:nextFocusDown="@id/subs_background_color"
       android:text="@string/subs_outline_color" />
 
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?attr/colorOutlineVariant"
+      android:alpha="0.3" />
+
     <TextView
       android:id="@+id/subs_background_color"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      style="@style/SubtileOption"
       android:nextFocusLeft="@id/apply_btt"
-
       android:nextFocusRight="@id/cancel_btt"
       android:nextFocusUp="@id/subs_outline_color"
       android:nextFocusDown="@id/subs_window_color"
       android:text="@string/subs_background_color" />
 
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?attr/colorOutlineVariant"
+      android:alpha="0.3" />
+
     <TextView
       android:id="@+id/subs_window_color"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      style="@style/SubtileOption"
       android:nextFocusLeft="@id/apply_btt"
       android:nextFocusRight="@id/cancel_btt"
-
       android:nextFocusUp="@id/subs_background_color"
       android:nextFocusDown="@id/subs_edge_type"
       android:text="@string/subs_window_color"
       android:visibility="gone" />
 
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?attr/colorOutlineVariant"
+      android:alpha="0.3" />
+
     <TextView
       android:id="@+id/subs_edge_type"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      style="@style/SubtileOption"
       android:nextFocusLeft="@id/apply_btt"
-
       android:nextFocusRight="@id/cancel_btt"
       android:nextFocusUp="@id/subs_window_color"
       android:nextFocusDown="@id/apply_btt"
       android:text="@string/subs_edge_type" />
 
+    <View
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?attr/colorOutlineVariant" />
+
     <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_rowWeight="1"
-
+      android:layout_marginVertical="8dp"
       android:gravity="center"
       android:text="@string/subs_hold_to_reset_to_default"
-      android:textColor="@color/text_primary"
-      android:textSize="14sp" />
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="12sp" />
 
     <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="60dp"
       android:layout_gravity="bottom"
       android:gravity="bottom|end"
+      android:paddingHorizontal="8dp"
       android:orientation="horizontal">
 
       <com.google.android.material.button.MaterialButton

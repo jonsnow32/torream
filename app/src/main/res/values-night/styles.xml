@@ -58,5 +58,15 @@
 
 
     <item name="collapsingToolbarLayoutStyle">@style/CollapsingBar</item>
+
+    <!-- Cast device picker dialog style -->
+    <item name="mediaRouteTheme">@style/MediaRouteDialogThemeDark</item>
+  </style>
+
+  <style name="MediaRouteDialogThemeDark" parent="Theme.MediaRouter">
+    <item name="android:windowBackground">@drawable/rounded_dialog</item>
+    <item name="android:windowAnimationStyle">@style/CenterMaterialDialogAnimation</item>
+    <item name="colorPrimary">@color/oneui_primary</item>
+    <item name="colorControlActivated">@color/oneui_primary</item>
   </style>
 </resources>

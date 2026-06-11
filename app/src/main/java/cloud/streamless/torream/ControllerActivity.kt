@@ -6,7 +6,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.View.*
 import android.widget.*
-import androidx.appcompat.app.AlertDialog
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import cloud.streamless.torream.model.SubtitleData
 import cloud.streamless.torream.model.VideoLink
 import cloud.streamless.torream.ui.player.PlayBackResult
@@ -103,12 +103,9 @@ class SelectSourceController(val view: ImageView, val activity: ControllerActivi
                         remoteMediaClient?.mediaInfo?.mediaTracks?.filter { it.type == MediaTrack.TYPE_TEXT }
                             ?: ArrayList()
 
-                    val dialogBuilder =
-                        AlertDialog.Builder(view.context, R.style.BaseMaterialDialogTheme)
-                    dialogBuilder.setView(R.layout.sort_bottom_sheet)
-                    val dialog = dialogBuilder.create()
+                    val dialog = BottomSheetDialog(view.context)
+                    dialog.setContentView(R.layout.sort_bottom_sheet)
                     dialog.show()
-                    //  dialog.setContentView(R.layout.sort_bottom_sheet)
                     val providerList =
                         dialog.findViewById<ListView>(R.id.sort_providers)!!
                     val subtitleList =

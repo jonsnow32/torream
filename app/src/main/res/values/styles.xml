@@ -56,6 +56,9 @@
     <item name="materialButtonOutlinedStyle">@style/AppOutlinedButtonStyle</item>
 
     <item name="collapsingToolbarLayoutStyle">@style/CollapsingBar</item>
+
+    <!-- Cast device picker dialog style -->
+    <item name="mediaRouteTheme">@style/MediaRouteDialogTheme</item>
   </style>
 
   <!-- Alert Dialog Theme - Dark -->
@@ -243,6 +246,13 @@
 
   <style name="CenterMaterialDialogTheme" parent="BaseMaterialDialogTheme">
     <item name="android:windowAnimationStyle">@style/CenterMaterialDialogAnimation</item>
+  </style>
+
+  <style name="MediaRouteDialogTheme" parent="Theme.MediaRouter.Light">
+    <item name="android:windowBackground">@drawable/rounded_dialog</item>
+    <item name="android:windowAnimationStyle">@style/CenterMaterialDialogAnimation</item>
+    <item name="colorPrimary">@color/md_theme_primary</item>
+    <item name="colorControlActivated">@color/md_theme_primary</item>
   </style>
 
   <style name="CustomPreferenceStyle" parent="@style/Preference.Material">
