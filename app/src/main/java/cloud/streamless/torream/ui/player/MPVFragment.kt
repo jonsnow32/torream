@@ -65,6 +65,7 @@ import cloud.streamless.torream.utils.CommonActivitty.screenHeight
 import cloud.streamless.torream.utils.CommonActivitty.screenWidth
 import cloud.streamless.torream.utils.DataStore
 import cloud.streamless.torream.utils.DataStore.getKey
+import cloud.streamless.torream.utils.InAppReviewHelper
 import cloud.streamless.torream.utils.UIHelper.dismissSafe
 import cloud.streamless.torream.utils.UIHelper.getNavigationBarHeight
 import cloud.streamless.torream.utils.UIHelper.getStatusBarHeight
@@ -247,6 +248,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private var isSameEpisode: Boolean = false;
   private var triedSwDecFallback = false
+  private var playbackSessionStartMs = 0L
 
   private var playlistState: PlaylistState? = null
   private val seekActionTime = 30000L
@@ -309,6 +311,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   @SuppressLint("ClickableViewAccessibility")
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+    playbackSessionStartMs = System.currentTimeMillis()
     player?.addObserver(this)
     player?.initialize(requireActivity().filesDir.path, requireActivity().cacheDir.path)
 
@@ -1818,6 +1821,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   override fun onDestroyView() {
     exitFullscreen()
+
+    activity?.takeIf { !it.isFinishing && !it.isChangingConfigurations }?.let {
+      InAppReviewHelper.onPlaybackSessionEnded(it, System.currentTimeMillis() - playbackSessionStartMs)
+    }
 
     // Unregister PIP action manager (Android O+ only)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

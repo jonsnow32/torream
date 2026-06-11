@@ -215,6 +215,8 @@ dependencies {
 
   // Play In-App Updates (for Play Store installs)
   implementation("com.google.android.play:app-update-ktx:2.1.0")
+  // Play In-App Review
+  implementation("com.google.android.play:review-ktx:2.0.2")
 //  implementation("androidx.media3:media3-exoplayer:$media3Version")
 //  implementation("com.google.android.mediahome:video:1.0.0")
 //  implementation("androidx.media3:media3-exoplayer-hls:$media3Version")
