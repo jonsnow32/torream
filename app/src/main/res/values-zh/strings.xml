@@ -860,4 +860,9 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="file_already_downloaded">文件已下载</string>
   <string name="preparing">准备中</string>
   <string name="select_files">Select file</string>
+  <string name="category_notifications">éç¥</string>
+  <string name="continue_watching_reminder">ç»§ç»­è§çæé</string>
+  <string name="continue_watching_reminder_summary">æéä½ å°æªçå®çè§é¢</string>
+  <string name="continue_watching_notification_title">ç»§ç»­è§çï¼</string>
+  <string name="continue_watching_notification_text">ç»§ç»­è§ç %1$s</string>
 </resources>
