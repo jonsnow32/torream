@@ -101,6 +101,7 @@ platform :android do
   lane :upload_metadata do
     upload_to_play_store(
       json_key:                ENV["PLAY_KEY_FILE"],
+      track:                   "production",
       skip_upload_apk:         true,
       skip_upload_aab:         true,
       skip_upload_images:      false,
