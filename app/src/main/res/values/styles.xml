@@ -362,6 +362,19 @@
     <item name="rippleColor">?attr/colorPrimary</item>
   </style>
 
+  <style name="LibraryTab" parent="Widget.AppCompat.CompoundButton.RadioButton">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">36dp</item>
+    <item name="android:button">@null</item>
+    <item name="android:background">@drawable/tab_radio_background</item>
+    <item name="android:gravity">center</item>
+    <item name="android:paddingHorizontal">18dp</item>
+    <item name="android:textSize">14sp</item>
+    <item name="android:fontFamily">@font/google_sans</item>
+    <item name="android:textColor">@color/tab_text_color</item>
+    <item name="android:focusable">true</item>
+  </style>
+
   <style name="TabNoCaps" parent="TextAppearance.Design.Tab">
     <item name="textAllCaps">false</item>
     <item name="fontFamily">@font/google_sans</item>

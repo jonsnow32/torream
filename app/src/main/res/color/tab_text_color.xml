@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-  <!-- Checked state - white text -->
-  <item android:state_checked="true"
-    android:color="@color/md_theme_onPrimary" />
-  <!-- Default unchecked state - secondary text -->
+  <!-- Checked: text on primary pill -->
+  <item android:state_checked="true" android:color="?attr/colorOnPrimary" />
+  <!-- Focused unchecked (TV dpad) -->
+  <item android:state_focused="true" android:color="@color/text_primary" />
+  <!-- Default unchecked -->
   <item android:color="@color/text_secondary" />
 </selector>
-

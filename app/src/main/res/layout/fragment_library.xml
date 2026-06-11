@@ -30,7 +30,10 @@
       android:layout_height="wrap_content"
       android:background="?colorSurface"
       android:focusable="false"
-      android:padding="8dp"
+      android:clipToPadding="false"
+      android:paddingHorizontal="12dp"
+      android:paddingTop="2dp"
+      android:paddingBottom="10dp"
       android:nextFocusLeft="@id/navRailView"
       android:nextFocusUp="@id/toolbar"
       android:nextFocusDown="@id/rvLibrary"
@@ -42,7 +45,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingHorizontal="4dp"
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:descendantFocusability="afterDescendants"
@@ -53,79 +55,42 @@
 
         <RadioButton
           android:id="@+id/tabDownloads"
-          style="@style/Widget.AppCompat.CompoundButton.RadioButton"
-          android:layout_width="wrap_content"
-          android:layout_height="match_parent"
-          android:layout_marginHorizontal="4dp"
-          android:background="@drawable/tab_radio_background"
-          android:button="@null"
-          android:gravity="center"
-          android:focusable="true"
+          style="@style/LibraryTab"
+          android:layout_marginEnd="8dp"
+          android:checked="true"
           android:nextFocusLeft="@id/toolbar"
           android:nextFocusRight="@id/tabFavorites"
           android:nextFocusUp="@id/toolbar"
           android:nextFocusDown="@id/rvLibrary"
-          android:paddingHorizontal="20dp"
-          android:paddingVertical="8dp"
-          android:text="@string/downloads"
-          android:textColor="@color/tab_text_color"
-          android:checked="true" />
+          android:text="@string/downloads" />
 
         <RadioButton
           android:id="@+id/tabFavorites"
-          style="@style/Widget.AppCompat.CompoundButton.RadioButton"
-          android:layout_width="wrap_content"
-          android:layout_height="match_parent"
-          android:layout_marginHorizontal="4dp"
-          android:background="@drawable/tab_radio_background"
-          android:button="@null"
-          android:gravity="center"
-          android:focusable="true"
+          style="@style/LibraryTab"
+          android:layout_marginEnd="8dp"
           android:nextFocusLeft="@id/tabDownloads"
           android:nextFocusRight="@id/tabHistory"
           android:nextFocusUp="@id/toolbar"
           android:nextFocusDown="@id/rvLibrary"
-          android:paddingHorizontal="20dp"
-          android:paddingVertical="8dp"
-          android:text="@string/favorites"
-          android:textColor="@color/tab_text_color" />
+          android:text="@string/favorites" />
 
         <RadioButton
           android:id="@+id/tabHistory"
-          style="@style/Widget.AppCompat.CompoundButton.RadioButton"
-          android:layout_width="wrap_content"
-          android:layout_height="match_parent"
-          android:layout_marginHorizontal="4dp"
-          android:background="@drawable/tab_radio_background"
-          android:button="@null"
-          android:gravity="center"
-          android:focusable="true"
+          style="@style/LibraryTab"
+          android:layout_marginEnd="8dp"
           android:nextFocusLeft="@id/tabFavorites"
           android:nextFocusRight="@id/tabPlaylists"
           android:nextFocusUp="@id/toolbar"
           android:nextFocusDown="@id/rvLibrary"
-          android:paddingHorizontal="20dp"
-          android:paddingVertical="8dp"
-          android:text="@string/history"
-          android:textColor="@color/tab_text_color" />
+          android:text="@string/history" />
 
         <RadioButton
           android:id="@+id/tabPlaylists"
-          style="@style/Widget.AppCompat.CompoundButton.RadioButton"
-          android:layout_width="wrap_content"
-          android:layout_height="match_parent"
-          android:layout_marginHorizontal="4dp"
-          android:background="@drawable/tab_radio_background"
-          android:button="@null"
-          android:gravity="center"
-          android:focusable="true"
+          style="@style/LibraryTab"
           android:nextFocusLeft="@id/tabHistory"
           android:nextFocusUp="@id/toolbar"
           android:nextFocusDown="@id/rvLibrary"
-          android:paddingHorizontal="20dp"
-          android:paddingVertical="8dp"
-          android:text="@string/playlists"
-          android:textColor="@color/tab_text_color" />
+          android:text="@string/playlists" />
       </RadioGroup>
     </HorizontalScrollView>
 
