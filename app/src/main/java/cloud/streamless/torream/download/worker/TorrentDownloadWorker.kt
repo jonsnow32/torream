@@ -43,7 +43,6 @@ class TorrentDownloadWorker @AssistedInject constructor(
   companion object {
     const val KEY_TASK_ID = "task_id"
     const val KEY_ERROR = "error"
-    private const val NOTIFICATION_ID = 1002
   }
 
   override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -165,7 +164,23 @@ class TorrentDownloadWorker @AssistedInject constructor(
 
     } catch (e: Exception) {
       Timber.e(e, "❌ Download error: $taskId")
-      return@withContext Result.failure(workDataOf(KEY_ERROR to (e.message ?: "Unknown error")))
+      val errorMessage = e.message ?: "Unknown error"
+
+      // Mark the task as failed in DB
+      val failedState = repo.observeState(taskId).first()
+      if (failedState != null) {
+        repo.updateState(failedState.copy(status = DownloadStatus.FAILED, error = errorMessage))
+      }
+
+      // Show a visible error notification so the user knows the download failed
+      val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+      val notification = DownloadNotificationHelper.createErrorNotification(
+        context, taskId, failedState?.task?.fileName, errorMessage
+      )
+      notificationManager.notify(taskId.hashCode(), notification)
+      DownloadNotificationHelper.postSummary(context)
+
+      return@withContext Result.failure(workDataOf(KEY_ERROR to errorMessage))
     }
   }
 
@@ -221,11 +236,12 @@ class TorrentDownloadWorker @AssistedInject constructor(
     val notification = DownloadNotificationHelper.createDownloadNotification(
       context, taskId, progress, false, fileName
     )
+    DownloadNotificationHelper.postSummary(context)
 
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+      ForegroundInfo(taskId.hashCode(), notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     } else {
-      ForegroundInfo(NOTIFICATION_ID, notification)
+      ForegroundInfo(taskId.hashCode(), notification)
     }
   }
 }

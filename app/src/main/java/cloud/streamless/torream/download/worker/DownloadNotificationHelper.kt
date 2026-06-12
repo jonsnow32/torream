@@ -17,6 +17,8 @@ object DownloadNotificationHelper {
   const val ACTION_OPEN_DOWNLOADS = "cloud.streamless.torream.OPEN_DOWNLOADS"
   const val ACTION_PAUSE_ALL = "cloud.streamless.torream.PAUSE_ALL_DOWNLOADS"
   const val ACTION_CANCEL_ALL = "cloud.streamless.torream.CANCEL_ALL_DOWNLOADS"
+  const val GROUP_KEY = "cloud.streamless.torream.DOWNLOADS"
+  const val SUMMARY_NOTIFICATION_ID = 1000
 
   fun createDownloadNotification(
     context: Context,
@@ -80,6 +82,7 @@ object DownloadNotificationHelper {
       .setContentIntent(pendingIntent)
       .addAction(android.R.drawable.ic_media_pause, "Pause All", pauseAllPendingIntent)
       .addAction(android.R.drawable.ic_delete, "Cancel All", cancelAllPendingIntent)
+      .setGroup(GROUP_KEY)
       .build()
   }
 
@@ -93,6 +96,57 @@ object DownloadNotificationHelper {
       val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
       notificationManager.createNotificationChannel(channel)
     }
+  }
+
+  fun createErrorNotification(
+    context: Context,
+    taskId: String,
+    fileName: String?,
+    errorMessage: String
+  ): Notification {
+    createNotificationChannel(context)
+
+    val title = fileName ?: taskId
+    val intent = Intent(context, Class.forName("cloud.streamless.torream.MainActivity")).apply {
+      action = ACTION_OPEN_DOWNLOADS
+      flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    }
+    val pendingIntent = PendingIntent.getActivity(
+      context, 0, intent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    return NotificationCompat.Builder(context, CHANNEL_ID)
+      .setContentTitle("Download failed: $title")
+      .setContentText(errorMessage)
+      .setSmallIcon(android.R.drawable.stat_notify_error)
+      .setAutoCancel(true)
+      .setOngoing(false)
+      .setContentIntent(pendingIntent)
+      .setGroup(GROUP_KEY)
+      .build()
+  }
+
+  fun postSummary(context: Context) {
+    createNotificationChannel(context)
+    val intent = Intent(context, Class.forName("cloud.streamless.torream.MainActivity")).apply {
+      action = ACTION_OPEN_DOWNLOADS
+      flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    }
+    val pendingIntent = PendingIntent.getActivity(
+      context, 0, intent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    val summary = NotificationCompat.Builder(context, CHANNEL_ID)
+      .setContentTitle("Downloads")
+      .setContentText("Downloads in progress")
+      .setSmallIcon(android.R.drawable.stat_sys_download)
+      .setGroup(GROUP_KEY)
+      .setGroupSummary(true)
+      .setContentIntent(pendingIntent)
+      .build()
+    val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    nm.notify(SUMMARY_NOTIFICATION_ID, summary)
   }
 
   /**

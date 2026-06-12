@@ -309,6 +309,7 @@ class HttpDownloadWorker @AssistedInject constructor(
     val notificationManager =
       context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     notificationManager.notify(taskId.hashCode(), notification)
+    DownloadNotificationHelper.postSummary(context)
   }
 
   /**
