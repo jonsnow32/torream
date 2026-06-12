@@ -176,6 +176,15 @@ class HttpDownloadWorker @AssistedInject constructor(
       Timber.i("Temp filename: $tempName")
       Timber.i("Total size: ${totalBytes / (1024 * 1024)} MB")
 
+      // Proactive space check — contentLength is the remaining bytes to download
+      if (contentLength > 0) {
+        val savePath = targetDir.filePath
+        if (savePath != null && !cloud.streamless.torream.utils.StorageUtils.hasEnoughSpace(savePath, contentLength)) {
+          val error = cloud.streamless.torream.utils.StorageUtils.noSpaceMessage(savePath)
+          repo.updateState(state.copy(status = DownloadStatus.FAILED, error = error))
+          return@withContext Result.failure(workDataOf(KEY_ERROR to error))
+        }
+      }
 
       // Update notification with resolved filename before download starts
       setForeground(createForegroundInfo(taskId, 0, tempName))
@@ -214,15 +223,16 @@ class HttpDownloadWorker @AssistedInject constructor(
       }
 
       Timber.e(e, "Download failed: $taskId")
-      repo.updateState(
-        state.copy(
-          status = DownloadStatus.FAILED,
-          error = e.message ?: "Unknown error"
-        )
-      )
+      val savePath = try { targetDir.filePath } catch (_: Exception) { null }
+      val error = if (cloud.streamless.torream.utils.StorageUtils.isNoSpaceError(e)) {
+        cloud.streamless.torream.utils.StorageUtils.noSpaceMessage(savePath ?: context.filesDir.path)
+      } else {
+        e.message ?: "Unknown error"
+      }
+      repo.updateState(state.copy(status = DownloadStatus.FAILED, error = error))
 
       coordinator.processQueuedDownloads()
-      return@withContext Result.failure(workDataOf(KEY_ERROR to e.message))
+      return@withContext Result.failure(workDataOf(KEY_ERROR to error))
     }
   }
 

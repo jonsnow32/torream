@@ -164,7 +164,12 @@ class TorrentDownloadWorker @AssistedInject constructor(
 
     } catch (e: Exception) {
       Timber.e(e, "❌ Download error: $taskId")
-      val errorMessage = e.message ?: "Unknown error"
+      val fallbackPath = context.getExternalFilesDir(null)?.path ?: context.filesDir.path
+      val errorMessage = if (cloud.streamless.torream.utils.StorageUtils.isNoSpaceError(e)) {
+        cloud.streamless.torream.utils.StorageUtils.noSpaceMessage(fallbackPath)
+      } else {
+        e.message ?: "Unknown error"
+      }
 
       // Mark the task as failed in DB
       val failedState = repo.observeState(taskId).first()

@@ -163,15 +163,16 @@ class HlsDownloadWorker @AssistedInject constructor(
       }
 
       Timber.e(e, "HLS download failed: $taskId")
-      repo.updateState(
-        state.copy(
-          status = DownloadStatus.FAILED,
-          error = e.message ?: "Unknown error"
-        )
-      )
+      val savePath = try { targetDir.filePath } catch (_: Exception) { null }
+      val error = if (cloud.streamless.torream.utils.StorageUtils.isNoSpaceError(e)) {
+        cloud.streamless.torream.utils.StorageUtils.noSpaceMessage(savePath ?: context.filesDir.path)
+      } else {
+        e.message ?: "Unknown error"
+      }
+      repo.updateState(state.copy(status = DownloadStatus.FAILED, error = error))
 
       coordinator.processQueuedDownloads()
-      return@withContext Result.failure(workDataOf(KEY_ERROR to e.message))
+      return@withContext Result.failure(workDataOf(KEY_ERROR to error))
     }
   }
 
