@@ -6,7 +6,7 @@
     <shape android:shape="oval">
       <stroke
         android:width="2dp"
-        android:color="@color/icon_tint" />
+        android:color="?attr/colorControlNormal" />
       <corners android:radius="10dp" />
     </shape>
   </item>

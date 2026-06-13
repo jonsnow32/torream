@@ -147,7 +147,7 @@ android {
     debug {
       isDebuggable = true
       applicationIdSuffix = ".debug"
-      resValue("string", "app_name", "Torream-Debug")
+      resValue("string", "app_name", "Torream.")
       isMinifyEnabled = false
       isShrinkResources = false
       ndk {
