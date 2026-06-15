@@ -2,9 +2,13 @@ package cloud.streamless.torream.ui.library
 
 
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -13,15 +17,14 @@ import cloud.streamless.torream.MainActivityViewModel.Companion.applyContentRect
 import cloud.streamless.torream.R
 import cloud.streamless.torream.ads.AdManager
 import cloud.streamless.torream.databinding.FragmentLibraryBinding
-import cloud.streamless.torream.download.DownloadRepository
 import cloud.streamless.torream.download.DownloadCoordinator
+import cloud.streamless.torream.download.DownloadRepository
 import cloud.streamless.torream.ui.adapter.GridAdapter.Companion.configureGridLayout
 import cloud.streamless.torream.ui.feed.FeedAction
 import cloud.streamless.torream.ui.feed.adapters.FeedAdapter
 import cloud.streamless.torream.utils.AutoClearedValue.Companion.autoCleared
 import cloud.streamless.torream.utils.FastScrollerHelper
 import cloud.streamless.torream.utils.observe
-import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -58,6 +61,12 @@ class LibraryFragment : Fragment() {
   lateinit var favoriteRepository: cloud.streamless.torream.favorites.FavoriteRepository
 
   private lateinit var adapter: FeedAdapter
+
+  private var isPrivateUnlocked = false
+  private var lastCheckedTabId = R.id.tabHistory
+  private var isHandlingPrivateAuth = false
+
+  private val pinPrefKey = "private_folder_pin"
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -118,26 +127,122 @@ class LibraryFragment : Fragment() {
   }
 
   private fun setupTabs() {
-    // Select the appropriate radio button based on current section
     when (viewModel.section.value) {
-      LibrarySection.DOWNLOADS -> binding.tabDownloads.isChecked = true
-      LibrarySection.FAVORITES -> binding.tabFavorites.isChecked = true
-      LibrarySection.HISTORY -> binding.tabHistory.isChecked = true
-      LibrarySection.PLAYLISTS -> binding.tabPlaylists.isChecked = true
+      LibrarySection.DOWNLOADS -> { binding.tabDownloads.isChecked = true; lastCheckedTabId = R.id.tabDownloads }
+      LibrarySection.FAVORITES -> { binding.tabFavorites.isChecked = true; lastCheckedTabId = R.id.tabFavorites }
+      LibrarySection.HISTORY   -> { binding.tabHistory.isChecked = true; lastCheckedTabId = R.id.tabHistory }
+      LibrarySection.PLAYLISTS -> { binding.tabPlaylists.isChecked = true; lastCheckedTabId = R.id.tabPlaylists }
+      LibrarySection.PRIVATE   -> { binding.tabPrivate.isChecked = true; lastCheckedTabId = R.id.tabPrivate }
     }
 
-    // Handle radio button selection changes
-    binding.tabLayout.setOnCheckedChangeListener { _, checkedId ->
-      when (checkedId) {
-        R.id.tabDownloads -> viewModel.section.value = LibrarySection.DOWNLOADS
-        R.id.tabFavorites -> viewModel.section.value = LibrarySection.FAVORITES
-        R.id.tabHistory -> viewModel.section.value = LibrarySection.HISTORY
-        R.id.tabPlaylists -> viewModel.section.value = LibrarySection.PLAYLISTS
+    binding.tabLayout.setOnCheckedChangeListener { group, checkedId ->
+      if (isHandlingPrivateAuth) return@setOnCheckedChangeListener
+
+      if (checkedId == R.id.tabPrivate && !isPrivateUnlocked) {
+        isHandlingPrivateAuth = true
+        val storedPin = viewModel.sharedPreferences.getString(pinPrefKey, null)
+        if (storedPin == null) {
+          showSetPinDialog(
+            onSet = {
+              isPrivateUnlocked = true
+              lastCheckedTabId = R.id.tabPrivate
+              commitSection(LibrarySection.PRIVATE)
+              isHandlingPrivateAuth = false
+            },
+            onCancel = {
+              group.check(lastCheckedTabId)
+              isHandlingPrivateAuth = false
+            }
+          )
+        } else {
+          showEnterPinDialog(
+            onCorrect = {
+              isPrivateUnlocked = true
+              lastCheckedTabId = R.id.tabPrivate
+              commitSection(LibrarySection.PRIVATE)
+              isHandlingPrivateAuth = false
+            },
+            onWrong = {
+              group.check(lastCheckedTabId)
+              isHandlingPrivateAuth = false
+              Toast.makeText(requireContext(), getString(R.string.private_folder_wrong_pin), Toast.LENGTH_SHORT).show()
+            },
+            onCancel = {
+              group.check(lastCheckedTabId)
+              isHandlingPrivateAuth = false
+            }
+          )
+        }
+        return@setOnCheckedChangeListener
       }
-      Timber.d("Tab selected: ${viewModel.section.value}")
-      // Update storage stats visibility
-      updateStorageStatsVisibility()
+
+      lastCheckedTabId = checkedId
+      when (checkedId) {
+        R.id.tabDownloads -> commitSection(LibrarySection.DOWNLOADS)
+        R.id.tabFavorites -> commitSection(LibrarySection.FAVORITES)
+        R.id.tabHistory   -> commitSection(LibrarySection.HISTORY)
+        R.id.tabPlaylists -> commitSection(LibrarySection.PLAYLISTS)
+        R.id.tabPrivate   -> commitSection(LibrarySection.PRIVATE)
+      }
     }
+  }
+
+  private fun commitSection(section: LibrarySection) {
+    viewModel.section.value = section
+    Timber.d("Tab selected: $section")
+    updateStorageStatsVisibility()
+  }
+
+  private fun showSetPinDialog(onSet: () -> Unit, onCancel: () -> Unit) {
+    val input = EditText(requireContext()).apply {
+      inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+      hint = getString(R.string.private_folder_pin_hint)
+    }
+    AlertDialog.Builder(requireContext(), R.style.BaseMaterialDialogTheme)
+      .setTitle(getString(R.string.private_folder_set_pin_title))
+      .setMessage(getString(R.string.private_folder_set_pin_message))
+      .setView(input)
+      .setPositiveButton(getString(R.string.set_pin)) { _, _ ->
+        val pin = input.text.toString()
+        if (pin.length >= 4) {
+          viewModel.sharedPreferences.edit().putString(pinPrefKey, pin).apply()
+          onSet()
+        } else {
+          Toast.makeText(requireContext(), getString(R.string.private_folder_pin_too_short), Toast.LENGTH_SHORT).show()
+          onCancel()
+        }
+      }
+      .setNegativeButton(getString(R.string.cancel)) { _, _ -> onCancel() }
+      .setOnCancelListener { onCancel() }
+      .show()
+  }
+
+  private fun showEnterPinDialog(onCorrect: () -> Unit, onWrong: () -> Unit, onCancel: () -> Unit) {
+    val input = EditText(requireContext()).apply {
+      inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+      hint = getString(R.string.private_folder_pin_hint)
+    }
+    AlertDialog.Builder(requireContext(), R.style.BaseMaterialDialogTheme)
+      .setTitle(getString(R.string.private_folder_enter_pin_title))
+      .setView(input)
+      .setPositiveButton(getString(R.string.confirm)) { _, _ ->
+        val stored = viewModel.sharedPreferences.getString(pinPrefKey, null)
+        if (input.text.toString() == stored) onCorrect() else onWrong()
+      }
+      .setNegativeButton(getString(R.string.cancel)) { _, _ -> onCancel() }
+      .setNeutralButton(getString(R.string.private_folder_change_pin)) { _, _ ->
+        isHandlingPrivateAuth = false
+        showSetPinDialog(
+          onSet = {
+            isPrivateUnlocked = true
+            lastCheckedTabId = R.id.tabPrivate
+            commitSection(LibrarySection.PRIVATE)
+          },
+          onCancel = { binding.tabLayout.check(lastCheckedTabId) }
+        )
+      }
+      .setOnCancelListener { onCancel() }
+      .show()
   }
 
   private fun setupStorageStats() {
@@ -159,12 +264,8 @@ class LibraryFragment : Fragment() {
   }
 
   private fun updateStorageStatsVisibility() {
-    // Show storage stats only on Downloads tab
-    binding.storageStatsView.visibility = if (viewModel.section.value == LibrarySection.DOWNLOADS) {
-      View.VISIBLE
-    } else {
-      View.GONE
-    }
+    binding.storageStatsView.visibility =
+      if (viewModel.section.value == LibrarySection.DOWNLOADS) View.VISIBLE else View.GONE
   }
 
   private fun updateStorageStatsUI() {

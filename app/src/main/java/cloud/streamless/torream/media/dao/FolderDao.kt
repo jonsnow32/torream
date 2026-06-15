@@ -10,14 +10,23 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FolderDao {
-  @Query("SELECT * FROM folders WHERE is_hidden = 0 ORDER BY name ASC")
+  @Query("SELECT * FROM folders WHERE is_hidden = 0 AND is_private = 0 ORDER BY name ASC")
   fun observeAll(): Flow<List<FolderEntity>>
 
-  @Query("SELECT * FROM folders WHERE is_hidden = 0 ORDER BY name ASC LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM folders WHERE is_hidden = 0 AND is_private = 0 ORDER BY name ASC LIMIT :limit OFFSET :offset")
   suspend fun getAllPaged(limit: Int, offset: Int): List<FolderEntity>
 
-  @Query("SELECT COUNT(*) FROM folders WHERE is_hidden = 0")
+  @Query("SELECT COUNT(*) FROM folders WHERE is_hidden = 0 AND is_private = 0")
   suspend fun countAllFolders(): Int
+
+  @Query("SELECT * FROM folders WHERE is_private = 1 ORDER BY name ASC LIMIT :limit OFFSET :offset")
+  suspend fun getPrivatePaged(limit: Int, offset: Int): List<FolderEntity>
+
+  @Query("SELECT COUNT(*) FROM folders WHERE is_private = 1")
+  suspend fun countPrivate(): Int
+
+  @Query("UPDATE folders SET is_private = :isPrivate WHERE path = :path")
+  suspend fun setPrivate(path: String, isPrivate: Boolean)
 
   @Query("SELECT * FROM folders")
   suspend fun getAll(): List<FolderEntity>

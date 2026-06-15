@@ -1,13 +1,17 @@
 package cloud.streamless.torream.ui.player.mpv
 
 import android.app.Dialog
+import android.content.SharedPreferences
 import android.text.Editable
 import android.view.LayoutInflater
+import android.widget.ArrayAdapter
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import cloud.streamless.torream.R
+import cloud.streamless.torream.databinding.DialogEqualizerBinding
 import cloud.streamless.torream.databinding.SubtitleOffsetBinding
 import cloud.streamless.torream.model.SubtitleData
 import cloud.streamless.torream.model.VideoLink
@@ -303,6 +307,118 @@ class PlayerDialogManager(
     }
 
     currentDialog = dialog
+  }
+
+  // ========== Equalizer ==========
+
+  private val eqBandFreqs = intArrayOf(60, 250, 1000, 4000, 16000)
+
+  private val eqPresets = linkedMapOf(
+    "Flat"         to floatArrayOf(0f, 0f, 0f, 0f, 0f),
+    "Bass Boost"   to floatArrayOf(8f, 4f, 0f, 0f, 0f),
+    "Treble Boost" to floatArrayOf(0f, 0f, 0f, 4f, 8f),
+    "Voice"        to floatArrayOf(0f, 4f, 2f, 4f, 0f),
+    "Movie"        to floatArrayOf(4f, 0f, -2f, 0f, 4f),
+    "Custom"       to floatArrayOf(0f, 0f, 0f, 0f, 0f)
+  )
+
+  private fun progressToDb(progress: Int) = (progress - 12).toFloat()
+  private fun dbToProgress(db: Float) = (db + 12).toInt().coerceIn(0, 24)
+  private fun dbLabel(db: Float) = if (db >= 0) "+${db.toInt()} dB" else "${db.toInt()} dB"
+
+  fun buildEqFilterString(gains: FloatArray): String {
+    if (gains.all { it == 0f }) return ""
+    val chain = gains.indices.joinToString(",") { i ->
+      "equalizer=f=${eqBandFreqs[i]}:width_type=o:width=2:g=${gains[i].toInt()}"
+    }
+    return "lavfi=graph=$chain"
+  }
+
+  fun loadEqGains(prefs: SharedPreferences): FloatArray {
+    val raw = prefs.getString("eq_bands", null) ?: return FloatArray(5)
+    return try {
+      raw.split(",").map { it.toFloat() }.toFloatArray().let {
+        if (it.size == 5) it else FloatArray(5)
+      }
+    } catch (_: Exception) { FloatArray(5) }
+  }
+
+  fun saveEqGains(prefs: SharedPreferences, gains: FloatArray) {
+    prefs.edit().putString("eq_bands", gains.joinToString(",")).apply()
+  }
+
+  fun showEqualizerDialog(
+    prefs: SharedPreferences,
+    onApply: (FloatArray) -> Unit
+  ) {
+    val ctx = fragment.activity ?: return
+    val binding = DialogEqualizerBinding.inflate(LayoutInflater.from(ctx))
+    onShowDialog?.invoke()
+
+    val currentGains = loadEqGains(prefs).copyOf()
+    val bands = listOf(binding.eqBand0, binding.eqBand1, binding.eqBand2, binding.eqBand3, binding.eqBand4)
+    val labels = listOf(binding.eqBand0Val, binding.eqBand1Val, binding.eqBand2Val, binding.eqBand3Val, binding.eqBand4Val)
+    var suppressPresetListener = false
+
+    fun refreshLabels() {
+      bands.forEachIndexed { i, sb -> labels[i].text = dbLabel(progressToDb(sb.progress)) }
+    }
+
+    fun applyPresetValues(gains: FloatArray) {
+      suppressPresetListener = true
+      bands.forEachIndexed { i, sb -> sb.progress = dbToProgress(gains[i]); currentGains[i] = gains[i] }
+      refreshLabels()
+      suppressPresetListener = false
+    }
+
+    // Init bands from saved gains
+    applyPresetValues(currentGains)
+
+    // Preset spinner
+    val presetNames = eqPresets.keys.toList()
+    val presetValues = eqPresets.values.toList()
+    binding.eqPresetSpinner.adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_item, presetNames)
+      .also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+    binding.eqPresetSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+      override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: android.view.View?, pos: Int, id: Long) {
+        if (suppressPresetListener) return
+        if (presetNames[pos] != "Custom") applyPresetValues(presetValues[pos].copyOf())
+      }
+      override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+    }
+
+    // SeekBar listeners — mark preset as Custom when user adjusts manually
+    bands.forEachIndexed { i, sb ->
+      sb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+          if (!fromUser) return
+          currentGains[i] = progressToDb(progress)
+          labels[i].text = dbLabel(currentGains[i])
+          suppressPresetListener = true
+          binding.eqPresetSpinner.setSelection(presetNames.indexOf("Custom"))
+          suppressPresetListener = false
+        }
+        override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+        override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+      })
+    }
+
+    binding.eqResetBtn.setOnClickListener { applyPresetValues(FloatArray(5)) }
+
+    val dialog = AlertDialog.Builder(ctx, R.style.BaseMaterialDialogTheme)
+      .setTitle(ctx.getString(R.string.equalizer))
+      .setView(binding.root)
+      .setPositiveButton(ctx.getString(R.string.apply)) { _, _ ->
+        saveEqGains(prefs, currentGains)
+        onApply(currentGains)
+      }
+      .setNegativeButton(ctx.getString(R.string.cancel), null)
+      .setOnDismissListener { onDismissDialog?.invoke() }
+      .create()
+
+    currentDialog = dialog
+    dialog.show()
   }
 
   /**

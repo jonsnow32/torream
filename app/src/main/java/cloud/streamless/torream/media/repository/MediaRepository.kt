@@ -73,4 +73,7 @@ interface MediaRepository {
   suspend fun isInHistory(uri: String): Boolean
   suspend fun syncDownloadedFilesState()
   suspend fun isFileExists(uri: String, path: String) : Boolean
+  suspend fun setFolderPrivate(path: String, isPrivate: Boolean)
+  suspend fun getPrivateFoldersPaged(limit: Int, offset: Int): List<Folder>
+  suspend fun countPrivateFolders(): Int
 }

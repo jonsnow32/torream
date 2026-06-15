@@ -17,5 +17,6 @@ data class FolderEntity(
   @ColumnInfo(name = "modified") val modified: Long,
   @ColumnInfo(name = "media_count") val mediaCount: Int = 0,
   @ColumnInfo(name = "child_count") val childCount: Int = 0,
-  @ColumnInfo(name = "is_hidden") val isHidden: Boolean = false
+  @ColumnInfo(name = "is_hidden") val isHidden: Boolean = false,
+  @ColumnInfo(name = "is_private") val isPrivate: Boolean = false
 )

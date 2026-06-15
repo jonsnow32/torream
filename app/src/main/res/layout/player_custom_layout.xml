@@ -301,6 +301,34 @@
                 android:textSize="12sp" />
             </LinearLayout>
 
+            <!-- Equalizer Option -->
+            <LinearLayout
+              android:id="@+id/playerEqualizerBtt"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginStart="12dp"
+              android:clickable="true"
+              android:focusable="true"
+              android:gravity="center"
+              android:orientation="vertical"
+              android:padding="8dp">
+
+              <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@string/equalizer"
+                android:src="@drawable/ic_baseline_tune_24"
+                app:tint="@android:color/white" />
+
+              <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/equalizer"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+            </LinearLayout>
+
             <!-- Audio Track Option -->
             <LinearLayout
               android:id="@+id/playerAudioTracksBtt"

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:padding="16dp">
+
+  <Spinner
+    android:id="@+id/eqPresetSpinner"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp" />
+
+  <!-- Band rows: label | seekbar | value -->
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_marginBottom="8dp">
+    <TextView android:layout_width="52dp" android:layout_height="wrap_content" android:text="60 Hz" android:textSize="12sp" />
+    <SeekBar android:id="@+id/eqBand0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="24" android:progress="12" />
+    <TextView android:id="@+id/eqBand0Val" android:layout_width="44dp" android:layout_height="wrap_content" android:gravity="end" android:text="0 dB" android:textSize="12sp" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_marginBottom="8dp">
+    <TextView android:layout_width="52dp" android:layout_height="wrap_content" android:text="250 Hz" android:textSize="12sp" />
+    <SeekBar android:id="@+id/eqBand1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="24" android:progress="12" />
+    <TextView android:id="@+id/eqBand1Val" android:layout_width="44dp" android:layout_height="wrap_content" android:gravity="end" android:text="0 dB" android:textSize="12sp" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_marginBottom="8dp">
+    <TextView android:layout_width="52dp" android:layout_height="wrap_content" android:text="1 kHz" android:textSize="12sp" />
+    <SeekBar android:id="@+id/eqBand2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="24" android:progress="12" />
+    <TextView android:id="@+id/eqBand2Val" android:layout_width="44dp" android:layout_height="wrap_content" android:gravity="end" android:text="0 dB" android:textSize="12sp" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_marginBottom="8dp">
+    <TextView android:layout_width="52dp" android:layout_height="wrap_content" android:text="4 kHz" android:textSize="12sp" />
+    <SeekBar android:id="@+id/eqBand3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="24" android:progress="12" />
+    <TextView android:id="@+id/eqBand3Val" android:layout_width="44dp" android:layout_height="wrap_content" android:gravity="end" android:text="0 dB" android:textSize="12sp" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_marginBottom="12dp">
+    <TextView android:layout_width="52dp" android:layout_height="wrap_content" android:text="16 kHz" android:textSize="12sp" />
+    <SeekBar android:id="@+id/eqBand4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:max="24" android:progress="12" />
+    <TextView android:id="@+id/eqBand4Val" android:layout_width="44dp" android:layout_height="wrap_content" android:gravity="end" android:text="0 dB" android:textSize="12sp" />
+  </LinearLayout>
+
+  <Button
+    android:id="@+id/eqResetBtn"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="end"
+    android:text="@string/eq_reset"
+    style="?attr/borderlessButtonStyle" />
+
+</LinearLayout>

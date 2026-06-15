@@ -1104,4 +1104,24 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="download_path_des">Choose where downloaded files are saved</string>
   <string name="battery_optimisation_des">Keep downloads running in the background</string>
   <string name="filter_section_display">Display</string>
+
+  <!-- Private Folder -->
+  <string name="private_folder_tab">Private</string>
+  <string name="private_folder_set_pin_title">Set Private Folder PIN</string>
+  <string name="private_folder_set_pin_message">Choose a PIN (4 digits minimum) to protect your private folder.</string>
+  <string name="private_folder_enter_pin_title">Private Folder</string>
+  <string name="private_folder_pin_hint">Enter PIN</string>
+  <string name="private_folder_pin_too_short">PIN must be at least 4 digits</string>
+  <string name="private_folder_wrong_pin">Wrong PIN</string>
+  <string name="private_folder_change_pin">Change PIN</string>
+  <string name="action_add_to_private">Lock folder</string>
+  <string name="action_remove_from_private">Unlock folder</string>
+  <string name="folder_locked">Folder locked</string>
+  <string name="folder_unlocked">Folder unlocked</string>
+  <string name="set_pin">Set PIN</string>
+  <string name="confirm">Confirm</string>
+
+  <!-- Equalizer -->
+  <string name="equalizer">Equalizer</string>
+  <string name="eq_reset">Reset</string>
 </resources>

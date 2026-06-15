@@ -36,7 +36,7 @@ object DatabaseModule {
       MediaDatabase::class.java,
       "media_database"
     )
-//      .addMigrations(Migration_1_2)
+      .addMigrations(MediaDatabase.MIGRATION_1_2)
       .fallbackToDestructiveMigration(BuildConfig.DEBUG) // For development - recreate DB on schema changes
       .build()
   }

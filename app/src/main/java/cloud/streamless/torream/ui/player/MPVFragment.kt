@@ -680,6 +680,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         showVideoTracks()
       }
 
+      playerEqualizerBtt.setOnClickListener {
+        showEqualizerDialog()
+      }
+
       playerCodecBtt.setOnClickListener {
         showCodecsDialog()
       }
@@ -1136,6 +1140,26 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
 
     return false
+  }
+
+  private fun showEqualizerDialog() {
+    dialogManager.showEqualizerDialog(sharedPreferences) { gains ->
+      applyEqualizer(gains)
+      activity?.hideSystemUI()
+    }
+  }
+
+  private fun applyEqualizer(gains: FloatArray) {
+    val filter = dialogManager.buildEqFilterString(gains)
+    try {
+      if (filter.isEmpty()) {
+        MPVLib.command(arrayOf("af", "clear"))
+      } else {
+        MPVLib.setPropertyString("af", filter)
+      }
+    } catch (e: Exception) {
+      Timber.tag(TAG).e(e, "Failed to apply equalizer")
+    }
   }
 
   private fun showCodecsDialog() {
@@ -1778,9 +1802,11 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       return
     }
 
-    // Set activityIsForeground BEFORE unpausing to ensure correct state
     activityIsForeground = true
     player?.paused = false
+
+    // Restore equalizer settings after MPV re-initialises
+    applyEqualizer(dialogManager.loadEqGains(sharedPreferences))
 
     uiReset()
     super.onResume()

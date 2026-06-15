@@ -300,13 +300,13 @@ class FeedAction(
       }
 
       is FeedData.FolderItem -> {
-        val actionItems = buildFolderItemActions()
+        val actionItems = buildFolderItemActions(item)
 
         FeedActionDialog.newInstance(actionItems).show(
           fragment.parentFragmentManager
         ) { bundle ->
           bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
-            handleFolderItemAction(item, actionItems[index].title)
+            handleFolderItemAction(item, actionItems[index].id)
           }
         }
       }
@@ -410,27 +410,17 @@ class FeedAction(
     return list
   }
 
-  private fun buildFolderItemActions(): List<ActionItem> {
-    return listOf(
-      ActionItem(
-        id = "open",
-        title = "Open folder",
-        iconRes = R.drawable.outline_arrow_outward_24,
-        isDestructive = false
-      ),
-      ActionItem(
-        id = "path",
-        title = "Show path",
-        iconRes = R.drawable.outline_automation_24,
-        isDestructive = false
-      ),
-      ActionItem(
-        id = "rescan",
-        title = "Rescan",
-        iconRes = R.drawable.outline_cached_24,
-        isDestructive = false
-      )
-    )
+  private fun buildFolderItemActions(item: FeedData.FolderItem): List<ActionItem> {
+    return buildList {
+      add(ActionItem(id = "open", title = "Open folder", iconRes = R.drawable.outline_arrow_outward_24, isDestructive = false))
+      add(ActionItem(id = "path", title = "Show path", iconRes = R.drawable.outline_automation_24, isDestructive = false))
+      add(ActionItem(id = "rescan", title = "Rescan", iconRes = R.drawable.outline_cached_24, isDestructive = false))
+      if (item.folder.isPrivate) {
+        add(ActionItem(id = "unlock", title = fragment.getString(R.string.action_remove_from_private), iconRes = R.drawable.lock_open_icon, isDestructive = false))
+      } else {
+        add(ActionItem(id = "lock", title = fragment.getString(R.string.action_add_to_private), iconRes = R.drawable.lock_close_icon, isDestructive = false))
+      }
+    }
   }
 
   private fun buildPlaylistItemActions(): List<ActionItem> {
@@ -649,19 +639,22 @@ class FeedAction(
     }
   }
 
-  private fun handleFolderItemAction(item: FeedData.FolderItem, actionTitle: String) {
-    when (actionTitle) {
-      "Open folder" -> {
-        onItemClick(item) // Reuse click action
+  private fun handleFolderItemAction(item: FeedData.FolderItem, actionId: String) {
+    when (actionId) {
+      "open" -> onItemClick(item)
+      "path" -> showToast("Path: ${item.folder.path}")
+      "rescan" -> showToast("Rescanning folder...")
+      "lock" -> fragment.lifecycleScope.launch {
+        repository.setFolderPrivate(item.folder.path, true)
+        withContext(Dispatchers.Main) {
+          showToast(fragment.getString(R.string.folder_locked))
+        }
       }
-
-      "Show path" -> {
-        showToast("Path: ${item.folder.path}")
-      }
-
-      "Rescan" -> {
-        showToast("Rescanning folder...")
-        // TODO: Implement folder rescan
+      "unlock" -> fragment.lifecycleScope.launch {
+        repository.setFolderPrivate(item.folder.path, false)
+        withContext(Dispatchers.Main) {
+          showToast(fragment.getString(R.string.folder_unlocked))
+        }
       }
     }
   }

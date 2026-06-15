@@ -3,6 +3,8 @@ package cloud.streamless.torream.media.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import cloud.streamless.torream.media.converters.Converters
 import cloud.streamless.torream.media.dao.DownloadDao
 import cloud.streamless.torream.media.dao.FavoriteDao
@@ -30,7 +32,7 @@ import cloud.streamless.torream.media.entities.PlaylistItemEntity
     PlaylistItemEntity::class,
     FavoriteEntity::class
   ],
-  version = 1,
+  version = 2,
   exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -38,6 +40,14 @@ abstract class MediaDatabase : RoomDatabase() {
   abstract fun mediaDao(): MediaDao
   abstract fun folderDao(): FolderDao
   abstract fun mediaPlaybackDao(): MediaPlaybackDao
+
+  companion object {
+    val MIGRATION_1_2 = object : Migration(1, 2) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE folders ADD COLUMN is_private INTEGER NOT NULL DEFAULT 0")
+      }
+    }
+  }
   abstract fun downloadDao(): DownloadDao
   abstract fun playlistDao(): PlaylistDao
   abstract fun favoriteDao(): FavoriteDao

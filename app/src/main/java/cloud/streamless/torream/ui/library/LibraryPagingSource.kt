@@ -21,7 +21,8 @@ enum class LibrarySection {
   DOWNLOADS,
   FAVORITES,
   HISTORY,
-  PLAYLISTS
+  PLAYLISTS,
+  PRIVATE
 }
 
 class LibraryPagingSource(
@@ -50,6 +51,7 @@ class LibraryPagingSource(
         LibrarySection.FAVORITES -> loadFavorites(pageSize, page * pageSize)
         LibrarySection.HISTORY -> loadHistory(pageSize, page * pageSize)
         LibrarySection.PLAYLISTS -> loadPlaylists(pageSize, page * pageSize)
+        LibrarySection.PRIVATE -> loadPrivateFolders(pageSize, page * pageSize)
       }
 
       LoadResult.Page(
@@ -365,6 +367,21 @@ class LibraryPagingSource(
   }
 
 
+
+  private suspend fun loadPrivateFolders(limit: Int, offset: Int): List<FeedData> {
+    return try {
+      repository.getPrivateFoldersPaged(limit, offset).map { folder ->
+        FeedData.FolderItem(
+          id = folder.path,
+          title = folder.name,
+          folder = folder
+        )
+      }
+    } catch (e: Exception) {
+      Timber.e(e, "Error loading private folders")
+      emptyList()
+    }
+  }
 
   /**
    * Determine media type based on MIME type

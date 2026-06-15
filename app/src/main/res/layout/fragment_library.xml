@@ -87,10 +87,20 @@
         <RadioButton
           android:id="@+id/tabPlaylists"
           style="@style/LibraryTab"
+          android:layout_marginEnd="8dp"
           android:nextFocusLeft="@id/tabHistory"
+          android:nextFocusRight="@id/tabPrivate"
           android:nextFocusUp="@id/toolbar"
           android:nextFocusDown="@id/rvLibrary"
           android:text="@string/playlists" />
+
+        <RadioButton
+          android:id="@+id/tabPrivate"
+          style="@style/LibraryTab"
+          android:nextFocusLeft="@id/tabPlaylists"
+          android:nextFocusUp="@id/toolbar"
+          android:nextFocusDown="@id/rvLibrary"
+          android:text="@string/private_folder_tab" />
       </RadioGroup>
     </HorizontalScrollView>
 

@@ -266,7 +266,11 @@ class MediaRepositoryImpl @Inject constructor(
         }
       }
 
-    val folders = buildFolderTree(groupedByFolder)
+    val existingPrivatePaths = folderDao.getAll()
+      .filter { it.isPrivate }
+      .map { it.path }
+      .toSet()
+    val folders = buildFolderTree(groupedByFolder, existingPrivatePaths)
 
     folderDao.transaction {
       folderDao.upsertAll(folders)
@@ -283,7 +287,8 @@ class MediaRepositoryImpl @Inject constructor(
   }
 
   private fun buildFolderTree(
-    groupedByFolder: Map<String, List<MediaEntity>>
+    groupedByFolder: Map<String, List<MediaEntity>>,
+    existingPrivatePaths: Set<String> = emptySet()
   ): List<FolderEntity> {
     val allFolders = mutableMapOf<String, FolderEntity>()
     val mediaCountByFolder = groupedByFolder.mapValues { it.value.size }
@@ -326,7 +331,8 @@ class MediaRepositoryImpl @Inject constructor(
             modified = currentFile.lastModified(),
             mediaCount = 0,
             childCount = 0,
-            isHidden = currentFile.isHidden
+            isHidden = currentFile.isHidden,
+            isPrivate = currentPath in existingPrivatePaths
           )
         }
 
@@ -682,14 +688,15 @@ class MediaRepositoryImpl @Inject constructor(
     sortOrder: FeedFilterConfig.SortOrder
   ): List<Folder> =
     withContext(Dispatchers.IO) {
-      // Get only root-level folders (folders with no parent or common root paths)
       val allFolders = folderDao.getAll().map { it.toFolderDomain() }
       val rootFolders = allFolders.filter { folder ->
-        folder.parentPath.isEmpty() ||
-        folder.parentPath == "/" ||
-        folder.parentPath == "/storage" ||
-        folder.parentPath == "/storage/emulated" ||
-        folder.parentPath == "/storage/emulated/0"
+        !folder.isPrivate && (
+          folder.parentPath.isEmpty() ||
+          folder.parentPath == "/" ||
+          folder.parentPath == "/storage" ||
+          folder.parentPath == "/storage/emulated" ||
+          folder.parentPath == "/storage/emulated/0"
+        )
       }
 
       val sorted = sortFolderList(rootFolders, sortBy, sortOrder)
@@ -715,7 +722,7 @@ class MediaRepositoryImpl @Inject constructor(
       // Get only direct children of the specified parent
       val allFolders = folderDao.getAll().map { it.toFolderDomain() }
       val subfolders = allFolders
-        .filter { it.parentPath == parentPath }
+        .filter { it.parentPath == parentPath && !it.isPrivate }
         .sortedBy { it.name.lowercase() }
 
       // Apply pagination
@@ -983,8 +990,20 @@ class MediaRepositoryImpl @Inject constructor(
       modified = this.modified,
       mediaCount = this.mediaCount,
       childCount = this.childCount,
-      thumbnail = null
+      thumbnail = null,
+      isPrivate = this.isPrivate
     )
   }
+
+  override suspend fun setFolderPrivate(path: String, isPrivate: Boolean) =
+    withContext(Dispatchers.IO) { folderDao.setPrivate(path, isPrivate) }
+
+  override suspend fun getPrivateFoldersPaged(limit: Int, offset: Int): List<Folder> =
+    withContext(Dispatchers.IO) {
+      folderDao.getPrivatePaged(limit, offset).map { it.toFolderDomain() }
+    }
+
+  override suspend fun countPrivateFolders(): Int =
+    withContext(Dispatchers.IO) { folderDao.countPrivate() }
 
 }
