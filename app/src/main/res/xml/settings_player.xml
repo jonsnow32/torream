@@ -131,6 +131,13 @@
       app:min="5"
       app:seekBarIncrement="5"
       app:showSeekBarValue="true" />
+    <SwitchPreferenceCompat
+      android:icon="@drawable/ic_baseline_ondemand_video_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/show_gesture_percentage_desc"
+      android:title="@string/show_gesture_percentage_title"
+      app:defaultValue="true"
+      app:key="@string/show_gesture_percentage_key" />
   </PreferenceCategory>
 
   <PreferenceCategory android:title="@string/pref_category_cache">

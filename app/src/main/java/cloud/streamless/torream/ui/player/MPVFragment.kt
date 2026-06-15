@@ -1162,17 +1162,29 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
 
+  private fun showGesturePercentage(): Boolean =
+    sharedPreferences.getBoolean(getString(R.string.show_gesture_percentage_key), true)
+
   private fun updateBrightnessOverlay(brightness: Float) {
     playerBinding?.apply {
       playerProgressbarRightHolder.isVisible = true
       playerProgressbarRight.max = 100_000
       playerProgressbarRight.progress = max(2_000, (brightness * 100_000f).toInt())
       playerProgressbarRightIcon.setImageResource(gestureHandler.getBrightnessIcon(brightness))
+      if (showGesturePercentage()) {
+        playerProgressbarRightPercent.text = "${(brightness * 100).toInt()}%"
+        playerProgressbarRightPercent.isVisible = true
+      } else {
+        playerProgressbarRightPercent.isVisible = false
+      }
     }
   }
 
   private fun hideBrightnessOverlay() {
-    playerBinding?.playerProgressbarRightHolder?.isVisible = false
+    playerBinding?.apply {
+      playerProgressbarRightHolder.isVisible = false
+      playerProgressbarRightPercent.isVisible = false
+    }
   }
 
   private fun updateVolumeOverlay(volumeRatio: Float) {
@@ -1182,11 +1194,20 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       playerProgressbarLeft.max = 100_000
       playerProgressbarLeft.progress = max(2_000, (volumeRatio * 100_000f).toInt())
       playerProgressbarLeftIcon.setImageResource(gestureHandler.getVolumeIcon(volumeRatio))
+      if (showGesturePercentage()) {
+        playerProgressbarLeftPercent.text = "${(volumeRatio * 100).toInt()}%"
+        playerProgressbarLeftPercent.isVisible = true
+      } else {
+        playerProgressbarLeftPercent.isVisible = false
+      }
     }
   }
 
   private fun hideVolumeOverlay() {
-    playerBinding?.playerProgressbarLeftHolder?.isVisible = false
+    playerBinding?.apply {
+      playerProgressbarLeftHolder.isVisible = false
+      playerProgressbarLeftPercent.isVisible = false
+    }
   }
 
   private fun updateSeekOverlay(position: Long, text: String) {
