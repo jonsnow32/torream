@@ -101,7 +101,7 @@ interface MediaDao {
     """
     SELECT m.* FROM media m
     INNER JOIN media_playback mp ON m.uri = mp.media_uri
-    WHERE mp.is_finished = 0
+    WHERE mp.is_finished = 0 AND m.is_private = 0
     ORDER BY mp.last_played_at DESC
     LIMIT :limit OFFSET :offset
   """

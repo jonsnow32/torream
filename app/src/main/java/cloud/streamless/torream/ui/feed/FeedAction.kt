@@ -851,18 +851,11 @@ class FeedAction(
         fragment.lifecycleScope.launch {
           val ctx = fragment.requireContext()
           val state = downloadRepository.observeState(item.id).firstOrNull() ?: return@launch
-          val src = File(state.task.targetPath)
           val type = state.task.type
           val targetDir = android.os.Environment.getExternalStoragePublicDirectory(
             android.os.Environment.DIRECTORY_DOWNLOADS)
-          val originalName = src.name.let { n ->
-            // Strip the _timestamp suffix and .tpv for files
-            if (n.endsWith(PrivateStorageManager.PRIVATE_EXT))
-              n.substringBeforeLast("_").let { base ->
-                base + (item.title.substringAfterLast(".").let { ext -> if (ext.isNotEmpty()) ".$ext" else "" })
-              }
-            else n.substringBeforeLast("_")
-          }.ifEmpty { item.title }
+          // item.title is the original display name stored at download time
+          val originalName = item.title.ifEmpty { File(state.task.targetPath).name }
           val restoredPath = withContext(Dispatchers.IO) {
             PrivateStorageManager.moveFromPrivate(ctx, state.task.targetPath, originalName, targetDir)
           }
