@@ -73,7 +73,8 @@ class DownloadRepositoryImpl @Inject constructor(
         fileName = e.fileName,
         headers = deserializeHeaders(e.headers),
         totalBytes = e.totalBytes,
-        createdAt = e.createdAt
+        createdAt = e.createdAt,
+        isPrivate = e.isPrivate,
       )
     }
 
@@ -92,7 +93,8 @@ class DownloadRepositoryImpl @Inject constructor(
         targetPath = e.targetPath,
         fileName = e.fileName,
         totalBytes = e.totalSize,
-        createdAt = e.dateAdded
+        createdAt = e.dateAdded,
+        isPrivate = e.isPrivate,
       )
     }
 
@@ -370,6 +372,7 @@ class DownloadRepositoryImpl @Inject constructor(
       headers = deserializeHeaders(e.headers),
       totalBytes = e.totalBytes,
       createdAt = e.createdAt,
+      isPrivate = e.isPrivate,
     )
     val status = try {
       DownloadStatus.valueOf(e.status)
@@ -386,6 +389,29 @@ class DownloadRepositoryImpl @Inject constructor(
     )
   }
 
+  override suspend fun setDownloadPrivate(id: String, type: DownloadType, isPrivate: Boolean, newPath: String) {
+    when (type) {
+      DownloadType.HTTP, DownloadType.HLS -> downloadDao.setHttpPrivate(id, isPrivate, newPath)
+      DownloadType.TORRENT -> downloadDao.setTorrentPrivate(id, isPrivate, newPath)
+    }
+  }
+
+  override suspend fun getPrivateDownloads(): List<DownloadTask> {
+    val httpEntities = try { downloadDao.getPrivateHttpFlow().first() } catch (_: Exception) { emptyList() }
+    val torrentEntities = try { downloadDao.getPrivateTorrentFlow().first() } catch (_: Exception) { emptyList() }
+    val httpTasks = httpEntities.map { e ->
+      DownloadTask(id = e.url, type = DownloadType.HTTP, source = e.url, targetPath = e.targetPath,
+        fileName = e.fileName, headers = deserializeHeaders(e.headers), totalBytes = e.totalBytes,
+        createdAt = e.createdAt, isPrivate = true)
+    }
+    val torrentTasks = torrentEntities.map { e ->
+      DownloadTask(id = e.infoHash, type = DownloadType.TORRENT, source = e.infoHash,
+        targetPath = e.targetPath, fileName = e.fileName, totalBytes = e.totalSize,
+        createdAt = e.dateAdded, isPrivate = true)
+    }
+    return (httpTasks + torrentTasks).sortedByDescending { it.createdAt }
+  }
+
   private fun torrentEntityToDownloadState(e: TorrentEntity): DownloadState {
     val task = DownloadTask(
       id = e.infoHash, // ID is the infoHash (or hashCode)
@@ -394,7 +420,8 @@ class DownloadRepositoryImpl @Inject constructor(
       targetPath = e.targetPath,
       fileName = e.fileName,
       totalBytes = e.totalSize,
-      createdAt = e.dateAdded
+      createdAt = e.dateAdded,
+      isPrivate = e.isPrivate,
     )
     val status = try {
       DownloadStatus.valueOf(e.status)

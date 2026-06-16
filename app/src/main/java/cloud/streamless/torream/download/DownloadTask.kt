@@ -14,5 +14,6 @@ data class DownloadTask(
   val fileName: String? = null, // Complete file path when downloaded, or display name for the download
   val headers: Map<String, String>? = null, // Custom HTTP headers for download (key-value pairs)
   val totalBytes: Long = 0,
-  val createdAt: Long = System.currentTimeMillis()
+  val createdAt: Long = System.currentTimeMillis(),
+  val isPrivate: Boolean = false
 )

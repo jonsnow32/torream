@@ -18,8 +18,14 @@ interface DownloadDao {
   @Query("SELECT * FROM http_downloads WHERE url = :url")
   fun getHttpByUrlFlow(url: String): Flow<HttpEntity?>
 
-  @Query("SELECT * FROM http_downloads")
+  @Query("SELECT * FROM http_downloads WHERE is_private = 0")
   fun getAllHttpFlow(): Flow<List<HttpEntity>>
+
+  @Query("SELECT * FROM http_downloads WHERE is_private = 1")
+  fun getPrivateHttpFlow(): Flow<List<HttpEntity>>
+
+  @Query("UPDATE http_downloads SET is_private = :isPrivate, target_path = :newPath WHERE url = :url")
+  suspend fun setHttpPrivate(url: String, isPrivate: Boolean, newPath: String)
 
   @Delete
   suspend fun deleteHttp(http: HttpEntity)
@@ -33,8 +39,14 @@ interface DownloadDao {
   @Query("SELECT * FROM torrents WHERE info_hash = :infoHash")
   fun getTorrentByIdFlow(infoHash: String): Flow<TorrentEntity?>
 
-  @Query("SELECT * FROM torrents ORDER BY date_added DESC")
+  @Query("SELECT * FROM torrents WHERE is_private = 0 ORDER BY date_added DESC")
   fun getAllTorrentFlow(): Flow<List<TorrentEntity>>
+
+  @Query("SELECT * FROM torrents WHERE is_private = 1 ORDER BY date_added DESC")
+  fun getPrivateTorrentFlow(): Flow<List<TorrentEntity>>
+
+  @Query("UPDATE torrents SET is_private = :isPrivate, target_path = :newPath WHERE info_hash = :infoHash")
+  suspend fun setTorrentPrivate(infoHash: String, isPrivate: Boolean, newPath: String)
 
   @Delete
   suspend fun deleteTorrent(torrent: TorrentEntity)

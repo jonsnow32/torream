@@ -346,7 +346,7 @@ class FeedAction(
           val unifiedFile = fragment.context?.let {
             UnifiedFileFactory.fromPath(it, state?.task?.targetPath ?: "")
           }
-          val actionItems = buildDownloadItemActions(status, unifiedFile)
+          val actionItems = buildDownloadItemActions(status, unifiedFile, state?.task?.isPrivate ?: false)
 
           if (actionItems.isEmpty()) {
             showToast("No actions available")
@@ -476,7 +476,8 @@ class FeedAction(
 
   private fun buildDownloadItemActions(
     status: DownloadStatus?,
-    unifiedFile: UnifiedFile? = null
+    unifiedFile: UnifiedFile? = null,
+    isPrivate: Boolean = false
   ): List<ActionItem> {
     return buildList {
       val isFolder = unifiedFile?.isDirectory == true
@@ -587,6 +588,19 @@ class FeedAction(
 //          isDestructive = false
 //        )
 //      )
+
+      // "make private" / "remove from private" — only for completed downloads
+      if (status == DownloadStatus.COMPLETED || status == DownloadStatus.FINISHED) {
+        if (isPrivate) {
+          add(ActionItem(id = "remove_download_from_private",
+            title = fragment.getString(R.string.action_remove_media_from_private),
+            iconRes = R.drawable.lock_open_icon, isDestructive = false))
+        } else {
+          add(ActionItem(id = "make_download_private",
+            title = fragment.getString(R.string.action_make_media_private),
+            iconRes = R.drawable.lock_close_icon, isDestructive = false))
+        }
+      }
 
       // "delete" - always available
       add(
@@ -814,6 +828,52 @@ class FeedAction(
         }
       }
 
+
+      "make_download_private" -> {
+        fragment.lifecycleScope.launch {
+          val ctx = fragment.requireContext()
+          val state = downloadRepository.observeState(item.id).firstOrNull() ?: return@launch
+          val srcPath = state.task.targetPath
+          val type = state.task.type
+          val newPath = withContext(Dispatchers.IO) {
+            PrivateStorageManager.moveToPrivate(ctx, srcPath, File(srcPath).name)
+          }
+          if (newPath != null) {
+            downloadRepository.setDownloadPrivate(item.id, type, true, newPath)
+            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_locked)) }
+          } else {
+            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_lock_failed)) }
+          }
+        }
+      }
+
+      "remove_download_from_private" -> {
+        fragment.lifecycleScope.launch {
+          val ctx = fragment.requireContext()
+          val state = downloadRepository.observeState(item.id).firstOrNull() ?: return@launch
+          val src = File(state.task.targetPath)
+          val type = state.task.type
+          val targetDir = android.os.Environment.getExternalStoragePublicDirectory(
+            android.os.Environment.DIRECTORY_DOWNLOADS)
+          val originalName = src.name.let { n ->
+            // Strip the _timestamp suffix and .tpv for files
+            if (n.endsWith(PrivateStorageManager.PRIVATE_EXT))
+              n.substringBeforeLast("_").let { base ->
+                base + (item.title.substringAfterLast(".").let { ext -> if (ext.isNotEmpty()) ".$ext" else "" })
+              }
+            else n.substringBeforeLast("_")
+          }.ifEmpty { item.title }
+          val restoredPath = withContext(Dispatchers.IO) {
+            PrivateStorageManager.moveFromPrivate(ctx, state.task.targetPath, originalName, targetDir)
+          }
+          if (restoredPath != null) {
+            downloadRepository.setDownloadPrivate(item.id, type, false, restoredPath)
+            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_unlocked)) }
+          } else {
+            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_lock_failed)) }
+          }
+        }
+      }
 
       "delete" -> {
         fragment.lifecycleScope.launch {

@@ -30,5 +30,6 @@ data class HttpEntity(
   @ColumnInfo(name = "status") val status: String = DownloadStatus.QUEUED.name, // store enum.name()
   @ColumnInfo(name = "error") val error: String? = null,
   @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis(),
-  @ColumnInfo(name = "update_at") val updatedAt: Long = System.currentTimeMillis()
+  @ColumnInfo(name = "update_at") val updatedAt: Long = System.currentTimeMillis(),
+  @ColumnInfo(name = "is_private") val isPrivate: Boolean = false
 )

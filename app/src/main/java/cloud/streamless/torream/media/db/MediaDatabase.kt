@@ -32,7 +32,7 @@ import cloud.streamless.torream.media.entities.PlaylistItemEntity
     PlaylistItemEntity::class,
     FavoriteEntity::class
   ],
-  version = 3,
+  version = 4,
   exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -50,6 +50,12 @@ abstract class MediaDatabase : RoomDatabase() {
     val MIGRATION_2_3 = object : Migration(2, 3) {
       override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE media ADD COLUMN is_private INTEGER NOT NULL DEFAULT 0")
+      }
+    }
+    val MIGRATION_3_4 = object : Migration(3, 4) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE http_downloads ADD COLUMN is_private INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE torrents ADD COLUMN is_private INTEGER NOT NULL DEFAULT 0")
       }
     }
   }

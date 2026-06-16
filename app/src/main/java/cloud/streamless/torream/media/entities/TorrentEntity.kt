@@ -30,5 +30,6 @@ data class TorrentEntity(
   @ColumnInfo(name = "error") val error: String? = null,
   @ColumnInfo(name = "date_added") val dateAdded: Long = System.currentTimeMillis(),
   @ColumnInfo(name = "date_completed") val dateCompleted: Long? = null,
-  @ColumnInfo(name = "is_auto_managed") val isAutoManaged: Boolean = true
+  @ColumnInfo(name = "is_auto_managed") val isAutoManaged: Boolean = true,
+  @ColumnInfo(name = "is_private") val isPrivate: Boolean = false
 )

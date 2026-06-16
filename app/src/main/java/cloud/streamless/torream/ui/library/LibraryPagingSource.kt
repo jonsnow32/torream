@@ -370,13 +370,27 @@ class LibraryPagingSource(
 
   private suspend fun loadPrivateFolders(limit: Int, offset: Int): List<FeedData> {
     return try {
-      val folders = repository.getPrivateFoldersPaged(limit / 2, offset / 2).map { folder ->
+      val folders = repository.getPrivateFoldersPaged(limit / 3, offset / 3).map { folder ->
         FeedData.FolderItem(id = folder.path, title = folder.name, folder = folder) as FeedData
       }
-      val media = repository.getPrivateMediaPaged(limit / 2, offset / 2).map { m ->
+      val media = repository.getPrivateMediaPaged(limit / 3, offset / 3).map { m ->
         FeedData.MediaItem(id = m.uri, title = m.name, type = determineMediaType(m.mimeType), media = m) as FeedData
       }
-      folders + media
+      val downloads = downloadRepository.getPrivateDownloads()
+        .drop(offset / 3).take(limit / 3)
+        .map { task ->
+          val title = task.fileName?.substringAfterLast('/')
+            ?: task.targetPath.substringAfterLast('/')
+          when (task.type) {
+            DownloadType.TORRENT -> FeedData.TorrentDownloadItem(id = task.id, title = title,
+              downloadState = cloud.streamless.torream.download.DownloadState(task = task,
+                status = DownloadStatus.FINISHED)) as FeedData
+            else -> FeedData.HttpDownloadItem(id = task.id, title = title,
+              downloadState = cloud.streamless.torream.download.DownloadState(task = task,
+                status = DownloadStatus.COMPLETED)) as FeedData
+          }
+        }
+      folders + media + downloads
     } catch (e: Exception) {
       Timber.e(e, "Error loading private items")
       emptyList()

@@ -9,4 +9,6 @@ interface DownloadRepository {
   fun observeAllStates(): Flow<List<DownloadState>>
   suspend fun updateState(state: DownloadState)
   suspend fun deleteTask(taskId: String)
+  suspend fun setDownloadPrivate(id: String, type: DownloadType, isPrivate: Boolean, newPath: String)
+  suspend fun getPrivateDownloads(): List<DownloadTask>
 }
