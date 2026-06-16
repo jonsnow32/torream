@@ -20,14 +20,14 @@ interface MediaDao {
   @Query("SELECT * FROM media")
   suspend fun getAllWithPlayback(): List<MediaWithPlayback>
 
-  @Query("SELECT * FROM media LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM media WHERE is_private = 0 LIMIT :limit OFFSET :offset")
   suspend fun getAllPaged(limit: Int, offset: Int): List<MediaEntity>
 
   @Transaction
-  @Query("SELECT * FROM media LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM media WHERE is_private = 0 LIMIT :limit OFFSET :offset")
   suspend fun getAllPagedWithPlayback(limit: Int, offset: Int): List<MediaWithPlayback>
 
-  @Query("SELECT * FROM media WHERE mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM media WHERE is_private = 0 AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
   suspend fun getAllPagedFiltered(
     mimeTypePattern: String,
     limit: Int,
@@ -35,7 +35,7 @@ interface MediaDao {
   ): List<MediaEntity>
 
   @Transaction
-  @Query("SELECT * FROM media WHERE mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM media WHERE is_private = 0 AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
   suspend fun getAllPagedFilteredWithPlayback(
     mimeTypePattern: String,
     limit: Int,
@@ -49,18 +49,18 @@ interface MediaDao {
   @Query("SELECT * FROM media WHERE parent_path = :folderPath")
   suspend fun getByFolderWithPlayback(folderPath: String): List<MediaWithPlayback>
 
-  @Query("SELECT * FROM media WHERE parent_path = :folderPath LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath AND is_private = 0 LIMIT :limit OFFSET :offset")
   suspend fun getByFolderPaged(folderPath: String, limit: Int, offset: Int): List<MediaEntity>
 
   @Transaction
-  @Query("SELECT * FROM media WHERE parent_path = :folderPath LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath AND is_private = 0 LIMIT :limit OFFSET :offset")
   suspend fun getByFolderPagedWithPlayback(
     folderPath: String,
     limit: Int,
     offset: Int
   ): List<MediaWithPlayback>
 
-  @Query("SELECT * FROM media WHERE parent_path = :folderPath AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath AND is_private = 0 AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
   suspend fun getByFolderPagedFiltered(
     folderPath: String,
     mimeTypePattern: String,
@@ -69,7 +69,7 @@ interface MediaDao {
   ): List<MediaEntity>
 
   @Transaction
-  @Query("SELECT * FROM media WHERE parent_path = :folderPath AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
+  @Query("SELECT * FROM media WHERE parent_path = :folderPath AND is_private = 0 AND mime_type LIKE :mimeTypePattern LIMIT :limit OFFSET :offset")
   suspend fun getByFolderPagedFilteredWithPlayback(
     folderPath: String,
     mimeTypePattern: String,
@@ -107,6 +107,19 @@ interface MediaDao {
   """
   )
   suspend fun getRecentlyPlayedWithPlayback(limit: Int, offset: Int): List<MediaWithPlayback>
+
+  @Query("SELECT uri FROM media WHERE is_private = 1")
+  suspend fun getPrivateUris(): List<String>
+
+  @Transaction
+  @Query("SELECT * FROM media WHERE is_private = 1 LIMIT :limit OFFSET :offset")
+  suspend fun getPrivateMediaPaged(limit: Int, offset: Int): List<MediaWithPlayback>
+
+  @Query("SELECT COUNT(*) FROM media WHERE is_private = 1")
+  suspend fun countPrivateMedia(): Int
+
+  @Query("UPDATE media SET is_private = :isPrivate, path = :newPath, custom_metadata = :originalPath WHERE uri = :uri")
+  suspend fun setMediaPrivate(uri: String, isPrivate: Boolean, newPath: String, originalPath: String?)
 
   @Query("DELETE FROM media_playback")
   suspend fun clearPlaybackHistory()

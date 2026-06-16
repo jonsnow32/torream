@@ -76,4 +76,7 @@ interface MediaRepository {
   suspend fun setFolderPrivate(path: String, isPrivate: Boolean)
   suspend fun getPrivateFoldersPaged(limit: Int, offset: Int): List<Folder>
   suspend fun countPrivateFolders(): Int
+  suspend fun setMediaPrivate(uri: String, isPrivate: Boolean, newPath: String, originalPath: String?)
+  suspend fun getPrivateMediaPaged(limit: Int, offset: Int): List<Media>
+  suspend fun countPrivateMedia(): Int
 }

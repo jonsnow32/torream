@@ -25,8 +25,10 @@ import cloud.streamless.torream.download.DownloadCoordinator
 import cloud.streamless.torream.download.DownloadState
 import cloud.streamless.torream.download.DownloadStatus
 import cloud.streamless.torream.media.repository.MediaRepository
+import cloud.streamless.torream.utils.PrivateStorageManager
 import cloud.streamless.torream.utils.UnifiedFile
 import cloud.streamless.torream.utils.UnifiedFileFactory
+import java.io.File
 
 class FeedAction(
   val fragment: Fragment,
@@ -285,7 +287,7 @@ class FeedAction(
           val isFav = favoriteRepository.isFavorite(item.media.uri)
           val isHistory = favoriteRepository.isHistory(item.media.uri)
 
-          val actionItems = buildMediaItemActions(isFav, isHistory)
+          val actionItems = buildMediaItemActions(isFav, isHistory, item.media.isPrivate)
 
           withContext(Dispatchers.Main) {
             FeedActionDialog.newInstance(actionItems).show(
@@ -367,7 +369,7 @@ class FeedAction(
 
   // ============ Helper functions to build ActionItem lists ============
 
-  private fun buildMediaItemActions(isFav: Boolean, isHistory: Boolean): List<ActionItem> {
+  private fun buildMediaItemActions(isFav: Boolean, isHistory: Boolean, isPrivate: Boolean): List<ActionItem> {
     val favoriteText =
       if (isFav) fragment.getString(R.string.action_remove_from_favorites) else fragment.getString(R.string.action_add_to_favorites)
 
@@ -396,8 +398,22 @@ class FeedAction(
         iconRes = R.drawable.ic_playlist_add,
         isDestructive = false
       ),
-
-      )
+      if (isPrivate) {
+        ActionItem(
+          id = "remove_from_private",
+          title = fragment.getString(R.string.action_remove_media_from_private),
+          iconRes = R.drawable.lock_open_icon,
+          isDestructive = false
+        )
+      } else {
+        ActionItem(
+          id = "make_private",
+          title = fragment.getString(R.string.action_make_media_private),
+          iconRes = R.drawable.lock_close_icon,
+          isDestructive = false
+        )
+      }
+    )
     if (isHistory)
       list.add(
         ActionItem(
@@ -621,6 +637,40 @@ class FeedAction(
 
       "add_to_playlist" -> {
         showAddToPlaylistDialog(item)
+      }
+
+      "make_private" -> {
+        fragment.lifecycleScope.launch {
+          val ctx = fragment.requireContext()
+          val newPath = withContext(Dispatchers.IO) {
+            PrivateStorageManager.moveToPrivate(ctx, item.media.path, item.media.name)
+          }
+          if (newPath != null) {
+            repository.setMediaPrivate(item.media.uri, true, newPath, item.media.path)
+            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_locked)) }
+          } else {
+            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_lock_failed)) }
+          }
+        }
+      }
+
+      "remove_from_private" -> {
+        fragment.lifecycleScope.launch {
+          val ctx = fragment.requireContext()
+          val originalPath = item.media.originalPath
+          val targetDir = if (originalPath != null) File(originalPath).parentFile else null
+            ?: File(android.os.Environment.getExternalStoragePublicDirectory(
+              android.os.Environment.DIRECTORY_MOVIES), "")
+          val restoredPath = withContext(Dispatchers.IO) {
+            PrivateStorageManager.moveFromPrivate(ctx, item.media.path, item.media.name, targetDir)
+          }
+          if (restoredPath != null) {
+            repository.setMediaPrivate(item.media.uri, false, restoredPath, null)
+            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_unlocked)) }
+          } else {
+            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_lock_failed)) }
+          }
+        }
       }
 
       "delete_history" -> {

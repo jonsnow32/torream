@@ -223,7 +223,8 @@ class MediaRepositoryImpl @Inject constructor(
       )
     }
 
-    val toDelete = existingMediaWithPlayback.keys.filterNot { it in currentUris }
+    val privateUris = existingMediaWithPlayback.filter { it.value.media.isPrivate }.keys.toSet()
+    val toDelete = existingMediaWithPlayback.keys.filterNot { it in currentUris || it in privateUris }
 
     // Execute in transaction
     mediaDao.transaction {
@@ -953,7 +954,9 @@ class MediaRepositoryImpl @Inject constructor(
       width = this.width,
       height = this.height,
       dateModified = this.dateModified,
-      mimeType = this.mimeType
+      mimeType = this.mimeType,
+      isPrivate = this.isPrivate,
+      originalPath = this.customMetadata
     )
   }
 
@@ -978,7 +981,9 @@ class MediaRepositoryImpl @Inject constructor(
       zoomType = this.playback?.zoomType ?: "fit",
       subtitles = this.playback?.subtitles,
       isFinished = this.playback?.isFinished ?: false,
-      plays = 0 // Not tracked in MediaPlaybackEntity
+      plays = 0, // Not tracked in MediaPlaybackEntity
+      isPrivate = this.media.isPrivate,
+      originalPath = this.media.customMetadata
     )
   }
 
@@ -1005,5 +1010,16 @@ class MediaRepositoryImpl @Inject constructor(
 
   override suspend fun countPrivateFolders(): Int =
     withContext(Dispatchers.IO) { folderDao.countPrivate() }
+
+  override suspend fun setMediaPrivate(uri: String, isPrivate: Boolean, newPath: String, originalPath: String?) =
+    withContext(Dispatchers.IO) { mediaDao.setMediaPrivate(uri, isPrivate, newPath, originalPath) }
+
+  override suspend fun getPrivateMediaPaged(limit: Int, offset: Int): List<Media> =
+    withContext(Dispatchers.IO) {
+      mediaDao.getPrivateMediaPaged(limit, offset).map { it.toMediaDomain() }
+    }
+
+  override suspend fun countPrivateMedia(): Int =
+    withContext(Dispatchers.IO) { mediaDao.countPrivateMedia() }
 
 }

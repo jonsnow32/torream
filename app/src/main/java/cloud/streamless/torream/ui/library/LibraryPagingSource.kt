@@ -370,15 +370,15 @@ class LibraryPagingSource(
 
   private suspend fun loadPrivateFolders(limit: Int, offset: Int): List<FeedData> {
     return try {
-      repository.getPrivateFoldersPaged(limit, offset).map { folder ->
-        FeedData.FolderItem(
-          id = folder.path,
-          title = folder.name,
-          folder = folder
-        )
+      val folders = repository.getPrivateFoldersPaged(limit / 2, offset / 2).map { folder ->
+        FeedData.FolderItem(id = folder.path, title = folder.name, folder = folder) as FeedData
       }
+      val media = repository.getPrivateMediaPaged(limit / 2, offset / 2).map { m ->
+        FeedData.MediaItem(id = m.uri, title = m.name, type = determineMediaType(m.mimeType), media = m) as FeedData
+      }
+      folders + media
     } catch (e: Exception) {
-      Timber.e(e, "Error loading private folders")
+      Timber.e(e, "Error loading private items")
       emptyList()
     }
   }

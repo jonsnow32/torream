@@ -29,5 +29,6 @@ data class MediaEntity(
   // User metadata (preserved during sync)
   @ColumnInfo(name = "thumbnail_path") val thumbnailPath: String? = null,
   @ColumnInfo(name = "is_favorite") val isFavorite: Boolean = false,
-  @ColumnInfo(name = "custom_metadata") val customMetadata: String? = null
+  @ColumnInfo(name = "custom_metadata") val customMetadata: String? = null,
+  @ColumnInfo(name = "is_private") val isPrivate: Boolean = false
 )

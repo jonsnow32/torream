@@ -26,6 +26,8 @@ data class Media(
   val subtitles: List<SubtitleData>? = null,
   val isFinished: Boolean = false,
   val plays: Int = 0,
+  val isPrivate: Boolean = false,
+  val originalPath: String? = null,
 )
 
 // Helper to convert stored string back to Uri when needed

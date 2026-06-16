@@ -1120,6 +1120,11 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="folder_unlocked">Folder unlocked</string>
   <string name="set_pin">Set PIN</string>
   <string name="confirm">Confirm</string>
+  <string name="action_make_media_private">Move to Private</string>
+  <string name="action_remove_media_from_private">Remove from Private</string>
+  <string name="media_locked">File moved to private storage</string>
+  <string name="media_unlocked">File restored</string>
+  <string name="media_lock_failed">Failed to move file</string>
 
   <!-- Equalizer -->
   <string name="equalizer">Equalizer</string>
