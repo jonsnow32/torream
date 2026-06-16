@@ -672,17 +672,23 @@ class FeedAction(
         fragment.lifecycleScope.launch {
           val ctx = fragment.requireContext()
           val originalPath = item.media.originalPath
-          val targetDir = if (originalPath != null) File(originalPath).parentFile else null
-            ?: File(android.os.Environment.getExternalStoragePublicDirectory(
-              android.os.Environment.DIRECTORY_MOVIES), "")
+          val preferredDir = if (originalPath != null) File(originalPath).parentFile else null
+            ?: ctx.getExternalFilesDir(android.os.Environment.DIRECTORY_MOVIES)
+            ?: ctx.filesDir
           val restoredPath = withContext(Dispatchers.IO) {
-            PrivateStorageManager.moveFromPrivate(ctx, item.media.path, item.media.name, targetDir)
+            PrivateStorageManager.moveFromPrivate(ctx, item.media.path, item.media.name, preferredDir)
           }
-          if (restoredPath != null) {
-            repository.setMediaPrivate(item.media.uri, false, restoredPath, null)
-            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_unlocked)) }
-          } else {
-            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_lock_failed)) }
+          when {
+            restoredPath != null && restoredPath.isNotEmpty() -> {
+              repository.setMediaPrivate(item.media.uri, false, restoredPath, null)
+              withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_unlocked)) }
+            }
+            restoredPath == "" -> {
+              // Private file already gone — just clean up the DB record
+              repository.setMediaPrivate(item.media.uri, false, originalPath ?: item.media.path, null)
+              withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_unlocked)) }
+            }
+            else -> withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_lock_failed)) }
           }
         }
       }
@@ -852,18 +858,22 @@ class FeedAction(
           val ctx = fragment.requireContext()
           val state = downloadRepository.observeState(item.id).firstOrNull() ?: return@launch
           val type = state.task.type
-          val targetDir = android.os.Environment.getExternalStoragePublicDirectory(
-            android.os.Environment.DIRECTORY_DOWNLOADS)
-          // item.title is the original display name stored at download time
+          val preferredDir = ctx.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS)
+            ?: android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
           val originalName = item.title.ifEmpty { File(state.task.targetPath).name }
           val restoredPath = withContext(Dispatchers.IO) {
-            PrivateStorageManager.moveFromPrivate(ctx, state.task.targetPath, originalName, targetDir)
+            PrivateStorageManager.moveFromPrivate(ctx, state.task.targetPath, originalName, preferredDir)
           }
-          if (restoredPath != null) {
-            downloadRepository.setDownloadPrivate(item.id, type, false, restoredPath)
-            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_unlocked)) }
-          } else {
-            withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_lock_failed)) }
+          when {
+            restoredPath != null && restoredPath.isNotEmpty() -> {
+              downloadRepository.setDownloadPrivate(item.id, type, false, restoredPath)
+              withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_unlocked)) }
+            }
+            restoredPath == "" -> {
+              downloadRepository.setDownloadPrivate(item.id, type, false, state.task.targetPath)
+              withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_unlocked)) }
+            }
+            else -> withContext(Dispatchers.Main) { showToast(fragment.getString(R.string.media_lock_failed)) }
           }
         }
       }
