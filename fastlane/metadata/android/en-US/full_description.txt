@@ -18,8 +18,8 @@ Full DPAD remote control support with an optimized TV interface. Navigate your l
 PICTURE-IN-PICTURE
 Continue watching while multitasking with PiP mode. Torream keeps your video visible across all your Android apps.
 
-CHROMECAST SUPPORT
-Cast any video to your Chromecast — including local files from your device. Control playback with a full cast player UI: seek, play/pause, skip, and subtitle selection, all without leaving the app.
+CHROMECAST & FCAST SUPPORT
+Cast any video to your Chromecast — including local files from your device. Control playback with a full cast player UI: seek, play/pause, skip, and subtitle selection, all without leaving the app. Prefer Fcast? Torream integrates with WebVideoCaster so you can cast to any device on your network with full subtitle and header support.
 
 BACKGROUND AUDIO PLAYBACK
 Keep audio running when you switch apps or lock your screen. Full media session integration with lock screen controls and notification controls.
