@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -198,10 +199,16 @@ class LibraryFragment : Fragment() {
       inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
       hint = getString(R.string.private_folder_pin_hint)
     }
+    val container = FrameLayout(requireContext()).apply {
+      val horizontal = (24 * resources.displayMetrics.density).toInt()
+      val vertical = (8 * resources.displayMetrics.density).toInt()
+      setPadding(horizontal, vertical, horizontal, vertical)
+      addView(input)
+    }
     AlertDialog.Builder(requireContext(), R.style.BaseMaterialDialogTheme)
       .setTitle(getString(R.string.private_folder_set_pin_title))
       .setMessage(getString(R.string.private_folder_set_pin_message))
-      .setView(input)
+      .setView(container)
       .setPositiveButton(getString(R.string.set_pin)) { _, _ ->
         val pin = input.text.toString()
         if (pin.length >= 4) {
@@ -222,9 +229,15 @@ class LibraryFragment : Fragment() {
       inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
       hint = getString(R.string.private_folder_pin_hint)
     }
+    val container = FrameLayout(requireContext()).apply {
+      val horizontal = (24 * resources.displayMetrics.density).toInt()
+      val vertical = (8 * resources.displayMetrics.density).toInt()
+      setPadding(horizontal, vertical, horizontal, vertical)
+      addView(input)
+    }
     AlertDialog.Builder(requireContext(), R.style.BaseMaterialDialogTheme)
       .setTitle(getString(R.string.private_folder_enter_pin_title))
-      .setView(input)
+      .setView(container)
       .setPositiveButton(getString(R.string.confirm)) { _, _ ->
         val stored = viewModel.sharedPreferences.getString(pinPrefKey, null)
         if (input.text.toString() == stored) onCorrect() else onWrong()

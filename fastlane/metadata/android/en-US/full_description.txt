@@ -27,6 +27,9 @@ Keep audio running when you switch apps or lock your screen. Full media session 
 DOWNLOAD FOR OFFLINE VIEWING
 Download HTTP, HLS, and torrent content directly to your device for offline playback anywhere.
 
+EQUALIZER
+Shape your audio with a built-in 5-band equalizer. Dial in bass, mids, and treble to match your headphones, speakers, or personal taste.
+
 GESTURE CONTROLS
 Swipe to adjust brightness, volume, and seek position with intuitive touch gestures — designed for one-handed use.
 
