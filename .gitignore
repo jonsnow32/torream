@@ -50,3 +50,6 @@ local.properties
 *.apk
 app/universal/
 /obj/
+
+# Fastlane run report (regenerated on every fastlane invocation)
+/fastlane/report.xml
