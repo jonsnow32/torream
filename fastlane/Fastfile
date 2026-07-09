@@ -97,6 +97,22 @@ platform :android do
     )
   end
 
+  desc "Update release notes for an already-uploaded build (no rebuild, no re-upload). Pass track:internal|alpha|production (default internal) and version_code:<code> if the track has more than one release"
+  lane :update_changelog do |options|
+    params = {
+      json_key:                ENV["PLAY_KEY_FILE"],
+      track:                   options[:track] || "internal",
+      skip_upload_apk:         true,
+      skip_upload_aab:         true,
+      skip_upload_metadata:    true,
+      skip_upload_images:      true,
+      skip_upload_screenshots: true,
+    }
+    params[:version_code] = options[:version_code].to_i if options[:version_code]
+
+    upload_to_play_store(params)
+  end
+
   desc "Upload store listing metadata, images and screenshots (no build)"
   lane :upload_metadata do
     upload_to_play_store(

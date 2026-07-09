@@ -79,6 +79,14 @@ Build, sign, and upload AAB to Play Store closed testing (alpha) track
 
 Promote internal build to production
 
+### android update_changelog
+
+```sh
+[bundle exec] fastlane android update_changelog
+```
+
+Update release notes for an already-uploaded build (no rebuild, no re-upload). Pass track:internal|alpha|production (default internal) and version_code:<code> if the track has more than one release
+
 ### android upload_metadata
 
 ```sh

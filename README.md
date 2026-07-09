@@ -24,3 +24,18 @@ For more details, see the build scripts in `buildscripts/`.
 
 build all releases
 /build-all-releases.sh
+
+## Play Store Release Notes
+
+Release notes ("What's new") live at `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`
+(max 500 characters per file). `supply`/`upload_to_play_store` picks the file matching the AAB's
+`versionCode` automatically on `upload_internal` and `deploy_production`.
+
+To update the release notes on a track without rebuilding or re-uploading the AAB:
+
+```bash
+PLAY_KEY_FILE=/path/to/service-account.json bundle exec fastlane update_changelog track:production version_code:106
+```
+
+`track` defaults to `internal`. Pass `version_code` when the target track has more than one active
+release (e.g. a draft alongside a live release) so fastlane knows which one to update.
