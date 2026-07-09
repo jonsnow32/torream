@@ -1,0 +1,8 @@
+Novedades de la versión 1.0.6:
+• Búsqueda de subtítulos en línea (OpenSubtitles, SubDL, SubSource)
+• Ecualizador movido a su propio panel de acceso rápido
+• Recordatorios de "Seguir viendo": pospón (1h/2h) o descarta con un toque
+• Nueva opción para editar la configuración de MPV (avanzado)
+• Superposición numérica al ajustar volumen/brillo
+• La Carpeta privada (PIN) ahora también protege archivos descargados
+• Corrección de errores y mejoras de estabilidad
