@@ -4,19 +4,19 @@ import android.app.Dialog
 import android.content.SharedPreferences
 import android.text.Editable
 import android.view.LayoutInflater
-import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import cloud.streamless.torream.R
-import cloud.streamless.torream.databinding.DialogEqualizerBinding
+import cloud.streamless.torream.databinding.BottomSheetEqualizerBinding
 import cloud.streamless.torream.databinding.SubtitleOffsetBinding
 import cloud.streamless.torream.model.SubtitleData
 import cloud.streamless.torream.model.VideoLink
 import cloud.streamless.torream.ui.dialog.SelectionDialog
 import cloud.streamless.torream.utils.UIHelper.dismissSafe
+import com.google.android.material.chip.Chip
 import kotlin.math.max
 
 /**
@@ -219,7 +219,7 @@ class PlayerDialogManager(
       currentSubtitleTracks.map { it.name } + listOf<String>(ctx.getString(R.string.load_from_file), ctx.getString(R.string.load_from_network)),
       subtitleIndex,
       fragment.getString(R.string.subtitle),
-      true
+      false
     )
     dialog.show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
@@ -311,114 +311,123 @@ class PlayerDialogManager(
 
   // ========== Equalizer ==========
 
-  private val eqBandFreqs = intArrayOf(60, 250, 1000, 4000, 16000)
-
   private val eqPresets = linkedMapOf(
     "Flat"         to floatArrayOf(0f, 0f, 0f, 0f, 0f),
     "Bass Boost"   to floatArrayOf(8f, 4f, 0f, 0f, 0f),
     "Treble Boost" to floatArrayOf(0f, 0f, 0f, 4f, 8f),
     "Voice"        to floatArrayOf(0f, 4f, 2f, 4f, 0f),
-    "Movie"        to floatArrayOf(4f, 0f, -2f, 0f, 4f),
-    "Custom"       to floatArrayOf(0f, 0f, 0f, 0f, 0f)
+    "Movie"        to floatArrayOf(4f, 0f, -2f, 0f, 4f)
   )
 
   private fun progressToDb(progress: Int) = (progress - 12).toFloat()
   private fun dbToProgress(db: Float) = (db + 12).toInt().coerceIn(0, 24)
-  private fun dbLabel(db: Float) = if (db >= 0) "+${db.toInt()} dB" else "${db.toInt()} dB"
-
-  fun buildEqFilterString(gains: FloatArray): String {
-    if (gains.all { it == 0f }) return ""
-    val chain = gains.indices.joinToString(",") { i ->
-      "equalizer=f=${eqBandFreqs[i]}:width_type=o:width=2:g=${gains[i].toInt()}"
-    }
-    return "lavfi=graph=$chain"
-  }
+  private fun dbLabel(db: Float) = if (db >= 0) "+${db.toInt()}" else "${db.toInt()}"
 
   fun loadEqGains(prefs: SharedPreferences): FloatArray {
     val raw = prefs.getString("eq_bands", null) ?: return FloatArray(5)
     return try {
-      raw.split(",").map { it.toFloat() }.toFloatArray().let {
-        if (it.size == 5) it else FloatArray(5)
-      }
+      val arr = raw.split(",").map { it.toFloat() }.toFloatArray()
+      if (arr.size == 5) arr else FloatArray(5)
     } catch (_: Exception) { FloatArray(5) }
-  }
-
-  fun saveEqGains(prefs: SharedPreferences, gains: FloatArray) {
-    prefs.edit().putString("eq_bands", gains.joinToString(",")).apply()
   }
 
   fun showEqualizerDialog(
     prefs: SharedPreferences,
-    onApply: (FloatArray) -> Unit
+    onChanged: (gains: FloatArray, enabled: Boolean) -> Unit
   ) {
     val ctx = fragment.activity ?: return
-    val binding = DialogEqualizerBinding.inflate(LayoutInflater.from(ctx))
+    val binding = BottomSheetEqualizerBinding.inflate(LayoutInflater.from(ctx))
     onShowDialog?.invoke()
 
-    val currentGains = loadEqGains(prefs).copyOf()
+    val gains = loadEqGains(prefs).copyOf()
+    var eqEnabled = prefs.getBoolean("eq_enabled", true)
+
     val bands = listOf(binding.eqBand0, binding.eqBand1, binding.eqBand2, binding.eqBand3, binding.eqBand4)
     val labels = listOf(binding.eqBand0Val, binding.eqBand1Val, binding.eqBand2Val, binding.eqBand3Val, binding.eqBand4Val)
-    var suppressPresetListener = false
 
-    fun refreshLabels() {
-      bands.forEachIndexed { i, sb -> labels[i].text = dbLabel(progressToDb(sb.progress)) }
+    fun save() {
+      prefs.edit()
+        .putString("eq_bands", gains.joinToString(","))
+        .putBoolean("eq_enabled", eqEnabled)
+        .apply()
+      onChanged(gains.copyOf(), eqEnabled)
     }
 
-    fun applyPresetValues(gains: FloatArray) {
-      suppressPresetListener = true
-      bands.forEachIndexed { i, sb -> sb.progress = dbToProgress(gains[i]); currentGains[i] = gains[i] }
-      refreshLabels()
-      suppressPresetListener = false
-    }
-
-    // Init bands from saved gains
-    applyPresetValues(currentGains)
-
-    // Preset spinner
-    val presetNames = eqPresets.keys.toList()
-    val presetValues = eqPresets.values.toList()
-    binding.eqPresetSpinner.adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_item, presetNames)
-      .also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
-
-    binding.eqPresetSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-      override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: android.view.View?, pos: Int, id: Long) {
-        if (suppressPresetListener) return
-        if (presetNames[pos] != "Custom") applyPresetValues(presetValues[pos].copyOf())
+    fun syncChips(matchGains: FloatArray?) {
+      (0 until binding.eqPresetChipGroup.childCount).forEach { j ->
+        val chip = binding.eqPresetChipGroup.getChildAt(j) as? Chip ?: return@forEach
+        chip.isChecked = matchGains != null && eqPresets[chip.text.toString()]?.contentEquals(matchGains) == true
       }
-      override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
     }
 
-    // SeekBar listeners — mark preset as Custom when user adjusts manually
+    fun updateBandsAlpha() {
+      binding.eqBandsContainer.alpha = if (eqEnabled) 1f else 0.4f
+      bands.forEach { it.isEnabled = eqEnabled }
+      binding.eqPresetChipGroup.alpha = if (eqEnabled) 1f else 0.4f
+      (0 until binding.eqPresetChipGroup.childCount).forEach { j ->
+        binding.eqPresetChipGroup.getChildAt(j)?.isEnabled = eqEnabled
+      }
+    }
+
+    // Init band sliders from saved gains
+    bands.forEachIndexed { i, sb ->
+      sb.progress = dbToProgress(gains[i])
+      labels[i].text = dbLabel(gains[i])
+    }
+
+    // SeekBar listeners — real-time label update, save on release
     bands.forEachIndexed { i, sb ->
       sb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
         override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
           if (!fromUser) return
-          currentGains[i] = progressToDb(progress)
-          labels[i].text = dbLabel(currentGains[i])
-          suppressPresetListener = true
-          binding.eqPresetSpinner.setSelection(presetNames.indexOf("Custom"))
-          suppressPresetListener = false
+          gains[i] = progressToDb(progress)
+          labels[i].text = dbLabel(gains[i])
+          syncChips(null)
         }
         override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-        override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        override fun onStopTrackingTouch(seekBar: SeekBar?) { save() }
       })
     }
 
-    binding.eqResetBtn.setOnClickListener { applyPresetValues(FloatArray(5)) }
+    // Preset chips
+    eqPresets.forEach { (name, presetGains) ->
+      val chip = Chip(ctx).apply {
+        text = name
+        isCheckable = true
+        isChecked = presetGains.contentEquals(gains)
+      }
+      chip.setOnClickListener {
+        presetGains.copyInto(gains)
+        bands.forEachIndexed { i, sb -> sb.progress = dbToProgress(gains[i]) }
+        labels.forEachIndexed { i, tv -> tv.text = dbLabel(gains[i]) }
+        syncChips(gains)
+        save()
+      }
+      binding.eqPresetChipGroup.addView(chip)
+    }
+
+    // Enable/disable switch
+    binding.eqEnabledSwitch.isChecked = eqEnabled
+    binding.eqEnabledSwitch.setOnCheckedChangeListener { _, checked ->
+      eqEnabled = checked
+      updateBandsAlpha()
+      save()
+    }
+    updateBandsAlpha()
 
     val dialog = AlertDialog.Builder(ctx, R.style.BaseMaterialDialogTheme)
-      .setTitle(ctx.getString(R.string.equalizer))
       .setView(binding.root)
-      .setPositiveButton(ctx.getString(R.string.apply)) { _, _ ->
-        saveEqGains(prefs, currentGains)
-        onApply(currentGains)
-      }
-      .setNegativeButton(ctx.getString(R.string.cancel), null)
       .setOnDismissListener { onDismissDialog?.invoke() }
       .create()
 
     currentDialog = dialog
     dialog.show()
+
+    // Fixed width — prevents stretch in landscape, consistent on all screen sizes
+    val dm = ctx.resources.displayMetrics
+    val targetPx = (380 * dm.density).toInt()
+    val maxPx = dm.widthPixels - (32 * dm.density).toInt()
+    dialog.window?.setLayout(minOf(targetPx, maxPx), android.view.WindowManager.LayoutParams.WRAP_CONTENT)
   }
 
   /**

@@ -1143,20 +1143,41 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   }
 
   private fun showEqualizerDialog() {
-    dialogManager.showEqualizerDialog(sharedPreferences) { gains ->
-      applyEqualizer(gains)
+    dialogManager.showEqualizerDialog(sharedPreferences) { gains, enabled ->
+      applyEqualizer(gains, enabled)
       activity?.hideSystemUI()
     }
   }
 
-  private fun applyEqualizer(gains: FloatArray) {
-    val filter = dialogManager.buildEqFilterString(gains)
+  private var androidEq: android.media.audiofx.Equalizer? = null
+
+  private fun applyEqualizer(gains: FloatArray, enabled: Boolean = true) {
     try {
-      if (filter.isEmpty()) {
-        MPVLib.command(arrayOf("af", "clear"))
-      } else {
-        MPVLib.setPropertyString("af", filter)
+      if (!enabled || gains.all { it == 0f }) {
+        androidEq?.enabled = false
+        return
       }
+      val eq = androidEq ?: android.media.audiofx.Equalizer(0, 0).also { androidEq = it }
+      val levelRange = eq.bandLevelRange
+      val numBands = eq.numberOfBands.toInt()
+      // Target frequencies in milliHz matching our 5 UI bands
+      val targetMHz = intArrayOf(60_000, 250_000, 1_000_000, 4_000_000, 16_000_000)
+      gains.forEachIndexed { i, gain ->
+        val target = targetMHz[i]
+        var bestBand: Short = 0
+        var bestDiff = Int.MAX_VALUE
+        for (b in 0 until numBands) {
+          val range = eq.getBandFreqRange(b.toShort())
+          val center = ((range[0].toLong() + range[1].toLong()) / 2L).toInt()
+          val diff = Math.abs(center - target)
+          if (diff < bestDiff) { bestDiff = diff; bestBand = b.toShort() }
+        }
+        val mb = (gain * 100).toInt()
+          .coerceIn(levelRange[0].toInt(), levelRange[1].toInt())
+          .toShort()
+        eq.setBandLevel(bestBand, mb)
+      }
+      eq.enabled = true
     } catch (e: Exception) {
       Timber.tag(TAG).e(e, "Failed to apply equalizer")
     }
@@ -1305,7 +1326,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
           openSubPicker()
         },
         onLoadSubtitlesOnline = {
-          showToast("Not implemented yet", Toast.LENGTH_SHORT)
+          openOnlineSubtitleSearch()
         },
         onDismiss = {
           //player?.paused = false
@@ -1317,6 +1338,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
+
+  private fun openOnlineSubtitleSearch() {
+    val title = playerBinding?.playerVideoTitle?.text?.toString()
+    val dialog = cloud.streamless.torream.ui.subtitles.OnlineSubtitleDialog.newInstance(title)
+    dialog.onSubtitleSelected = { sub -> addAndSelectSubtitles(sub) }
+    dialog.show(childFragmentManager)
+  }
 
   private fun openCastController() {
     startActivity(Intent(requireContext(), ControllerActivity::class.java))
@@ -1806,7 +1834,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     player?.paused = false
 
     // Restore equalizer settings after MPV re-initialises
-    applyEqualizer(dialogManager.loadEqGains(sharedPreferences))
+    applyEqualizer(
+      dialogManager.loadEqGains(sharedPreferences),
+      sharedPreferences.getBoolean("eq_enabled", true)
+    )
 
     uiReset()
     super.onResume()
@@ -1893,6 +1924,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     player?.removeObserver(this)
     player?.destroy()
+
+    androidEq?.release()
+    androidEq = null
 
     localFileStreamServer.stop()
     playerEventListener = null

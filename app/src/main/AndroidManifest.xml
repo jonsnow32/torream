@@ -224,6 +224,17 @@
         <action android:name="cloud.streamless.torream.CANCEL_ALL_DOWNLOADS" />
       </intent-filter>
     </receiver>
+
+    <!-- Continue watching notification action receiver -->
+    <receiver
+      android:name=".utils.ContinueWatchingActionReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="cloud.streamless.torream.CW_SNOOZE_1H" />
+        <action android:name="cloud.streamless.torream.CW_SNOOZE_2H" />
+        <action android:name="cloud.streamless.torream.CW_DISMISS" />
+      </intent-filter>
+    </receiver>
   </application>
 
 </manifest>

@@ -30,6 +30,7 @@
   <string name="video_buffer_size_key" translatable="false">video_buffer_size_key</string>
   <string name="video_buffer_length_key" translatable="false">video_buffer_length_key</string>
   <string name="video_buffer_clear_key" translatable="false">video_buffer_clear_key</string>
+  <string name="mpv_conf_editor_key" translatable="false">mpv_conf_editor</string>
   <string name="video_buffer_disk_key" translatable="false">video_buffer_disk_key</string>
   <string name="use_system_brightness_key" translatable="false">use_system_brightness_key</string>
   <string name="swipe_enabled_key" translatable="false">swipe_enabled_key</string>
@@ -422,6 +423,8 @@
   <string name="video_buffer_length_settings">Video buffer length</string>
   <string name="video_buffer_disk_settings">Video cache on disk</string>
   <string name="video_buffer_clear_settings">Clear video and image cache</string>
+  <string name="pref_category_advanced">Advanced</string>
+  <string name="mpv_conf_editor">MPV Config (mpv.conf)</string>
   <string name="android_tv_interface_on_seek_settings">Player Shown - Seek Amount</string>
   <string name="android_tv_interface_on_seek_settings_summary">The seek amount used when the player is visible</string>
   <string name="android_tv_interface_off_seek_settings">Player Hidden - Seek Amount</string>
@@ -453,6 +456,9 @@
   <string name="continue_watching_reminder_summary">Remind you about videos you haven\'t finished</string>
   <string name="continue_watching_notification_title">Continue watching?</string>
   <string name="continue_watching_notification_text">Pick up where you left off in %1$s</string>
+  <string name="cw_snooze_1h">1h later</string>
+  <string name="cw_snooze_2h">2h later</string>
+  <string name="cw_dont_remind">Don\'t remind</string>
   <string name="legal_notice">Disclaimer</string>
   <string name="legal_notice_key" translatable="false">legal_notice_key</string>
   <string name="legal_notice_text">Any legal issues regarding the content on this application
@@ -574,6 +580,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="player_loaded_subtitles" formatted="true">Loaded %s</string>
   <string name="player_load_subtitles">Load from file</string>
   <string name="player_load_subtitles_online">Load from Internet</string>
+  <string name="subtitle_no_results">No subtitles found</string>
+  <string name="subtitle_download_error">Failed to download subtitle</string>
   <string name="downloaded_file">Downloaded file</string>
   <string name="actor_main">Main</string>
   <string name="actor_supporting">Supporting</string>
@@ -1101,6 +1109,9 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="app_language_des">Change the app display language</string>
   <string name="ad_testing_des">Preview ad placements</string>
   <string name="video_buffer_clear_des">Free up space used by cached video and images</string>
+  <string name="mpv_conf_editor_des">Edit raw MPV options — takes effect on next playback</string>
+  <string name="mpv_conf_saved">Saved — restart playback to apply changes</string>
+  <string name="mpv_conf_reset">Reset</string>
   <string name="download_path_des">Choose where downloaded files are saved</string>
   <string name="battery_optimisation_des">Keep downloads running in the background</string>
   <string name="filter_section_display">Display</string>

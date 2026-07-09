@@ -169,6 +169,15 @@
       android:summary="@string/video_buffer_clear_des"
       android:title="@string/video_buffer_clear_settings" />
   </PreferenceCategory>
+  <PreferenceCategory android:title="@string/pref_category_advanced">
+    <Preference
+      android:icon="@drawable/ic_baseline_tune_24"
+      android:key="@string/mpv_conf_editor_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/mpv_conf_editor"
+      app:summary="@string/mpv_conf_editor_des" />
+  </PreferenceCategory>
+
   <PreferenceCategory android:title="@string/pref_category_android_tv">
     <SeekBarPreference
       android:defaultValue="10"

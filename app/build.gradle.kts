@@ -40,8 +40,8 @@ android {
     applicationId = "cloud.streamless.torream"
     minSdk = 23
     targetSdk = 36
-    versionCode = 104
-    versionName = "1.0.4"
+    versionCode = 106
+    versionName = "1.0.6"
 
 
     // Reads local.properties
@@ -56,6 +56,16 @@ android {
       "String",
       "TEST_ID",
       "\"" + localProperties["test.id"] + "\""
+    )
+    buildConfigField(
+      "String",
+      "OPENSUBTITLES_API_KEY",
+      "\"" + (localProperties["opensubtitles.api_key"] ?: System.getenv("OPENSUBTITLES_API_KEY") ?: "") + "\""
+    )
+    buildConfigField(
+      "String",
+      "SUBDL_API_KEY",
+      "\"" + (localProperties["subdl.api_key"] ?: System.getenv("SUBDL_API_KEY") ?: "") + "\""
     )
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

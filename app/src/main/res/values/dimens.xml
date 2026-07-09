@@ -42,4 +42,6 @@
   <dimen name="shelf_item_heigh">110dp</dimen>
 
   <dimen name="nav_height">64dp</dimen>
+
+  <dimen name="eq_slider_height">160dp</dimen>
 </resources>

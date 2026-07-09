@@ -26,6 +26,9 @@ import java.util.concurrent.TimeUnit
  * Daily worker that reminds the user about the most recent unfinished video,
  * but only if the app hasn't been opened for a while. Disabled via the
  * "continue watching reminder" switch in Settings > General.
+ *
+ * When invoked via snooze (INPUT_SNOOZE_MODE=true), skips all time-gate checks
+ * and shows a notification for the specific item passed in inputData.
  */
 @HiltWorker
 class ContinueWatchingReminderWorker @AssistedInject constructor(
@@ -37,6 +40,18 @@ class ContinueWatchingReminderWorker @AssistedInject constructor(
   override suspend fun doWork(): Result {
     val context = applicationContext
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+
+    // Snooze mode: show notification for a specific item without any checks
+    if (inputData.getBoolean(INPUT_SNOOZE_MODE, false)) {
+      val uri = inputData.getString(EXTRA_MEDIA_URI) ?: return Result.success()
+      val name = inputData.getString(EXTRA_MEDIA_NAME) ?: ""
+      val position = inputData.getLong(EXTRA_POSITION, 0L)
+      if (NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+        showNotification(context, uri, name, position, prefs)
+      }
+      return Result.success()
+    }
+
     val now = System.currentTimeMillis()
 
     if (!prefs.getBoolean(context.getString(R.string.continue_watching_reminder_key), true)) {
@@ -54,18 +69,28 @@ class ContinueWatchingReminderWorker @AssistedInject constructor(
       return Result.success()
     }
 
-    val item = mediaDao.getRecentlyPlayedWithPlayback(5, 0).firstOrNull {
+    val dismissedUris = prefs.getStringSet(PREF_DISMISSED_URIS, emptySet()) ?: emptySet()
+
+    val item = mediaDao.getRecentlyPlayedWithPlayback(10, 0).firstOrNull {
       val playback = it.playback ?: return@firstOrNull false
-      playback.position > 0L && now - playback.lastPlayedAt < MAX_ITEM_AGE_MS
+      !dismissedUris.contains(it.media.uri) &&
+        playback.position > 0L &&
+        now - playback.lastPlayedAt < MAX_ITEM_AGE_MS
     } ?: return Result.success()
 
-    showNotification(context, item.media.uri, item.media.name, item.playback?.position ?: 0L)
+    showNotification(context, item.media.uri, item.media.name, item.playback?.position ?: 0L, prefs)
     prefs.edit { putLong(PREF_LAST_REMINDER_AT, now) }
     Timber.d("Continue watching reminder shown for ${item.media.name}")
     return Result.success()
   }
 
-  private fun showNotification(context: Context, mediaUri: String, mediaName: String, position: Long) {
+  private fun showNotification(
+    context: Context,
+    mediaUri: String,
+    mediaName: String,
+    position: Long,
+    prefs: android.content.SharedPreferences
+  ) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       val channel = NotificationChannel(
         CHANNEL_ID,
@@ -76,7 +101,7 @@ class ContinueWatchingReminderWorker @AssistedInject constructor(
       manager.createNotificationChannel(channel)
     }
 
-    val intent = Intent(context, MainActivity::class.java).apply {
+    val contentIntent = Intent(context, MainActivity::class.java).apply {
       action = ACTION_CONTINUE_WATCHING
       putExtra(EXTRA_MEDIA_URI, mediaUri)
       putExtra(EXTRA_MEDIA_NAME, mediaName)
@@ -84,17 +109,45 @@ class ContinueWatchingReminderWorker @AssistedInject constructor(
       flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or
         Intent.FLAG_ACTIVITY_SINGLE_TOP
     }
-    val pendingIntent = PendingIntent.getActivity(
-      context, 0, intent,
+    val contentPendingIntent = PendingIntent.getActivity(
+      context, 0, contentIntent,
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
+
+    fun actionIntent(action: String, requestCode: Int): PendingIntent {
+      val intent = Intent(context, ContinueWatchingActionReceiver::class.java).apply {
+        this.action = action
+        putExtra(EXTRA_MEDIA_URI, mediaUri)
+        putExtra(EXTRA_MEDIA_NAME, mediaName)
+        putExtra(EXTRA_POSITION, position)
+      }
+      return PendingIntent.getBroadcast(
+        context, requestCode, intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+      )
+    }
 
     val notification = NotificationCompat.Builder(context, CHANNEL_ID)
       .setSmallIcon(R.drawable.ic_baseline_play_arrow_24)
       .setContentTitle(context.getString(R.string.continue_watching_notification_title))
       .setContentText(context.getString(R.string.continue_watching_notification_text, mediaName))
-      .setContentIntent(pendingIntent)
+      .setContentIntent(contentPendingIntent)
       .setAutoCancel(true)
+      .addAction(
+        0,
+        context.getString(R.string.cw_snooze_1h),
+        actionIntent(ContinueWatchingActionReceiver.ACTION_SNOOZE_1H, 1)
+      )
+      .addAction(
+        0,
+        context.getString(R.string.cw_snooze_2h),
+        actionIntent(ContinueWatchingActionReceiver.ACTION_SNOOZE_2H, 2)
+      )
+      .addAction(
+        0,
+        context.getString(R.string.cw_dont_remind),
+        actionIntent(ContinueWatchingActionReceiver.ACTION_DISMISS, 3)
+      )
       .build()
 
     try {
@@ -107,14 +160,16 @@ class ContinueWatchingReminderWorker @AssistedInject constructor(
   companion object {
     const val WORK_NAME = "continue_watching_reminder"
     const val PREF_APP_LAST_OPENED_AT = "app_last_opened_at"
+    const val PREF_DISMISSED_URIS = "continue_watching_dismissed_uris"
     const val ACTION_CONTINUE_WATCHING = "cloud.streamless.torream.CONTINUE_WATCHING"
     const val EXTRA_MEDIA_URI = "media_uri"
     const val EXTRA_MEDIA_NAME = "media_name"
     const val EXTRA_POSITION = "position"
+    const val INPUT_SNOOZE_MODE = "snooze_mode"
+    const val NOTIFICATION_ID = 9011
 
     private const val PREF_LAST_REMINDER_AT = "continue_watching_last_reminder_at"
     private const val CHANNEL_ID = "continue_watching_channel"
-    private const val NOTIFICATION_ID = 9011
 
     // Test mode in debug builds: no inactivity/interval gating, so every run notifies
     private val TEST_MODE = BuildConfig.DEBUG

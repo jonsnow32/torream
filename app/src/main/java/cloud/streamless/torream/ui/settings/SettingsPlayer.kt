@@ -2,14 +2,22 @@ package cloud.streamless.torream.ui.settings
 
 import android.os.Bundle
 import android.text.format.Formatter.formatShortFileSize
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import cloud.streamless.torream.R
 import cloud.streamless.torream.ui.dialog.SelectionDialog
+import cloud.streamless.torream.ui.player.mpv.MPVUtils
+import cloud.streamless.torream.ui.player.mpv.MPVView
 import cloud.streamless.torream.ui.settings.SettingsFragment.Companion.getFolderSize
 import cloud.streamless.torream.ui.settings.SettingsFragment.Companion.getPref
 import cloud.streamless.torream.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
@@ -193,6 +201,11 @@ class SettingsPlayer : PreferenceFragmentCompat() {
       return@setOnPreferenceClickListener true
     }
 
+    getPref(R.string.mpv_conf_editor_key)?.setOnPreferenceClickListener {
+      showMpvConfEditor()
+      true
+    }
+
     getPref(R.string.video_buffer_clear_key)?.let { pref ->
       val cacheDir = context?.cacheDir ?: return@let
 
@@ -217,5 +230,68 @@ class SettingsPlayer : PreferenceFragmentCompat() {
       }
     }
 
+  }
+
+  private fun showMpvConfEditor() {
+    val ctx = requireContext()
+    val confFile = MPVView.getMpvConfFile(ctx) ?: run {
+      Toast.makeText(ctx, "External storage not available", Toast.LENGTH_SHORT).show()
+      return
+    }
+    val currentContent = if (confFile.exists()) confFile.readText() else MPVView.DEFAULT_MPV_CONF
+
+    val dp8 = MPVUtils.convertDp(ctx, 8f)
+
+    val pathView = TextView(ctx).apply {
+      text = confFile.absolutePath
+      setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11f)
+      setTextColor(0xFF888888.toInt())
+      setPadding(dp8, dp8, dp8, MPVUtils.convertDp(ctx, 4f))
+    }
+
+    val editText = EditText(ctx).apply {
+      setText(currentContent)
+      typeface = android.graphics.Typeface.MONOSPACE
+      setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12f)
+      gravity = Gravity.TOP or Gravity.START
+      inputType = android.text.InputType.TYPE_CLASS_TEXT or
+        android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+        android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+      isSingleLine = false
+      maxLines = 999
+      isVerticalScrollBarEnabled = true
+      setHorizontallyScrolling(false)
+      setLines(20)
+      setPadding(dp8, dp8, dp8, dp8)
+    }
+
+    val layout = LinearLayout(ctx).apply {
+      orientation = LinearLayout.VERTICAL
+      addView(pathView)
+      addView(editText)
+    }
+
+    val dialog = AlertDialog.Builder(ctx, R.style.BaseMaterialDialogTheme)
+      .setTitle(R.string.mpv_conf_editor)
+      .setView(layout)
+      .setPositiveButton(android.R.string.ok) { _, _ ->
+        runCatching {
+          confFile.parentFile?.mkdirs()
+          confFile.writeText(editText.text.toString())
+        }.onSuccess {
+          Toast.makeText(ctx, R.string.mpv_conf_saved, Toast.LENGTH_SHORT).show()
+        }.onFailure {
+          Toast.makeText(ctx, "Failed to save: ${it.message}", Toast.LENGTH_LONG).show()
+        }
+      }
+      .setNeutralButton(R.string.mpv_conf_reset, null)
+      .setNegativeButton(android.R.string.cancel, null)
+      .show()
+
+    // Override neutral button so it doesn't auto-dismiss the dialog
+    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+      editText.setText(MPVView.DEFAULT_MPV_CONF)
+      editText.setSelection(0)
+    }
   }
 }

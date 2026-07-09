@@ -142,6 +142,18 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     MPVLib.setOptionString("sub-ass-override", "yes")
     MPVLib.setOptionString("sub-visibility", "yes")
 
+    // Load user mpv.conf from external storage — options there override the above
+    val externalFilesDir = context.getExternalFilesDir(null)
+    if (externalFilesDir != null) {
+      val userConf = File(externalFilesDir, "mpv.conf")
+      if (!userConf.exists()) {
+        runCatching { userConf.writeText(DEFAULT_MPV_CONF) }
+      }
+      if (userConf.exists()) {
+        MPVLib.setOptionString("include", userConf.absolutePath)
+      }
+    }
+
     Timber.tag(TAG).v("Set sub-ass-override to yes and sub-visibility to yes - will use custom subtitle styling")
 
     // Load and apply subtitle settings - optimized with extracted method
@@ -707,5 +719,28 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
 
   companion object {
     private const val TAG = "mpv"
+
+    fun getMpvConfFile(context: android.content.Context): java.io.File? {
+      val dir = context.getExternalFilesDir(null) ?: return null
+      return java.io.File(dir, "mpv.conf")
+    }
+
+    val DEFAULT_MPV_CONF = """# mpv.conf — user configuration
+# Location: Android/data/cloud.streamless.torream/files/mpv.conf
+# Options here override app defaults. Restart playback for changes to take effect.
+# Full option reference: https://mpv.io/manual/master/#configuration-files
+#
+# Uncomment lines below or add your own options:
+#
+# hwdec=auto
+# deband=yes
+# video-sync=display-resample
+# interpolation=yes
+# tscale=oversample
+# sub-font-size=55
+# volume-max=200
+# cache=yes
+# demuxer-max-bytes=256MiB
+"""
   }
 }

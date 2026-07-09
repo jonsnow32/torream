@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:paddingTop="8dp"
+  android:paddingBottom="4dp">
+
+  <!-- Title row with enable switch -->
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="20dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:text="@string/equalizer"
+      android:textAppearance="?attr/textAppearanceTitleMedium"
+      android:textColor="?attr/colorOnSurface"
+      android:textStyle="bold" />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+      android:id="@+id/eqEnabledSwitch"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" />
+
+  </LinearLayout>
+
+  <!-- Band sliders -->
+  <LinearLayout
+    android:id="@+id/eqBandsContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingStart="4dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="4dp">
+
+    <!-- dB scale column -->
+    <LinearLayout
+      android:layout_width="28dp"
+      android:layout_height="wrap_content"
+      android:gravity="center_horizontal"
+      android:orientation="vertical">
+
+      <Space
+        android:layout_width="0dp"
+        android:layout_height="20dp" />
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/eq_slider_height"
+        android:orientation="vertical">
+
+        <TextView
+          android:layout_width="match_parent"
+          android:layout_height="0dp"
+          android:layout_weight="1"
+          android:alpha="0.5"
+          android:gravity="top|center_horizontal"
+          android:text="+12"
+          android:textSize="9sp" />
+
+        <TextView
+          android:layout_width="match_parent"
+          android:layout_height="0dp"
+          android:layout_weight="1"
+          android:alpha="0.5"
+          android:gravity="center"
+          android:text="0"
+          android:textSize="9sp" />
+
+        <TextView
+          android:layout_width="match_parent"
+          android:layout_height="0dp"
+          android:layout_weight="1"
+          android:alpha="0.5"
+          android:gravity="bottom|center_horizontal"
+          android:text="-12"
+          android:textSize="9sp" />
+
+      </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Band 0: 60 Hz -->
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:gravity="center_horizontal"
+      android:orientation="vertical">
+
+      <TextView
+        android:id="@+id/eqBand0Val"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:gravity="center"
+        android:text="0"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="11sp" />
+
+      <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/eq_slider_height">
+
+        <SeekBar
+          android:id="@+id/eqBand0"
+          android:layout_width="@dimen/eq_slider_height"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:max="24"
+          android:progress="12"
+          android:rotation="-90"
+          android:splitTrack="false"
+          android:thumb="@drawable/eq_seekbar_thumb"
+          android:thumbTint="?attr/colorPrimary"
+          android:progressTint="?attr/colorPrimary"
+          android:progressBackgroundTint="?attr/colorSurfaceVariant" />
+
+      </FrameLayout>
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="60"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="11sp" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.5"
+        android:gravity="center"
+        android:text="Hz"
+        android:textSize="9sp" />
+
+    </LinearLayout>
+
+    <!-- Band 1: 250 Hz -->
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:gravity="center_horizontal"
+      android:orientation="vertical">
+
+      <TextView
+        android:id="@+id/eqBand1Val"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:gravity="center"
+        android:text="0"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="11sp" />
+
+      <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/eq_slider_height">
+
+        <SeekBar
+          android:id="@+id/eqBand1"
+          android:layout_width="@dimen/eq_slider_height"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:max="24"
+          android:progress="12"
+          android:rotation="-90"
+          android:splitTrack="false"
+          android:thumb="@drawable/eq_seekbar_thumb"
+          android:thumbTint="?attr/colorPrimary"
+          android:progressTint="?attr/colorPrimary"
+          android:progressBackgroundTint="?attr/colorSurfaceVariant" />
+
+      </FrameLayout>
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="250"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="11sp" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.5"
+        android:gravity="center"
+        android:text="Hz"
+        android:textSize="9sp" />
+
+    </LinearLayout>
+
+    <!-- Band 2: 1 kHz -->
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:gravity="center_horizontal"
+      android:orientation="vertical">
+
+      <TextView
+        android:id="@+id/eqBand2Val"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:gravity="center"
+        android:text="0"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="11sp" />
+
+      <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/eq_slider_height">
+
+        <SeekBar
+          android:id="@+id/eqBand2"
+          android:layout_width="@dimen/eq_slider_height"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:max="24"
+          android:progress="12"
+          android:rotation="-90"
+          android:splitTrack="false"
+          android:thumb="@drawable/eq_seekbar_thumb"
+          android:thumbTint="?attr/colorPrimary"
+          android:progressTint="?attr/colorPrimary"
+          android:progressBackgroundTint="?attr/colorSurfaceVariant" />
+
+      </FrameLayout>
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="1k"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="11sp" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.5"
+        android:gravity="center"
+        android:text="Hz"
+        android:textSize="9sp" />
+
+    </LinearLayout>
+
+    <!-- Band 3: 4 kHz -->
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:gravity="center_horizontal"
+      android:orientation="vertical">
+
+      <TextView
+        android:id="@+id/eqBand3Val"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:gravity="center"
+        android:text="0"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="11sp" />
+
+      <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/eq_slider_height">
+
+        <SeekBar
+          android:id="@+id/eqBand3"
+          android:layout_width="@dimen/eq_slider_height"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:max="24"
+          android:progress="12"
+          android:rotation="-90"
+          android:splitTrack="false"
+          android:thumb="@drawable/eq_seekbar_thumb"
+          android:thumbTint="?attr/colorPrimary"
+          android:progressTint="?attr/colorPrimary"
+          android:progressBackgroundTint="?attr/colorSurfaceVariant" />
+
+      </FrameLayout>
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="4k"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="11sp" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.5"
+        android:gravity="center"
+        android:text="Hz"
+        android:textSize="9sp" />
+
+    </LinearLayout>
+
+    <!-- Band 4: 16 kHz -->
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:gravity="center_horizontal"
+      android:orientation="vertical">
+
+      <TextView
+        android:id="@+id/eqBand4Val"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:gravity="center"
+        android:text="0"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="11sp" />
+
+      <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/eq_slider_height">
+
+        <SeekBar
+          android:id="@+id/eqBand4"
+          android:layout_width="@dimen/eq_slider_height"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:max="24"
+          android:progress="12"
+          android:rotation="-90"
+          android:splitTrack="false"
+          android:thumb="@drawable/eq_seekbar_thumb"
+          android:thumbTint="?attr/colorPrimary"
+          android:progressTint="?attr/colorPrimary"
+          android:progressBackgroundTint="?attr/colorSurfaceVariant" />
+
+      </FrameLayout>
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="16k"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="11sp" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.5"
+        android:gravity="center"
+        android:text="Hz"
+        android:textSize="9sp" />
+
+    </LinearLayout>
+
+  </LinearLayout>
+
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="1dp"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:background="?attr/colorOutlineVariant" />
+
+  <HorizontalScrollView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:scrollbars="none">
+
+    <com.google.android.material.chip.ChipGroup
+      android:id="@+id/eqPresetChipGroup"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      app:selectionRequired="false"
+      app:singleSelection="true" />
+
+  </HorizontalScrollView>
+
+</LinearLayout>
