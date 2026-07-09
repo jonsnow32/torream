@@ -1,0 +1,8 @@
+What's new in 1.0.6:
+• Online subtitle search (OpenSubtitles, SubDL, SubSource) built into the player
+• Equalizer moved to its own quick-access panel
+• Continue Watching reminders: snooze (1h/2h) or dismiss with one tap
+• New setting to edit the raw MPV config for advanced users
+• Numeric percentage overlay for volume/brightness gestures
+• Private Folder (PIN-protected) now covers downloaded files too
+• Bug fixes and stability improvements
