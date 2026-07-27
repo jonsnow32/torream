@@ -1950,6 +1950,8 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private fun enterFullscreen() {
     activity?.hideSystemUI()
+    // Prevent the system from dimming/locking the screen during playback
+    activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     // Use WindowCompat to allow drawing edge-to-edge (including display cutout)
     try {
       activity?.let { WindowCompat.setDecorFitsSystemWindows(it.window, false) }
@@ -1961,6 +1963,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private fun exitFullscreen() {
     //if (lockRotation)
     activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
+    activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
     // simply resets brightness and notch settings that might have been overridden
     val lp = activity?.window?.attributes
