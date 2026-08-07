@@ -31,7 +31,9 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
+import androidx.core.view.updateLayoutParams
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -53,6 +55,7 @@ import cloud.streamless.torream.ui.player.PlayBackResult
 import cloud.streamless.torream.ui.player.PlayerEventType
 import cloud.streamless.torream.ui.player.mpv.MPVUtils
 import cloud.streamless.torream.utils.AppUtils.isCastApiAvailable
+import cloud.streamless.torream.utils.applyAppColorTheme
 import cloud.streamless.torream.utils.CommonActivitty
 import cloud.streamless.torream.utils.CommonActivitty.activityResultEvent
 import cloud.streamless.torream.utils.ContinueWatchingReminderWorker
@@ -195,6 +198,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     loadThemes()
+    applyAppColorTheme()
     super.onCreate(savedInstanceState)
 
     ioSafe {
@@ -269,6 +273,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
 
     ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
       viewmodel.setSystemSafeRect(this, insets)
+      binding.statusBarScrim.updateLayoutParams {
+        height = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+      }
       val cutout = insets.displayCutout
       if (cutout != null) {
         viewmodel.setNotchSafeRect(

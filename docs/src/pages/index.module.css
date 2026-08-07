@@ -3,127 +3,28 @@
  * and scoped locally.
  */
 
-/* === BASE STYLES === */
-
-/* Embla Carousel Container */
-.sliderContainer {
-  position: relative;
-  width: 100%;
-  height: 92vh;
-  overflow: hidden;
-  z-index: 1;
-  margin-top: 60px;
-}
-
-.embla {
-  overflow: hidden;
-  height: 100%;
-  position: relative;
-}
-
-.emblaContainer {
-  display: flex;
-  height: 100%;
-}
-
-.emblaSlide {
-  flex: 0 0 100%;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* === NAVIGATION === */
-
-/* Dots */
-.sliderDots {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0.8rem;
-  z-index: 10;
-}
-
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0;
-}
-
-.dot:hover {
-  background: rgba(255, 255, 255, 0.6);
-  transform: scale(1.2);
-}
-
-.activeDot {
-  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
-  width: 32px;
-  border-radius: 6px;
-}
-
-/* Arrows */
-.arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 3rem;
-  width: 60px;
-  height: 60px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.arrow:hover {
-  color: #00d4ff;
-  transform: translateY(-50%) scale(1.2);
-}
-
-.arrowLeft {
-  left: 2rem;
-}
-
-.arrowRight {
-  right: 2rem;
-}
-
-/* === HERO SECTION === */
+/* === HERO === */
 
 .hero {
-  width: 100%;
-  height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem 4rem;
   color: white;
 }
 
-.heroContent {
-  max-width: 800px;
-  padding: 2rem;
-  text-align: center;
-  animation: fadeInUp 1s ease-out;
+.logo {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 1.5rem;
+  border-radius: 20px;
 }
 
 .heroTitle {
-  font-size: 4rem;
+  font-size: 3rem;
   font-weight: 800;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
   background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -131,27 +32,25 @@
 }
 
 .heroSubtitle {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   margin-bottom: 2rem;
   color: #b8b8d1;
   font-weight: 300;
+  max-width: 600px;
 }
 
 .heroButtons {
   display: flex;
-  gap: 1.5rem;
-  justify-content: center;
+  gap: 1.25rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
-/* === BUTTONS === */
-
 .btnPrimary,
-.btnSecondary,
-.btnCta {
-  padding: 1rem 2.5rem;
+.btnSecondary {
+  padding: 0.85rem 2rem;
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.3s ease;
@@ -166,6 +65,7 @@
 .btnPrimary:hover {
   transform: scale(1.05);
   box-shadow: 0 10px 30px rgba(123, 47, 247, 0.4);
+  color: white;
 }
 
 .btnSecondary {
@@ -178,308 +78,76 @@
   transform: scale(1.05);
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.5);
+  color: white;
 }
 
-/* === FEATURES SECTION === */
+/* === CHANGELOG === */
 
-.featureRow {
-  width: 100%;
-  height: 100%;
-  max-width: 1400px;
-  padding: 2rem 4rem;
+.changelog {
+  max-width: 720px;
   margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4rem;
-  box-sizing: border-box;
-  overflow: hidden;
+  padding: 0 2rem 5rem;
 }
 
-.featureRowReverse {
-  flex-direction: row-reverse;
-}
-
-.featureText {
-  flex: 1;
-  color: white;
-  max-width: 550px;
-  min-width: 0;
-}
-
-.featureText h2 {
-  font-size: clamp(1.8rem, 3.5vw, 3rem);
+.changelogTitle {
+  font-size: 1.75rem;
   font-weight: 700;
-  margin-bottom: 1rem;
-  line-height: 1.3;
-  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.featureText p {
-  font-size: clamp(1rem, 1.5vw, 1.2rem);
-  line-height: 1.7;
-  color: #d0d0e0;
-  font-weight: 300;
-}
-
-.featureImageWrapper {
-  flex: 1;
-  position: relative;
-  max-width: 600px;
-  max-height: 60vh;
-  min-width: 0;
-  overflow: hidden;
-  border-radius: 20px;
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.featureImageWrapper:hover {
-  box-shadow: 0 40px 100px rgba(123, 47, 247, 0.4);
-  transform: translateY(-12px);
-}
-
-.featureImage {
-  width: 100%;
-  height: 100%;
-  max-height: 60vh;
-  object-fit: contain;
-  display: block;
-  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.featureImageWrapper:hover .featureImage {
-  transform: scale(1.05);
-}
-
-/* === CTA SECTION === */
-
-.cta {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: white;
+  margin-bottom: 2rem;
   text-align: center;
-  color: white;
 }
 
-.ctaContent {
-  max-width: 900px;
-  padding: 2rem;
-}
-
-.ctaContent h2 {
-  font-size: 3.5rem;
-  font-weight: 700;
+.release {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.75rem 2rem;
   margin-bottom: 1.5rem;
-  line-height: 1.3;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.ctaContent p {
-  font-size: 1.5rem;
-  margin-bottom: 3rem;
+.releaseVersion {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #00d4ff;
+  margin-bottom: 1rem;
+}
+
+.releaseList {
+  margin: 0;
+  padding-left: 1.25rem;
   color: #d0d0e0;
-  font-weight: 300;
-}
-
-.btnCta {
-  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
-  color: white;
-  font-size: 1.2rem;
-}
-
-.btnCta:hover {
-  transform: scale(1.08);
-  box-shadow: 0 15px 40px rgba(123, 47, 247, 0.5);
-}
-
-/* === ANIMATIONS === */
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  line-height: 1.8;
 }
 
 /* === RESPONSIVE === */
 
-/* Tablet (≤ 996px) */
-@media (max-width: 996px) {
-  .arrow {
-    width: 50px;
-    height: 50px;
-    font-size: 2rem;
-  }
-
-  .arrowLeft {
-    left: 1rem;
-  }
-
-  .arrowRight {
-    right: 1rem;
-  }
-
-  .sliderDots {
-    bottom: 1.5rem;
+@media (max-width: 767px) {
+  .hero {
+    padding: 3rem 1.5rem 2.5rem;
   }
 
   .heroTitle {
-    font-size: clamp(2.5rem, 5vw, 3rem);
-  }
-
-  .heroSubtitle {
-    font-size: clamp(1.1rem, 2vw, 1.3rem);
-  }
-
-  .heroContent {
-    max-width: 90%;
-    padding: 1.5rem;
-  }
-
-  .featureRow {
-    gap: 2rem;
-    padding: 1.5rem 2rem;
-    max-width: 95%;
-  }
-
-  .featureText {
-    max-width: 400px;
-  }
-
-  .featureImageWrapper {
-    max-width: 450px;
-    max-height: 50vh;
-  }
-
-  .featureImage {
-    max-height: 50vh;
-  }
-
-  .ctaContent {
-    max-width: 85%;
-    padding: 1.5rem;
-  }
-}
-
-/* Mobile (≤ 767px) */
-@media (max-width: 767px) {
-  .arrow {
-    width: 40px;
-    height: 40px;
-    font-size: 1.5rem;
-  }
-
-  .arrowLeft {
-    left: 0.5rem;
-  }
-
-  .arrowRight {
-    right: 0.5rem;
-  }
-
-  .sliderDots {
-    bottom: 1rem;
-  }
-
-  .dot {
-    width: 8px;
-    height: 8px;
-  }
-
-  .activeDot {
-    width: 20px;
-  }
-
-  .heroContent {
-    padding: 1.5rem;
-    max-width: 95%;
+    font-size: 2.25rem;
   }
 
   .heroButtons {
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    width: 100%;
   }
 
   .btnPrimary,
-  .btnSecondary,
-  .btnCta {
-    padding: 0.9rem 2rem;
-    font-size: 1rem;
+  .btnSecondary {
     width: 100%;
     max-width: 300px;
-  }
-
-  .featureRow {
-    flex-direction: column !important;
-    gap: 1.5rem;
-    padding: 1.5rem 1rem;
-    max-width: 100%;
-  }
-
-  .featureText {
-    max-width: 100%;
     text-align: center;
-    order: 2;
   }
 
-  .featureImageWrapper {
-    max-width: 100%;
-    width: 100%;
-    max-height: none;
-    order: 1;
-    border-radius: 12px;
+  .changelog {
+    padding: 0 1.25rem 3rem;
   }
 
-  .featureImage {
-    max-height: none;
-    object-fit: contain;
-  }
-
-  .ctaContent {
-    padding: 1.5rem;
-    max-width: 95%;
+  .release {
+    padding: 1.25rem 1.5rem;
   }
 }
-
-/* Mobile Small (≤ 480px) */
-@media (max-width: 480px) {
-  .heroContent {
-    padding: 1rem;
-  }
-
-  .btnPrimary,
-  .btnSecondary,
-  .btnCta {
-    padding: 0.8rem 1.5rem;
-    font-size: 0.95rem;
-    max-width: 280px;
-  }
-
-  .featureRow {
-    padding: 1rem;
-    gap: 1rem;
-  }
-
-  .featureImageWrapper {
-    max-height: none;
-  }
-
-  .featureImage {
-    max-height: none;
-  }
-
-  .ctaContent {
-    padding: 1rem;
-  }
-}
-

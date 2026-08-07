@@ -17,6 +17,7 @@
     <item name="colorSurface">@color/oneui_surface</item>
     <item name="colorOnBackground">@color/oneui_on_background</item>
     <item name="colorOnSurface">@color/oneui_on_surface</item>
+    <item name="colorSurfaceContainer">@color/oneui_gray_background</item>
 
     <!-- Status bar -->
     <item name="android:statusBarColor">@color/oneui_status_bar</item>
@@ -61,6 +62,131 @@
 
     <!-- Cast device picker dialog style -->
     <item name="mediaRouteTheme">@style/MediaRouteDialogThemeDark</item>
+  </style>
+
+  <!-- Color themes - Dark variants -->
+
+  <style name="Theme.AmoledBlack" parent="AppTheme">
+    <item name="colorPrimary">@color/oneui_primary</item>
+    <item name="colorOnPrimary">#000000</item>
+    <item name="android:colorBackground">#000000</item>
+    <item name="colorSurface">#000000</item>
+    <item name="colorOnSurface">@color/oneui_on_surface</item>
+    <item name="colorSurfaceContainer">#0A0A0A</item>
+    <item name="colorSearch">@color/oneui_primary</item>
+    <item name="colorOngoing">@color/oneui_primary</item>
+    <item name="primaryGrayBackground">#0A0A0A</item>
+    <item name="primaryBlackBackground">#000000</item>
+    <item name="iconGrayBackground">#0A0A0A</item>
+    <item name="boxItemBackground">#0A0A0A</item>
+  </style>
+
+  <style name="Theme.Catppuccin" parent="AppTheme">
+    <item name="colorPrimary">#89B4FA</item>
+    <item name="colorOnPrimary">#11111B</item>
+    <item name="colorSecondary">#CBA6F7</item>
+    <item name="colorOnSecondary">#11111B</item>
+    <item name="android:colorBackground">#1E1E2E</item>
+    <item name="colorOnBackground">#CDD6F4</item>
+    <item name="colorSurface">#1E1E2E</item>
+    <item name="colorOnSurface">#CDD6F4</item>
+    <item name="colorSurfaceContainer">#313244</item>
+    <item name="colorSearch">#89B4FA</item>
+    <item name="colorOngoing">#89B4FA</item>
+    <item name="primaryGrayBackground">#313244</item>
+    <item name="primaryBlackBackground">#181825</item>
+    <item name="iconGrayBackground">#313244</item>
+    <item name="boxItemBackground">#313244</item>
+  </style>
+
+  <style name="Theme.Nord" parent="AppTheme">
+    <item name="colorPrimary">#88C0D0</item>
+    <item name="colorOnPrimary">#2E3440</item>
+    <item name="colorSecondary">#81A1C1</item>
+    <item name="colorOnSecondary">#2E3440</item>
+    <item name="android:colorBackground">#2E3440</item>
+    <item name="colorOnBackground">#ECEFF4</item>
+    <item name="colorSurface">#3B4252</item>
+    <item name="colorOnSurface">#ECEFF4</item>
+    <item name="colorSurfaceContainer">#434C5E</item>
+    <item name="colorSearch">#88C0D0</item>
+    <item name="colorOngoing">#88C0D0</item>
+    <item name="primaryGrayBackground">#434C5E</item>
+    <item name="primaryBlackBackground">#2E3440</item>
+    <item name="iconGrayBackground">#434C5E</item>
+    <item name="boxItemBackground">#434C5E</item>
+  </style>
+
+  <style name="Theme.Dracula" parent="AppTheme">
+    <item name="colorPrimary">#BD93F9</item>
+    <item name="colorOnPrimary">#282A36</item>
+    <item name="colorSecondary">#FF79C6</item>
+    <item name="colorOnSecondary">#282A36</item>
+    <item name="android:colorBackground">#282A36</item>
+    <item name="colorOnBackground">#F8F8F2</item>
+    <item name="colorSurface">#282A36</item>
+    <item name="colorOnSurface">#F8F8F2</item>
+    <item name="colorSurfaceContainer">#44475A</item>
+    <item name="colorSearch">#BD93F9</item>
+    <item name="colorOngoing">#8BE9FD</item>
+    <item name="primaryGrayBackground">#44475A</item>
+    <item name="primaryBlackBackground">#21222C</item>
+    <item name="iconGrayBackground">#44475A</item>
+    <item name="boxItemBackground">#44475A</item>
+  </style>
+
+  <style name="Theme.TokyoNight" parent="AppTheme">
+    <item name="colorPrimary">#7AA2F7</item>
+    <item name="colorOnPrimary">#1A1B26</item>
+    <item name="colorSecondary">#BB9AF7</item>
+    <item name="colorOnSecondary">#1A1B26</item>
+    <item name="android:colorBackground">#24283B</item>
+    <item name="colorOnBackground">#C0CAF5</item>
+    <item name="colorSurface">#24283B</item>
+    <item name="colorOnSurface">#C0CAF5</item>
+    <item name="colorSurfaceContainer">#292E42</item>
+    <item name="colorSearch">#7DCFFF</item>
+    <item name="colorOngoing">#7DCFFF</item>
+    <item name="primaryGrayBackground">#292E42</item>
+    <item name="primaryBlackBackground">#1A1B26</item>
+    <item name="iconGrayBackground">#292E42</item>
+    <item name="boxItemBackground">#292E42</item>
+  </style>
+
+  <style name="Theme.Gruvbox" parent="AppTheme">
+    <item name="colorPrimary">#FE8019</item>
+    <item name="colorOnPrimary">#282828</item>
+    <item name="colorSecondary">#8EC07C</item>
+    <item name="colorOnSecondary">#282828</item>
+    <item name="android:colorBackground">#282828</item>
+    <item name="colorOnBackground">#EBDBB2</item>
+    <item name="colorSurface">#282828</item>
+    <item name="colorOnSurface">#EBDBB2</item>
+    <item name="colorSurfaceContainer">#3C3836</item>
+    <item name="colorSearch">#FE8019</item>
+    <item name="colorOngoing">#FE8019</item>
+    <item name="primaryGrayBackground">#3C3836</item>
+    <item name="primaryBlackBackground">#1D2021</item>
+    <item name="iconGrayBackground">#3C3836</item>
+    <item name="boxItemBackground">#3C3836</item>
+  </style>
+
+  <style name="Theme.Solarized" parent="AppTheme">
+    <item name="colorPrimary">#268BD2</item>
+    <item name="colorOnPrimary">#002B36</item>
+    <item name="colorSecondary">#2AA198</item>
+    <item name="colorOnSecondary">#002B36</item>
+    <item name="android:colorBackground">#002B36</item>
+    <item name="colorOnBackground">#839496</item>
+    <item name="colorSurface">#002B36</item>
+    <item name="colorOnSurface">#839496</item>
+    <item name="colorSurfaceContainer">#073642</item>
+    <item name="colorSearch">#268BD2</item>
+    <item name="colorOngoing">#268BD2</item>
+    <item name="primaryGrayBackground">#073642</item>
+    <item name="primaryBlackBackground">#00212B</item>
+    <item name="iconGrayBackground">#073642</item>
+    <item name="boxItemBackground">#073642</item>
   </style>
 
   <style name="MediaRouteDialogThemeDark" parent="Theme.MediaRouter">

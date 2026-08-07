@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:minHeight="?android:attr/listPreferredItemHeightSmall"
+  android:gravity="center_vertical"
+  android:orientation="horizontal"
+  android:paddingHorizontal="12dp"
+  android:foreground="?attr/selectableItemBackgroundBorderless">
+
+  <View
+    android:id="@+id/swatch1"
+    android:layout_width="14dp"
+    android:layout_height="14dp"
+    android:background="@drawable/shape_theme_swatch_dot" />
+
+  <View
+    android:id="@+id/swatch2"
+    android:layout_width="14dp"
+    android:layout_height="14dp"
+    android:layout_marginStart="-6dp"
+    android:background="@drawable/shape_theme_swatch_dot" />
+
+  <View
+    android:id="@+id/swatch3"
+    android:layout_width="14dp"
+    android:layout_height="14dp"
+    android:layout_marginStart="-6dp"
+    android:layout_marginEnd="16dp"
+    android:background="@drawable/shape_theme_swatch_dot" />
+
+  <ImageView
+    android:id="@+id/dynamicSwatchIcon"
+    android:layout_width="20dp"
+    android:layout_height="20dp"
+    android:layout_marginEnd="16dp"
+    android:src="@drawable/ic_baseline_color_lens_24"
+    android:visibility="gone"
+    android:contentDescription="@null" />
+
+  <TextView
+    android:id="@android:id/text1"
+    style="@style/AppTextViewStyle"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:textSize="16sp"
+    tools:text="Nord" />
+
+  <ImageView
+    android:id="@+id/checkmark"
+    android:layout_width="20dp"
+    android:layout_height="20dp"
+    android:layout_marginStart="8dp"
+    android:src="@drawable/ic_check_20dp"
+    app:tint="?attr/colorPrimary"
+    android:visibility="gone"
+    android:contentDescription="@null" />
+</LinearLayout>

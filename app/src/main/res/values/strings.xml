@@ -71,6 +71,7 @@
   <string name="automatic_backup_key" translatable="false">automatic_backup_key</string>
   <string name="prefer_media_type_key" translatable="false">prefer_media_type_key_2</string>
   <string name="app_theme_key" translatable="false">app_theme_key</string>
+  <string name="app_color_theme_key" translatable="false">app_color_theme_key</string>
   <string name="episode_sync_enabled_key" translatable="false">episode_sync_enabled_key</string>
   <string name="log_enabled_key" translatable="false">log_enabled_key</string>
   <string name="show_logcat_key" translatable="false">show_logcat_key</string>
@@ -512,6 +513,16 @@
   <string name="emulator_layout">Emulator layout</string>
   <string name="primary_color_settings">Primary color</string>
   <string name="app_theme_settings">App theme</string>
+  <string name="app_color_theme_settings">Color theme</string>
+  <string name="color_theme_default">Default</string>
+  <string name="color_theme_amoled_black">AMOLED Black</string>
+  <string name="color_theme_catppuccin">Catppuccin</string>
+  <string name="color_theme_nord">Nord</string>
+  <string name="color_theme_dracula">Dracula</string>
+  <string name="color_theme_tokyo_night">Tokyo Night</string>
+  <string name="color_theme_gruvbox">Gruvbox</string>
+  <string name="color_theme_solarized">Solarized</string>
+  <string name="color_theme_material_you">Material You</string>
   <string name="bottom_title_settings">Poster title location</string>
   <string name="bottom_title_settings_des">Put the title under the poster</string>
   <!-- account stuff -->
@@ -1105,6 +1116,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="input_url_des">Play a video from a link, magnet or torrent</string>
   <string name="open_local_video_des">Pick a video file from this device</string>
   <string name="app_theme_settings_des">Light, dark or follow system</string>
+  <string name="app_color_theme_settings_des">Pick an accent color palette</string>
   <string name="app_layout_des">Phone, TV or automatic layout</string>
   <string name="app_language_des">Change the app display language</string>
   <string name="ad_testing_des">Preview ad placements</string>

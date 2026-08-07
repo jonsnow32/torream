@@ -16,6 +16,7 @@
     <item name="colorOnBackground">@color/md_theme_onBackground</item>
     <item name="colorSurface">@color/md_theme_surface</item>
     <item name="colorOnSurface">@color/md_theme_onSurface</item>
+    <item name="colorSurfaceContainer">@color/oneui_gray_background</item>
     <!-- Status bar -->
 <!--    <item name="android:statusBarColor">@color/oneui_status_bar</item>-->
 <!--    <item name="android:navigationBarColor">@color/oneui_navigation_bar</item>-->
@@ -61,18 +62,130 @@
     <item name="mediaRouteTheme">@style/MediaRouteDialogTheme</item>
   </style>
 
+  <!-- Color themes - Light variants -->
+
+  <style name="Theme.AmoledBlack" parent="AppTheme" />
+
+  <style name="Theme.Catppuccin" parent="AppTheme">
+    <item name="colorPrimary">#1E66F5</item>
+    <item name="colorOnPrimary">#EFF1F5</item>
+    <item name="colorSecondary">#8839EF</item>
+    <item name="colorOnSecondary">#EFF1F5</item>
+    <item name="android:colorBackground">#EFF1F5</item>
+    <item name="colorOnBackground">#4C4F69</item>
+    <item name="colorSurface">#EFF1F5</item>
+    <item name="colorOnSurface">#4C4F69</item>
+    <item name="colorSurfaceContainer">#E6E9EF</item>
+    <item name="colorSearch">#1E66F5</item>
+    <item name="colorOngoing">#1E66F5</item>
+    <item name="primaryGrayBackground">#CCD0DA</item>
+    <item name="primaryBlackBackground">#DCE0E8</item>
+    <item name="iconGrayBackground">#CCD0DA</item>
+    <item name="boxItemBackground">#CCD0DA</item>
+  </style>
+
+  <style name="Theme.Nord" parent="AppTheme">
+    <item name="colorPrimary">#5E81AC</item>
+    <item name="colorOnPrimary">#ECEFF4</item>
+    <item name="colorSecondary">#88C0D0</item>
+    <item name="colorOnSecondary">#2E3440</item>
+    <item name="android:colorBackground">#ECEFF4</item>
+    <item name="colorOnBackground">#2E3440</item>
+    <item name="colorSurface">#ECEFF4</item>
+    <item name="colorOnSurface">#2E3440</item>
+    <item name="colorSurfaceContainer">#E5E9F0</item>
+    <item name="colorSearch">#5E81AC</item>
+    <item name="colorOngoing">#5E81AC</item>
+    <item name="primaryGrayBackground">#E5E9F0</item>
+    <item name="primaryBlackBackground">#D8DEE9</item>
+    <item name="iconGrayBackground">#D8DEE9</item>
+    <item name="boxItemBackground">#E5E9F0</item>
+  </style>
+
+  <style name="Theme.Dracula" parent="AppTheme">
+    <item name="colorPrimary">#BD93F9</item>
+    <item name="colorOnPrimary">#282A36</item>
+    <item name="colorSecondary">#FF79C6</item>
+    <item name="colorOnSecondary">#282A36</item>
+    <item name="android:colorBackground">#F8F8F2</item>
+    <item name="colorOnBackground">#282A36</item>
+    <item name="colorSurface">#F8F8F2</item>
+    <item name="colorOnSurface">#282A36</item>
+    <item name="colorSurfaceContainer">#E9E9E4</item>
+    <item name="colorSearch">#BD93F9</item>
+    <item name="colorOngoing">#8BE9FD</item>
+    <item name="primaryGrayBackground">#E9E9E4</item>
+    <item name="primaryBlackBackground">#DEDEDA</item>
+    <item name="iconGrayBackground">#E9E9E4</item>
+    <item name="boxItemBackground">#E9E9E4</item>
+  </style>
+
+  <style name="Theme.TokyoNight" parent="AppTheme">
+    <item name="colorPrimary">#34548A</item>
+    <item name="colorOnPrimary">#D5D6DB</item>
+    <item name="colorSecondary">#5A4A78</item>
+    <item name="colorOnSecondary">#D5D6DB</item>
+    <item name="android:colorBackground">#D5D6DB</item>
+    <item name="colorOnBackground">#343B58</item>
+    <item name="colorSurface">#D5D6DB</item>
+    <item name="colorOnSurface">#343B58</item>
+    <item name="colorSurfaceContainer">#E1E2E7</item>
+    <item name="colorSearch">#34548A</item>
+    <item name="colorOngoing">#34548A</item>
+    <item name="primaryGrayBackground">#E1E2E7</item>
+    <item name="primaryBlackBackground">#C4C5CA</item>
+    <item name="iconGrayBackground">#E1E2E7</item>
+    <item name="boxItemBackground">#E1E2E7</item>
+  </style>
+
+  <style name="Theme.Gruvbox" parent="AppTheme">
+    <item name="colorPrimary">#AF3A03</item>
+    <item name="colorOnPrimary">#FBF1C7</item>
+    <item name="colorSecondary">#427B58</item>
+    <item name="colorOnSecondary">#FBF1C7</item>
+    <item name="android:colorBackground">#FBF1C7</item>
+    <item name="colorOnBackground">#3C3836</item>
+    <item name="colorSurface">#FBF1C7</item>
+    <item name="colorOnSurface">#3C3836</item>
+    <item name="colorSurfaceContainer">#EBDBB2</item>
+    <item name="colorSearch">#AF3A03</item>
+    <item name="colorOngoing">#AF3A03</item>
+    <item name="primaryGrayBackground">#EBDBB2</item>
+    <item name="primaryBlackBackground">#D5C4A1</item>
+    <item name="iconGrayBackground">#EBDBB2</item>
+    <item name="boxItemBackground">#EBDBB2</item>
+  </style>
+
+  <style name="Theme.Solarized" parent="AppTheme">
+    <item name="colorPrimary">#268BD2</item>
+    <item name="colorOnPrimary">#FDF6E3</item>
+    <item name="colorSecondary">#2AA198</item>
+    <item name="colorOnSecondary">#FDF6E3</item>
+    <item name="android:colorBackground">#FDF6E3</item>
+    <item name="colorOnBackground">#657B83</item>
+    <item name="colorSurface">#FDF6E3</item>
+    <item name="colorOnSurface">#657B83</item>
+    <item name="colorSurfaceContainer">#EEE8D5</item>
+    <item name="colorSearch">#268BD2</item>
+    <item name="colorOngoing">#268BD2</item>
+    <item name="primaryGrayBackground">#EEE8D5</item>
+    <item name="primaryBlackBackground">#93A1A1</item>
+    <item name="iconGrayBackground">#EEE8D5</item>
+    <item name="boxItemBackground">#EEE8D5</item>
+  </style>
+
   <!-- Alert Dialog Theme - Dark -->
   <style name="Theme.AlertDialog.Dark" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
-    <item name="colorPrimary">@color/dialog_dark_primary</item>
-    <item name="colorOnSurface">@color/dialog_dark_on_surface</item>
-    <item name="android:colorBackground">@color/dialog_dark_background</item>
+    <item name="colorPrimary">?attr/colorPrimary</item>
+    <item name="colorOnSurface">?attr/colorOnSurface</item>
+    <item name="android:colorBackground">?attr/colorSurface</item>
   </style>
 
   <!-- Alert Dialog Theme - Light -->
   <style name="Theme.AlertDialog.Light" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
-    <item name="colorPrimary">@color/dialog_light_primary</item>
-    <item name="colorOnSurface">@color/dialog_light_on_surface</item>
-    <item name="android:colorBackground">@color/dialog_light_background</item>
+    <item name="colorPrimary">?attr/colorPrimary</item>
+    <item name="colorOnSurface">?attr/colorOnSurface</item>
+    <item name="android:colorBackground">?attr/colorSurface</item>
   </style>
 
   <!-- Tab Layout Style - Dark -->

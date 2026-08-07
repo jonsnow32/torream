@@ -13,6 +13,13 @@
 
     <Preference
       android:layout="@layout/custom_preference"
+      android:icon="@drawable/ic_baseline_color_lens_24"
+      android:key="@string/app_color_theme_key"
+      android:summary="@string/app_color_theme_settings_des"
+      android:title="@string/app_color_theme_settings" />
+
+    <Preference
+      android:layout="@layout/custom_preference"
       android:icon="@drawable/ic_baseline_tv_24"
       android:key="@string/app_layout_key"
       android:summary="@string/app_layout_des"

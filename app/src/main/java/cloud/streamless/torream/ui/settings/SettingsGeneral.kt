@@ -18,15 +18,18 @@ import cloud.streamless.torream.BuildConfig
 import cloud.streamless.torream.R
 import cloud.streamless.torream.app
 import cloud.streamless.torream.network.initClient
+import cloud.streamless.torream.ui.dialog.ColorThemeDialog
 import cloud.streamless.torream.ui.dialog.SelectionDialog
 import cloud.streamless.torream.ui.settings.SettingsFragment.Companion.getPref
 import cloud.streamless.torream.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import cloud.streamless.torream.ui.settings.SettingsFragment.Companion.setUpToolbar
+import cloud.streamless.torream.utils.AppColorTheme
 import cloud.streamless.torream.utils.CommonActivitty.hideKeyboard
 import cloud.streamless.torream.utils.CommonActivitty.setLocale
 import cloud.streamless.torream.utils.LayoutMode
 import cloud.streamless.torream.utils.SubtitleHelper
 import cloud.streamless.torream.utils.Utils.logError
+import cloud.streamless.torream.utils.getAppColorTheme
 import cloud.streamless.torream.utils.isLayout
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -209,6 +212,30 @@ class SettingsGeneral : PreferenceFragmentCompat() {
             } catch (e: Exception) {
               logError(e)
             }
+          }
+        }
+      }
+      return@setOnPreferenceClickListener true
+    }
+
+    getPref(R.string.app_color_theme_key)?.setOnPreferenceClickListener {
+      val current = requireContext().getAppColorTheme()
+      val available = AppColorTheme.entries.filter { it.isAvailable }
+      val currentIndex = available.indexOf(current).coerceAtLeast(0)
+
+      ColorThemeDialog.newInstance(
+        available,
+        available[currentIndex],
+        getString(R.string.app_color_theme_settings)
+      ).show(parentFragmentManager) { bundle ->
+        bundle?.getString(ColorThemeDialog.SELECTED_THEME)?.let { prefValue ->
+          try {
+            settingsManager.edit {
+              putString(getString(R.string.app_color_theme_key), prefValue)
+            }
+            activity?.recreate()
+          } catch (e: Exception) {
+            logError(e)
           }
         }
       }

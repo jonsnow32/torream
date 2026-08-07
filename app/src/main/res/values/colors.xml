@@ -126,5 +126,31 @@
 
   <!-- Navigation colors -->
   <color name="nav_indicator">#1C1C1C</color>
+
+  <!-- Color theme picker preview swatches - Light -->
+  <color name="default_swatch_background">@color/md_theme_surface</color>
+  <color name="default_swatch_primary">@color/md_theme_primary</color>
+  <color name="default_swatch_secondary">@color/md_theme_secondary</color>
+  <color name="amoled_swatch_background">@color/md_theme_surface</color>
+  <color name="amoled_swatch_primary">@color/md_theme_primary</color>
+  <color name="amoled_swatch_secondary">@color/md_theme_secondary</color>
+  <color name="catppuccin_swatch_background">#EFF1F5</color>
+  <color name="catppuccin_swatch_primary">#1E66F5</color>
+  <color name="catppuccin_swatch_secondary">#8839EF</color>
+  <color name="nord_swatch_background">#ECEFF4</color>
+  <color name="nord_swatch_primary">#5E81AC</color>
+  <color name="nord_swatch_secondary">#88C0D0</color>
+  <color name="dracula_swatch_background">#F8F8F2</color>
+  <color name="dracula_swatch_primary">#BD93F9</color>
+  <color name="dracula_swatch_secondary">#FF79C6</color>
+  <color name="tokyo_night_swatch_background">#D5D6DB</color>
+  <color name="tokyo_night_swatch_primary">#34548A</color>
+  <color name="tokyo_night_swatch_secondary">#5A4A78</color>
+  <color name="gruvbox_swatch_background">#FBF1C7</color>
+  <color name="gruvbox_swatch_primary">#AF3A03</color>
+  <color name="gruvbox_swatch_secondary">#427B58</color>
+  <color name="solarized_swatch_background">#FDF6E3</color>
+  <color name="solarized_swatch_primary">#268BD2</color>
+  <color name="solarized_swatch_secondary">#2AA198</color>
 </resources>
 
