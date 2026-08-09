@@ -37,6 +37,7 @@
   <string name="playback_speed_enabled_key" translatable="false">playback_speed_enabled_key</string>
   <string name="player_resize_enabled_key" translatable="false">player_resize_enabled_key</string>
   <string name="pip_enabled_key" translatable="false">pip_enabled_key</string>
+  <string name="stats_overlay_enabled_key" translatable="false">stats_overlay_enabled_key</string>
   <string name="double_tap_enabled_key" translatable="false">double_tap_enabled_key</string>
   <string name="double_tap_pause_enabled_key" translatable="false">double_tap_pause_enabled_key</string>
   <string name="double_tap_seek_time_key" translatable="false">double_tap_seek_time_key2</string>
@@ -240,6 +241,7 @@
   <string name="show_log_cat">Show Logcat 🐈</string>
   <string name="test_log">Log</string>
   <string name="picture_in_picture_des">Continues playback in a miniature player on top of other apps</string>
+  <string name="stats_overlay_settings_des">Show FPS, dropped frames, codec and network info during playback</string>
   <string name="player_size_settings">Player resize button</string>
   <string name="player_size_settings_des">Remove the black borders</string>
   <string name="player_subtitles_settings">Subtitles</string>
@@ -843,6 +845,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="biometric_unsupported">Biometric authentication is not supported on this device</string>
 
   <string name="picture_in_picture">PiP</string>
+  <string name="stats_overlay_settings">Stats overlay</string>
+  <string name="stats_overlay_close">Close stats overlay</string>
 
 
   <string name="version_update_at" translatable="false">2024-06-07T05:23:38Z</string>

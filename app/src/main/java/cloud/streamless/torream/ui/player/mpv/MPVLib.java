@@ -52,6 +52,8 @@ public class MPVLib {
      public static native void setPropertyBoolean(@NonNull String property, @NonNull Boolean value);
      public static native String getPropertyString(@NonNull String property);
      public static native void setPropertyString(@NonNull String property, @NonNull String value);
+     /** Returns String/Boolean/Long/Double/ArrayList/HashMap depending on the mpv node's shape, or null. */
+     public static native Object getPropertyNode(@NonNull String property);
 
      public static native void observeProperty(@NonNull String property, int format);
 

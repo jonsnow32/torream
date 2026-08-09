@@ -43,6 +43,13 @@
       app:defaultValue="true"
       app:key="@string/pip_enabled_key" />
     <SwitchPreferenceCompat
+      android:icon="@drawable/ic_outline_info_24"
+      android:layout="@layout/custom_switch_preference"
+      android:summary="@string/stats_overlay_settings_des"
+      android:title="@string/stats_overlay_settings"
+      app:defaultValue="false"
+      app:key="@string/stats_overlay_enabled_key" />
+    <SwitchPreferenceCompat
       android:icon="@drawable/ic_baseline_aspect_ratio_24"
       android:layout="@layout/custom_switch_preference"
       android:summary="@string/player_size_settings_des"

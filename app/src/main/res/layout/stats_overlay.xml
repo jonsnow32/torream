@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:id="@+id/statsRoot"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="#CC000000"
+  android:clickable="false"
+  android:focusable="false">
+
+  <androidx.core.widget.NestedScrollView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:focusable="false"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="16dp"
+    android:scrollbars="vertical"
+    app:layout_constraintHeight_max="480dp"
+    app:layout_constraintBottom_toTopOf="@id/statsNetworkRow"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <TextView
+      android:id="@+id/statsText"
+      style="@style/StatsOverlayText"
+      tools:text="File: example.mp4\nSize: 1.31 GiB" />
+
+  </androidx.core.widget.NestedScrollView>
+
+  <ImageView
+    android:id="@+id/statsClose"
+    android:layout_width="36dp"
+    android:layout_height="36dp"
+    android:layout_margin="8dp"
+    android:background="@drawable/transparent_circle_background"
+    android:clickable="true"
+    android:contentDescription="@string/stats_overlay_close"
+    android:focusable="true"
+    android:padding="8dp"
+    android:src="@drawable/ic_close_20dp"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+  <LinearLayout
+    android:id="@+id/statsNetworkRow"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent">
+
+    <TextView
+      android:id="@+id/statsNetwork"
+      style="@style/StatsOverlayText"
+      tools:text="Net: 0 KB/s" />
+
+    <cloud.streamless.torream.ui.player.stats.SparklineView
+      android:id="@+id/statsSparkline"
+      android:layout_width="80dp"
+      android:layout_height="18dp"
+      android:layout_marginStart="8dp"
+      android:clickable="false"
+      android:focusable="false" />
+  </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

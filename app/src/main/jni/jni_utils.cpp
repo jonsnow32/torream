@@ -32,6 +32,14 @@ void init_methods_cache(JNIEnv *env)
     java_Boolean = FIND_CLASS("java/lang/Boolean");
     java_Boolean_init = env->GetMethodID(java_Boolean, "<init>", "(Z)V");
     java_Boolean_booleanValue = env->GetMethodID(java_Boolean, "booleanValue", "()Z");
+    java_Long = FIND_CLASS("java/lang/Long");
+    java_Long_init = env->GetMethodID(java_Long, "<init>", "(J)V");
+    java_ArrayList = FIND_CLASS("java/util/ArrayList");
+    java_ArrayList_init = env->GetMethodID(java_ArrayList, "<init>", "()V");
+    java_ArrayList_add = env->GetMethodID(java_ArrayList, "add", "(Ljava/lang/Object;)Z");
+    java_HashMap = FIND_CLASS("java/util/HashMap");
+    java_HashMap_init = env->GetMethodID(java_HashMap, "<init>", "()V");
+    java_HashMap_put = env->GetMethodID(java_HashMap, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     android_graphics_Bitmap = FIND_CLASS("android/graphics/Bitmap");
     // createBitmap(int[], int, int, android.graphics.Bitmap$Config)

@@ -18,6 +18,7 @@ extern "C" {
     jni_func(void, setPropertyBoolean, jstring property, jobject value);
     jni_func(jstring, getPropertyString, jstring jproperty);
     jni_func(void, setPropertyString, jstring jproperty, jstring jvalue);
+    jni_func(jobject, getPropertyNode, jstring jproperty);
 
     jni_func(void, observeProperty, jstring property, jint format);
 }
@@ -118,6 +119,63 @@ jni_func(void, setPropertyString, jstring jproperty, jstring jvalue) {
     const char *value = env->GetStringUTFChars(jvalue, NULL);
     common_set_property(env, jproperty, MPV_FORMAT_STRING, &value);
     env->ReleaseStringUTFChars(jvalue, value);
+}
+
+// Recursively converts an mpv_node into a Java String/Boolean/Long/Double/ArrayList/HashMap.
+static jobject node_to_java(JNIEnv *env, mpv_node *node) {
+    switch (node->format) {
+        case MPV_FORMAT_STRING:
+            return env->NewStringUTF(node->u.string);
+        case MPV_FORMAT_FLAG:
+            return env->NewObject(java_Boolean, java_Boolean_init, (jboolean)node->u.flag);
+        case MPV_FORMAT_INT64:
+            return env->NewObject(java_Long, java_Long_init, (jlong)node->u.int64);
+        case MPV_FORMAT_DOUBLE:
+            return env->NewObject(java_Double, java_Double_init, (jdouble)node->u.double_);
+        case MPV_FORMAT_NODE_ARRAY: {
+            jobject list = env->NewObject(java_ArrayList, java_ArrayList_init);
+            mpv_node_list *node_list = node->u.list;
+            for (int i = 0; i < node_list->num; i++) {
+                jobject value = node_to_java(env, &node_list->values[i]);
+                env->CallBooleanMethod(list, java_ArrayList_add, value);
+                if (value) env->DeleteLocalRef(value);
+            }
+            return list;
+        }
+        case MPV_FORMAT_NODE_MAP: {
+            jobject map = env->NewObject(java_HashMap, java_HashMap_init);
+            mpv_node_list *node_list = node->u.list;
+            for (int i = 0; i < node_list->num; i++) {
+                jstring key = env->NewStringUTF(node_list->keys[i]);
+                jobject value = node_to_java(env, &node_list->values[i]);
+                env->CallObjectMethod(map, java_HashMap_put, key, value);
+                env->DeleteLocalRef(key);
+                if (value) env->DeleteLocalRef(value);
+            }
+            return map;
+        }
+        default:
+            return NULL;
+    }
+}
+
+jni_func(jobject, getPropertyNode, jstring jproperty) {
+    if (!g_mpv)
+        die("mpv is not initialized");
+
+    const char *prop = env->GetStringUTFChars(jproperty, NULL);
+    mpv_node node;
+    int result = mpv_get_property(g_mpv, prop, MPV_FORMAT_NODE, &node);
+    if (result < 0)
+        ALOGE("mpv_get_property(%s) format NODE returned error %s", prop, mpv_error_string(result));
+    env->ReleaseStringUTFChars(jproperty, prop);
+
+    if (result < 0)
+        return NULL;
+
+    jobject java_obj = node_to_java(env, &node);
+    mpv_free_node_contents(&node);
+    return java_obj;
 }
 
 jni_func(void, observeProperty, jstring property, jint format) {

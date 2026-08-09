@@ -20,6 +20,7 @@ import cloud.streamless.torream.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_INT64
 import cloud.streamless.torream.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_NODE
 import cloud.streamless.torream.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_NONE
 import cloud.streamless.torream.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
+import cloud.streamless.torream.ui.player.stats.FrameTiming
 import cloud.streamless.torream.utils.isTvOrEmulator
 import cloud.streamless.torream.utils.DataStore.getKey
 import cloud.streamless.torream.model.SaveCaptionStyle
@@ -577,6 +578,127 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
   val estimatedVfFps: Double?
     get() = MPVLib.getPropertyDouble("estimated-vf-fps")
 
+  val videoCodec: String?
+    get() = MPVLib.getPropertyString("video-codec")
+
+  val decoderDroppedFrames: Int?
+    get() = MPVLib.getPropertyInt("decoder-frame-drop-count")
+
+  val outputDroppedFrames: Int?
+    get() = MPVLib.getPropertyInt("frame-drop-count")
+
+  /** Demuxer cache fill speed in bytes/sec; 0/null when there is no network activity (e.g. local files). */
+  val cacheSpeed: Double?
+    get() = MPVLib.getPropertyDouble("cache-speed")
+
+  // --- Extended stats overlay properties ---
+
+  val filename: String?
+    get() = MPVLib.getPropertyString("filename")
+
+  /** File size in bytes; read via node format since file-size can exceed Int range. */
+  val fileSize: Long?
+    get() = MPVLib.getPropertyNode("file-size") as? Long
+
+  val fileFormat: String?
+    get() = MPVLib.getPropertyString("file-format")
+
+  val demuxerCacheDuration: Double?
+    get() = MPVLib.getPropertyDouble("demuxer-cache-duration")
+
+  /** Cached bytes not yet played, from demuxer-cache-state's "fw-bytes" node field. */
+  val cacheForwardBytes: Long?
+    get() = (MPVLib.getPropertyNode("demuxer-cache-state") as? Map<*, *>)
+      ?.get("fw-bytes") as? Long
+
+  val currentVo: String?
+    get() = MPVLib.getPropertyString("current-vo")
+
+  val gpuContext: String?
+    get() = MPVLib.getPropertyString("gpu-context")
+
+  val avsync: Double?
+    get() = MPVLib.getPropertyDouble("avsync")
+
+  val containerFps: Double?
+    get() = MPVLib.getPropertyDouble("container-fps")
+
+  val videoBitrate: Double?
+    get() = MPVLib.getPropertyDouble("video-bitrate")
+
+  val videoParamsPixelFormat: String?
+    get() = MPVLib.getPropertyString("video-params/pixelformat")
+  val videoParamsColorLevels: String?
+    get() = MPVLib.getPropertyString("video-params/colorlevels")
+  val videoParamsChromaLocation: String?
+    get() = MPVLib.getPropertyString("video-params/chroma-location")
+  val videoParamsColormatrix: String?
+    get() = MPVLib.getPropertyString("video-params/colormatrix")
+  val videoParamsPrimaries: String?
+    get() = MPVLib.getPropertyString("video-params/primaries")
+  val videoParamsGamma: String?
+    get() = MPVLib.getPropertyString("video-params/gamma")
+
+  val videoOutParamsW: Int?
+    get() = MPVLib.getPropertyInt("video-out-params/w")
+  val videoOutParamsH: Int?
+    get() = MPVLib.getPropertyInt("video-out-params/h")
+  val videoOutParamsAspect: Double?
+    get() = MPVLib.getPropertyDouble("video-out-params/aspect")
+  val videoOutParamsPixelFormat: String?
+    get() = MPVLib.getPropertyString("video-out-params/pixelformat")
+  val videoOutParamsColorLevels: String?
+    get() = MPVLib.getPropertyString("video-out-params/colorlevels")
+  val videoOutParamsColormatrix: String?
+    get() = MPVLib.getPropertyString("video-out-params/colormatrix")
+  val videoOutParamsPrimaries: String?
+    get() = MPVLib.getPropertyString("video-out-params/primaries")
+  val videoOutParamsGamma: String?
+    get() = MPVLib.getPropertyString("video-out-params/gamma")
+
+  val audioCodecName: String?
+    get() = MPVLib.getPropertyString("audio-codec-name")
+  val currentAo: String?
+    get() = MPVLib.getPropertyString("current-ao")
+  val audioDevice: String?
+    get() = MPVLib.getPropertyString("audio-device")
+  val audioDelay: Double?
+    get() = MPVLib.getPropertyDouble("audio-delay")
+  val audioChannels: String?
+    get() = MPVLib.getPropertyString("audio-params/channels")
+  val audioFormatIn: String?
+    get() = MPVLib.getPropertyString("audio-params/format")
+  val audioFormatOut: String?
+    get() = MPVLib.getPropertyString("audio-out-params/format")
+  val audioSampleRate: Int?
+    get() = MPVLib.getPropertyInt("audio-params/samplerate")
+  val audioBitrate: Double?
+    get() = MPVLib.getPropertyDouble("audio-bitrate")
+  val activeAudioFilters: String?
+    get() = MPVLib.getPropertyString("af")
+
+  /** Sums GPU shader-pass timings from "vo-passes" (nanoseconds -> microseconds); null if unavailable/unparseable. */
+  fun voPassesFrameTiming(): FrameTiming? {
+    val node = MPVLib.getPropertyNode("vo-passes") as? Map<*, *> ?: return null
+
+    fun sumPasses(key: String): Triple<Double, Double, Double> {
+      val passes = node[key] as? List<*> ?: return Triple(0.0, 0.0, 0.0)
+      var last = 0.0
+      var avg = 0.0
+      var peak = 0.0
+      for (pass in passes) {
+        val passMap = pass as? Map<*, *> ?: continue
+        last += (passMap["last"] as? Long ?: 0L) / 1000.0
+        avg += (passMap["avg"] as? Long ?: 0L) / 1000.0
+        peak += (passMap["peak"] as? Long ?: 0L) / 1000.0
+      }
+      return Triple(last, avg, peak)
+    }
+
+    val (freshLast, freshAvg, freshPeak) = sumPasses("fresh")
+    val (redrawLast, redrawAvg, redrawPeak) = sumPasses("redraw")
+    return FrameTiming(freshLast, freshAvg, freshPeak, redrawLast, redrawAvg, redrawPeak)
+  }
 
   /**
    * Returns the video aspect ratio. Rotation is taken into account.

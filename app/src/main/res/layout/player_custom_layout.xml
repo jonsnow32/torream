@@ -48,6 +48,12 @@
     android:layout_height="match_parent"
     android:background="@color/black_gradient" />
 
+  <cloud.streamless.torream.ui.player.stats.StatsOverlay
+    android:id="@+id/statsOverlay"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone" />
+
   <FrameLayout
     android:id="@+id/pipHide"
     android:layout_width="match_parent"

@@ -267,6 +267,16 @@
   </style>
 
 
+  <!-- Player stats overlay text style -->
+  <style name="StatsOverlayText">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:fontFamily">monospace</item>
+    <item name="android:textColor">@color/white</item>
+    <item name="android:textSize">11sp</item>
+    <item name="android:lineSpacingExtra">0.5dp</item>
+  </style>
+
   <!-- Watch Header Text Style -->
   <style name="WatchHeaderText">
     <item name="android:textSize">16sp</item>

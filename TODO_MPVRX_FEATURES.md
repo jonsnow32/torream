@@ -28,7 +28,8 @@ Nguồn tham khảo: [`Riteshp2001/mpvRx`](https://github.com/Riteshp2001/mpvRx)
 | 5 | **Audio FFT visualizer** | Thấp/Trung bình | Cần OpenGL ES rendering |
 | 6 | **Dual subtitle + speech-to-subtitle (Whisper)** | Trung bình/Cao | Mở rộng `SubtitleHelper` / `MPVSubtitleFragment` |
 | 7 | **Syncplay** (đồng bộ xem chung nhiều người qua room) | Cao | Cần network client mới (WebSocket/TCP theo Syncplay protocol) + hook 2 chiều vào `PlayerMediaManager` / `MPVFragment` |
-| 8 | **yt-dlp streaming** (YouTube/Twitch/Bilibili, chọn codec/res/HDR) | Cao | Cần Python bridge hoặc native binding |
+| 8 | **yt-dlp streaming** (YouTube/
+Twitch/Bilibili, chọn codec/res/HDR) | Cao | Cần Python bridge hoặc native binding |
 | 9 | **HDR shader pipeline + Anime4K upscaling** | Cao | Đụng native MPV/JNI layer (`ui/player/mpv/`), rủi ro hiệu năng/nhiệt trên thiết bị yếu — cần thermal/battery-aware throttling nếu làm |
 | 10 | **Lua/JS scripting engine + code editor** | Cao | Tính năng lớn, ít người dùng phổ thông cần — ưu tiên thấp trừ khi có yêu cầu cụ thể |
 

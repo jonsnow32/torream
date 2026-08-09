@@ -2,10 +2,12 @@ package cloud.streamless.torream.ui.player
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.BatteryManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
@@ -27,6 +29,7 @@ import androidx.annotation.OptIn
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.RESULT_CANCELED
 import androidx.appcompat.app.AppCompatActivity.RESULT_OK
+import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -174,6 +177,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private val eventUiHandler = Handler(Looper.getMainLooper())
 
   private var playerBinding: PlayerCustomLayoutBinding? = null
+  private var statsPollingRunnable: Runnable? = null
 
   // Manager components for cleaner architecture
   private lateinit var gestureHandler: PlayerGestureHandler
@@ -317,6 +321,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     // Initialize manager components
     initializeManagers()
+    startStatsPollingIfEnabled()
 
     observe(viewModel.allLinks) {
       allLinks = it
@@ -859,6 +864,151 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         }
       )
     }
+  }
+
+  private fun startStatsPollingIfEnabled() {
+    val enabled = sharedPreferences.getBoolean(getString(R.string.stats_overlay_enabled_key), false)
+    playerBinding?.statsOverlay?.isVisible = enabled
+    playerBinding?.statsOverlay?.onCloseClick = { disableStatsOverlay() }
+    if (!enabled) return
+
+    val runnable = object : Runnable {
+      override fun run() {
+        pollStats()
+        eventUiHandler.postDelayed(this, 1000L)
+      }
+    }
+    statsPollingRunnable = runnable
+    eventUiHandler.post(runnable)
+  }
+
+  private fun disableStatsOverlay() {
+    statsPollingRunnable?.let { eventUiHandler.removeCallbacks(it) }
+    statsPollingRunnable = null
+    playerBinding?.statsOverlay?.isVisible = false
+    sharedPreferences.edit {
+      putBoolean(getString(R.string.stats_overlay_enabled_key), false)
+    }
+  }
+
+  private fun pollStats() {
+    val mpv = player ?: return
+    val batteryPercent = context?.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+      ?.let { intent ->
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        if (level >= 0 && scale > 0) (level * 100 / scale) else -1
+      } ?: -1
+
+    val cacheSpeedBps = mpv.cacheSpeed ?: 0.0
+    playerBinding?.statsOverlay?.render(buildStatsText(mpv, batteryPercent), (cacheSpeedBps / 1024.0).toFloat())
+  }
+
+  private val codecFriendlyNames = mapOf(
+    "h264" to "H.264 / AVC",
+    "hevc" to "H.265 / HEVC",
+    "av1" to "AV1",
+    "vp9" to "VP9",
+    "vp8" to "VP8",
+    "mpeg2video" to "MPEG-2",
+    "aac" to "AAC",
+    "opus" to "Opus",
+    "ac3" to "AC-3",
+    "eac3" to "E-AC-3",
+    "mp3" to "MP3",
+    "flac" to "FLAC"
+  )
+
+  private fun friendlyCodecName(codec: String?): String? = codec?.let { codecFriendlyNames[it] ?: it }
+
+  private fun buildStatsText(mpv: MPVView, batteryPercent: Int): String {
+    val sb = StringBuilder()
+
+    // Always emits "label: value", falling back to a placeholder so the line count/shape
+    // stays constant across ticks instead of fields appearing once mpv finishes loading.
+    fun line(label: String, value: Any?) {
+      sb.append("$label: ${value ?: "-"}\n")
+    }
+
+    fun section(title: String) {
+      sb.append("\n").append(title).append("\n").append("-".repeat(title.length)).append("\n")
+    }
+
+    val videoW = MPVLib.getPropertyInt("video-params/w")
+    val videoH = MPVLib.getPropertyInt("video-params/h")
+    val videoAspect = mpv.getVideoAspect()
+
+    line("File", buildCastTitle() ?: mpv.filename)
+    line("Size", mpv.fileSize?.let { "%.2f GiB".format(it / 1024.0 / 1024.0 / 1024.0) })
+    line("Format/Protocol", mpv.fileFormat)
+    val cacheMiB = mpv.cacheForwardBytes?.let { "%.2f MiB".format(it / 1024.0 / 1024.0) }
+    val cacheSec = mpv.demuxerCacheDuration?.let { "%.1f sec".format(it) }
+    line(
+      "Total Cache",
+      if (cacheMiB != null || cacheSec != null)
+        listOfNotNull(cacheMiB, cacheSec?.let { "($it)" }).joinToString(" ")
+      else null
+    )
+    line("Battery", batteryPercent.takeIf { it >= 0 }?.let { "$it%" })
+
+    section("Display")
+    line("VO", mpv.currentVo)
+    line("Context", mpv.gpuContext)
+    line("A-V", mpv.avsync)
+    line("Dropped", "${mpv.decoderDroppedFrames ?: 0} decoder / ${mpv.outputDroppedFrames ?: 0} output")
+    val timing = mpv.voPassesFrameTiming()
+    line(
+      "Frame Timings",
+      timing?.let {
+        "fresh %.0f/%.0f/%.0fµs · redraw %.0f/%.0f/%.0fµs (last/avg/peak)"
+          .format(it.freshLast, it.freshAvg, it.freshPeak, it.redrawLast, it.redrawAvg, it.redrawPeak)
+      }
+    )
+    line(
+      "Resolution",
+      if (mpv.videoOutParamsW != null && mpv.videoOutParamsH != null) "${mpv.videoOutParamsW} × ${mpv.videoOutParamsH}" else null
+    )
+    line("Aspect Ratio", mpv.videoOutParamsAspect?.let { "%.2f:1".format(it) })
+    line("Format", mpv.videoOutParamsPixelFormat)
+    line("Levels", mpv.videoOutParamsColorLevels)
+    line("Colormatrix", mpv.videoOutParamsColormatrix)
+    line("Primaries", mpv.videoOutParamsPrimaries)
+    line("Transfer", mpv.videoOutParamsGamma)
+
+    section("Video")
+    line("Codec", friendlyCodecName(mpv.videoCodec))
+    val decoder = mpv.videoCodec?.let { codec ->
+      if (mpv.hwdecActive != "no") "${codec}_${mpv.hwdecActive}" else "$codec (software)"
+    }
+    line("Decoder", decoder)
+    line("Frame Rate", (mpv.containerFps ?: mpv.estimatedVfFps)?.let { "%.3f fps".format(it) })
+    line("Resolution", if (videoW != null && videoH != null) "$videoW × $videoH" else null)
+    line("Aspect Ratio", videoAspect?.let { "%.2f:1".format(it) })
+    line("Format", mpv.videoParamsPixelFormat)
+    line("Levels", mpv.videoParamsColorLevels)
+    line("Chroma Location", mpv.videoParamsChromaLocation)
+    line("Colormatrix", mpv.videoParamsColormatrix)
+    line("Primaries", mpv.videoParamsPrimaries)
+    line("Transfer", mpv.videoParamsGamma)
+    line("Bitrate", mpv.videoBitrate?.let { "%.0f kbps".format(it / 1000.0) })
+
+    section("Audio")
+    line("Codec", friendlyCodecName(mpv.audioCodecName))
+    line("Output", mpv.currentAo)
+    line("Device", mpv.audioDevice)
+    line("A-V Delay", mpv.audioDelay?.let { "%.0f ms".format(it * 1000.0) })
+    line("Channels", mpv.audioChannels)
+    line(
+      "Sample Format",
+      if (mpv.audioFormatIn != null || mpv.audioFormatOut != null)
+        listOfNotNull(mpv.audioFormatIn, mpv.audioFormatOut).joinToString(" → ")
+      else null
+    )
+    line("Sample Rate", mpv.audioSampleRate?.let { "$it Hz" })
+    line("Bitrate", mpv.audioBitrate?.let { "%.0f kbps".format(it / 1000.0) })
+    line("Filters", mpv.activeAudioFilters)
+
+    return sb.toString().trim()
   }
 
   /**
@@ -1899,6 +2049,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   override fun onDestroyView() {
     exitFullscreen()
+
+    statsPollingRunnable?.let { eventUiHandler.removeCallbacks(it) }
+    statsPollingRunnable = null
 
     activity?.takeIf { !it.isFinishing && !it.isChangingConfigurations }?.let {
       InAppReviewHelper.onPlaybackSessionEnded(it, System.currentTimeMillis() - playbackSessionStartMs)

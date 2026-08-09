@@ -11,8 +11,9 @@ void init_methods_cache(JNIEnv *env);
 #define UTIL_EXTERN extern
 #endif
 
-UTIL_EXTERN jclass java_Integer, java_Double, java_Boolean;
+UTIL_EXTERN jclass java_Integer, java_Double, java_Boolean, java_Long, java_ArrayList, java_HashMap;
 UTIL_EXTERN jmethodID java_Integer_init, java_Integer_intValue, java_Double_init, java_Double_doubleValue, java_Boolean_init, java_Boolean_booleanValue;
+UTIL_EXTERN jmethodID java_Long_init, java_ArrayList_init, java_ArrayList_add, java_HashMap_init, java_HashMap_put;
 
 UTIL_EXTERN jclass android_graphics_Bitmap, android_graphics_Bitmap_Config;
 UTIL_EXTERN jmethodID android_graphics_Bitmap_createBitmap;
