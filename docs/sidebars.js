@@ -16,6 +16,7 @@ const sidebars = {
         'features/media-library',
         'features/android-tv',
         'features/chromecast',
+        'features/network-shares',
       ],
     },
     {

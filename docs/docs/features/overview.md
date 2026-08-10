@@ -79,6 +79,16 @@ Torream is packed with powerful features that make it a comprehensive media solu
 
 [Learn more about Chromecast →](./chromecast.md)
 
+### 🌐 Network Shares
+
+- **SMB, FTP, and WebDAV**: Connect to NAS, PC, or remote shares
+- **Direct playback**: No manual download step
+- **Encrypted credentials**: Android Keystore-backed storage
+- **Folder browsing**: Breadcrumb-style navigation with file-type icons
+- **Multiple saved shares**: Switch between them from one Browse tab
+
+[Learn more about Network Shares →](./network-shares.md)
+
 ## Additional Features
 
 ### 🎨 Customization
@@ -133,6 +143,7 @@ Torream is packed with powerful features that make it a comprehensive media solu
 | Torrent Support | ✅ | ✅ |
 | Media Library | ✅ | ✅ |
 | Chromecast | ✅ | ✅ |
+| Network Shares (SMB/FTP/WebDAV) | ✅ | ✅ |
 | Android TV | ✅ | ✅ |
 | Ads | ✅ Yes | ❌ No |
 | Advanced Settings | Limited | ✅ Full |
@@ -186,6 +197,7 @@ Torream combines:
 - ✅ Organized media library
 - ✅ Android TV optimization
 - ✅ Chromecast integration
+- ✅ SMB/FTP/WebDAV network shares
 - ✅ Privacy-focused design
 - ✅ Performance optimization
 

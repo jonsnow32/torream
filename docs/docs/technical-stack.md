@@ -164,6 +164,23 @@ Complete torrent client implementation:
   - Enables playback before download completion
   - Local streaming server for player integration
 
+## Network Share Browsing
+
+### Protocol Clients
+- **smbj** `0.14.0`: Pure-Java SMB2/3 client
+  - No native code — avoids cross-compiling `libsmbclient`
+  - Used for both folder listing and file reads
+  - Backed by a local NanoHTTPD proxy (mirrors the torrent streaming server pattern) so the player can read SMB files without native protocol support
+- **Apache Commons Net** `3.11.1`: FTP client for folder listing
+  - FTP playback itself goes directly through the app's media engine (built-in protocol support)
+- **WebDAV**: Custom lightweight client (OkHttp + `XmlPullParser`)
+  - PROPFIND-based folder listing, no extra dependency
+  - Playback goes directly over `http(s)://` with Basic Auth headers
+
+### Credential Storage
+- **Android Keystore**: Hardware-backed AES/GCM encryption for saved share passwords
+  - Keys never leave secure hardware; passwords decrypted only transiently in memory
+
 ## Image Loading
 
 ### Coil `2.7.0`
@@ -312,6 +329,7 @@ Local Data Source (Room) + Remote Data Source (Network)
 - **ProGuard**: Code obfuscation in release builds
 - **Permission runtime requests**: User privacy
 - **SafeFile**: Secure file operations
+- **Android Keystore**: Encrypted storage for network share credentials
 
 ## Summary
 
