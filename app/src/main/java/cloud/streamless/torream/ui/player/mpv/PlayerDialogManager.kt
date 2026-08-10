@@ -203,6 +203,7 @@ class PlayerDialogManager(
     onSubtitleSelected: (subtitleIndex: Int) -> Unit,
     onLoadSubtitlesFromFile: () -> Unit,
     onLoadSubtitlesOnline: () -> Unit,
+    onTranslateSubtitle: () -> Unit,
     onDismiss: () -> Unit
   ) {
     onShowDialog?.invoke()
@@ -216,7 +217,11 @@ class PlayerDialogManager(
 
     val subtitleIndex = max((currentSubtitleTracks.indexOfFirst { it.selected }), 0)
     val dialog = SelectionDialog.single(
-      currentSubtitleTracks.map { it.name } + listOf<String>(ctx.getString(R.string.load_from_file), ctx.getString(R.string.load_from_network)),
+      currentSubtitleTracks.map { it.name } + listOf<String>(
+        ctx.getString(R.string.load_from_file),
+        ctx.getString(R.string.load_from_network),
+        ctx.getString(R.string.translate_subtitle)
+      ),
       subtitleIndex,
       fragment.getString(R.string.subtitle),
       false
@@ -229,6 +234,9 @@ class PlayerDialogManager(
             return@let
           } else if (index == currentSubtitleTracks.size + 1) {
             onLoadSubtitlesOnline()
+            return@let
+          } else if (index == currentSubtitleTracks.size + 2) {
+            onTranslateSubtitle()
             return@let
           } else {
             onSubtitleSelected(index)

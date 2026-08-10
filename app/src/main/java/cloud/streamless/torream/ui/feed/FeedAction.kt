@@ -398,6 +398,12 @@ class FeedAction(
         iconRes = R.drawable.ic_playlist_add,
         isDestructive = false
       ),
+      ActionItem(
+        id = "batch_rename",
+        title = fragment.getString(R.string.action_batch_rename),
+        iconRes = R.drawable.ic_baseline_auto_awesome_24,
+        isDestructive = false
+      ),
       if (isPrivate) {
         ActionItem(
           id = "remove_from_private",
@@ -651,6 +657,10 @@ class FeedAction(
 
       "add_to_playlist" -> {
         showAddToPlaylistDialog(item)
+      }
+
+      "batch_rename" -> {
+        showBatchRenameDialog(item)
       }
 
       "make_private" -> {
@@ -1360,6 +1370,56 @@ class FeedAction(
 
   private fun showAddToPlaylistDialog(item: FeedData.MediaItem) {
     showAddToPlaylistDialog(listOf(item))
+  }
+
+  /**
+   * Batch rename (AI): lets the user pick sibling files in the same folder as [item], then opens
+   * [cloud.streamless.torream.ui.library.BatchRenameDialog] to suggest and apply clean names.
+   */
+  private fun showBatchRenameDialog(item: FeedData.MediaItem) {
+    val context = fragment.context ?: return
+    val parentPath = File(item.media.path).parent
+    if (parentPath == null) {
+      showToast("Cannot determine folder")
+      return
+    }
+
+    fragment.lifecycleScope.launch {
+      val siblingFiles = withContext(Dispatchers.IO) {
+        UnifiedFileFactory.fromPath(context, parentPath)?.listFiles()
+          ?.filter { it.isFile && (isVideoFile(it) || isAudioFile(it)) }
+          ?.sortedBy { it.name }
+          ?: emptyList()
+      }
+
+      if (siblingFiles.isEmpty()) {
+        showToast(fragment.getString(R.string.batch_rename_no_files))
+        return@launch
+      }
+
+      val currentName = File(item.media.path).name
+      val preselected = siblingFiles.indexOfFirst { it.name == currentName }
+        .let { if (it >= 0) listOf(it) else emptyList() }
+
+      withContext(Dispatchers.Main) {
+        SelectionDialog.multiple(
+          items = siblingFiles.map { it.name },
+          selectedIndex = preselected,
+          name = fragment.getString(R.string.batch_rename_select_files)
+        ).show(fragment.parentFragmentManager) { bundle ->
+          val indices = bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)
+          if (indices.isNullOrEmpty()) return@show
+
+          val selectedUris = indices.mapNotNull { siblingFiles.getOrNull(it)?.uri?.toString() }
+          val dialog = cloud.streamless.torream.ui.library.BatchRenameDialog.newInstance(selectedUris)
+          dialog.onRenamed = {
+            (fragment as? cloud.streamless.torream.ui.library.LibraryFragment)?.refreshAdapter()
+            (fragment as? cloud.streamless.torream.ui.home.FeedFragment)?.refreshAdapter()
+          }
+          dialog.show(fragment.parentFragmentManager)
+        }
+      }
+    }
   }
 
   /**

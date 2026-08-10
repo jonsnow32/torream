@@ -84,6 +84,7 @@ class SettingsFragment : Fragment() {
         settingsCast to R.id.action_navigation_global_to_navigation_settings_cast,
         settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
         settingsDownload to R.id.action_navigation_global_to_navigation_settings_download,
+        settingsAiTools to R.id.action_navigation_global_to_navigation_settings_ai_tools,
       ).forEach { (view, navigationId) ->
         view.apply {
           setOnClickListener {

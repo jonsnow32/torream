@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="?attr/colorSurfaceContainer"
+  android:orientation="vertical"
+  android:padding="16dp">
+
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:text="@string/translate_subtitle"
+    android:textColor="?attr/colorOnSurface"
+    android:textSize="18sp" />
+
+  <LinearLayout
+    android:id="@+id/targetLanguageRow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/preference_focused"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <TextView
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:text="@string/target_language"
+      android:textColor="?attr/colorOnSurface"
+      android:textSize="16sp" />
+
+    <TextView
+      android:id="@+id/targetLanguageValue"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="14sp"
+      tools:text="Spanish" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:id="@+id/progressContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:orientation="vertical"
+    android:visibility="gone"
+    tools:visibility="visible">
+
+    <ProgressBar
+      android:id="@+id/translateProgressBar"
+      style="?android:attr/progressBarStyleHorizontal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:max="100" />
+
+    <TextView
+      android:id="@+id/progressText"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="4dp"
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="13sp"
+      tools:text="Translating 40/120" />
+  </LinearLayout>
+
+  <TextView
+    android:id="@+id/errorText"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:textColor="?attr/colorError"
+    android:textSize="13sp"
+    android:visibility="gone"
+    tools:text="Translation failed"
+    tools:visibility="visible" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:gravity="end"
+    android:orientation="horizontal">
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/cancelBtt"
+      style="@style/Widget.Material3.Button.TextButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="8dp"
+      android:text="@android:string/cancel" />
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/translateBtt"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/translate_subtitle" />
+  </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="?attr/colorSurfaceContainer"
+  android:orientation="vertical"
+  android:padding="16dp">
+
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:text="@string/batch_rename_title"
+    android:textColor="?attr/colorOnSurface"
+    android:textSize="18sp" />
+
+  <LinearLayout
+    android:id="@+id/loadingContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    tools:visibility="visible">
+
+    <ProgressBar
+      android:layout_width="24dp"
+      android:layout_height="24dp"
+      android:layout_marginEnd="12dp" />
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/batch_rename_loading"
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="14sp" />
+  </LinearLayout>
+
+  <ScrollView
+    android:id="@+id/reviewScroll"
+    android:layout_width="match_parent"
+    android:layout_height="300dp"
+    android:visibility="gone"
+    tools:visibility="visible">
+
+    <LinearLayout
+      android:id="@+id/reviewContainer"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical" />
+  </ScrollView>
+
+  <TextView
+    android:id="@+id/errorText"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textColor="?attr/colorError"
+    android:textSize="13sp"
+    android:visibility="gone"
+    tools:text="Rename suggestion failed"
+    tools:visibility="visible" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:gravity="end"
+    android:orientation="horizontal">
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/cancelBtt"
+      style="@style/Widget.Material3.Button.TextButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="8dp"
+      android:text="@android:string/cancel" />
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/applyBtt"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/batch_rename_apply" />
+  </LinearLayout>
+</LinearLayout>

@@ -93,6 +93,14 @@
     app:popEnterAnim="@anim/enter_anim"
     app:popExitAnim="@anim/exit_anim" />
 
+  <action
+    android:id="@+id/action_navigation_global_to_navigation_settings_ai_tools"
+    app:destination="@id/navigation_settings_ai_tools"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
+
   <fragment
     android:id="@+id/navigation_settings_general"
     android:name="cloud.streamless.torream.ui.settings.SettingsGeneral"
@@ -237,4 +245,13 @@
     android:id="@+id/settingsDownload"
     android:name="cloud.streamless.torream.ui.settings.SettingsDownload"
     android:label="SettingsDownload" />
+
+  <fragment
+    android:id="@+id/navigation_settings_ai_tools"
+    android:name="cloud.streamless.torream.ui.settings.SettingsAiTools"
+    android:label="@string/title_settings"
+    app:enterAnim="@anim/enter_anim"
+    app:exitAnim="@anim/exit_anim"
+    app:popEnterAnim="@anim/enter_anim"
+    app:popExitAnim="@anim/exit_anim" />
 </navigation>

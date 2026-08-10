@@ -242,6 +242,11 @@ dependencies {
   // Downloading & Networking
   implementation("com.github.Blatzar:NiceHttp:0.4.13")
 
+  // Encrypted storage for user-entered AI provider API keys
+  // NOTE: version unverified in this sandbox (no network access to dl.google.com) — confirm the
+  // latest available androidx.security:security-crypto version when building locally.
+  implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
   // Network share browsing (SMB/FTP) - pure Java/Kotlin, no native code
   implementation("com.hierynomus:smbj:0.14.0")
   implementation("commons-net:commons-net:3.11.1")

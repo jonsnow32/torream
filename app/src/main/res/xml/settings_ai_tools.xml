@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto">
+
+  <PreferenceCategory android:title="@string/pref_category_ai_api_keys">
+    <Preference
+      android:icon="@drawable/lock_close_icon"
+      android:key="@string/ai_key_openai_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/ai_key_openai" />
+    <Preference
+      android:icon="@drawable/lock_close_icon"
+      android:key="@string/ai_key_anthropic_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/ai_key_anthropic" />
+    <Preference
+      android:icon="@drawable/lock_close_icon"
+      android:key="@string/ai_key_groq_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/ai_key_groq" />
+    <Preference
+      android:icon="@drawable/lock_close_icon"
+      android:key="@string/ai_key_openrouter_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/ai_key_openrouter" />
+  </PreferenceCategory>
+
+  <PreferenceCategory android:title="@string/pref_category_ai_model">
+    <Preference
+      android:icon="@drawable/ic_baseline_tune_24"
+      android:key="@string/ai_default_provider_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/ai_default_provider" />
+    <Preference
+      android:icon="@drawable/ic_baseline_tune_24"
+      android:key="@string/ai_openrouter_model_key"
+      android:layout="@layout/custom_preference"
+      android:title="@string/ai_openrouter_model"
+      app:summary="@string/ai_openrouter_model_des" />
+  </PreferenceCategory>
+
+</PreferenceScreen>

@@ -61,6 +61,7 @@ import cloud.streamless.torream.ui.player.mpv.PlayerMediaManager
 import cloud.streamless.torream.ui.player.mpv.PlayerUIController
 import cloud.streamless.torream.ui.player.youtube.YouTubeOverlay
 import cloud.streamless.torream.ui.subtitles.MPVSubtitleFragment
+import cloud.streamless.torream.ui.subtitles.TranslateSubtitleDialog
 import cloud.streamless.torream.utils.CommonActivitty
 import cloud.streamless.torream.utils.CommonActivitty.keyEventListener
 import cloud.streamless.torream.utils.CommonActivitty.playerEventListener
@@ -1478,6 +1479,9 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         onLoadSubtitlesOnline = {
           openOnlineSubtitleSearch()
         },
+        onTranslateSubtitle = {
+          openTranslateSubtitleDialog()
+        },
         onDismiss = {
           //player?.paused = false
           activity?.hideSystemUI()
@@ -1493,6 +1497,18 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     val title = playerBinding?.playerVideoTitle?.text?.toString()
     val dialog = cloud.streamless.torream.ui.subtitles.OnlineSubtitleDialog.newInstance(title)
     dialog.onSubtitleSelected = { sub -> addAndSelectSubtitles(sub) }
+    dialog.show(childFragmentManager)
+  }
+
+  private fun openTranslateSubtitleDialog() {
+    val selectedTrackName = player?.tracks?.get("sub")?.find { it.selected }?.name
+    val subtitle = currentSubs.find { it.name == selectedTrackName } ?: currentSubs.singleOrNull()
+    if (subtitle == null) {
+      Toast.makeText(context, R.string.load_subtitle_before_translating, Toast.LENGTH_SHORT).show()
+      return
+    }
+    val dialog = TranslateSubtitleDialog.newInstance(subtitle)
+    dialog.onTranslated = { sub -> addAndSelectSubtitles(sub) }
     dialog.show(childFragmentManager)
   }
 
