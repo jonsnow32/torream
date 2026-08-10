@@ -330,6 +330,19 @@
   <string name="no_episodes_found">No Episodes found</string>
   <string name="delete_file">Delete File</string>
   <string name="delete">Delete</string>
+  <string name="save">Save</string>
+  <string name="add_network_share">Add network share</string>
+  <string name="network_share_name">Name</string>
+  <string name="network_share_host">Host / IP address</string>
+  <string name="network_share_port">Port</string>
+  <string name="network_share_path">Path (e.g. ShareName/Videos)</string>
+  <string name="network_share_username">Username (optional)</string>
+  <string name="network_share_password">Password (optional)</string>
+  <string name="network_share_use_tls">Use HTTPS/TLS (WebDAV only)</string>
+  <string name="network_share_connect_failed">Couldn\'t connect: %1$s</string>
+  <string name="network_share_empty">No files here</string>
+  <string name="network_shares_empty">No network shares yet. Tap + to add one.</string>
+  <string name="browse">Browse</string>
   <string name="cancel">Cancel</string>
   <string name="pause">Pause</string>
 

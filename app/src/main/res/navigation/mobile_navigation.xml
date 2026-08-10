@@ -160,7 +160,7 @@
   <fragment
     android:id="@+id/browseFragment"
     android:name="cloud.streamless.torream.ui.browse.BrowseFragment"
-    android:label="BrowseFragment" />
+    android:label="@string/browse" />
 
   <fragment
     android:id="@+id/navigation_settings_player"

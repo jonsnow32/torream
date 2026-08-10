@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="@drawable/outline_drawable_forced"
+  android:clickable="true"
+  android:focusable="true"
+  android:gravity="center_vertical"
+  android:minHeight="56dp"
+  android:orientation="horizontal"
+  android:paddingHorizontal="12dp"
+  android:paddingVertical="8dp">
+
+  <ImageView
+    android:id="@+id/entryIcon"
+    android:layout_width="28dp"
+    android:layout_height="28dp"
+    android:src="@drawable/ic_folder"
+    android:contentDescription="@null" />
+
+  <LinearLayout
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:layout_weight="1"
+    android:orientation="vertical">
+
+    <TextView
+      android:id="@+id/entryName"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:textColor="@color/text_primary"
+      android:textSize="15sp"
+      tools:text="Movie.mkv" />
+
+    <TextView
+      android:id="@+id/entrySubtitle"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:textColor="@color/text_secondary"
+      android:textSize="12sp"
+      tools:text="1.2 GB" />
+  </LinearLayout>
+
+</LinearLayout>

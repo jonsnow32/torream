@@ -8,12 +8,16 @@ import cloud.streamless.torream.media.dao.FavoriteDao
 import cloud.streamless.torream.media.dao.FolderDao
 import cloud.streamless.torream.media.dao.MediaDao
 import cloud.streamless.torream.media.dao.MediaPlaybackDao
+import cloud.streamless.torream.media.dao.NetworkShareDao
 import cloud.streamless.torream.media.dao.PlaylistDao
 import cloud.streamless.torream.media.db.MediaDatabase
 import cloud.streamless.torream.media.dataSource.MediaStoreDataSource
 import cloud.streamless.torream.media.dataSource.MediaStoreDataSourceImpl
 import cloud.streamless.torream.media.repository.MediaRepository
 import cloud.streamless.torream.media.repository.MediaRepositoryImpl
+import cloud.streamless.torream.media.repository.NetworkShareRepository
+import cloud.streamless.torream.media.repository.NetworkShareRepositoryImpl
+import cloud.streamless.torream.utils.SmbStreamServer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,7 +40,12 @@ object DatabaseModule {
       MediaDatabase::class.java,
       "media_database"
     )
-      .addMigrations(MediaDatabase.MIGRATION_1_2, MediaDatabase.MIGRATION_2_3, MediaDatabase.MIGRATION_3_4)
+      .addMigrations(
+        MediaDatabase.MIGRATION_1_2,
+        MediaDatabase.MIGRATION_2_3,
+        MediaDatabase.MIGRATION_3_4,
+        MediaDatabase.MIGRATION_4_5
+      )
       .fallbackToDestructiveMigration(BuildConfig.DEBUG) // For development - recreate DB on schema changes
       .build()
   }
@@ -75,6 +84,21 @@ object DatabaseModule {
   @Singleton
   fun provideFavoriteDao(database: MediaDatabase): FavoriteDao {
     return database.favoriteDao()
+  }
+
+  @Provides
+  @Singleton
+  fun provideNetworkShareDao(database: MediaDatabase): NetworkShareDao {
+    return database.networkShareDao()
+  }
+
+  @Provides
+  @Singleton
+  fun provideNetworkShareRepository(
+    dao: NetworkShareDao,
+    smbStreamServer: SmbStreamServer
+  ): NetworkShareRepository {
+    return NetworkShareRepositoryImpl(dao, smbStreamServer)
   }
 
 

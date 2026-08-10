@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="@drawable/outline_drawable_forced"
+  android:clickable="true"
+  android:focusable="true"
+  android:gravity="center_vertical"
+  android:minHeight="64dp"
+  android:orientation="horizontal"
+  android:paddingHorizontal="12dp"
+  android:paddingVertical="8dp">
+
+  <ImageView
+    android:id="@+id/shareIcon"
+    android:layout_width="32dp"
+    android:layout_height="32dp"
+    android:src="@drawable/ic_baseline_dns_24"
+    android:tint="?attr/colorPrimary"
+    android:contentDescription="@null" />
+
+  <LinearLayout
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:layout_weight="1"
+    android:orientation="vertical">
+
+    <TextView
+      android:id="@+id/shareName"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:textColor="@color/text_primary"
+      android:textSize="16sp"
+      tools:text="My NAS" />
+
+    <TextView
+      android:id="@+id/shareSubtitle"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:textColor="@color/text_secondary"
+      android:textSize="13sp"
+      tools:text="SMB - 192.168.1.10" />
+  </LinearLayout>
+
+  <ImageView
+    android:id="@+id/shareDelete"
+    android:layout_width="24dp"
+    android:layout_height="24dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:padding="4dp"
+    android:src="@drawable/ic_baseline_delete_outline_24"
+    android:contentDescription="@string/delete" />
+
+</LinearLayout>

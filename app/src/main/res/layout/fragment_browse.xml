@@ -15,7 +15,7 @@
       android:id="@+id/toolbar"
       android:layout_width="match_parent"
       android:layout_height="?attr/actionBarSize"
-      app:title="@string/app_name" />
+      app:title="@string/browse" />
   </com.google.android.material.appbar.AppBarLayout>
 
   <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -24,15 +24,31 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-    <androidx.recyclerview.widget.RecyclerView
-      android:id="@+id/recycler_view"
+    <FrameLayout
       android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:clipToPadding="false"
-      android:paddingHorizontal="20dp"
-      android:paddingVertical="8dp"
-      android:scrollbars="vertical"
-      tools:listitem="@layout/item_video" />
+      android:layout_height="match_parent">
+
+      <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:scrollbars="vertical"
+        tools:listitem="@layout/item_network_share" />
+
+      <TextView
+        android:id="@+id/emptyText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:padding="24dp"
+        android:textColor="@color/text_secondary"
+        android:visibility="gone"
+        tools:text="No network shares yet. Tap + to add one." />
+    </FrameLayout>
   </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

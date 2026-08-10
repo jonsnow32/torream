@@ -242,6 +242,10 @@ dependencies {
   // Downloading & Networking
   implementation("com.github.Blatzar:NiceHttp:0.4.13")
 
+  // Network share browsing (SMB/FTP) - pure Java/Kotlin, no native code
+  implementation("com.hierynomus:smbj:0.14.0")
+  implementation("commons-net:commons-net:3.11.1")
+
   // File handling
   implementation("com.github.LagradOst:SafeFile:0.0.8")
 
