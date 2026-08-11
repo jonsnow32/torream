@@ -12,6 +12,7 @@ interface MediaRepository {
   fun observeMedia(): Flow<List<Media>>
   fun observeFolders(): Flow<List<Folder>>
   fun observeSyncState(): Flow<SyncState>
+  fun hasMediaPermission(): Boolean
   suspend fun refreshMedia(path: String? = null): Boolean
   suspend fun getMediaByFolder(folderPath: String): List<Media>
   suspend fun getMediaByFolderPaged(

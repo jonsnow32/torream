@@ -6,8 +6,11 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- Media index is derived from MediaStore content:// URIs that require runtime
+         permissions which are never restored alongside backed-up app data. Restoring
+         a stale DB skips the empty-DB permission/sync check and causes playback
+         failures for entries the app no longer has access to. -->
+    <exclude domain="database" path="media_database"/>
+    <exclude domain="database" path="media_database-wal"/>
+    <exclude domain="database" path="media_database-shm"/>
 </full-backup-content>

@@ -4,16 +4,17 @@
    for details.
 -->
 <data-extraction-rules>
+    <!-- Media index rows reference content:// URIs gated by runtime permissions that
+         are never restored with app data - a restored DB would skip the empty-DB
+         permission/sync check and cause playback failures for stale entries. -->
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="database" path="media_database"/>
+        <exclude domain="database" path="media_database-wal"/>
+        <exclude domain="database" path="media_database-shm"/>
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="database" path="media_database"/>
+        <exclude domain="database" path="media_database-wal"/>
+        <exclude domain="database" path="media_database-shm"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

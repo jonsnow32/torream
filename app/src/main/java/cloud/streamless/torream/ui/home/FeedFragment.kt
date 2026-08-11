@@ -400,8 +400,9 @@ class FeedFragment : Fragment() {
     // Save the config to persist across app restarts
     FeedFilterConfig.save(sharedPreferences, config)
 
-    // Refresh the adapter to apply changes
-    adapter.refresh()
+    // Note: no need to call adapter.refresh() here - updating filterConfig.value
+    // already triggers a new Pager via flatMapLatest. Calling refresh() too would
+    // race a reload on the old (soon-to-be-cancelled) PagingSource against the new one.
 
     showToast("Settings applied: ${config.groupMode.name} / ${config.viewMode.name}")
   }

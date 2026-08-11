@@ -51,18 +51,24 @@ class FeedPagingSource(
           val media = repository.observeMedia().first()
           Timber.d("Database check: ${folders.size} folders, ${media.size} media items")
           folders.isNotEmpty() || media.isNotEmpty()
+        } catch (e: CancellationException) {
+          throw e // Don't treat cancellation as "database is empty"
         } catch (e: Exception) {
           Timber.e(e, "Error checking database")
           false
         }
 
-        // If database is empty, definitely need to sync (will throw if no permission)
-        if (!hasData) {
-          Timber.w("Database is empty, triggering sync - will throw if no permission")
+        // Trigger sync (which throws if permission is missing) whenever the database is
+        // empty OR permission isn't currently granted. Relying on "DB has data" alone is
+        // not enough: cached rows can outlive the permission grant (e.g. permission
+        // revoked in Settings, or the DB restored via Android Auto Backup on a fresh
+        // install where runtime permissions are never restored), leaving stale
+        // content:// entries that fail to open at playback time instead of surfacing
+        // the permission request.
+        if (!hasData || !repository.hasMediaPermission()) {
+          Timber.w("Database is empty or permission missing, triggering sync - will throw if no permission")
           repository.refreshMedia()
         }
-        // Note: If database has data, we'll still try to load from it
-        // but syncState observer will show permission error if sync fails in background
       }
 
       // Load data based on groupMode and rootFolderPath

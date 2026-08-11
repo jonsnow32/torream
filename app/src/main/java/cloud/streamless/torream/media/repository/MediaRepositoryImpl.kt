@@ -96,6 +96,8 @@ class MediaRepositoryImpl @Inject constructor(
 
   override fun observeSyncState(): Flow<SyncState> = _syncState.asStateFlow()
 
+  override fun hasMediaPermission(): Boolean = hasMediaPermissions()
+
   @OptIn(kotlinx.coroutines.FlowPreview::class)
   private fun startAutoSync() {
     syncJob = mediaStore.observeMediaChanges()
@@ -127,12 +129,20 @@ class MediaRepositoryImpl @Inject constructor(
         }
       }
 
-      Timber.d("performSync: Total ${mediaItems.size} media items after combining sources")
+      // Drop 0-byte or zero-duration files - they're unplayable (interrupted downloads,
+      // corrupted files) and would otherwise show up in the feed and fail at playback time
+      val playableItems = mediaItems.filter { it.size > 0L && it.duration > 0L }
+      val droppedCount = mediaItems.size - playableItems.size
+      if (droppedCount > 0) {
+        Timber.w("performSync: Dropping $droppedCount unplayable item(s) (0 size or 0 duration)")
+      }
+
+      Timber.d("performSync: Total ${playableItems.size} media items after combining sources")
 
       // Parallel processing
       coroutineScope {
-        val mediaJob = launch { syncMedia(mediaItems) }
-        val folderJob = launch { syncFolders(mediaItems) }
+        val mediaJob = launch { syncMedia(playableItems) }
+        val folderJob = launch { syncFolders(playableItems) }
         val downloadJob = launch { syncDownloadedFilesState() }
 
         mediaJob.join()
@@ -633,9 +643,11 @@ class MediaRepositoryImpl @Inject constructor(
 
     Timber.d("getAllMediaPaged: Found ${allMedia.size} media items before sorting")
 
-    // If no data and no permission, throw exception to trigger error UI
-    if (allMedia.isEmpty() && offset == 0 && !hasMediaPermissions()) {
-      Timber.w("getAllMediaPaged: No media in database and no permission - throwing exception")
+    // If permission isn't granted, throw to trigger the permission-request error UI -
+    // even if stale cached rows exist (e.g. from a prior grant, or a DB restored via
+    // Android Auto Backup, which never restores the runtime permission grant with it).
+    if (offset == 0 && !hasMediaPermissions()) {
+      Timber.w("getAllMediaPaged: No media permission - throwing exception")
       throw MediaPermissionException("Media access permission is required to load media files")
     }
 
@@ -704,9 +716,11 @@ class MediaRepositoryImpl @Inject constructor(
 
       Timber.d("getFoldersPaged: Found ${sorted.size} root folders (offset=$offset, limit=$limit)")
 
-      // If no data and no permission, throw exception to trigger error UI
-      if (sorted.isEmpty() && offset == 0 && !hasMediaPermissions()) {
-        Timber.w("getFoldersPaged: No folders in database and no permission - throwing exception")
+      // If permission isn't granted, throw to trigger the permission-request error UI -
+      // even if stale cached rows exist (e.g. from a prior grant, or a DB restored via
+      // Android Auto Backup, which never restores the runtime permission grant with it).
+      if (offset == 0 && !hasMediaPermissions()) {
+        Timber.w("getFoldersPaged: No folder permission - throwing exception")
         throw MediaPermissionException("Media access permission is required to load folders")
       }
 
