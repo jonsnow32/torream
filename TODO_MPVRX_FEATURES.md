@@ -25,14 +25,14 @@ Nguồn tham khảo: [`Riteshp2001/mpvRx`](https://github.com/Riteshp2001/mpvRx)
 | 2 | ✅ **Stats overlay** (File/Display/Video/Audio dump, GPU frame timings, network sparkline, battery) | Thấp | Done — `ui/player/stats/`, `getPropertyNode` (JNI, `vo-passes`), toggle ở Settings > Player |
 | 3 | ✅ **SMB/FTP/WebDAV client** | Trung bình | Done — `ui/browse/` (tab mới), `NetworkShareRepository`, SMB qua smbj (pure-Java) + `SmbStreamServer` proxy thay vì native libsmbclient |
 | 4 | ✅ **AI tools** (dịch subtitle, đổi tên file hàng loạt qua OpenAI/Anthropic/Groq/OpenRouter...) | Trung bình | Done — `ai/` package (provider abstraction kiểu `AdWaterfallManager`), `SettingsAiTools`, subtitle translate qua `TranslateSubtitleDialog` (player subtitle menu), batch rename qua `BatchRenameDialog` (Library long-press). Build (`assembleArm64Debug`) + unit tests (`testUniversalDebugUnitTest`) verified OK |
-| 5 | **Audio FFT visualizer** | Thấp/Trung bình | Cần OpenGL ES rendering |
+| 5 | ✅ **Audio FFT visualizer** | Thấp/Trung bình | Done — mpv-native `--lavfi-complex` (`showfreqs`) thay vì Android `Visualizer` API để tránh permission `RECORD_AUDIO`; toggle ở Settings > Player, tự bật khi file không có video track (`MPVFragment.updateAudioVisualizer()`) |
 | 6 | **Dual subtitle + speech-to-subtitle (Whisper)** | Trung bình/Cao | Mở rộng `SubtitleHelper` / `MPVSubtitleFragment` |
 | 7 | **Syncplay** (đồng bộ xem chung nhiều người qua room) | Cao | Cần network client mới (WebSocket/TCP theo Syncplay protocol) + hook 2 chiều vào `PlayerMediaManager` / `MPVFragment` |
 | 8 | **yt-dlp streaming** (YouTube/
 Twitch/Bilibili, chọn codec/res/HDR) | Cao | Cần Python bridge hoặc native binding |
 | 9 | **HDR shader pipeline + Anime4K upscaling** | Cao | Đụng native MPV/JNI layer (`ui/player/mpv/`), rủi ro hiệu năng/nhiệt trên thiết bị yếu — cần thermal/battery-aware throttling nếu làm |
-| 10 | **Lua/JS scripting engine + code editor** | Cao | Tính năng lớn, ít người dùng phổ thông cần — ưu tiên thấp trừ khi có yêu cầu cụ thể |
+| 10 | ✅ **Lua scripting engine + code editor** | Cao | Done — `ui/player/scripting/` (`ScriptStore`, `ScriptManagerFragment`, `LuaSyntaxHighlighter`). Settings > Player > Lua Scripts; scripts saved under `filesDir/scripts`, loaded via mpv's `load-script` command in `MPVView.loadUserScripts()`. **JS scripting dropped**: app's mpv build doesn't compile in mujs (`buildscripts/scripts/mpv.sh` never passes `-Djavascript=enabled`, only the desktop/mingw64 CI build does) — adding it means a new native dependency + rebuilding `.so` for all 4 ABIs, out of scope here |
 
 ## Gợi ý thứ tự làm
 
-Theming → Stats overlay → SMB/FTP/WebDAV → AI tools → Audio visualizer → Dual subtitle → (Syncplay / yt-dlp / HDR pipeline / scripting — mỗi mục cần plan riêng khi bắt tay vào, do phức tạp và rủi ro kiến trúc cao).
+Theming → Stats overlay → SMB/FTP/WebDAV → AI tools → Audio visualizer → Lua scripting → Dual subtitle → (Syncplay / yt-dlp / HDR pipeline — mỗi mục cần plan riêng khi bắt tay vào, do phức tạp và rủi ro kiến trúc cao).

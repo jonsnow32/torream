@@ -25,6 +25,7 @@ import cloud.streamless.torream.ui.settings.SettingsFragment.Companion.setUpTool
 import cloud.streamless.torream.ui.subtitles.ChromecastSubtitlesFragment
 import cloud.streamless.torream.ui.subtitles.MPVSubtitleFragment
 import cloud.streamless.torream.utils.CommonActivitty.hideKeyboard
+import cloud.streamless.torream.utils.UIHelper.navigate
 import cloud.streamless.torream.utils.Utils.logError
 
 class SettingsPlayer : PreferenceFragmentCompat() {
@@ -203,6 +204,11 @@ class SettingsPlayer : PreferenceFragmentCompat() {
 
     getPref(R.string.mpv_conf_editor_key)?.setOnPreferenceClickListener {
       showMpvConfEditor()
+      true
+    }
+
+    getPref(R.string.lua_scripts_key)?.setOnPreferenceClickListener {
+      activity?.navigate(R.id.global_to_navigation_lua_scripts, Bundle())
       true
     }
 

@@ -949,6 +949,28 @@
 
     <issue
         id="MissingTranslation"
+        message="&quot;audio_visualizer_settings_des&quot; is not translated in &quot;es&quot; (Spanish) or &quot;zh&quot; (Chinese)"
+        errorLine1="  &lt;string name=&quot;audio_visualizer_settings_des&quot;>Show an audio spectrum visualizer when playing files without video&lt;/string>"
+        errorLine2="          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="252"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;audio_visualizer_settings&quot; is not translated in &quot;es&quot; (Spanish) or &quot;zh&quot; (Chinese)"
+        errorLine1="  &lt;string name=&quot;audio_visualizer_settings&quot;>Audio visualizer&lt;/string>"
+        errorLine2="          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="870"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
         message="&quot;open_download_folder_summary&quot; is not translated in &quot;es&quot; (Spanish) or &quot;zh&quot; (Chinese)"
         errorLine1="  &lt;string name=&quot;open_download_folder_summary&quot;>View downloaded files in file manager&lt;/string>"
         errorLine2="          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">

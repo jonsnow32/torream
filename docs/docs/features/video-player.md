@@ -186,6 +186,17 @@ Continue listening:
 - Notification controls
 - Bluetooth controls
 
+### Lua Scripting
+
+Torream's player is built on native mpv, which exposes mpv's own Lua scripting API. Settings → Player → **Lua Scripts** gives you an on-device manager for it:
+
+- **Built-in editor**: write scripts directly on your device, with syntax highlighting for comments, strings, numbers, and keywords
+- **Enable/disable**: toggle a script off without deleting it
+- **Multiple scripts**: create, edit, and remove as many as you like
+- Scripts are loaded into mpv on player startup — restart playback after editing to apply changes
+
+This is the same scripting environment as desktop mpv, so existing mpv Lua scripts (key bindings, OSD customization, automation) generally work unmodified.
+
 ### Playlist Playback
 
 **Auto-Play Next**:

@@ -20,6 +20,7 @@ import cloud.streamless.torream.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_INT64
 import cloud.streamless.torream.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_NODE
 import cloud.streamless.torream.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_NONE
 import cloud.streamless.torream.ui.player.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
+import cloud.streamless.torream.ui.player.scripting.ScriptStore
 import cloud.streamless.torream.ui.player.stats.FrameTiming
 import cloud.streamless.torream.utils.isTvOrEmulator
 import cloud.streamless.torream.utils.DataStore.getKey
@@ -272,9 +273,26 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     // we need to call write-watch-later manually
     MPVLib.setOptionString("save-position-on-quit", "no")
 
+    loadUserScripts()
+
     // Ensure directories exist asynchronously to avoid StrictMode violations
     post {
       ensureDirectoriesExist()
+    }
+  }
+
+  // Loads every enabled user Lua script (ui/player/scripting/) into this mpv session. Scripts are
+  // loaded once here, not re-evaluated per file played, since mpv's load-script command always
+  // spawns a new script instance rather than replacing one at the same path - see ScriptStore.
+  private fun loadUserScripts() {
+    try {
+      ScriptStore.list(context)
+        .filter { it.enabled }
+        .forEach { script ->
+          MPVLib.command(arrayOf("load-script", script.file.absolutePath))
+        }
+    } catch (e: Exception) {
+      Timber.tag(TAG).w(e, "Failed to load user scripts")
     }
   }
 
@@ -397,7 +415,7 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     MPVLib.removeObserver(o)
   }
 
-  data class Track(val mpvId: Int, val name: String, val selected: Boolean = false)
+  data class Track(val mpvId: Int, val name: String, val selected: Boolean = false, val albumart: Boolean = false)
 
   var tracks = mapOf<String, MutableList<Track>>(
     "audio" to arrayListOf(),
@@ -472,11 +490,16 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
         else -> context.getString(R.string.ui_track_text, mpvId, context.getString(R.string.unknown))
       }
 
+      // Cover art embedded in audio files (e.g. mp3 ID3 APIC) is demuxed as a video track,
+      // but mpv flags it via track-list/N/albumart so it can be told apart from real video.
+      val albumart = type == "video" && (MPVLib.getPropertyBoolean("track-list/$i/albumart") ?: false)
+
       tracks.getValue(type).add(
         Track(
           mpvId = mpvId,
           name = trackName,
-          selected = selected
+          selected = selected,
+          albumart = albumart
         )
       )
     }
@@ -666,6 +689,11 @@ class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(context, attr
     get() = MPVLib.getPropertyDouble("audio-delay")
   val audioChannels: String?
     get() = MPVLib.getPropertyString("audio-params/channels")
+
+  /** Audio channel layout setting: auto, auto-safe, mono, stereo, reverse-stereo. */
+  var audioChannelLayout: String?
+    get() = MPVLib.getPropertyString("audio-channels")
+    set(layout) = MPVLib.setPropertyString("audio-channels", layout ?: "auto")
   val audioFormatIn: String?
     get() = MPVLib.getPropertyString("audio-params/format")
   val audioFormatOut: String?

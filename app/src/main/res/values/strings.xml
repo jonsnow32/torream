@@ -31,6 +31,7 @@
   <string name="video_buffer_length_key" translatable="false">video_buffer_length_key</string>
   <string name="video_buffer_clear_key" translatable="false">video_buffer_clear_key</string>
   <string name="mpv_conf_editor_key" translatable="false">mpv_conf_editor</string>
+  <string name="lua_scripts_key" translatable="false">lua_scripts</string>
   <string name="ai_key_openai_key" translatable="false">ai_key_openai_key</string>
   <string name="ai_key_anthropic_key" translatable="false">ai_key_anthropic_key</string>
   <string name="ai_key_groq_key" translatable="false">ai_key_groq_key</string>
@@ -44,6 +45,7 @@
   <string name="player_resize_enabled_key" translatable="false">player_resize_enabled_key</string>
   <string name="pip_enabled_key" translatable="false">pip_enabled_key</string>
   <string name="stats_overlay_enabled_key" translatable="false">stats_overlay_enabled_key</string>
+  <string name="audio_visualizer_enabled_key" translatable="false">audio_visualizer_enabled_key</string>
   <string name="double_tap_enabled_key" translatable="false">double_tap_enabled_key</string>
   <string name="double_tap_pause_enabled_key" translatable="false">double_tap_pause_enabled_key</string>
   <string name="double_tap_seek_time_key" translatable="false">double_tap_seek_time_key2</string>
@@ -248,6 +250,7 @@
   <string name="test_log">Log</string>
   <string name="picture_in_picture_des">Continues playback in a miniature player on top of other apps</string>
   <string name="stats_overlay_settings_des">Show FPS, dropped frames, codec and network info during playback</string>
+  <string name="audio_visualizer_settings_des">Show an audio spectrum visualizer when playing files without video</string>
   <string name="player_size_settings">Player resize button</string>
   <string name="player_size_settings_des">Remove the black borders</string>
   <string name="player_subtitles_settings">Subtitles</string>
@@ -865,6 +868,7 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
 
   <string name="picture_in_picture">PiP</string>
   <string name="stats_overlay_settings">Stats overlay</string>
+  <string name="audio_visualizer_settings">Audio visualizer</string>
   <string name="stats_overlay_close">Close stats overlay</string>
 
 
@@ -913,6 +917,11 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="uri_invalid_protocol">Invalid protocol</string>
   <string name="unknown">Unknown</string>
   <string name="codec">HW+</string>
+  <string name="audio_channels_auto">Auto</string>
+  <string name="audio_channels_auto_safe">Auto Safe</string>
+  <string name="audio_channels_mono">Mono</string>
+  <string name="audio_channels_stereo">Stereo</string>
+  <string name="audio_channels_reverse_stereo">Reverse Stereo</string>
   <string name="player_decoders">Decoders</string>
   <string name="more_options">More Options</string>
   <string name="end_of_file">End of file</string>
@@ -1174,6 +1183,14 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="mpv_conf_editor_des">Edit raw MPV options — takes effect on next playback</string>
   <string name="mpv_conf_saved">Saved — restart playback to apply changes</string>
   <string name="mpv_conf_reset">Reset</string>
+  <string name="lua_scripts_settings">Lua Scripts</string>
+  <string name="lua_scripts_settings_des">Write and manage mpv Lua scripts</string>
+  <string name="lua_scripts_empty">No scripts yet. Tap + to write one — it uses mpv\'s built-in Lua scripting API.</string>
+  <string name="lua_scripts_new">New script</string>
+  <string name="lua_scripts_name_hint">Script name</string>
+  <string name="lua_scripts_invalid_name">Invalid script name</string>
+  <string name="lua_scripts_delete_confirm">Delete this script?</string>
+  <string name="lua_scripts_saved">Saved — restart playback to apply changes</string>
   <string name="download_path_des">Choose where downloaded files are saved</string>
   <string name="battery_optimisation_des">Keep downloads running in the background</string>
   <string name="filter_section_display">Display</string>

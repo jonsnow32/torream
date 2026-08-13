@@ -160,12 +160,16 @@ class PlayerDialogManager(
     }
   }
 
+  private val audioChannelLayouts = listOf("auto", "auto-safe", "mono", "stereo", "reverse-stereo")
+
   /**
-   * Show audio tracks selection dialog
+   * Show audio tracks selection dialog, with a footer row to pick the audio channel layout.
    */
   fun showAudioTracksDialog(
     tracks: Map<String, List<MPVView.Track>>,
+    currentChannelLayout: String,
     onAudioSelected: (audioIndex: Int) -> Unit,
+    onChannelsSelected: (channelLayout: String) -> Unit,
     onDismiss: () -> Unit
   ) {
     onShowDialog?.invoke()
@@ -178,16 +182,30 @@ class PlayerDialogManager(
       return
     }
     val audioIndex = max((currentAudioTracks.indexOfFirst { it.selected }), 0)
+    val channelLabels = listOf(
+      ctx.getString(R.string.audio_channels_auto),
+      ctx.getString(R.string.audio_channels_auto_safe),
+      ctx.getString(R.string.audio_channels_mono),
+      ctx.getString(R.string.audio_channels_stereo),
+      ctx.getString(R.string.audio_channels_reverse_stereo)
+    )
+    val channelIndex = audioChannelLayouts.indexOf(currentChannelLayout).coerceAtLeast(0)
+
     val dialog = SelectionDialog.single(
       currentAudioTracks.map { it.name },
       audioIndex,
       ctx.getString(R.string.video_tracks),
-      true
+      true,
+      channelLabels,
+      channelIndex
     )
     dialog.show(fragment.parentFragmentManager) { bundle ->
       bundle?.let {
-        it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.apply {
-          onAudioSelected(this)
+        it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+          onAudioSelected(index)
+        }
+        if (it.containsKey(SelectionDialog.FOOTER_SELECTED)) {
+          onChannelsSelected(audioChannelLayouts[it.getInt(SelectionDialog.FOOTER_SELECTED)])
         }
       }
       onDismissDialog?.invoke()

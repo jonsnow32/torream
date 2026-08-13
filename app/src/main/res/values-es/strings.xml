@@ -631,6 +631,11 @@
   <string name="uri_invalid_protocol">Protocolo inválido</string>
   <string name="unknown">Desconocido</string>
   <string name="codec">HW+</string>
+  <string name="audio_channels_auto">Automático</string>
+  <string name="audio_channels_auto_safe">Automático (seguro)</string>
+  <string name="audio_channels_mono">Mono</string>
+  <string name="audio_channels_stereo">Estéreo</string>
+  <string name="audio_channels_reverse_stereo">Estéreo invertido</string>
   <string name="player_decoders">Decodificadores</string>
   <string name="more_options">Más opciones</string>
   <string name="end_of_file">Fin del archivo</string>
@@ -848,6 +853,14 @@
   <string name="mpv_conf_editor_des">Editar opciones MPV en bruto — se aplica en la próxima reproducción</string>
   <string name="mpv_conf_saved">Guardado — reinicia la reproducción para aplicar los cambios</string>
   <string name="mpv_conf_reset">Restablecer</string>
+  <string name="lua_scripts_settings">Scripts Lua</string>
+  <string name="lua_scripts_settings_des">Escribe y gestiona scripts Lua de mpv</string>
+  <string name="lua_scripts_empty">Aún no hay scripts. Toca + para escribir uno — usa la API de scripting Lua integrada de mpv.</string>
+  <string name="lua_scripts_new">Nuevo script</string>
+  <string name="lua_scripts_name_hint">Nombre del script</string>
+  <string name="lua_scripts_invalid_name">Nombre de script no válido</string>
+  <string name="lua_scripts_delete_confirm">¿Eliminar este script?</string>
+  <string name="lua_scripts_saved">Guardado — reinicia la reproducción para aplicar los cambios</string>
   <string name="subtitle_no_results">No se encontraron subtítulos</string>
   <string name="subtitle_download_error">Error al descargar el subtítulo</string>
   <string name="show_gesture_percentage_title">Mostrar porcentaje de volumen/brillo</string>

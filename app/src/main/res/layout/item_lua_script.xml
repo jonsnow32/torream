@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:id="@+id/scriptRow"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="horizontal"
+  android:gravity="center_vertical"
+  android:paddingStart="16dp"
+  android:paddingEnd="8dp"
+  android:paddingTop="12dp"
+  android:paddingBottom="12dp"
+  android:clickable="true"
+  android:focusable="true"
+  android:background="@drawable/preference_focused">
+
+  <TextView
+    android:id="@+id/scriptName"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:textColor="@color/text_primary"
+    android:textSize="16sp"
+    android:ellipsize="end"
+    android:maxLines="1" />
+
+  <androidx.appcompat.widget.SwitchCompat
+    android:id="@+id/scriptEnabledSwitch"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="4dp" />
+
+  <ImageButton
+    android:id="@+id/scriptDeleteButton"
+    android:layout_width="40dp"
+    android:layout_height="40dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:src="@drawable/ic_baseline_delete_outline_24"
+    app:tint="?attr/colorPrimary"
+    android:contentDescription="@string/delete" />
+
+</LinearLayout>

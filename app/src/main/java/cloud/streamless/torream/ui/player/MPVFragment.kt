@@ -70,6 +70,7 @@ import cloud.streamless.torream.utils.CommonActivitty.screenWidth
 import cloud.streamless.torream.utils.DataStore
 import cloud.streamless.torream.utils.DataStore.getKey
 import cloud.streamless.torream.utils.InAppReviewHelper
+import cloud.streamless.torream.utils.UIHelper.colorFromAttribute
 import cloud.streamless.torream.utils.UIHelper.dismissSafe
 import cloud.streamless.torream.utils.UIHelper.getNavigationBarHeight
 import cloud.streamless.torream.utils.UIHelper.getStatusBarHeight
@@ -179,6 +180,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private var playerBinding: PlayerCustomLayoutBinding? = null
   private var statsPollingRunnable: Runnable? = null
+  private var audioVisualizerFilter: String? = null
 
   // Manager components for cleaner architecture
   private lateinit var gestureHandler: PlayerGestureHandler
@@ -892,6 +894,29 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
   }
 
+  // Renders an FFT spectrum via mpv's own lavfi filter graph (showfreqs), composited directly
+  // into the video output, so files without a video track have something to show. Avoids any
+  // Android-side audio capture (and the RECORD_AUDIO permission that would come with it).
+  private fun updateAudioVisualizer() {
+    val enabled = sharedPreferences.getBoolean(getString(R.string.audio_visualizer_enabled_key), false)
+    // mpvId == 0 is the "off" pseudo-track; album art (embedded cover images) is demuxed as a
+    // video track too, so it's excluded here to still treat the file as audio-only.
+    val hasVideoTrack = player?.tracks?.get("video")?.any { it.mpvId > 0 && !it.albumart } == true
+    val filter = if (enabled && !hasVideoTrack) {
+      // Downmix to mono before showfreqs so it only ever needs one channel's color, regardless
+      // of the source's real channel layout (stereo/5.1/7.1) - only affects the visualizer tap,
+      // [ao] (real audio output) keeps the original layout. colors= uses the app's theme color
+      // instead of showfreqs' rainbow default (0xRRGGBB[AA]; alpha last, so mask it off here).
+      val hexColor = "0x%06X".format(requireContext().colorFromAttribute(R.attr.colorPrimary) and 0xFFFFFF)
+      "[aid1]asplit[ao][a1];[a1]aformat=channel_layouts=mono[a1m];[a1m]showfreqs=mode=bar:fscale=log:averaging=$AUDIO_VISUALIZER_AVERAGING:colors=$hexColor[vo]"
+    } else {
+      ""
+    }
+    if (audioVisualizerFilter == filter) return
+    audioVisualizerFilter = filter
+    MPVLib.setPropertyString("lavfi-complex", filter)
+  }
+
   private fun pollStats() {
     val mpv = player ?: return
     val batteryPercent = context?.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
@@ -1445,10 +1470,14 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
       dialogManager.showAudioTracksDialog(
         tracks = tracks,
+        currentChannelLayout = player?.audioChannelLayout ?: "auto",
         onAudioSelected = { audioIndex ->
           player?.aid = audioIndex
           // Reload tracks to update the selected state
           player?.loadTracks()
+        },
+        onChannelsSelected = { channelLayout ->
+          player?.audioChannelLayout = channelLayout
         },
         onDismiss = {
           player?.paused = false
@@ -2311,6 +2340,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         if (value > 0) {
           Timber.tag(TAG).d("track-list/count changed to $value - loading tracks")
           player?.loadTracks()
+          updateAudioVisualizer()
 
           // CRITICAL FIX: Auto-enable first subtitle track if available
           // This ensures subtitles are visible after being loaded
@@ -2427,6 +2457,13 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
   private fun playlistNext() = MPVLib.command(arrayOf("playlist-next"))
 
   private fun updateOrientation(rotate: Double) {
+    // Album art (embedded cover images) is demuxed as a video track with its own rotate
+    // metadata, so audio files would otherwise flip the screen to landscape here too.
+    val hasVideoTrack = player?.tracks?.get("video")?.any { it.mpvId > 0 && !it.albumart } == true
+    if (!hasVideoTrack) {
+      activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+      return
+    }
 
     activity?.requestedOrientation = if (rotate < 90f)
       ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
@@ -2880,6 +2917,10 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
     // fraction to which audio volume is ducked on loss of audio focus
     private const val AUDIO_FOCUS_DUCKING = 0.5f
+
+    // showfreqs runs at 25fps by default; averaging=1 (its own default) means "no smoothing" per
+    // ffmpeg's docs, causing raw per-frame jitter. 25 gives roughly a 1s EMA smoothing window.
+    private const val AUDIO_VISUALIZER_AVERAGING = 25
 
     // request codes for invoking other activities
     private const val RCODE_EXTERNAL_AUDIO = 1000

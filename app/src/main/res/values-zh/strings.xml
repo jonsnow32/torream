@@ -655,6 +655,11 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="uri_invalid_protocol">协议无效</string>
   <string name="unknown">未知</string>
   <string name="codec">HW+</string>
+  <string name="audio_channels_auto">自动</string>
+  <string name="audio_channels_auto_safe">自动（安全）</string>
+  <string name="audio_channels_mono">单声道</string>
+  <string name="audio_channels_stereo">立体声</string>
+  <string name="audio_channels_reverse_stereo">反转立体声</string>
   <string name="player_decoders">解码器</string>
   <string name="more_options">更多选项</string>
   <string name="end_of_file">文件结尾</string>
@@ -876,6 +881,14 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="mpv_conf_editor_des">编辑原始 MPV 选项 — 下次播放时生效</string>
   <string name="mpv_conf_saved">已保存 — 重新开始播放以应用更改</string>
   <string name="mpv_conf_reset">重置</string>
+  <string name="lua_scripts_settings">Lua 脚本</string>
+  <string name="lua_scripts_settings_des">编写和管理 mpv Lua 脚本</string>
+  <string name="lua_scripts_empty">还没有脚本。点击 + 编写一个 — 使用 mpv 内置的 Lua 脚本 API。</string>
+  <string name="lua_scripts_new">新建脚本</string>
+  <string name="lua_scripts_name_hint">脚本名称</string>
+  <string name="lua_scripts_invalid_name">脚本名称无效</string>
+  <string name="lua_scripts_delete_confirm">删除此脚本？</string>
+  <string name="lua_scripts_saved">已保存 — 重新开始播放以应用更改</string>
   <string name="subtitle_no_results">未找到字幕</string>
   <string name="subtitle_download_error">字幕下载失败</string>
   <string name="show_gesture_percentage_title">显示音量/亮度百分比</string>
