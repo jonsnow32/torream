@@ -16,7 +16,9 @@ class OpenSubtitlesProvider : SubtitleProvider {
     private val headers
         get() = mapOf(
             "Api-Key" to apiKey,
-            "Content-Type" to "application/json"
+            "Content-Type" to "application/json",
+            // OpenSubtitles' gateway blocks requests without a distinct User-Agent
+            "User-Agent" to "Torream v${BuildConfig.VERSION_NAME}"
         )
 
     @Serializable

@@ -141,6 +141,10 @@ class SettingsFragment : Fragment() {
         openLocalVideo(videoResultLauncher)
 //        activity?.navigate(R.id.feedFragment)
       }
+
+      browseBtn.setOnClickListener {
+        activity?.navigate(R.id.browseFragment)
+      }
     }
 
     val appVersion = BuildConfig.VERSION_NAME

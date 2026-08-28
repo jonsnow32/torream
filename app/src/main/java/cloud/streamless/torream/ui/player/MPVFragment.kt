@@ -62,6 +62,7 @@ import cloud.streamless.torream.ui.player.mpv.PlayerUIController
 import cloud.streamless.torream.ui.player.youtube.YouTubeOverlay
 import cloud.streamless.torream.ui.subtitles.MPVSubtitleFragment
 import cloud.streamless.torream.ui.subtitles.TranslateSubtitleDialog
+import cloud.streamless.torream.utils.AnalyticsLogger
 import cloud.streamless.torream.utils.CommonActivitty
 import cloud.streamless.torream.utils.CommonActivitty.keyEventListener
 import cloud.streamless.torream.utils.CommonActivitty.playerEventListener
@@ -342,6 +343,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       // Current link index changed - will be used by checkAndInitializePlayback
     }
     observe(viewModel.currentSubs) { set ->
+      currentSubs = set
       for (sub in set) {
         mediaManager.addSubtitle(sub, select = true)
       }
@@ -1531,7 +1533,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
 
   private fun openTranslateSubtitleDialog() {
     val selectedTrackName = player?.tracks?.get("sub")?.find { it.selected }?.name
-    val subtitle = currentSubs.find { it.name == selectedTrackName } ?: currentSubs.singleOrNull()
+    val subtitle = currentSubs.find { it.name == selectedTrackName } ?: currentSubs.lastOrNull()
     if (subtitle == null) {
       Toast.makeText(context, R.string.load_subtitle_before_translating, Toast.LENGTH_SHORT).show()
       return
@@ -1810,6 +1812,7 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
       startPosition = startPosition,
       title = link.name
     )
+    AnalyticsLogger.logVideoPlay(requireContext(), link.name)
 
     playerBinding?.playerBuffering?.isVisible = true
     try {

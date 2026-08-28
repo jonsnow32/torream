@@ -23,9 +23,7 @@ interface GridAdapter {
     vararg adapters: GridAdapter
   ) : GridAdapter {
     override val adapter = ConcatAdapter(adapters.map { it.adapter })
-    private val getSpanSizeMap = adapters.mapIndexed { index, gridAdapter ->
-      gridAdapter.adapter to gridAdapter::getSpanSize
-    }.toMap()
+    private val getSpanSizeMap = adapters.associate { it.adapter to it::getSpanSize }
 
     override fun getSpanSize(position: Int, width: Int, count: Int): Int {
       val (wrappedAdapter, pos) = adapter.getWrappedAdapterAndPosition(position).toKotlinPair()
@@ -36,6 +34,13 @@ interface GridAdapter {
   }
 
   companion object {
+    private fun calculateSpanCount(totalWidth: Int, itemWidth: Int, itemSpacing: Int, even: Boolean): Int {
+      // Add spacing between items
+      val effectiveItemWidth = itemWidth + itemSpacing
+      val calc = floor(totalWidth.toFloat() / effectiveItemWidth).toInt()
+      return if (calc > 1) calc - if (even) calc % 2 else 0 else 1
+    }
+
     fun configureGridLayout(
       recycler: RecyclerView, gridAdapter: GridAdapter, even: Boolean = false, itemSpacingDp: Int = 8
     ) {
@@ -43,15 +48,8 @@ interface GridAdapter {
       val itemWidth = context.resolveStyledDimension(R.attr.itemCoverSize)
       val itemSpacing = itemSpacingDp.toPx
 
-      fun calculateSpanCount(totalWidth: Int): Int {
-        // Add spacing between items
-        val effectiveItemWidth = itemWidth + itemSpacing
-        val calc = floor(totalWidth.toFloat() / effectiveItemWidth).toInt()
-        return if (calc > 1) calc - if (even) calc % 2 else 0 else 1
-      }
-
       val displayWidth = context.resources.displayMetrics.widthPixels
-      val initialSpanCount = calculateSpanCount(displayWidth)
+      val initialSpanCount = calculateSpanCount(displayWidth, itemWidth, itemSpacing, even)
 
       val layoutManager = GridLayoutManager(context, initialSpanCount)
 
@@ -73,24 +71,21 @@ interface GridAdapter {
         setHasFixedSize(true)
         setItemViewCacheSize(20)
 
+        if ((0 until itemDecorationCount).none { getItemDecorationAt(it) is GridSpacingDecoration }) {
+          addItemDecoration(GridSpacingDecoration(itemSpacing, false))
+        }
+
         doOnLayout {
           val width = it.width - it.paddingLeft - it.paddingRight
           if (width <= 0) return@doOnLayout
 
-          val newSpanCount = calculateSpanCount(width)
+          val newSpanCount = calculateSpanCount(width, itemWidth, itemSpacing, even)
           if (layoutManager.spanCount != newSpanCount) {
             layoutManager.spanCount = newSpanCount
-//            layoutManager.spanSizeLookup.invalidateSpanIndexCache()
-//            recycledViewPool.clear()
-//            requestLayout()
+            layoutManager.spanSizeLookup.invalidateSpanIndexCache()
           }
         }
       }
-
-      // Optional: Add item decoration for visual spacing
-//      if (recycler.itemDecorationCount == 0) {
-//        recycler.addItemDecoration(GridSpacingDecoration(itemSpacing, false))
-//      }
     }
 
     /**
@@ -107,12 +102,6 @@ interface GridAdapter {
       val itemWidth = context.resolveStyledDimension(R.attr.itemCoverSize)
       val itemSpacing = itemSpacingDp.toPx
 
-      fun calculateSpanCount(totalWidth: Int): Int {
-        val effectiveItemWidth = itemWidth + itemSpacing
-        val calc = floor(totalWidth.toFloat() / effectiveItemWidth).toInt()
-        return if (calc > 1) calc - if (even) calc % 2 else 0 else 1
-      }
-
       val layoutManager = recycler.layoutManager as? GridLayoutManager ?: return
 
       // Force recalculation using actual display metrics
@@ -120,7 +109,7 @@ interface GridAdapter {
       val width = displayWidth - recycler.paddingLeft - recycler.paddingRight
 
       if (width > 0) {
-        val newSpanCount = calculateSpanCount(width)
+        val newSpanCount = calculateSpanCount(width, itemWidth, itemSpacing, even)
         if (layoutManager.spanCount != newSpanCount) {
           layoutManager.spanCount = newSpanCount
           layoutManager.spanSizeLookup.invalidateSpanIndexCache()
@@ -172,7 +161,7 @@ interface GridAdapter {
           outRect.bottom = spacing
         } else {
           outRect.left = column * spacing / spanCount
-          outRect.right = spacing - (column + spanSize) * spacing / spanCount + column * spacing / spanCount
+          outRect.right = spacing - (column + spanSize) * spacing / spanCount
           // top for all rows except first (groupIndex > 0)
           if (groupIndex > 0) outRect.top = spacing
           // bottom left 0 so rows are spaced by top of next row

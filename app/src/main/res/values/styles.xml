@@ -5,6 +5,8 @@
 
     <!-- Primary colors - OneUI Blue -->
     <item name="colorPrimary">@color/md_theme_primary</item>
+    <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+    <item name="colorAccent">@color/colorAccent</item>
     <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
 
     <!-- Secondary colors - OneUI Accent -->

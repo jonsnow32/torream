@@ -13,9 +13,11 @@ import androidx.hilt.work.HiltWorkerFactory
 import cloud.streamless.torream.ads.AdManager
 import cloud.streamless.torream.ads.AdPreloadManager
 import cloud.streamless.torream.utils.ContinueWatchingReminderWorker
+import cloud.streamless.torream.utils.CrashlyticsTree
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.VideoFrameDecoder
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.MainScope
@@ -54,6 +56,13 @@ class CSApplication : Application(), ImageLoaderFactory, Configuration.Provider 
 
     if (BuildConfig.DEBUG) {
       Timber.plant(Timber.DebugTree())
+    }
+    Timber.plant(CrashlyticsTree())
+
+    FirebaseCrashlytics.getInstance().apply {
+      setCustomKey("build_type", BuildConfig.BUILD_TYPE)
+      setCustomKey("flavor", BuildConfig.FLAVOR)
+      setCustomKey("version_name", BuildConfig.VERSION_NAME)
     }
 
     scope.launch {

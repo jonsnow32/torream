@@ -21,6 +21,7 @@ import cloud.streamless.torream.ui.dialog.AddNetworkShareDialog
 import cloud.streamless.torream.utils.PlaybackDataHelper
 import cloud.streamless.torream.utils.UIHelper.navigate
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -58,7 +59,14 @@ class BrowseFragment : Fragment() {
         false
       }
     }
-    binding.toolbar.setNavigationOnClickListener { viewModel.navigateUp() }
+    binding.toolbar.navigationIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_baseline_arrow_back_24)
+    binding.toolbar.setNavigationOnClickListener {
+      if (viewModel.currentShare.value != null) {
+        viewModel.navigateUp()
+      } else {
+        requireActivity().onBackPressedDispatcher.onBackPressed()
+      }
+    }
 
     shareAdapter = NetworkShareAdapter(
       onClick = { share -> viewModel.openShare(share) },
@@ -108,8 +116,6 @@ class BrowseFragment : Fragment() {
     viewLifecycleOwner.lifecycleScope.launch {
       viewModel.currentShare.collect { share ->
         backPressedCallback.isEnabled = share != null
-        binding.toolbar.navigationIcon =
-          if (share != null) ContextCompat.getDrawable(requireContext(), R.drawable.ic_baseline_arrow_back_24) else null
         if (share == null) {
           binding.recyclerView.adapter = shareAdapter
           binding.toolbar.title = getString(R.string.browse)
@@ -121,22 +127,30 @@ class BrowseFragment : Fragment() {
       }
     }
     viewLifecycleOwner.lifecycleScope.launch {
-      viewModel.entries.collect { entries ->
+      combine(
+        viewModel.currentShare,
+        viewModel.entries,
+        viewModel.error,
+        viewModel.isLoading
+      ) { share, entries, error, loading ->
         entryAdapter.submitList(entries)
-        if (viewModel.currentShare.value != null && viewModel.error.value == null) {
-          binding.emptyText.isVisible = entries.isEmpty()
-          if (entries.isEmpty()) binding.emptyText.text = getString(R.string.network_share_empty)
+        if (share != null) {
+          when {
+            error != null -> {
+              binding.emptyText.isVisible = true
+              binding.emptyText.text = error
+            }
+            !loading && entries.isEmpty() -> {
+              binding.emptyText.isVisible = true
+              binding.emptyText.text = getString(R.string.network_share_empty)
+            }
+            else -> binding.emptyText.isVisible = false
+          }
         }
-      }
+      }.collect {}
     }
     viewLifecycleOwner.lifecycleScope.launch {
       viewModel.isLoading.collect { loading -> binding.swipeRefresh.isRefreshing = loading }
-    }
-    viewLifecycleOwner.lifecycleScope.launch {
-      viewModel.error.collect { error ->
-        binding.emptyText.isVisible = error != null
-        if (error != null) binding.emptyText.text = error
-      }
     }
   }
 

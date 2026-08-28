@@ -19,10 +19,4 @@
     android:icon="@drawable/anim_bookmark"
     android:title="@string/library"
     android:focusable="true" />
-
-  <item
-    android:id="@+id/browseFragment"
-    android:icon="@drawable/ic_baseline_dns_24"
-    android:title="@string/browse"
-    android:focusable="true" />
 </menu>

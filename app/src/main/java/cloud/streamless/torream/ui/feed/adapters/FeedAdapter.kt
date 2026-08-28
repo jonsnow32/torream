@@ -90,8 +90,8 @@ class FeedAdapter(
       FeedData.Type.TorrentDownload,
       FeedData.Type.Audio -> count
 
-      FeedData.Type.VideoSmall -> 2
-      FeedData.Type.AudioSmall -> 2
+      FeedData.Type.VideoSmall -> 3
+      FeedData.Type.AudioSmall -> 3
       FeedData.Type.FolderSmall -> 2
       FeedData.Type.PlayListSmall -> 2
     }

@@ -21,8 +21,8 @@ import cloud.streamless.torream.ui.dialog.DockingDialog
 import cloud.streamless.torream.ui.dialog.SelectionDialog
 import cloud.streamless.torream.ui.subtitles.AbstractSubtitleEntities.SubtitleEntity
 import cloud.streamless.torream.ui.subtitles.providers.OpenSubtitlesProvider
+import cloud.streamless.torream.ui.subtitles.providers.StremioProvider
 import cloud.streamless.torream.ui.subtitles.providers.SubDLProvider
-import cloud.streamless.torream.ui.subtitles.providers.SubSourceProvider
 import cloud.streamless.torream.ui.subtitles.providers.SubtitleProvider
 import cloud.streamless.torream.utils.SubtitleHelper
 import cloud.streamless.torream.utils.UIHelper.dismissSafe
@@ -54,7 +54,7 @@ class OnlineSubtitleDialog : DockingDialog() {
     private val providers: List<SubtitleProvider> = listOf(
         OpenSubtitlesProvider(),
         SubDLProvider(),
-        SubSourceProvider()
+        StremioProvider()
     )
 
     private val subtitleAdapter by lazy { SubtitleListAdapter(requireContext()) }

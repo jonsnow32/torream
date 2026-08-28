@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "420721227690",
+    "project_id": "toream-28118",
+    "storage_bucket": "toream-28118.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:420721227690:android:a8f37476b436eb4ea7ddd3",
+        "android_client_info": {
+          "package_name": "cloud.streamless.torream"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeebwWOISKgyE5AdVRzkRORtIRb9eME6Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:420721227690:android:168564f7eeaba3faa7ddd3",
+        "android_client_info": {
+          "package_name": "cloud.streamless.torream.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeebwWOISKgyE5AdVRzkRORtIRb9eME6Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

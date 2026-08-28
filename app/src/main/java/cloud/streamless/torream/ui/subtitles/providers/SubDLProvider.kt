@@ -41,7 +41,7 @@ class SubDLProvider : SubtitleProvider {
             put("api_key", apiKey)
             if (!lang.isNullOrBlank()) put("language", lang.uppercase())
         }
-        val response = app.get("$baseUrl/subtitles/search", params = params)
+        val response = app.get("$baseUrl/subtitles", params = params)
         val parsed = parseJson<SearchResponse>(response.text)
         if (!parsed.status) return emptyList()
         return parsed.subtitles.map { sub ->

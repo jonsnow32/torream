@@ -7,6 +7,8 @@ plugins {
   id("com.google.dagger.hilt.android")
   id("org.jetbrains.kotlin.plugin.serialization")
   id("kotlin-parcelize")
+  id("com.google.gms.google-services")
+  id("com.google.firebase.crashlytics")
 }
 
 val abiCodes = mapOf(
@@ -153,6 +155,10 @@ android {
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
       )
+      // Upload native (MPV/.so) debug symbols so Crashlytics can symbolicate NDK crashes
+      configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+        nativeSymbolUploadEnabled = true
+      }
     }
     debug {
       isDebuggable = true
@@ -162,6 +168,10 @@ android {
       isShrinkResources = false
       ndk {
         abiFilters += listOf("arm64-v8a")
+      }
+      // Upload native (MPV/.so) debug symbols so Crashlytics can symbolicate NDK crashes
+      configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+        nativeSymbolUploadEnabled = true
       }
     }
   }
@@ -287,4 +297,10 @@ dependencies {
 
   //logging
   implementation("com.jakewharton.timber:timber:5.0.1")
+
+  // Firebase Crashlytics (JVM + native/NDK crash reporting) + Analytics
+  implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+  implementation("com.google.firebase:firebase-crashlytics")
+  implementation("com.google.firebase:firebase-crashlytics-ndk")
+  implementation("com.google.firebase:firebase-analytics")
 }

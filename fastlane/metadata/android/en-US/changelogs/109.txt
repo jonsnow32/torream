@@ -1,0 +1,7 @@
+What's new in 1.0.9:
+• Browse and stream from SMB, FTP, and WebDAV network shares
+• New AI tools: subtitle translation and batch rename
+• Lua scripting support, audio FFT visualizer, and channel layout picker
+• Unified toolbar and background theming across Home, Library, Browse, and Settings
+• Fixed permission checks for restored/stale library entries; unplayable items are now dropped automatically
+• Bug fixes and stability improvements

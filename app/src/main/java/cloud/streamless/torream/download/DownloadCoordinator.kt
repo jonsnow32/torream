@@ -15,6 +15,7 @@ import cloud.streamless.torream.download.worker.HlsDownloadWorker
 import cloud.streamless.torream.download.worker.HttpDownloadWorker
 import cloud.streamless.torream.download.worker.TorrentDownloadWorker
 
+import cloud.streamless.torream.utils.AnalyticsLogger
 import cloud.streamless.torream.utils.AppUtils.getDownloadPath
 import cloud.streamless.torream.utils.UnifiedFileFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -226,6 +227,7 @@ class DownloadCoordinator @Inject constructor(
     )
 
     Timber.i("Download work enqueued for taskId=${updatedTask.id}")
+    AnalyticsLogger.logDownloadStart(context, updatedTask.type.name, updatedTask.fileName)
   }
 
   /**

@@ -352,6 +352,7 @@
   <string name="network_share_empty">No files here</string>
   <string name="network_shares_empty">No network shares yet. Tap + to add one.</string>
   <string name="browse">Browse</string>
+  <string name="browse_des">Browse local folders and network shares</string>
   <string name="cancel">Cancel</string>
   <string name="pause">Pause</string>
 
