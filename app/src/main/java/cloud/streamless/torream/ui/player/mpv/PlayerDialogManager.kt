@@ -222,6 +222,8 @@ class PlayerDialogManager(
     onLoadSubtitlesFromFile: () -> Unit,
     onLoadSubtitlesOnline: () -> Unit,
     onTranslateSubtitle: () -> Unit,
+    onGenerateSubtitle: () -> Unit,
+    onSecondarySubtitle: () -> Unit,
     onDismiss: () -> Unit
   ) {
     onShowDialog?.invoke()
@@ -233,34 +235,61 @@ class PlayerDialogManager(
       return
     }
 
+    // Actions live after the tracks in the same list; keyed by label so adding one can't drift
+    // the index arithmetic the way a chain of `size + n` comparisons did.
+    val actions = listOf(
+      ctx.getString(R.string.load_from_file) to onLoadSubtitlesFromFile,
+      ctx.getString(R.string.load_from_network) to onLoadSubtitlesOnline,
+      ctx.getString(R.string.translate_subtitle) to onTranslateSubtitle,
+      ctx.getString(R.string.generate_subtitle) to onGenerateSubtitle,
+      ctx.getString(R.string.secondary_subtitle) to onSecondarySubtitle
+    )
+
     val subtitleIndex = max((currentSubtitleTracks.indexOfFirst { it.selected }), 0)
     val dialog = SelectionDialog.single(
-      currentSubtitleTracks.map { it.name } + listOf<String>(
-        ctx.getString(R.string.load_from_file),
-        ctx.getString(R.string.load_from_network),
-        ctx.getString(R.string.translate_subtitle)
-      ),
+      currentSubtitleTracks.map { it.name } + actions.map { it.first },
       subtitleIndex,
       fragment.getString(R.string.subtitle),
       false
     )
     dialog.show(fragment.parentFragmentManager) { bundle ->
-      bundle?.let {
-        it.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
-          if (index == currentSubtitleTracks.size) {
-            onLoadSubtitlesFromFile()
-            return@let
-          } else if (index == currentSubtitleTracks.size + 1) {
-            onLoadSubtitlesOnline()
-            return@let
-          } else if (index == currentSubtitleTracks.size + 2) {
-            onTranslateSubtitle()
-            return@let
-          } else {
-            onSubtitleSelected(index)
-          }
+      bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+        val action = actions.getOrNull(index - currentSubtitleTracks.size)
+        if (action != null) action.second() else onSubtitleSelected(index)
+      }
+      onDismissDialog?.invoke()
+      onDismiss()
+    }
+  }
 
-        }
+  /**
+   * Show the picker for mpv's secondary subtitle track, rendered above the primary one.
+   */
+  fun showSecondarySubtitleDialog(
+    tracks: Map<String, List<MPVView.Track>>,
+    currentSecondaryId: Int,
+    onSelected: (mpvId: Int) -> Unit,
+    onDismiss: () -> Unit
+  ) {
+    onShowDialog?.invoke()
+    val ctx = fragment.activity ?: return
+    val subtitleTracks = tracks["sub"].orEmpty()
+    if (subtitleTracks.isEmpty()) {
+      Toast.makeText(ctx, "No subtitle tracks available", Toast.LENGTH_SHORT).show()
+      onDismissDialog?.invoke()
+      return
+    }
+
+    val selectedIndex = subtitleTracks.indexOfFirst { it.mpvId == currentSecondaryId }
+      .coerceAtLeast(0)
+    SelectionDialog.single(
+      subtitleTracks.map { it.name },
+      selectedIndex,
+      ctx.getString(R.string.secondary_subtitle),
+      false
+    ).show(fragment.parentFragmentManager) { bundle ->
+      bundle?.getIntegerArrayList(SelectionDialog.ITEMS_SELECTED)?.get(0)?.let { index ->
+        subtitleTracks.getOrNull(index)?.let { onSelected(it.mpvId) }
       }
       onDismissDialog?.invoke()
       onDismiss()

@@ -26,6 +26,13 @@ object AiSettings {
         context.setKey(modelKey(type), model)
     }
 
+    /** Whisper-style model id per provider; not user-configurable — each provider has one obvious choice. */
+    fun getTranscriptionModel(type: AiProvider.ProviderType) = when (type) {
+        AiProvider.ProviderType.OPENAI -> "whisper-1"
+        AiProvider.ProviderType.GROQ -> "whisper-large-v3-turbo"
+        else -> "" // no transcription endpoint
+    }
+
     private fun defaultModelFor(type: AiProvider.ProviderType) = when (type) {
         AiProvider.ProviderType.OPENAI -> "gpt-4o-mini"
         AiProvider.ProviderType.ANTHROPIC -> "claude-3-5-haiku-20241022"

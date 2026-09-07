@@ -47,6 +47,28 @@ object SrtVttParser {
         }
     }
 
+    /** Shifts every cue's timing by [seconds] — used to place a transcribed chunk on the full timeline. */
+    fun shift(cues: List<SubtitleCue>, seconds: Double): List<SubtitleCue> =
+        if (seconds == 0.0) cues else cues.map {
+            it.copy(
+                startTime = formatCanonical(parseCanonical(it.startTime) + seconds),
+                endTime = formatCanonical(parseCanonical(it.endTime) + seconds)
+            )
+        }
+
+    private fun parseCanonical(time: String): Double {
+        val (h, m, rest) = time.split(':')
+        return h.toInt() * 3600.0 + m.toInt() * 60.0 + rest.toDouble()
+    }
+
+    private fun formatCanonical(seconds: Double): String {
+        val total = seconds.coerceAtLeast(0.0)
+        val millis = (total * 1000).toLong()
+        return "%02d:%02d:%02d.%03d".format(
+            millis / 3_600_000, (millis / 60_000) % 60, (millis / 1000) % 60, millis % 1000
+        )
+    }
+
     private fun toFormatTime(canonical: String, isVtt: Boolean): String =
         if (isVtt) canonical else canonical.replace('.', ',')
 }

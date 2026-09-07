@@ -89,4 +89,27 @@ class SrtVttParserTest {
         assertEquals(0, SrtVttParser.parse("").size)
         assertEquals(0, SrtVttParser.parse("WEBVTT\n\n").size)
     }
+
+    @Test
+    fun `shift moves cue timings onto the full timeline`() {
+        val cues = SrtVttParser.parse(
+            """
+            1
+            00:00:01,500 --> 00:00:04,000
+            Chunk-local text
+            """.trimIndent()
+        )
+
+        val shifted = SrtVttParser.shift(cues, 3600.25)
+
+        assertEquals("01:00:01.750", shifted[0].startTime)
+        assertEquals("01:00:04.250", shifted[0].endTime)
+        assertEquals("Chunk-local text", shifted[0].text)
+    }
+
+    @Test
+    fun `shift by zero returns the cues untouched`() {
+        val cues = SrtVttParser.parse("1\n00:00:01,000 --> 00:00:02,000\nHi")
+        assertEquals(cues, SrtVttParser.shift(cues, 0.0))
+    }
 }

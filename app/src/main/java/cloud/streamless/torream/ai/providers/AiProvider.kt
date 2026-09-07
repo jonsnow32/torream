@@ -1,7 +1,9 @@
 package cloud.streamless.torream.ai.providers
 
+import java.io.File
+
 /**
- * Interface chung cho tất cả AI chat-completion providers (subtitle translation, batch rename).
+ * Interface chung cho tất cả AI providers (subtitle translation, batch rename, speech-to-subtitle).
  */
 interface AiProvider {
 
@@ -13,6 +15,9 @@ interface AiProvider {
 
     /** True if an API key is configured for this provider. */
     fun isConfigured(): Boolean
+
+    /** True if this provider exposes a Whisper-style `audio/transcriptions` endpoint. */
+    val supportsTranscription: Boolean get() = false
 
     /**
      * Single-shot chat completion.
@@ -26,4 +31,13 @@ interface AiProvider {
         model: String,
         temperature: Double = 0.3
     ): Result<String>
+
+    /**
+     * Transcribes a WAV file and returns the raw SRT the provider produced. Timestamps are relative
+     * to the start of [audio], so callers transcribing a chunk must shift them themselves.
+     *
+     * @param language ISO 639-1 hint, or null to let the model auto-detect.
+     */
+    suspend fun transcribe(audio: File, model: String, language: String?): Result<String> =
+        Result.failure(UnsupportedOperationException("$providerType does not support transcription"))
 }

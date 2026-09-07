@@ -7,6 +7,7 @@ import cloud.streamless.torream.ai.providers.GroqProvider
 import cloud.streamless.torream.ai.providers.OpenAiProvider
 import cloud.streamless.torream.ai.providers.OpenRouterProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,6 +29,20 @@ class AiManager @Inject constructor(
     fun getProvider(type: AiProvider.ProviderType): AiProvider? = providers[type]
 
     fun getConfiguredProviders(): List<AiProvider> = providers.values.filter { it.isConfigured() }
+
+    /** Providers that can run speech-to-subtitle right now (key set + transcription endpoint). */
+    fun getTranscriptionProviders(): List<AiProvider> =
+        providers.values.filter { it.isConfigured() && it.supportsTranscription }
+
+    suspend fun transcribe(
+        type: AiProvider.ProviderType,
+        audio: File,
+        language: String?
+    ): Result<String> {
+        val provider = providers[type]
+            ?: return Result.failure(IllegalStateException("Provider unavailable: $type"))
+        return provider.transcribe(audio, AiSettings.getTranscriptionModel(type), language)
+    }
 
     /**
      * Uses the user's saved default provider + its model id. Fails fast if no default is set or

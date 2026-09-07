@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="?attr/colorSurfaceContainer"
+  android:orientation="vertical"
+  android:padding="16dp">
+
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/generate_subtitle"
+    android:textColor="?attr/colorOnSurface"
+    android:textSize="18sp" />
+
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="12dp"
+    android:text="@string/generate_subtitle_des"
+    android:textColor="?attr/colorOnSurfaceVariant"
+    android:textSize="13sp" />
+
+  <LinearLayout
+    android:id="@+id/providerRow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/preference_focused"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <TextView
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:text="@string/ai_default_provider"
+      android:textColor="?attr/colorOnSurface"
+      android:textSize="16sp" />
+
+    <TextView
+      android:id="@+id/providerValue"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="14sp"
+      tools:text="OpenAI" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:id="@+id/languageRow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/preference_focused"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <TextView
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:text="@string/spoken_language"
+      android:textColor="?attr/colorOnSurface"
+      android:textSize="16sp" />
+
+    <TextView
+      android:id="@+id/languageValue"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="14sp"
+      tools:text="Auto-detect" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:id="@+id/progressContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:orientation="vertical"
+    android:visibility="gone"
+    tools:visibility="visible">
+
+    <ProgressBar
+      android:id="@+id/transcribeProgressBar"
+      style="?android:attr/progressBarStyleHorizontal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:max="100" />
+
+    <TextView
+      android:id="@+id/progressText"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="4dp"
+      android:textColor="?attr/colorOnSurfaceVariant"
+      android:textSize="13sp"
+      tools:text="Transcribing 05:00 / 42:10" />
+  </LinearLayout>
+
+  <TextView
+    android:id="@+id/errorText"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:textColor="?attr/colorError"
+    android:textSize="13sp"
+    android:visibility="gone"
+    tools:text="Transcription failed"
+    tools:visibility="visible" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:gravity="end"
+    android:orientation="horizontal">
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/cancelBtt"
+      style="@style/Widget.Material3.Button.TextButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="8dp"
+      android:text="@android:string/cancel" />
+
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/transcribeBtt"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/generate_subtitle_start" />
+  </LinearLayout>
+</LinearLayout>

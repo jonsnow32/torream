@@ -1129,6 +1129,16 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="load_subtitle_before_translating">Load a subtitle first</string>
   <string name="translating_progress">Translating %1$d/%2$d</string>
   <string name="translation_failed">Translation failed</string>
+  <string name="generate_subtitle">Generate subtitle (AI)</string>
+  <string name="generate_subtitle_des">Transcribes the audio of this file with a speech-to-text model. The whole file is decoded, so this takes a while and uses your API credits.</string>
+  <string name="generate_subtitle_start">Generate</string>
+  <string name="generated_subtitle_name">AI transcription (%1$s)</string>
+  <string name="spoken_language">Spoken language</string>
+  <string name="language_auto_detect">Auto-detect</string>
+  <string name="transcribing_progress">Transcribing %1$s / %2$s</string>
+  <string name="transcription_failed">Transcription failed</string>
+  <string name="transcription_no_provider">Set an OpenAI or Groq API key in Settings > AI Tools first</string>
+  <string name="secondary_subtitle">Secondary subtitle</string>
   <string name="action_batch_rename">Batch rename (AI)</string>
   <string name="batch_rename_title">Batch rename</string>
   <string name="batch_rename_select_files">Select files to rename</string>

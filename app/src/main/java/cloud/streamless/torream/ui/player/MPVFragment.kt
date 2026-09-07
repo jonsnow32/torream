@@ -61,6 +61,7 @@ import cloud.streamless.torream.ui.player.mpv.PlayerMediaManager
 import cloud.streamless.torream.ui.player.mpv.PlayerUIController
 import cloud.streamless.torream.ui.player.youtube.YouTubeOverlay
 import cloud.streamless.torream.ui.subtitles.MPVSubtitleFragment
+import cloud.streamless.torream.ui.subtitles.TranscribeSubtitleDialog
 import cloud.streamless.torream.ui.subtitles.TranslateSubtitleDialog
 import cloud.streamless.torream.utils.AnalyticsLogger
 import cloud.streamless.torream.utils.CommonActivitty
@@ -1513,6 +1514,12 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
         onTranslateSubtitle = {
           openTranslateSubtitleDialog()
         },
+        onGenerateSubtitle = {
+          openTranscribeSubtitleDialog()
+        },
+        onSecondarySubtitle = {
+          showSecondarySubtitleDialog()
+        },
         onDismiss = {
           //player?.paused = false
           activity?.hideSystemUI()
@@ -1540,6 +1547,33 @@ class MPVFragment : Fragment(), MPVLib.EventObserver {
     }
     val dialog = TranslateSubtitleDialog.newInstance(subtitle)
     dialog.onTranslated = { sub -> addAndSelectSubtitles(sub) }
+    dialog.show(childFragmentManager)
+  }
+
+  private fun showSecondarySubtitleDialog() {
+    val tracks = player?.tracks ?: return
+    dialogManager.showSecondarySubtitleDialog(
+      tracks = tracks,
+      currentSecondaryId = player?.secondarySid ?: -1,
+      // mpv's "off" pseudo-track is id 0, but the property only accepts "no" to disable.
+      onSelected = { mpvId -> player?.secondarySid = if (mpvId <= 0) -1 else mpvId },
+      onDismiss = { activity?.hideSystemUI() }
+    )
+  }
+
+  private fun openTranscribeSubtitleDialog() {
+    val source = currentSelectedLink?.url ?: MPVLib.getPropertyString("path")
+    if (source.isNullOrBlank()) {
+      Toast.makeText(context, R.string.transcription_failed, Toast.LENGTH_SHORT).show()
+      return
+    }
+    val dialog = TranscribeSubtitleDialog.newInstance(
+      source = source,
+      headers = currentSelectedLink?.headers.orEmpty(),
+      durationSeconds = psc.durationSec.toDouble(),
+      title = currentSelectedLink?.name ?: source.substringAfterLast('/')
+    )
+    dialog.onTranscribed = { sub -> addAndSelectSubtitles(sub) }
     dialog.show(childFragmentManager)
   }
 
