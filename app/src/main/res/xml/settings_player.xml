@@ -226,4 +226,11 @@
       app:seekBarIncrement="5"
       app:showSeekBarValue="true" />
   </PreferenceCategory>
+
+  <Preference
+    android:icon="@drawable/ic_outline_info_24"
+    android:layout="@layout/custom_preference"
+    android:selectable="false"
+    android:title="@string/mpv_library_version_title"
+    app:summary="@string/mpv_library_version" />
 </PreferenceScreen>

@@ -1198,6 +1198,8 @@ https://en.wikipedia.org/wiki/The_quick_brown_fox_jumps_over_the_lazy_dog
   <string name="lua_scripts_settings_des">Write and manage mpv Lua scripts</string>
   <string name="lua_scripts_empty">No scripts yet. Tap + to write one — it uses mpv\'s built-in Lua scripting API.</string>
   <string name="lua_scripts_new">New script</string>
+  <string name="mpv_library_version_title">MPV Library</string>
+  <string name="mpv_library_version" translatable="false">v0.41.0</string>
   <string name="lua_scripts_name_hint">Script name</string>
   <string name="lua_scripts_invalid_name">Invalid script name</string>
   <string name="lua_scripts_delete_confirm">Delete this script?</string>
