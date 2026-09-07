@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <!-- Base application theme - Light Theme (Default) -->
   <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
+
+    <!-- Force Dark disabled: app is Light-only (not DayNight); leaving it on triggers a
+         framework attribute-resolution crash when the system tries to auto-dark-theme dialogs
+         (UnsupportedOperationException in TextView.readTextAppearance on some OEMs/API levels) -->
+    <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
 
     <!-- Primary colors - OneUI Blue -->
     <item name="colorPrimary">@color/md_theme_primary</item>

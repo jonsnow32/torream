@@ -337,7 +337,7 @@ class LibraryFragment : Fragment() {
   }
 
   private fun clearHistory() {
-    androidx.appcompat.app.AlertDialog.Builder(requireContext())
+    AlertDialog.Builder(requireContext(), R.style.BaseMaterialDialogTheme)
       .setTitle(getString(R.string.clear_history))
       .setMessage(getString(R.string.clear_history_message))
       .setPositiveButton(getString(R.string.clear_history_confirm)) { _, _ ->
