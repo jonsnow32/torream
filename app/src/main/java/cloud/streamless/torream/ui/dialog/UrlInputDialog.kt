@@ -232,7 +232,7 @@ class UrlInputDialog : DockingDialog() {
    * Start download process for the given URL
    */
   private fun startDownload(inputUrl: String) {
-    lifecycleScope.launch {
+    viewLifecycleOwner.lifecycleScope.launch {
       // Determine type and save dir on IO (quick)
       val (taskType, saveDir) = withContext(Dispatchers.IO) {
         when {
