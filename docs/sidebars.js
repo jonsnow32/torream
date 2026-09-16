@@ -30,6 +30,7 @@ const sidebars = {
       ],
     },
     'technical-stack',
+    'changelog',
     'faq',
   ],
 };

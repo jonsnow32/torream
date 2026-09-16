@@ -49,11 +49,25 @@ jobs:
           ADMOB_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_AD_UNIT_ID }}
           ADMOB_REWARDED_AD_UNIT_ID: ${{ secrets.ADMOB_REWARDED_AD_UNIT_ID }}
 
+      - name: Generate release notes
+        id: notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY=$(gh api "repos/${{ github.repository }}/releases/generate-notes" \
+            -f tag_name="${{ github.ref_name }}" --jq .body)
+          DELIM="NOTES_EOF_$(date +%s%N)"
+          {
+            echo "body<<$DELIM"
+            echo "$BODY"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/bundle/universalRelease/*.aab
-          generate_release_notes: true
+          body: ${{ steps.notes.outputs.body }}
 
       # Upload to Play Console internal track — runs only when the Play service
       # account secret is configured, so a release still succeeds without it.
@@ -86,3 +100,33 @@ jobs:
         run: bundle exec fastlane upload_metadata
         env:
           PLAY_KEY_FILE: play-store-credentials.json
+
+      - name: Update docs changelog
+        env:
+          NOTES: ${{ steps.notes.outputs.body }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          DATE=$(date -u +%Y-%m-%d)
+          {
+            echo "## v$VERSION - $DATE"
+            echo
+            echo "$NOTES"
+            echo
+          } > /tmp/changelog-entry.md
+
+          git fetch origin main
+          git checkout main
+
+          awk '
+            /<!-- changelog:start -->/ { print; while ((getline line < "/tmp/changelog-entry.md") > 0) print line; next }
+            { print }
+          ' docs/docs/changelog.md > /tmp/changelog.md
+          mv /tmp/changelog.md docs/docs/changelog.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/docs/changelog.md
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: changelog for $GITHUB_REF_NAME"
+            git push origin HEAD:main
+          fi

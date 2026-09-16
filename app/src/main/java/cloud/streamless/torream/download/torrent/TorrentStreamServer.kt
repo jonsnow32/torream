@@ -10,6 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jsoup.helper.RequestAuthenticator
+import org.libtorrent4j.Priority
+import org.libtorrent4j.TorrentHandle
+import org.libtorrent4j.TorrentInfo
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
@@ -34,6 +37,8 @@ class TorrentStreamServer @Inject constructor(
 
   companion object {
     private const val MAX_PORT_ATTEMPTS = 10
+    private const val PIECE_PRIORITY_WINDOW = 20
+    private const val PIECE_WAIT_TIMEOUT_MS = 30_000L
   }
 
   /**
@@ -198,9 +203,26 @@ class TorrentStreamServer @Inject constructor(
 
       // Handle range requests (important for video seeking)
       val range = session.headers["range"]
+      val (start, end) = if (range != null && range.startsWith("bytes=")) {
+        parseRange(range, fileSize)
+      } else {
+        0L to fileSize - 1
+      }
+
+      // The requested byte range may not have been downloaded yet - libtorrent
+      // pre-allocates the file on disk, so reading undownloaded regions returns
+      // zero bytes instead of real data. Bump piece priority and block until the
+      // piece(s) covering the start of this range are actually available.
+      if (!waitForByteRangeReady(handle, torrentInfo, fileStorage, fileIndex, start)) {
+        return newFixedLengthResponse(
+          Response.Status.SERVICE_UNAVAILABLE,
+          "text/plain",
+          "Requested data not downloaded yet, please retry"
+        )
+      }
 
       return if (range != null && range.startsWith("bytes=")) {
-        handleRangeRequest(fullPath, fileSize, range, mimeType)
+        handleRangeRequest(fullPath, fileSize, start, end, mimeType)
       } else {
         // Full file response
         val inputStream = FileInputStream(fullPath)
@@ -208,13 +230,7 @@ class TorrentStreamServer @Inject constructor(
       }
     }
 
-    private fun handleRangeRequest(
-      file: File,
-      fileSize: Long,
-      rangeHeader: String,
-      mimeType: String
-    ): Response {
-      // Parse range: bytes=start-end
+    private fun parseRange(rangeHeader: String, fileSize: Long): Pair<Long, Long> {
       val rangeValue = rangeHeader.substring("bytes=".length)
       val parts = rangeValue.split("-")
 
@@ -224,7 +240,58 @@ class TorrentStreamServer @Inject constructor(
       } else {
         fileSize - 1
       }
+      return start to end
+    }
 
+    /**
+     * Raises piece priority/deadline for a forward window starting at [startByte] and blocks
+     * (with a bounded timeout) until the piece covering [startByte] is actually downloaded.
+     * Without this, undownloaded regions of the pre-allocated file read back as zero bytes.
+     */
+    private fun waitForByteRangeReady(
+      handle: TorrentHandle,
+      torrentInfo: TorrentInfo,
+      fileStorage: org.libtorrent4j.FileStorage,
+      fileIndex: Int,
+      startByte: Long
+    ): Boolean {
+      val pieceLength = torrentInfo.pieceLength()
+      if (pieceLength <= 0) return true
+
+      val numPieces = torrentInfo.numPieces()
+      val absoluteOffset = fileStorage.fileOffset(fileIndex) + startByte
+      val startPiece = (absoluteOffset / pieceLength).toInt()
+      if (startPiece < 0 || startPiece >= numPieces) return true
+
+      val windowEnd = minOf(startPiece + PIECE_PRIORITY_WINDOW, numPieces)
+      for (piece in startPiece until windowEnd) {
+        try {
+          handle.piecePriority(piece, Priority.TOP_PRIORITY)
+          handle.setPieceDeadline(piece, (piece - startPiece) * 100)
+        } catch (e: Exception) {
+          Timber.w(e, "Failed to prioritize piece $piece")
+        }
+      }
+
+      if (handle.havePiece(startPiece)) return true
+
+      Timber.d("Waiting for piece $startPiece to download before streaming...")
+      val deadline = System.currentTimeMillis() + PIECE_WAIT_TIMEOUT_MS
+      while (System.currentTimeMillis() < deadline) {
+        if (!handle.isValid) return false
+        if (handle.havePiece(startPiece)) return true
+        Thread.sleep(200)
+      }
+      return handle.havePiece(startPiece)
+    }
+
+    private fun handleRangeRequest(
+      file: File,
+      fileSize: Long,
+      start: Long,
+      end: Long,
+      mimeType: String
+    ): Response {
       val contentLength = end - start + 1
 
       Timber.d("Range request: start=$start, end=$end, length=$contentLength")

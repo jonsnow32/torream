@@ -120,7 +120,8 @@ class TorrentDownloadEngine @Inject constructor(
     Timber.i("📦 Torrent: ${torrentInfo.name()}, size: ${torrentInfo.totalSize()}")
 
     // Start download
-    val handle = startDownload(session, torrentInfo, saveDir, sequential)
+    val targetFileIndex = findLargestVideoFileIndex(torrentInfo)
+    val handle = startDownload(session, torrentInfo, saveDir, sequential, targetFileIndex)
       ?: throw Exception("Failed to start torrent download")
 
     // Add public trackers
@@ -161,7 +162,8 @@ class TorrentDownloadEngine @Inject constructor(
     Timber.i("📦 Torrent info: name=${torrentInfo.name()}, size=${torrentInfo.totalSize()}")
 
     // Start download
-    val handle = startDownload(session, torrentInfo, saveDir, sequential)
+    val targetFileIndex = findLargestVideoFileIndex(torrentInfo)
+    val handle = startDownload(session, torrentInfo, saveDir, sequential, targetFileIndex)
       ?: throw Exception("Failed to start torrent download")
 
     // Add public trackers
@@ -332,7 +334,8 @@ class TorrentDownloadEngine @Inject constructor(
     session: org.libtorrent4j.SessionManager,
     torrentInfo: TorrentInfo,
     saveDir: File,
-    sequential: Boolean
+    sequential: Boolean,
+    targetFileIndex: Int = 0
   ): TorrentHandle? = withContext(Dispatchers.IO) {
     try {
       // Ensure save directory exists
@@ -361,13 +364,13 @@ class TorrentDownloadEngine @Inject constructor(
         handle.setFlags(org.libtorrent4j.TorrentFlags.SEQUENTIAL_DOWNLOAD)
         Timber.d("✅ Sequential download enabled")
 
-        // Set file priorities (prioritize first and last files for streaming)
+        // Set file priorities (prioritize the target video file and last file for streaming)
         val fileStorage = torrentInfo.files()
         val numFiles = fileStorage.numFiles()
         val priorities = Array(numFiles) { i ->
           when (i) {
-            0 -> Priority.TOP_PRIORITY // First file
-            numFiles - 1 -> Priority.TOP_PRIORITY // Last file
+            targetFileIndex -> Priority.TOP_PRIORITY // File being streamed
+            numFiles - 1 -> Priority.TOP_PRIORITY // Last file (e.g. MKV index/cues)
             else -> Priority.DEFAULT
           }
         }
