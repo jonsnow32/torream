@@ -42,8 +42,8 @@ android {
     applicationId = "cloud.streamless.torream"
     minSdk = 23
     targetSdk = 36
-    versionCode = 112
-    versionName = "1.0.12"
+    versionCode = 113
+    versionName = "1.0.13"
 
 
     // Reads local.properties
