@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
 
     steps:
       - uses: actions/checkout@v4
@@ -104,6 +105,7 @@ jobs:
       - name: Update docs changelog
         env:
           NOTES: ${{ steps.notes.outputs.body }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           DATE=$(date -u +%Y-%m-%d)
@@ -129,4 +131,10 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m "docs: changelog for $GITHUB_REF_NAME"
             git push origin HEAD:main
+
+            # A push authenticated with the default GITHUB_TOKEN does not
+            # trigger other workflows (anti-recursion rule), so pages.yml
+            # would never redeploy the new changelog entry on its own.
+            # Dispatch it explicitly instead.
+            gh workflow run pages.yml --ref main
           fi
