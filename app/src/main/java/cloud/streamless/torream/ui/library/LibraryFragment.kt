@@ -341,7 +341,7 @@ class LibraryFragment : Fragment() {
       .setTitle(getString(R.string.clear_history))
       .setMessage(getString(R.string.clear_history_message))
       .setPositiveButton(getString(R.string.clear_history_confirm)) { _, _ ->
-        viewLifecycleOwner.lifecycleScope.launch {
+        lifecycleScope.launch {
           try {
             val success = viewModel.clearHistory()
             if (success) {
