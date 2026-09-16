@@ -1,14 +1,18 @@
 package cloud.streamless.torream.ui.home
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
@@ -89,7 +93,13 @@ class FeedFragment : Fragment() {
       viewModel.refreshMediaRepository()
     } else {
       // Permissions denied - adapter will continue showing error state
-      showToast(getString(R.string.permissions_denied))
+      val deniedPermanently = permissions.filterValues { !it }.keys
+        .any { !shouldShowRequestPermissionRationale(it) }
+      if (deniedPermanently) {
+        showOpenSettingsDialog()
+      } else {
+        showToast(getString(R.string.permissions_denied))
+      }
     }
   }
 
@@ -405,6 +415,20 @@ class FeedFragment : Fragment() {
     // race a reload on the old (soon-to-be-cancelled) PagingSource against the new one.
 
     showToast("Settings applied: ${config.groupMode.name} / ${config.viewMode.name}")
+  }
+
+  private fun showOpenSettingsDialog() {
+    AlertDialog.Builder(requireContext(), R.style.BaseMaterialDialogTheme)
+      .setTitle(R.string.permission_denied_permanently_title)
+      .setMessage(R.string.permission_denied_permanently_message)
+      .setPositiveButton(R.string.open_settings) { _, _ ->
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+          data = Uri.parse("package:${requireContext().packageName}")
+        }
+        startActivity(intent)
+      }
+      .setNegativeButton(R.string.cancel, null)
+      .show()
   }
 
   /**
