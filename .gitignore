@@ -34,6 +34,7 @@ local.properties
 /docs/pnpm-debug.log*
 /docs/*.tmp
 /docs/.turbo
+/docs/src/data/homeChangelog.generated.ts
 /.kotlin
 /_ai_gen_docs
 /app/api29
